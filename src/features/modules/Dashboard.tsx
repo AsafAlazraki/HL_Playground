@@ -553,8 +553,33 @@ function PlaceCard({
           </span>
         </span>
 
+        {/* ============================================================
+            THE NAME IS THE SUBJECT OF THE CARD, AND IT WAS 15px.
+
+            Measured at 1280x800 on the real seed: 25 places, and the
+            largest glyph anywhere in the grid was `.md-place-name` at
+            **15px** — the same size as the count beside it, one step
+            off the 12px noun and four off the 11px label. 1.36x of
+            scale contrast inside a card, on a screen whose whole job
+            is to let somebody pick a brand. The face above it is
+            158.9px tall and, for the ten places with no photograph,
+            holds one glyph.
+
+            So the name takes `.ds-display-lg` — 26.88px at 1280, the
+            lowest of the four display steps and the one ds.css
+            describes as "a stage title with a page behind it". A door
+            to Highfield is exactly that: press it and Highfield is
+            the page. The utility carries the whole set (size, weight,
+            leading, tracking, face, width axis) and `.md-place-name`
+            keeps only the clamp and the wrap, so nothing here reaches
+            in for one of the four (rule 6).
+
+            NOT the marque, and not the hero: both are one-per-screen
+            steps and this is a grid of 25. And it steps back DOWN a
+            whole step under 1100px, where the track drops to 174px —
+            see the media query in modules.css. */}
         <span className="md-place-body">
-          <span className="md-place-name">{place.name}</span>
+          <span className="ds-display-lg md-place-name">{place.name}</span>
           <span className="md-place-fact">
             {place.retired ? (
               <span className="md-place-held">{fact}</span>

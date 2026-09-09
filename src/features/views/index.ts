@@ -45,9 +45,23 @@
       (`__order` also wants a home in model.ts beside
       PAIR_ORIGIN_FIELD.)
 
-   3. `createJoinEntity` does not set `role: 'join'`. We follow it
-      with `updateEntity(id, { role: 'join' })`; setting it inside the
-      action would make every join self-identifying.
+   3. SETTLED, 2026-09-09. `createJoinEntity` sets `role: 'join'`
+      itself (useProjectStore.ts:1708) and has for some time; the
+      `updateEntity` that used to follow it here was a second write
+      into the same burst for a field the store had already filled
+      in, and it is gone.
+
+   ---------------------------------------------------------------
+   AND ONE RULE THIS FEATURE OWES THE REST OF THE APP
+
+   `ensureJoinTable` CREATES A TABLE. UX_PASS §5: a structural change
+   is never a side effect of a browsing or picking action — it is
+   offered, in a sentence that names it, and it is undoable. The ask
+   belongs to the surface where the press happened, not to the
+   function: `BlockCard`'s `withJoin` holds the act back, names the
+   table it is about to make and the count the sheet will move to,
+   and raises a toast with UNDO once a person has said yes. A new
+   caller does the same, or it reintroduces audit finding 14.
    ============================================================ */
 
 export { ViewPage } from './ViewPage'
@@ -115,6 +129,7 @@ export {
   findJoinTable,
   joinRefFor,
   ensureJoinTable,
+  joinTableName,
   readPairs,
   relatedRows,
   writePair,

@@ -16,6 +16,23 @@ export type { EnvelopeRead, EnvelopeSummary } from './readEnvelope'
 export { saveCopyOfSheet, nextCopyName, pad2 } from './saveCopy'
 export { sheetNow, sheetFacts, quotesSurviveSentence } from './sheetNow'
 export type { SheetNow } from './sheetNow'
+/* A BLOCK OF SPREADSHEET CELLS → A MERGE, WITH THE COLUMNS MAPPED
+   BY HAND — UX_PASS §3's four steps. The surface is published to the
+   register's action bar by `useTableRoundTrip` above, beside the two
+   file controls it belongs with; these are the pure half, exported so
+   anything that ever needs to read a pasted block reads it the one
+   way. */
+export { PasteRows } from './PasteRows'
+export type { PasteRowsProps } from './PasteRows'
+export {
+  applyPaste,
+  describePaste,
+  planPaste,
+  proposeMapping,
+  readColumns,
+  readPastedBlock,
+} from './pasteBlock'
+export type { MapTo, PastePlan, PasteResult, PastedBlock } from './pasteBlock'
 export { applyReplace, applyMerge } from './apply'
 /* any loader that calls replaceProject must wrap itself in this, or the
    organisation is lost and the app falls back to onboarding */

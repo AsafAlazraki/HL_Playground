@@ -514,7 +514,15 @@ function Quotes({ me, acts }: { me: string; acts: DashboardActs }): JSX.Element 
 
       {list.length > 0 ? (
         <p className="dsh-worth">
-          <b className="dsh-worth-n ds-mono">{money(worth)}</b>
+          {/* NO `.ds-mono`, AND THAT IS DELIBERATE. This is the one
+              figure on the dashboard set at the display step, and
+              ds.css measured what a fixed-pitch family costs there:
+              the thousands comma takes a full digit cell and
+              "$8,557" reads "$8 , 557". `.dsh-worth-n` takes
+              `--t-figure-xl-*` whole — Archivo, tabular — so the
+              total still cannot jitter as it changes. The argument
+              in full is beside the rule in dashboard.css. */}
+          <b className="dsh-worth-n">{money(worth)}</b>
           <span className="dsh-worth-say">
             across {plural(list.length, 'quote', 'quotes')}
           </span>
@@ -948,7 +956,13 @@ function DoorPlate({ door, onOpen }: { door: Door; onOpen: () => void }): JSX.El
         </span>
       </span>
       <span className="dsh-door-say">
-        <span className="dsh-door-name ds-heading">{door.label}</span>
+        {/* NO `.ds-heading`, AND IT USED TO CARRY ONE. A door's name
+            is the display step now — `--t-display-lg` through
+            `.dsh-door-name`, which is the feature rule that owns
+            this element. Two classes both at (0,1,0) with this
+            feature's sheet loaded after ds.css is a cascade nobody
+            can see; the argument is beside the rule. */}
+        <span className="dsh-door-name">{door.label}</span>
         {/* THE COUNT IS THE DEALER'S OWN NOUN — "810 variants",
             "2,860 parts" — and the figure inside it is mono, which
             is the rule every other number on this page keeps. */}

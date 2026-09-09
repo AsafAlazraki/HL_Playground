@@ -131,12 +131,94 @@ In `src/app/**` and `src/features/**`, write `--sp-*`.
 
 ## 3 · TYPE — THE STEPS ACTUALLY DRAWN ON THE NEW SURFACES
 
-**Two faces only.** Inter (`var(--font-ui)`) for anything a person reads. IBM Plex Mono
-(`var(--font-mono)`) for **every figure, count, price, SKU and identifier**, always with
-`font-variant-numeric: tabular-nums`. There is no third face; `--font-display` is mapped to the
-sans, so a rule that asks for the serif silently gets Inter.
+> **AMENDED 2026-09-09 — and this section is the one that lost.** It said *"two faces only …
+> there is no third face"* and it capped the scale at a 28px `display` step. `PHASE_TWO.md` §2.3
+> and its scale-contrast table ask for a **72–110px product name against 12px labels**. Two
+> documents cannot both be right, and the reason this one loses is the reason `DECISIONS.md`
+> exists: **the app looks like the contract, and the owner has said four times that he hates how
+> it looks.** A contract describing a system nobody wants to look at is not worth keeping. What
+> follows is the system `src/styles/ds.css` now defines.
+
+**Three faces.** Inter (`var(--font-ui)`, `var(--font-sans)`) for anything a person **reads**. IBM
+Plex Mono (`var(--font-mono)`) for **every figure, count, price, SKU and identifier**, always with
+`font-variant-numeric: tabular-nums`. **Archivo** (`var(--font-hero)`) for **display type and
+nothing else** — a variable grotesque, and a drawing-office voice is what a dealership's tooling
+should have. Everything a person reads is still Inter; every figure is still mono.
+
+**The display face lives on `--font-hero`, NOT on `--font-display`.** `bridge.css:141` defines
+`--font-display: var(--font-sans)` and bridge.css is imported *after* ds.css, so a face parked on
+that name is silently overridden — the hero rendered in Inter with Archivo's width axis applied to
+it, and that cost an hour. **Do not rename `--font-display`, and do not point it at Archivo.** It
+stays an alias for the sans, and the nine feature rules that still ask for it keep getting Inter,
+correctly. New display work asks for `--font-hero`.
+
+**Instrument Serif stays out, and §8.11's reasoning is honoured rather than reversed.** §8.11
+retired the display serif because it was being set at 9px, where a serif is blur; what replaces it
+is a **floor, not a promise** — Archivo is reachable through exactly the four steps below, the
+lowest of which bottoms out at 26px, so no display face can render at 9px again.
+`@fontsource/instrument-serif` is still an installed dependency with zero references in any
+stylesheet and should be **removed from `package.json`** — a follow-up for the owner, not done
+here.
+
+### The display tier — four steps, and Archivo carries all of them
+
+Take the **whole set**: size, weight, leading and tracking travel together (DESIGN_PRINCIPLES rule
+6). Tracking runs further negative as the step grows (rule 7). The sizes below are the browser's
+resolved values, measured in Chrome at the stated window widths.
+
+| set · utility | size | weight | leading | tracking | `wdth` | what it is for |
+|---|---|---|---|---|---|---|
+| `--t-marque-*` · `.ds-marque` | `clamp(72px, 1.786rem + 4.241vw, 110px)` → 72px @1024, **82.9px @1280**, 89.6 @1440, 110 @1920 | 640 | 0.98 | −0.042em | 100 | **the name of the thing being sold.** One per screen, and only where the subject IS a product: the configurator's identity column (`PHASE_TWO` §2.3, `QUOTE_GROUND_UP` §3). **Never a stage title** |
+| `--t-hero-*` · `.ds-hero` | `clamp(34px, 3.4vw, 52px)` → 43.5px @1280, 52 @1529+ | 680 | 1.03 | −0.036em | 105 | the first line of a stage that IS the page |
+| `--t-display-lg-*` · `.ds-display-lg` | `clamp(26px, 2.1vw, 34px)` → 26.9px @1280 | 650 | 1.1 | −0.028em | 103 | a stage title with a page behind it |
+| `--t-figure-xl-*` · `.ds-figure-xl` | `clamp(30px, 1.018rem + 1.339vw, 42px)` → 33.4px @1280, 42 @1920 | 600 | 1.05 | −0.03em | 100 | **the committed total.** The one figure a price bar exists to state. Tabular, and **not mono** — see below |
+
+**The width ladder descends as the size grows: 105 → 103 → 100.** The extension is a voice, and a
+voice is affordable where there is room — a hero runs across a stage. A marque runs down a ~400px
+identity column beside a photograph, where every percent of width costs a line of wrap on a name
+like *Highfield CL260*. At 83px the size is the voice.
+
+**`--t-marque` steps DOWN a whole step; it does not shrink.** Its clamp bottoms at 72px and holds
+there below 1024px. In a window under ~1000px, or a column narrower than ~360px, the surface takes
+`--t-hero-*` — the whole set — instead. Rule 6 permits swapping steps; it never permits reaching
+in for one value.
+
+**`--t-display-size` (28px, ramped to 40px by `response.css`) is NOT the display tier.** It is a
+panel/stage step in Inter and it stays that. `response.css` deliberately keeps the `--display-*`
+ramp shallow because an oversized heading on a **data** surface steals room from the data; the
+marque exists for the one surface that is not a data surface.
+
+**Measured, not assumed.** At 1280×800 on the real seed the largest glyph on the home stage was
+**32.7px against an 11px label — 2.97×**. The marque makes that **82.9px against 11px — 7.53×**,
+which is the scale contrast `PHASE_TWO` §3 asks for. Contrast, measured in Chrome with the full
+ancestor chain composited (the method in `tools/check-contrast.mjs`): `--fg` over `--bg`,
+`--surface-1`, `--surface-2` and `--bg-sunken` is **15.04–17.41:1 on light** and **13.18–16.92:1
+on dark**, against the 3:1 large-text requirement — and it clears 4.5:1 as well. **A marque over a
+photograph cannot be measured**, so it takes a scrim **on the image**, never a lighter ink.
+
+**`--t-figure-xl` is the one figure that is not mono, and the exception is measured.** §2's rule
+is *"if it is a number **in a column**, it is mono"* — mono is what makes a column line up on the
+decimal. A committed total is not in a column; it is a headline that happens to be a number. IBM
+Plex Mono is fixed-pitch, so at 33.43px it gives the thousands comma the same **20.05px** cell as a
+digit — `$8 , 557` — and **no OpenType feature closes it**: default, `tnum` and `pnum` all render
+`$8,557` at exactly 120.19px, measured per glyph in Chrome. Archivo with
+`font-variant-numeric: tabular-nums` gives every digit an identical **19.14px** advance (the `1`
+is 18.27px proportional, 19.14px tabular) and the comma **9.61px**. The total therefore keeps the
+property that matters — it cannot jitter as the price changes, which is what *"money never
+animates"* (`QUOTE_GROUND_UP` §4) depends on — and drops the one that does not apply. **Every
+other figure is still mono**: a price in a table, a count, a SKU, an id. One step, one figure, at
+display size. Do not read it as permission. `'zero'` is deliberately not set — a slashed zero is a
+code affordance, not something a customer should see in a price.
+
+**The leading was measured, not chosen.** Archivo's ink at 82.9px/640: tallest ascender 0.736em,
+deepest descender 0.193em. 0.98 leaves 0.051em (4.2px) between the descender of one line and the
+ascender of the next; 0.96 leaves a 0.031em hairline and 0.94 touches. A stacked accent (Å, É)
+reaches 0.929em on its own and collides at any display leading under ~1.13 — true of every display
+step in every system, and accepted here rather than papered over.
 
 **The floor is 11px.** Absolute. `.md-verb` at 11.5px is the lowest thing the redesign drew.
+
+### The chrome steps, unchanged
 
 The redesign's chrome type is tighter than the six abstract steps in `ds.css`. **Take these
 values, not the abstract ones**, because these are what is on screen:
@@ -403,7 +485,17 @@ preference.
     live surfaces — **the dock and the page toolbar** (plus the table's sticky header row and the
     Cmd-Tab switcher). **Do not add a third `backdrop-filter`** without arguing it first.
 11. **THE DISPLAY SERIF.** Retired; it was being set at 9px, where a serif is blur.
-    `--font-display` maps to the sans.
+    `--font-display` maps to the sans and **still does** — do not rename it and do not point it at
+    a display face (`bridge.css:141` wins over `ds.css` by load order, so a face parked there is
+    silently overridden). `@fontsource/instrument-serif` is still installed and referenced by no
+    stylesheet; **delete the dependency**, do not import it.
+    **AMENDED 2026-09-09 — the reason survives, the absolute does not.** This entry was being read
+    as *"no display face, ever"*; what it says is *"not at 9px"*. Inter was then doing every job
+    from a business name to an 11px label — the default every generated interface reaches for, and
+    the reason §3 capped out at 28px against a spec asking for 110. **Archivo** now carries the
+    display tier on `--font-hero` (§3), and the guard against repeating the 9px failure is a
+    **floor**: the four steps that reach the face bottom out at 26px, so it cannot be set small.
+    The serif itself stays retired — that part is not reversed.
 12. **`:active { transform: none }`.** The outgoing build had 16 `:active` rules of which three
     cancelled their own feedback. Never cancel a press.
 13. **A GLOBAL KEY HANDLER WITHOUT A MODIFIER.** `Shell.tsx` has carried the words "NO WINDOW KEY

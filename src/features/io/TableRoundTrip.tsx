@@ -48,7 +48,7 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { JSX, ReactNode } from 'react'
-import { DownloadSimple, UploadSimple } from '@phosphor-icons/react'
+import { ClipboardText, DownloadSimple, UploadSimple } from '@phosphor-icons/react'
 import type { CellValue, FieldDef, RowData } from '@/types/model'
 import type { ActionItem } from '@/lib/actions'
 import { useProjectStore } from '@/store/useProjectStore'
@@ -64,11 +64,12 @@ import {
   planTableUpload,
   type TableUploadPlan,
 } from './tableCsv'
+import { PasteRows } from './PasteRows'
+import type { PastePlan, PasteResult } from './pasteBlock'
+import { PlanChanges, PlanNotes } from './PlanEvidence'
 import './io.css'
 
-/* how many changed cells the confirm lists before it starts counting */
-const CHANGES_SHOWN = 8
-/* how many new rows it names */
+/* how many new rows the confirm names */
 const NEW_SHOWN = 6
 
 const plural = (n: number, one: string, many: string): string =>
@@ -126,6 +127,8 @@ export function useTableRoundTrip(src: TableRoundTripSource): TableRoundTrip {
 
   const fileRef = useRef<HTMLInputElement>(null)
   const [plan, setPlan] = useState<TableUploadPlan | null>(null)
+  const [pasting, setPasting] = useState(false)
+  const addField = useProjectStore((s) => s.addField)
 
   /* -- out ---------------------------------------------------- */
 
@@ -212,6 +215,50 @@ export function useTableRoundTrip(src: TableRoundTripSource): TableRoundTrip {
     )
   }, [plan, updateCell, addRow, pushToast])
 
+  /* -- the block ---------------------------------------------- */
+
+  /* THE THREE STORE DOORS THE PASTE NEEDS, IN ONE OBJECT AND IN ONE
+     TURN. `addField` is the one the file door does not have and must
+     not be given: a `.csv` carries no type and no description, so a
+     FILE creating a column would be the app inventing everything
+     about it (tableCsv.ts reason 3). A person standing in front of
+     the mapping, told the type and what it costs, is a different act
+     — DESIGN_PRINCIPLES §7, offered in a sentence that names it. */
+  const write = useMemo(
+    () => ({ updateCell, addRow, addField }),
+    [updateCell, addRow, addField],
+  )
+
+  const pasted = useCallback(
+    (done: { columnsAdded: number; cellsWritten: number; rowsChanged: number; rowsAdded: number; columnsRefused: string[] }) => {
+      setPasting(false)
+      const said: string[] = []
+      if (done.columnsAdded > 0) {
+        said.push(`${plural(done.columnsAdded, 'column', 'columns')} added`)
+      }
+      if (done.rowsAdded > 0) said.push(`${plural(done.rowsAdded, 'row', 'rows')} added`)
+      if (done.cellsWritten > 0) {
+        said.push(
+          `${plural(done.cellsWritten, 'cell', 'cells')} across ${plural(done.rowsChanged, 'row', 'rows')}`,
+        )
+      }
+      /* rule 10 travels all the way to the note: a column the store
+         would not make took its cells with it, and that is not a
+         thing to discover in the register afterwards */
+      const held =
+        done.columnsRefused.length > 0
+          ? ` ${done.columnsRefused.join(', ')} could not be created, so nothing was written into ${done.columnsRefused.length === 1 ? 'it' : 'them'}.`
+          : ''
+      offerUndo(
+        pushToast,
+        said.length === 0
+          ? `The pasted block changed nothing.${held}`
+          : `Pasted into ${entity?.name ?? 'the table'} — ${said.join(', ')}.${held}`,
+      )
+    },
+    [entity, pushToast],
+  )
+
   /* -- the controls ------------------------------------------- */
 
   const items = useMemo<ActionItem[]>(() => {
@@ -240,6 +287,27 @@ export function useTableRoundTrip(src: TableRoundTripSource): TableRoundTrip {
         refusal: noColumns ? 'Draft a column before a file has anywhere to land.' : undefined,
         onPick: doUpload,
       },
+      /* THE THIRD DOOR, AND THE ONE A DEALER USES. UX_PASS §9 item 8:
+         "Paste with header mapping — the front door to the product."
+         It stands in this group and not somewhere new because it is
+         the same act as the two beside it — data arriving at this
+         register from a spreadsheet — and it reads as the shortest
+         version of it: no file, no download, no Excel. */
+      {
+        kind: 'button',
+        id: 'tb-paste',
+        label: 'Paste rows',
+        say: entity ? `Paste rows into ${entity.name}` : 'Paste rows',
+        icon: ClipboardText,
+        /* IT IS REFUSED ON AN EMPTY SCHEMA AND SAYS SO, unlike the
+           file door, whose refusal is the same sentence: a column is
+           where a pasted value lands, and a table with none has
+           nowhere to put one. */
+        refusal: noColumns
+          ? 'Draft a column before a pasted block has anywhere to land.'
+          : undefined,
+        onPick: () => setPasting(true),
+      },
     ]
   }, [entity, shownRows.length, doExport, doUpload])
 
@@ -263,6 +331,17 @@ export function useTableRoundTrip(src: TableRoundTripSource): TableRoundTrip {
           rowsHere={allRows.length}
           onCancel={() => setPlan(null)}
           onCommit={commit}
+        />
+      ) : null}
+      {pasting && entity ? (
+        <PasteRows
+          entity={entity}
+          rows={allRows}
+          refMapOf={refMapOf}
+          refLabelOf={refLabelOf}
+          write={write}
+          onClose={() => setPasting(false)}
+          onDone={(_plan: PastePlan, result: PasteResult) => pasted(result)}
         />
       ) : null}
     </>
@@ -308,9 +387,6 @@ function UploadPreflight({
       ]
     : []
 
-  const shown = plan.changes.slice(0, CHANGES_SHOWN)
-  const moreChanges = plan.changes.length - shown.length
-
   const choices =
     plan.ok && !idle
       ? [
@@ -352,34 +428,12 @@ function UploadPreflight({
         </p>
       ) : null}
 
-      {shown.length > 0 ? (
-        <ul className="io-diff">
-          {shown.map((c) => (
-            <li className="io-diff-line" key={`${c.rowId}:${c.fieldId}`}>
-              <span className="io-diff-where">{c.rowLabel}</span>
-              {/* A COLUMN NAME IS A NAME (§2), and this one carried
-                  `.mono-label`, whose identity IS uppercase — so a
-                  dealer's `Landed hull cost` was printed back at them
-                  as LANDED HULL COST on the one screen whose entire
-                  job is "check this against the email that sent you
-                  the file". It is now the caption step in the reading
-                  face, in the case the column is actually called. */}
-              <span className="io-diff-col">{c.columnName}</span>
-              <span className="io-diff-from">{c.from === '' ? '—' : c.from}</span>
-              <span className="io-diff-arrow" aria-hidden="true">
-                →
-              </span>
-              <span className="io-diff-to">{c.to === '' ? '—' : c.to}</span>
-            </li>
-          ))}
-          {moreChanges > 0 ? (
-            /* a sentence, not a stamp: this read +12 MORE CELLS */
-            <li className="io-diff-more">
-              +{moreChanges} more {moreChanges === 1 ? 'cell' : 'cells'}
-            </li>
-          ) : null}
-        </ul>
-      ) : null}
+      {/* THE SAME TWO BLOCKS THE PASTE DOOR DRAWS. Extracted to
+          `PlanEvidence` when the second door arrived, because two
+          copies of "here is what would change" is two places for the
+          sentence a dealer checks against their supplier's email to
+          drift out of agreement with itself. */}
+      <PlanChanges plan={plan} />
 
       {plan.newRows.length > 0 ? (
         <ConfirmSamples
@@ -389,15 +443,7 @@ function UploadPreflight({
         />
       ) : null}
 
-      {plan.refusals.length > 0 ? (
-        <ul className="io-rt-notes">
-          {plan.refusals.map((r) => (
-            <li className="io-rt-note" key={r.id}>
-              {r.say}
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      <PlanNotes notes={plan.refusals} />
     </ConfirmSheet>
   )
 }

@@ -2484,3 +2484,102 @@
 .vw-block-name {
   line-height: var(--t-heading-lead);
 }
+
+/* ============================================================
+   THE ASK BEFORE A TABLE IS MADE — "structure is never a side
+   effect" (UX_PASS §5), drawn where the press was.
+
+   WHY IT IS NOT A DIALOG. Rule 9: a reversible act gets a toast,
+   never a confirm — and this act IS reversible, in one press of
+   UNDO, which is why the sentence says so. What §5 asks for is not
+   a confirmation but an OFFER: the app is about to author schema on
+   the back of a star, and the person is entitled to read what it
+   will make before it exists. So it is a panel on the block, above
+   the rows it is about, and the everyday path — a block whose join
+   already exists — never sees it.
+
+   WHY IT IS NOT RED. `.vw-confirm` beside it is `--red` over
+   `--red-wash` because it is about taking something away. Nothing
+   is being lost here and nothing is being refused; the eighth-note
+   is `--warning`, on the mark only, and it carries no wash.
+
+   MEASURED IN CHROME AT 1280×800 ON THE REAL SEED (a Highfield page
+   with Dunbier Trailers on it), compositing the FULL ancestor chain
+   down to this panel's own `--paper-sunken` ground, at 13px:
+
+     lead   --ink        15.04 : 1
+     body   --ink-soft    6.99 : 1
+     mark   --warning     5.12 : 1
+
+   All three clear 4.5. The mark is the tightest and it is the only
+   thing here carrying a hue — which is the arrangement `.vw-warn`
+   arrived at for the same reason: `--warning` over a wash of its own
+   composites to 4.28 and fails, so there is no wash.
+
+   NOTHING HERE ANIMATES. The playbook's motion table is explicit
+   that a refusal and its sentence land in the same frame; an ask
+   that fades in arrives after the person has already looked for it.
+   ============================================================ */
+.vw-link-ask {
+  margin: 0 var(--sp-3) var(--sp-3);
+  padding: var(--sp-3);
+  border-left: 2px solid var(--warning);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunken);
+}
+.vw-link-say {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--ui-size);
+  line-height: 1.5;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+/* the mark sits on the sentence's first line, not centred on three */
+.vw-link-mark {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--warning);
+}
+/* the fact, ahead of what follows from it. A name keeps its own
+   case — uppercase is a label style and this is two table names. */
+.vw-link-word {
+  font-weight: 600;
+  color: var(--ink);
+}
+.vw-link-acts {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+/* ── AND THE OTHER HALF OF §5: A GUESS THAT SAYS SO ─────────────
+   `.vw-offer-why` above it is the mono caption that names the
+   evidence — a link column, an envelope, two matching names. This
+   is the line that says how much that evidence is worth, and it is
+   set as prose rather than as a stamp, because it is a sentence a
+   person has to weigh rather than a label they scan past.
+
+   NO WASH AND NO RED. Nothing is refused and nothing is wrong; the
+   app simply does not know. The mark of it is the weight on the
+   first three words and the button beside it not being blue.
+
+   MEASURED IN CHROME AT 1280×800 on the real seed, compositing the
+   full chain, on the offer's own `--paper-high` ground, at 12px —
+   read off the Formosa offer a Highfield page makes:
+     lead  --ink       17.41 : 1
+     body  --ink-soft   8.09 : 1
+   ============================================================ */
+.vw-offer-guess {
+  margin-top: var(--sp-2);
+  font-size: var(--ui-s-size);
+  line-height: 1.5;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+.vw-offer-guess-word {
+  font-weight: 600;
+  color: var(--ink);
+}

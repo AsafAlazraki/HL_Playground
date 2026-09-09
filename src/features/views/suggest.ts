@@ -28,6 +28,27 @@ import { describeRule } from './describe'
 
 export type SuggestionKind = 'link' | 'range' | 'match' | 'none'
 
+/**
+ * HOW MUCH THE FILE ACTUALLY SAYS — and it is not the same for all
+ * four kinds.
+ *
+ * UX_PASS §5, finding 18: the guided path picked the first column of
+ * each table, which on the real data is `Series` on both sides — 193
+ * rows naming neither the boat nor the motor. *"A suggestion that is
+ * confidently wrong is worse than no suggestion. Prefer
+ * `displayFieldId`; where the guess is weak, say it is a guess."*
+ *
+ *   'declared'  the price file states the relationship. A reference
+ *               column pointing at the other table, or a Min/Max
+ *               envelope naming the quantity the other side carries.
+ *               Offer it as the answer.
+ *   'guess'     nothing declares anything and two columns happen to
+ *               share a word. It may be right; it is not knowledge,
+ *               and the surface must say so rather than dress a
+ *               coincidence as a finding.
+ */
+export type SuggestionGround = 'declared' | 'guess'
+
 export interface RuleSuggestion {
   kind: SuggestionKind
   /** the offer, in full: "Show motors where HP is between …" */
@@ -36,6 +57,8 @@ export interface RuleSuggestion {
   group?: ClauseGroup
   /** one line under the offer saying WHY we guessed this */
   because: string
+  /** whether the file declared this or we inferred it from two names */
+  ground: SuggestionGround
 }
 
 /* ---------------------------------------------------------- */
@@ -109,6 +132,7 @@ function linkSuggestion(root: EntityDef, target: EntityDef): RuleSuggestion | nu
     return {
       kind: 'link',
       group,
+      ground: 'declared',
       sentence: describeRule(group, root, target),
       because: `${target.name} already has a “${inbound.name}” link column pointing at ${root.name}.`,
     }
@@ -121,6 +145,7 @@ function linkSuggestion(root: EntityDef, target: EntityDef): RuleSuggestion | nu
     return {
       kind: 'link',
       group,
+      ground: 'declared',
       sentence: describeRule(group, root, target),
       because: `${root.name} already has a “${outbound.name}” link column pointing at ${target.name}.`,
     }
@@ -163,6 +188,11 @@ function rangeSuggestion(root: EntityDef, target: EntityDef): RuleSuggestion | n
     return {
       kind: 'range',
       group,
+      /* An envelope is a statement: the business wrote Min HP and Max
+         HP on the boat BECAUSE a motor has an HP that has to sit
+         between them. That is the file declaring a relationship, in
+         the only vocabulary a spreadsheet has. */
+      ground: 'declared',
       sentence: describeRule(group, root, target),
       because: `${root.name} carries ${pair.min.name} and ${pair.max.name}; ${target.name} carries ${hit.name}.`,
     }
@@ -244,8 +274,17 @@ function matchSuggestion(root: EntityDef, target: EntityDef): RuleSuggestion | n
   return {
     kind: 'match',
     group,
+    /* TWO COLUMNS SHARING A WORD IS NOT A RELATIONSHIP. The
+       bookkeeping list above throws out the names that mean the same
+       thing on every table, which makes this the best of the
+       coincidences that are left — not evidence. Finding 18 is this
+       exact rule on the real seed: `Series` on both sides, 193 rows
+       naming neither the boat nor the motor. It is still offered,
+       because sometimes it is right and the person can see the list
+       it produces; it is offered AS A GUESS. */
+    ground: 'guess',
     sentence: describeRule(group, root, target),
-    because: `Both tables have a “${best.t.name}” column.`,
+    because: `Both tables have a “${best.t.name}” column. Nothing in the file says the two are about the same thing — they share a name.`,
   }
 }
 
@@ -259,6 +298,9 @@ export function suggestRule(root: EntityDef, target: EntityDef): RuleSuggestion 
     rangeSuggestion(root, target) ??
     matchSuggestion(root, target) ?? {
       kind: 'none',
+      /* nothing was found, so there is nothing to be confident about —
+         and no `group`, so there is nothing to commit either */
+      ground: 'guess',
       sentence: describeRule(undefined, root, target),
       because: `Nothing on ${root.name} lines up with anything on ${target.name}, so nothing is narrowed.`,
     }

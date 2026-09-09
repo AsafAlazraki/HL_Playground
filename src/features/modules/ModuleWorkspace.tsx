@@ -246,10 +246,41 @@ export function ModuleIndex({
             eyebrow stays visible because a tint is a hint and a word
             is a fact.
 
-            A PLACE WITH NO MARK IS UNCHANGED. Most tables have no
-            logo and never will, and a crest with a boat glyph in it
-            would be a large empty gesture. Those keep the 46px plate
-            and the name in display type. */}
+            AND THE OTHER HALF, WHICH WAS A FALLBACK AND IS NOW THE
+            OTHER FORM OF THE SAME HEADER.
+
+            "Those keep the 46px plate and the name in display type"
+            is what this said, and measured at 1280x800 on the real
+            seed that display type was `.ds-display-lg` at **26.88px**
+            against an 11px eyebrow — 2.44x, where PHASE_TWO §2.3's
+            scale-contrast row asks for about 7x. Beside a crest whose
+            wordmark is drawn at 44px, a 26.88px name is not the other
+            half of an asymmetry; it is the consolation prize for a
+            place whose artwork nobody has uploaded. And measured on
+            this seed the consolation prize is EVERY place:
+            `src/features/modules/marks/` ships empty by design
+            (`brandLogos.ts` — "what is not here is not invented"), so
+            `markFor` returns undefined for all 25 places and all 25
+            workspaces. The fallback IS the screen.
+
+            So the name takes `--t-hero` — 43.5px at 1280, the step
+            ds.css defines as "the first line of a stage that IS the
+            page", which is exactly what a module workspace is. The
+            crest's wordmark is capped at `--t-hero-size` too now
+            (`.md-work-crest-img`), so the two headers are the same
+            43.5px of ink at every width and differ only in what that
+            ink is made of. Measured with a placeholder mark dropped
+            into `marks/` and then deleted: crest 433x69.5 holding a
+            9.17:1 wordmark at 399x43.5, against a name at 43.52px.
+
+            AND IT IS NOT `--t-marque`, THOUGH THAT IS THE BIGGER
+            STEP. DESIGN_CONTRACT's display-tier table reserves the
+            marque for "the name of the thing being sold ... only
+            where the subject IS a product", and says of it in the
+            same row: **never a stage title**. Highfield Inflatables
+            is a place holding 588 boats, not one of them. The step
+            above this one belongs to the configurator's identity
+            column and this surface does not get to borrow it. */}
         {crest ? (
           <span className="md-work-crest">
             <img className="md-work-crest-img" src={crest.src} alt="" />
@@ -274,7 +305,7 @@ export function ModuleIndex({
           {standing && owner.name !== name ? (
             <span className="mono-label md-work-of">{owner.name}</span>
           ) : null}
-          <h2 className={crest ? 'md-work-name is-quiet' : 'ds-display-lg md-work-name'}>{name}</h2>
+          <h2 className={crest ? 'md-work-name is-quiet' : 'ds-hero md-work-name'}>{name}</h2>
         </div>
         {/* ONE FACT, THE SAME ONE THE CARD CARRIED. A figure is never
             a hue and is always mono and tabular. */}

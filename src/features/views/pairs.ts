@@ -109,10 +109,44 @@ export function joinRefFor(
   return findJoinTable(entities, sourceEntityId, targetEntityId)
 }
 
+/** The name a link table between these two WOULD be given.
+ *
+ *  Exported so a surface can name the table it is about to create
+ *  before it exists. UX_PASS §5 asks the ask to name the thing —
+ *  "will create a link table, Boats ↔ Motors" — and a sentence that
+ *  guessed at that name would be a sentence that could go stale the
+ *  first time this one changed. There is one name and both the ask
+ *  and the act read it here. */
+export function joinTableName(a: EntityDef, b: EntityDef): string {
+  return `${a.name} × ${b.name}`
+}
+
 /**
  * The join for this pairing, made only when a person first curates.
  * A table that is merely LOOKED at never grows a join table — the
  * relationship becomes data the moment someone disposes of it.
+ *
+ * ── THIS FUNCTION CREATES A TABLE, AND THE CALLER MUST HAVE ASKED ──
+ *
+ * UX_PASS §5, the rule for the whole app: *"a structural change — a
+ * new table, a new column, a new join — is never a side effect of a
+ * browsing or picking action. It is OFFERED, in a sentence that names
+ * it, and it is undoable."* Audit finding 14 is this function reached
+ * from a star: one press took the sheet 21 tables → 22, moved the
+ * selection onto the new table and said nothing. Measured again on
+ * 2026-09-09 against the real seed: 53 → 54, in silence.
+ *
+ * So the ask is not optional and it is not this function's to make —
+ * it belongs where the press was, beside the row (rule 10). The one
+ * caller, `BlockCard`'s `withJoin`, holds the act back until a person
+ * has read the sentence and pressed the button; do the same in any
+ * new one. Nothing here refuses, because a function that refused
+ * would have to invent a policy about who is allowed to ask.
+ *
+ * IT IS ONE UNDO STEP. `record()` collapses everything written in one
+ * tick, so the table and the pair that caused it go back together —
+ * which is what lets the caller raise a toast with UNDO rather than a
+ * confirm (rule 9).
  */
 export function ensureJoinTable(
   sourceEntityId: string,
@@ -124,9 +158,12 @@ export function ensureJoinTable(
   const a = store.entities[sourceEntityId]
   const b = store.entities[targetEntityId]
   if (!a || !b) return null
-  const made = store.createJoinEntity(sourceEntityId, targetEntityId, `${a.name} × ${b.name}`)
+  /* `createJoinEntity` sets `role: 'join'` itself (useProjectStore.ts
+     :1708). It did not when this was written, and the `updateEntity`
+     that followed is gone — a second write into the same burst for a
+     field the store already filled in. See the note in index.ts. */
+  const made = store.createJoinEntity(sourceEntityId, targetEntityId, joinTableName(a, b))
   if (!made) return null
-  useProjectStore.getState().updateEntity(made.entity.id, { role: 'join' })
   return {
     entityId: made.entity.id,
     sourceFieldId: made.aFieldId,

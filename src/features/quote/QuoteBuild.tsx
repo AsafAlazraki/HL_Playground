@@ -617,6 +617,78 @@ export function QuoteBuild({ quote, onIssued, onGo }: QuoteBuildProps): ReactEle
    to the hull, so the picture is never a mystery.
    ============================================================ */
 
+/** What a subject label is actually made of, once it is taken apart. */
+type Lockup = {
+  /** the maker, where the label states one — `Highfield` */
+  maker: string
+  /** the model code: the NAME of the thing, and the only marque — `CL260` */
+  model: string
+  /** everything the model is qualified by — `(PVC) B-G-DG` */
+  trim: string
+  /** true when the model cannot be set at the display step, so the
+   *  surface takes the whole `--t-hero` step instead */
+  long: boolean
+}
+
+/** A maker longer than this is not a maker — it is the first half of a
+ *  part description that happens to contain a hyphen. Measured against
+ *  the seed: `Highfield` 9, `Yamaha` 6, `Yamaha Twin Rig` 15,
+ *  `DEC Rigging Kit (Twin Eng)` 26 — which is the one that must fail. */
+const MAKER_MAX = 20
+
+/** THE MEASURED CEILING, and the reason it is seven. Archivo at the
+ *  marque step is 82.86px at 1280 and the identity column's content box
+ *  is 360.3px. Measured in Chrome with the face loaded: `CL290FT` 325.6
+ *  and `SP760ST` 330.3 fit; `RU230KAM` 418.8, `XF450USA` 391.2 and
+ *  `F9.9SMHB` 381.9 do not. A model code is one unbroken token, so a
+ *  code that does not fit has nowhere to wrap — it would overflow into
+ *  the pane's `overflow: hidden` and lose letters. Seven characters is
+ *  where that boundary sits, so eight steps the whole thing down. */
+const MARQUE_TOKEN_MAX = 7
+
+/**
+ * TAKE THE LABEL APART SO THE MARQUE CAN BE ONE WORD.
+ *
+ * `quote.subjectLabel` is four facts welded together —
+ * `Highfield - RU230KAM (PVC) WH` is a maker, a model, a hull material
+ * and a colourway. PHASE_TWO §2.3 asks for a 72–110px product NAME; the
+ * name is the model. Setting the whole string at that step is what put
+ * an earlier pass across three lines and 228.5px of a 806px pane.
+ *
+ * NOTHING IS DROPPED. Every character of the label comes back out of
+ * this function in `maker`, `model` and `trim`, and `ProductPane` draws
+ * all three inside the one `h1`, in the order they were written.
+ *
+ * WHERE IT DECLINES TO SPLIT it returns the whole label as the model
+ * and marks it long, so the surface steps down rather than guessing.
+ */
+export function marqueOf(label: string): Lockup {
+  const whole = label.trim()
+
+  /* THE MAKER IS WHAT PRECEDES THE FIRST ` - `, and only if it is
+     short enough to be a maker. `Fusion Apollo RA670 Stereo w 2 Pairs
+     of XS 6.5 Speakers + 1.8mtr Aerial` has no ` - ` at all and falls
+     straight through, which is right: it has no marque in it. */
+  const cut = whole.indexOf(' - ')
+  const hasMaker = cut > 0 && cut <= MAKER_MAX
+  const maker = hasMaker ? whole.slice(0, cut) : ''
+  const rest = hasMaker ? whole.slice(cut + 3).trim() : whole
+
+  /* THE MODEL RUNS TO THE FIRST QUALIFIER — a bracket or a pipe.
+     `CL260 (PVC) B-G-DG` splits at ` (`; `6X9 Binnacle | Built in DES`
+     splits at ` |`; `F9.9SMHB` has neither and is the model entire. */
+  const marks = [rest.indexOf(' ('), rest.indexOf(' |')].filter((i) => i > 0)
+  const at = marks.length > 0 ? Math.min(...marks) : -1
+  const model = (at > 0 ? rest.slice(0, at) : rest).trim()
+  const trim = at > 0 ? rest.slice(at + 1).trim() : ''
+
+  /* A LABEL THAT SPLIT TO NOTHING KEEPS ITS WHOLE SELF. */
+  if (model === '') return { maker: '', model: whole, trim: '', long: true }
+
+  const longest = model.split(/\s+/).reduce((n, word) => Math.max(n, word.length), 0)
+  return { maker, model, trim, long: longest > MARQUE_TOKEN_MAX }
+}
+
 function ProductPane({
   quote,
   steps,
@@ -637,6 +709,7 @@ function ProductPane({
   const shot = quote.lines.find((l) => l.id === showing)
   const img = shot ? shot.image : quote.subjectImage
   const name = shot ? shot.label : quote.subjectLabel
+  const lockup = marqueOf(quote.subjectLabel)
 
   /* ── WHAT IS ALREADY DECIDED, WHERE IT CANNOT SCROLL AWAY ────────
      CONFIGURATOR.md §C: "A person deep in Dealer Fit needs to see
@@ -719,10 +792,22 @@ function ProductPane({
           been put on it. That is also the anatomy `PageHead` uses on
           every other screen in this app — eyebrow, name, facts —
           which is why the reference keeps the mono-label step it
-          already had rather than gaining a treatment of its own. */}
+          already had rather than gaining a treatment of its own.
+
+          AND THE NAME IS A LOCKUP NOW, NOT A STRING. One `h1`, three
+          steps: the maker, the model at the display step, and what
+          qualifies it. See `marqueOf` above for what is split and why,
+          and `.qb-name` in build.css for the two measurements that set
+          the step. Every character of `subjectLabel` is still inside
+          this heading, in the order it was written, so what a screen
+          reader announces is unchanged. */}
       <div className="qb-ident">
         <p className="qb-ref mono-label">{quote.reference}</p>
-        <h1 className="qb-name">{quote.subjectLabel}</h1>
+        <h1 className={`qb-name${lockup.long ? ' is-long' : ''}`}>
+          {lockup.maker === '' ? null : <span className="qb-name-maker">{lockup.maker}</span>}
+          <span className="qb-name-model ds-marque">{lockup.model}</span>
+          {lockup.trim === '' ? null : <span className="qb-name-trim">{lockup.trim}</span>}
+        </h1>
 
         {quote.subjectSpecs.length > 0 ? (
           <ul className="qb-specs">
@@ -1855,6 +1940,27 @@ function PriceBar({
   const [ledger, setLedger] = useState(false)
   const named = quote.customer.name.trim()
 
+  /* ── THE REFUSAL THE FLOW LINE IS ALREADY MAKING ─────────────────
+     `issueBlockers` pushes "This quote is addressed to nobody" first,
+     and only when the name is blank (totals.ts:275) — so `named === ''`
+     identifies it structurally and no sentence has to be matched.
+
+     The strip below used to print it, in amber, with a "Name the
+     customer" button beside it. Sixteen pixels above, the flow line
+     already reads `Address  nobody yet`, and that stop is BOTH the
+     fact and the door. Every draft begins unaddressed, so the alarm
+     was on for the whole of the normal case, and a second door to the
+     same place is the duplicate this file has deleted three times.
+
+     Rule 10 is kept where it belongs: the Address stop states it in
+     the same 40px band as the handover, the ledger under the total
+     lists it in full, `CustomerField` prints it against the box a
+     person types into, and the handover itself carries the first
+     refusal on its `title`. What is gone is the fourth copy and the
+     36.4px row it cost. Every OTHER refusal still takes the strip. */
+  const said = named === '' ? 1 : 0
+  const unsaid = refusals.slice(said)
+
   return (
     <FlowFoot
       line={
@@ -1875,19 +1981,23 @@ function PriceBar({
         <Ledger quote={quote} steps={steps} totals={totals} refusals={refusals} />
       ) : null}
 
-      {/* RULE 10, AND IT GETS ITS OWN LINE. The reason a quote cannot
-          go out is stated beside the control it refuses — a sentence
-          squeezed into the strip beside a total, a rung control and
-          two buttons wrapped to four lines at 1024 and took a fifth
-          of the window. Across the width it is one line at every
-          size, and the control row stays a row.
+      {/* RULE 10, AND IT GETS ITS OWN LINE — for a refusal nothing
+          else on the screen is already making. The reason a quote
+          cannot go out is stated beside the control it refuses; a
+          sentence squeezed into the strip beside a total, a rung
+          control and two buttons wrapped to four lines at 1024 and
+          took a fifth of the window. Across the width it is one line
+          at every size, and the control row stays a row.
 
-          IT IS THE FACT AND THE ACT, and no longer a paragraph: see
+          IT IS THE FACT AND THE COUNT, and no longer a paragraph: see
           `refusalFact` above. The rest of the sentence is beside the
           box it is about and inside the ledger, and where a second
           reason exists the count of them is a door onto that ledger
-          rather than a number a person has to go looking for. */}
-      {refusals.length > 0 ? (
+          rather than a number a person has to go looking for.
+
+          `unsaid`, NOT `refusals` — see the note above it. On the
+          ordinary draft this strip does not draw at all. */}
+      {unsaid.length > 0 ? (
         <div className="qb-give-why" role="status">
           <Warning
             className="qb-give-mark"
@@ -1895,15 +2005,10 @@ function PriceBar({
             weight="fill"
             aria-hidden="true"
           />
-          <span className="qb-give-fact">{refusalFact(refusals[0])}</span>
-          {named === '' ? (
-            <button type="button" className="qb-give-fix" onClick={() => onGo('address')}>
-              Name the customer
-            </button>
-          ) : null}
-          {refusals.length > 1 ? (
+          <span className="qb-give-fact">{refusalFact(unsaid[0])}</span>
+          {unsaid.length > 1 ? (
             <button type="button" className="qb-give-more" onClick={() => setLedger(true)}>
-              {refusals.length - 1} more
+              {unsaid.length - 1} more
             </button>
           ) : null}
         </div>
@@ -2023,11 +2128,20 @@ function PriceBar({
             `disabled`: a disabled control drops out of the tab order
             and takes its own explanation with it, so the first
             reason it cannot go is printed beside it and the rest are
-            under the total. */}
+            under the total.
+
+            THE `title` IS THE FOURTH PLACE THE REFUSAL LIVES, and it
+            carries the WHOLE first sentence rather than `refusalFact`'s
+            head of it — a tooltip has room and a strip does not. It is
+            a supplement to the Address stop and the ledger, never the
+            only statement: a hover is not a place a refusal may hide.
+            `refusals`, not `unsaid`, because the button is refused for
+            the reason the flow line is making too. */}
         <button
           type="button"
           className="qb-give qb-price-act"
           aria-disabled={refusals.length > 0 || undefined}
+          title={refusals.length > 0 ? refusals[0] : undefined}
           onClick={() => {
             if (refusals.length > 0) return
             onIssue()

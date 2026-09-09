@@ -108,6 +108,42 @@ import './catalogue.css'
  *  scroll nobody does. */
 const PAGE = 48
 
+/* ============================================================
+   THE CHAPTER HEAD'S FLOOR, IN CHARACTERS.
+
+   The band head is where this screen wears the display tier — the
+   long argument is at the top of `catalogue.css` — and it takes
+   `.ds-hero`, which resolves to 43.5px at 1280. That is the size a
+   SERIES NAME can be. It is not always a size the level column
+   holds, because the level column is whatever the business filed
+   under and this file did not write it:
+
+     Highfield   Series     "Roll-Up"                          7
+     Stabicraft  Series     "Frontier Series"                 15
+     Yamaha      Series     "Four Stroke Models"              18
+     Dunbier     Series     "SPORTS WATER TOY SERIES"         23
+     Parts       Category   "PFD's - Personal Floatation …"   35
+     Dunbier     Series     "SPORT CENTRELINE WIDE SERIES
+                             (Width Between Guards 1790mm)"   58
+
+   MEASURED, at 1280 on the real seed: the content column is 992px
+   and Archivo at 43.5px averages 22.6px a character, so the head
+   holds about 40 characters on one line before the label and the
+   count are subtracted. 24 is that budget with the label
+   ("CATEGORY" is the longest in the file), the count and a gap
+   taken out of it, and it is the number at which every level value
+   in the seed sorts correctly: Dunbier's 23-character band stays
+   at hero, its 58-character one steps down, and nothing in between
+   is close enough to the line to flicker.
+
+   IT IS A WHOLE-STEP SWAP AND NOT A SHRINK (ds.css, §2 rule 6):
+   the head takes `.ds-display-lg` — size, weight, leading,
+   tracking and the width axis together — rather than reaching into
+   `.ds-hero` for a smaller font-size. That is the same floor rule
+   `--t-marque` states for a narrow column, applied one step down.
+   ============================================================ */
+const BAND_HERO_MAX = 24
+
 /** A cell's display text, softened where the store shouts. A boolean
  *  is stored TRUE and the register draws it as a tick; a chip has to
  *  say a word, and rule 3 bars the uppercase one. */
@@ -859,7 +895,20 @@ function Gallery({
           {levelId && !sorted && band.name !== '' ? (
             <h2 className="cat-band-head k-band">
               <span className="mono-label cat-band-lab">{levelName}</span>
-              <span className="cat-band-name">{band.name}</span>
+              {/* THE STEP IS CHOSEN HERE AND DECLARED IN ds.css.
+                  Taking the system's class rather than restating
+                  four tokens in `catalogue.css` is what keeps the
+                  display face's tracking correction and its
+                  `prefers-contrast` width walk-back attached to
+                  it — ds.css's own instruction, and the reason
+                  `.cat-band-name` declares no type at all. */}
+              <span
+                className={`cat-band-name ${
+                  band.name.length > BAND_HERO_MAX ? 'ds-display-lg' : 'ds-hero'
+                }`}
+              >
+                {band.name}
+              </span>
               <span className="cat-band-count cat-num">{band.held}</span>
             </h2>
           ) : null}

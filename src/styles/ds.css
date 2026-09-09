@@ -1170,6 +1170,110 @@
   --t-display-lg-lead: 1.1;
   --t-display-lg-track: -0.026em;
 
+  /* ============================================================
+     THE DISPLAY TIER — READ THIS BEFORE YOU WRITE A font-size.
+
+     WHAT IS NEW AND WHAT IT IS FOR
+
+       --t-marque-*    72 → 110px   THE NAME OF THE THING BEING SOLD.
+                                    One per screen, and only where the
+                                    subject IS a product — the
+                                    configurator's identity column
+                                    (PHASE_TWO §2.3, QUOTE_GROUND_UP §3).
+                                    NOT a stage title; that is --t-hero.
+       --t-figure-xl-* 30 → 42px    THE COMMITTED TOTAL. The one figure a
+                                    price bar exists to state. Tabular,
+                                    and NOT mono — see below, it was
+                                    measured.
+
+     Utilities: .ds-marque and .ds-figure-xl. Take the class, not the
+     four tokens, unless you are writing a feature rule that already
+     owns the element.
+
+     WHY THEY EXIST. PHASE_TWO §3's scale-contrast row asks for a
+     "72–110px product name against 12px labels". The ceiling in this
+     file was --t-hero, which is 52px only above 1529px and resolved to
+     43.5px at 1280. Measured in Chrome at 1280x800 on the real seed,
+     the largest glyph on the home stage was 32.7px against an 11px
+     label — 2.97x, where the spec wants about 7x. There was no display
+     tier to contrast WITH, which is the whole reason the app wears
+     none of its own art direction.
+
+     TAKE THE WHOLE SET (§2, rule 6). Size, weight, leading AND
+     tracking travel together. Tracking runs further negative as the
+     step grows (rule 7): --t-hero is -0.033em, this is -0.042em. An
+     83px name at 0 tracking is the amateur tell.
+
+     WHY rem + vw AND NOT vw ALONE. response.css:38-42 already settled
+     it: a bare vw term does not respond to browser zoom, which turns a
+     readability aid into a trap. Both clamps below carry a rem term so
+     they zoom and reflow. --t-hero predates that rule and still uses
+     bare vw; these do not repeat it.
+
+     THE FLOOR IS A WHOLE-STEP SWAP, NOT A SHRINK. --t-marque bottoms
+     at 72px and holds there below 1024px. In a window under ~1000px,
+     or a column narrower than ~360px, a surface drops to --t-hero-* —
+     the whole step — rather than half-shrinking this one. Rule 6
+     permits swapping steps; it never permits reaching in for one
+     value.
+
+     THE LEADING IS 0.98 AND THAT NUMBER WAS MEASURED, NOT CHOSEN.
+     Archivo's ink at this step, from canvas actualBoundingBox at
+     82.86px/640: tallest ascender 0.736em, deepest descender 0.193em
+     — 0.929em of ink. 0.98 leaves 0.051em (4.2px at 1280) between the
+     descender of one line and the ascender of the next. 0.96 leaves
+     0.031em, which is a hairline, and 0.94 leaves 0.011em, which
+     touches. A STACKED ACCENT (Å, É) reaches 0.929em on its own and
+     WILL collide at any display leading under about 1.13 — that is
+     true of every display step in every system and is accepted here
+     rather than papered over. Marine marques are unaccented.
+
+     THE GROUND IS NOT ALWAYS SOLID. §2.3 puts a photograph behind this
+     column. Large text needs 3:1 (>=24px) and a photograph cannot be
+     measured, so a marque over an image takes a scrim ON THE IMAGE,
+     never a lighter ink. Measured in Chrome at 1280x800 with the full
+     ancestor chain composited (the method in tools/check-contrast.mjs),
+     --fg over --bg / --surface-1 / --surface-2 / --bg-sunken is
+     15.04–17.41:1 on light and 13.18–16.92:1 on dark, against a
+     requirement of 3:1. Both steps clear 4.5:1 as well, so the tier is
+     safe even if a surface ignores the floor. Nothing here needs a
+     lighter ink; do not invent one.
+
+     WHY --t-figure-xl IS NOT MONO, AND THE MEASUREMENT THAT DECIDED
+     IT. §2 says "if it is a number IN A COLUMN, it is mono" — mono is
+     what makes a column line up on the decimal. A committed total is
+     not in a column; it is a headline that happens to be a number.
+     And IBM Plex Mono is fixed-pitch, so at 33.43px it gives the
+     thousands comma the same 20.05px cell as a digit: "$8 , 557".
+     Measured per glyph in Chrome, and NO OpenType feature closes it —
+     default, tnum and pnum all render $8,557 at exactly 120.19px,
+     because a fixed-pitch family has one advance and that is the
+     point of it.
+
+     Archivo with `font-variant-numeric: tabular-nums` gives every
+     digit an identical 19.14px advance — measured, including the '1',
+     which is 18.27px proportional and 19.14px tabular — and the comma
+     9.61px. So the total keeps the property that actually matters,
+     that it cannot jitter as the price changes ("money never
+     animates", QUOTE_GROUND_UP §4), and loses the one that does not
+     apply. It also puts the total in the same voice as the marque
+     beside it instead of a second face arguing with it.
+
+     EVERY OTHER FIGURE IS STILL MONO. This is one step, for one
+     figure, at display size. A price in a table, a count, a SKU, an
+     id — all still --font-mono, all still tabular. Do not read this
+     as permission.
+     ============================================================ */
+  --t-marque-size: clamp(72px, 1.786rem + 4.241vw, 110px);
+  --t-marque-weight: 640;
+  --t-marque-lead: 0.98;
+  --t-marque-track: -0.042em;
+
+  --t-figure-xl-size: clamp(30px, 1.018rem + 1.339vw, 42px);
+  --t-figure-xl-weight: 600;
+  --t-figure-xl-lead: 1.05;
+  --t-figure-xl-track: -0.03em;
+
   /* -- motion, extended ---------------------------------------
      The four above stay. These are for ENTRANCES, which the old
      system had none of because nothing entered — every stage
@@ -1273,6 +1377,52 @@
   font-weight: var(--t-display-lg-weight);
   line-height: var(--t-display-lg-lead);
   letter-spacing: var(--t-display-lg-track);
+  color: var(--fg);
+}
+
+/* THE MARQUE — the step above --t-hero, and the only one. It carries
+   the display face directly rather than being re-pointed at it lower
+   down the file, because a step defined in two places is the split
+   this file already paid for once.
+
+   text-wrap: balance because a marque wraps to two lines more often
+   than not, and a one-word orphan at 83px is visible from across the
+   room. It does NOT break mid-word — "nothing truncates mid-word"
+   holds at every size, so a name too long for its column overflows
+   and the SURFACE gives it room or steps down to --t-hero.
+
+   wdth is stated at 100 rather than left to inherit, so a marque
+   dropped inside an extended host cannot pick the host's width up.
+   See the width ladder in THE DISPLAY FACE below. */
+.ds-marque {
+  font-family: var(--font-hero);
+  font-variation-settings: 'wdth' 100;
+  font-size: var(--t-marque-size);
+  font-weight: var(--t-marque-weight);
+  line-height: var(--t-marque-lead);
+  letter-spacing: var(--t-marque-track);
+  color: var(--fg);
+  text-wrap: balance;
+}
+
+/* THE COMMITTED TOTAL — the display face, tabular, and NOT mono. The
+   reasoning and the per-glyph measurement are in the note above; the
+   short version is that a fixed-pitch family gives the thousands comma
+   a full digit cell, which at 33px reads "$8 , 557", and no OpenType
+   feature closes it. Tabular-nums on Archivo keeps every digit on one
+   advance, which is the property a total actually needs.
+
+   'zero' is NOT set. A slashed zero is a code affordance; it has no
+   business in a price a customer reads. */
+.ds-figure-xl {
+  font-family: var(--font-hero);
+  font-variation-settings: 'wdth' 100;
+  font-size: var(--t-figure-xl-size);
+  font-weight: var(--t-figure-xl-weight);
+  line-height: var(--t-figure-xl-lead);
+  letter-spacing: var(--t-figure-xl-track);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
   color: var(--fg);
 }
 
@@ -1508,6 +1658,16 @@
   font-variation-settings: 'wdth' 103;
   letter-spacing: -0.028em;
 }
+
+/* THE WIDTH LADDER, AND WHY IT DESCENDS. 105 at hero, 103 at
+   display-lg, 100 at marque. The extension is a voice, and a voice is
+   affordable where there is room: hero runs across a stage. The marque
+   runs down a 400px identity column beside a photograph, where every
+   percent of width costs a line of wrap on a name like "Highfield
+   CL260". At 83px the SIZE is the voice and the width should not spend
+   the column. .ds-marque therefore states 'wdth' 100 at its own
+   definition above, which also means the prefers-contrast rule below
+   has nothing to walk back for it. */
 
 /* Archivo has no optical-size axis. Leaving `font-optical-sizing:
    auto` inherited from .ds-root is harmless, but the synthesis

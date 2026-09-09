@@ -1,0 +1,110 @@
+/* ============================================================
+   THE LOCKUP — what `marqueOf` is allowed to do to a name.
+
+   WHY THIS FILE EXISTS. `.qb-name` sets the model code at the display
+   step (82.86px at 1280, 110px at 1920) and the maker and the trim in
+   two quieter steps around it. That only works if the string is split
+   correctly, and the split is the one part of the identity column no
+   guard can see: CLAUDE.md records that there is no visual regression
+   tooling, so a splitter that starts eating the maker, or dropping the
+   colourway, would ship silently and look deliberate.
+
+   THE PROMISE EVERY CASE BELOW KEEPS. Nothing is dropped. Every
+   character of the label comes back out in `maker`, `model` and
+   `trim` — DESIGN_PRINCIPLES §3's "nothing truncates" applies to a
+   function that takes a name apart just as much as to a stylesheet
+   that runs out of room. The last test asserts it over the real
+   shapes rather than trusting the three above it.
+   ============================================================ */
+import { describe, expect, it } from 'vitest'
+
+import { marqueOf } from './QuoteBuild'
+
+/** Put the parts back together the way the `h1` reads them out. */
+const rejoin = (label: string): string => {
+  const l = marqueOf(label)
+  return [l.maker, l.model, l.trim].filter((s) => s !== '').join(' ')
+}
+
+/** The shapes the seeded price file actually produces. */
+const SEED = [
+  'Highfield - CL260 (PVC) B-G-DG',
+  'Highfield - ADV9 (Dune)',
+  'Highfield - RU230KAM (PVC) WH',
+  'Highfield - SP420 (HYP) I-B-C',
+  'Yamaha - F9.9SMHB',
+  'Yamaha - XF450USA',
+  'Yamaha Twin Rig - F300XCB / LF300XCB (25" Shafts)',
+  'Helm Master L2 - 6X9 Binnacle | Built in DES | Straight Helm | EKS | Single',
+  'DEC Rigging Kit (Twin Eng) - 6X9 Twin Binnacle Mnt | CL5 Gauge Kit',
+  'Fusion Apollo RA670 Stereo w 2 Pairs of XS 6.5 Speakers + 1.8mtr Aerial',
+]
+
+describe('marqueOf', () => {
+  it('takes the maker off the front and leaves the model as the marque', () => {
+    expect(marqueOf('Highfield - CL260 (PVC) B-G-DG')).toEqual({
+      maker: 'Highfield',
+      model: 'CL260',
+      trim: '(PVC) B-G-DG',
+      long: false,
+    })
+  })
+
+  it('keeps a model with no qualifier whole and leaves the trim empty', () => {
+    /* `F9.9SMHB` is eight characters, which is past the measured
+       seven that fit the identity column at the display step — so it
+       is marked long and the surface takes the --t-hero step. */
+    expect(marqueOf('Yamaha - F9.9SMHB')).toEqual({
+      maker: 'Yamaha',
+      model: 'F9.9SMHB',
+      trim: '',
+      long: true,
+    })
+  })
+
+  it('splits at a pipe as well as at a bracket', () => {
+    const l = marqueOf('Helm Master L2 - 6X9 Binnacle | Built in DES | Straight Helm')
+    expect(l.maker).toBe('Helm Master L2')
+    expect(l.model).toBe('6X9 Binnacle')
+    expect(l.trim).toBe('| Built in DES | Straight Helm')
+  })
+
+  it('refuses a head too long to be a maker rather than inventing one', () => {
+    /* `DEC Rigging Kit (Twin Eng)` is 26 characters before its ` - `.
+       A part description is not a maker, and printing it in the
+       maker's step would be a lie about what the row is. */
+    const l = marqueOf('DEC Rigging Kit (Twin Eng) - 6X9 Twin Binnacle Mnt | CL5 Gauge Kit')
+    expect(l.maker).toBe('')
+    expect(l.model).toBe('DEC Rigging Kit')
+  })
+
+  it('marks a name with no marque in it long, so the surface steps down', () => {
+    const l = marqueOf('Fusion Apollo RA670 Stereo w 2 Pairs of XS 6.5 Speakers + 1.8mtr Aerial')
+    expect(l.maker).toBe('')
+    expect(l.long).toBe(true)
+  })
+
+  it('is exactly seven characters that fit, and eight that do not', () => {
+    /* The boundary is a MEASUREMENT, not a taste: Archivo at 82.86px
+       renders `SP760ST` at 330.3px and `RU230KAM` at 418.8px into a
+       360.3px column. If either half of this flips, the column either
+       overflows or gives up a step it did not need to. */
+    expect(marqueOf('Highfield - SP760ST').long).toBe(false)
+    expect(marqueOf('Highfield - RU230KAM (PVC) WH').long).toBe(true)
+  })
+
+  it('never drops a character of any label the seed produces', () => {
+    /* The ONLY thing the split is allowed to consume is the ` - ` it
+       took the maker off at, and only when it took one — where no
+       maker is found the hyphen stays in the model, which is why the
+       expectation has to ask rather than assume. */
+    for (const label of SEED) {
+      const l = marqueOf(label)
+      expect(rejoin(label)).toBe(l.maker === '' ? label : label.replace(' - ', ' '))
+    }
+  })
+
+  it('survives a label with nothing in it', () => {
+    expect(marqueOf('')).toEqual({ maker: '', model: '', trim: '', long: true })
+  })
+})

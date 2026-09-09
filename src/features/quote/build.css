@@ -509,42 +509,164 @@
   color: var(--fg-tertiary);
 }
 
-/* ── THE HEADLINE WAS A MODEL CODE, AT 79px, OVER THREE LINES ────
+/* ══ THE MARQUE, AND WHY THE WHOLE LABEL COULD NEVER BE ONE ═══════
 
-   MEASURED at 1600×1000 on a Highfield RU230KAM: `clamp(34px, 15cqw,
-   84px)` resolved to 79.3px in a 529px column, and "Highfield -
-   RU230KAM (PVC) WH" set across three lines 228.5px tall — 28% of
-   the pane's 806px, and more of it than the photograph of the boat
-   got. On a Highfield SP420 (HYP) I-B-C it was three lines again.
+   WHAT WAS HERE, AND WHY IT WAS RIGHT AT THE TIME. This rule set the
+   whole of `quote.subjectLabel` — "Highfield - RU230KAM (PVC) WH" —
+   in one step, and an earlier pass had it at `clamp(34px, 15cqw,
+   84px)`, which resolved to 79.3px in a 529px column and put that
+   string across three lines 228.5px tall: more of the pane than the
+   photograph of the boat got. The cure was to bring the SIZE down to
+   26–34px. It worked, and it cost the screen its subject: measured
+   at 1280×800 on a Highfield CL260, the biggest glyph anywhere in
+   the configurator was 26.0px against an 11px label — 2.36× — where
+   PHASE_TWO §2.3's scale-contrast row asks for 72–110px against 12px,
+   about 7×. The screen read as a form because nothing on it was a
+   headline.
 
-   A MODEL CODE IS AN IDENTIFIER, NOT A HEADLINE. `PageHead` reached
-   the same conclusion for the same reason and wrote it down: Archivo
-   at 64px "is right for a landing surface and wrong for the fifth
-   screen of a working day". Its `.ph-name` is the app's page-title
-   size now, and this is a page title, so it takes the same step —
-   the same face, the same 660 weight, the same 1.08 leading, the
-   same −0.028em, and the same 26–34px range.
+   THE FAULT WAS NEVER THE SIZE. It was setting an IDENTIFIER as if
+   it were a NAME. "Highfield - RU230KAM (PVC) WH" is four facts
+   welded into one string: a maker, a model, a hull material and a
+   colourway. A marque is the middle one. So the string is taken
+   apart (`marqueOf`, QuoteBuild.tsx) and each part is set at the step
+   it deserves — maker above, model at the display step, the rest
+   below. NOTHING IS DROPPED: all four facts are in the `h1`, in
+   reading order, and the heading still reads out whole.
 
-   THE COEFFICIENT IS NOT COPIED, BECAUSE THE CONTAINER IS NOT THE
-   SAME BOX. `.ph-name` reads 2.4cqi off a page-width container;
-   this reads off a 340–660px pane, so 2.4cqi would sit on the 26px
-   floor at every width the split is used at. 6.4cqi puts a 529px
-   pane at 33.9px, a 660px pane at the 34px ceiling, and a 406px pane
-   — the narrowest the 1280 rule allows — at 26px, the floor Archivo
-   may be set at. Read back in the browser at three widths.
+   THE COLUMN CANNOT HOLD EVERY MODEL CODE, AND THAT IS MEASURED.
+   Archivo at the marque step is 82.86px at 1280, and the identity
+   column's content box there is 360.3px. Widths measured in Chrome
+   with the face loaded, wdth 100, −0.042em:
 
-   What it bought: measured after, the name is 33.85px over one line
-   and the photograph took the difference. */
+     CL260     231.3    ADV9       207.1    F250LB     278.4
+     CL290FT   325.6    SP760ST    330.3    ← 7 chars, the ceiling
+     RU230KAM  418.8    F9.9SMHB   381.9    XF450USA   391.2  ← over
+
+   A model code is one unbroken token, so a code that does not fit has
+   nowhere to wrap. ds.css's marque note states the answer: "a name
+   too long for its column overflows and the SURFACE gives it room or
+   steps down to --t-hero" — the WHOLE step, never a shrink of one
+   value (§2 rule 6). So `marqueOf` marks a model whose longest token
+   runs past seven characters, and `.is-long` takes the hero set
+   entire. Seven is the measured ceiling above, not a guess.
+
+   AND THE COLUMN ITSELF CAN BE TOO NARROW. Between 1025 and about
+   1215px of window the pane's own rule (`max-width: 1280`) puts the
+   content box under 340px, where even a five-character code is
+   crowded. The container query below withdraws the step by WIDTH as
+   well as by content — the same swap, the other axis. Below 1024 the
+   panes stack, the column is the page, and the marque comes back.
+   ═══════════════════════════════════════════════════════════════ */
 .qb-name {
   margin: 0;
-  font-family: var(--font-hero);
-  font-size: clamp(26px, 6.4cqi, 34px);
-  font-weight: 660;
-  line-height: 1.08;
-  letter-spacing: -0.028em;
-  color: var(--fg);
-  text-wrap: balance;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  /* 2px, not a spacing token: these three lines are ONE lockup and
+     the leading inside it is set by the type steps, not by a gap.
+     `--s-2` between a 20px maker and an 83px model reads as three
+     separate blocks rather than as a name. */
+  gap: 2px;
+}
+
+/* THE MAKER IS A NAME, SO IT IS NOT UPPERCASE (§1 rule 3). It is the
+   15px heading step at the secondary tier — loud enough to be read as
+   part of the lockup, quiet enough that the model is the marque. */
+.qb-name-maker {
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-track);
+  line-height: 1.2;
+  color: var(--fg-secondary);
   overflow-wrap: break-word;
+}
+
+/* THE STEP ITSELF IS `.ds-marque`, WORN AT THE CALL SITE. This rule
+   deliberately declares no size, weight, leading or tracking: ds.css
+   owns that set and its own note says a step defined in two places is
+   a split this project has already paid for once.
+
+   `overflow-wrap: break-word` IS A BACKSTOP AND NOT THE MECHANISM.
+   The step-swap above is what keeps a long code out of this step at
+   all; if a code ever reached it that still did not fit, a wrap loses
+   nothing and the pane's `overflow: hidden` would lose a word. §3's
+   absolute is about text a person cannot read, and a broken line is
+   still readable. Measured on the seed: never reached.
+
+   NO OPTICAL LEFT CORRECTION, AND THAT IS A MEASUREMENT RATHER THAN
+   AN OVERSIGHT. Archivo's left side bearing at this step, from canvas
+   `actualBoundingBoxLeft` at 82.86px/640, by the letter a model code
+   actually starts with:
+
+     ADV9 0px · XF450USA 0px · RU230KAM 1px · F250LB 1px · Ocean 2px
+     CL260 3px · SP560 3px · SP760ST 3px · 1850 5px
+
+   — 0 to 5px, which is 0 to 0.06em. One `margin-left` cannot be right
+   for that spread: the −0.036em that squares `CL260` with the maker
+   above it hangs `ADV9` three pixels out into the pane's padding. A
+   3px inset under one code is a smaller fault than a 3px overhang
+   under another, so the box edge is left alone. */
+.qb-name-model {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+/* THE COLOURWAY AND THE HULL MATERIAL. A value, not a label, so
+   sentence case and the small step — and tertiary, because it is the
+   least of the four facts and it sits directly under an 83px word.
+
+   THE WEIGHT IS STATED because the host is an `h1` and a UA sets that
+   to 700: measured before this line, the trim rendered at 13px/700,
+   which is a caption shouting under a marque. Both other lines in the
+   lockup declare their own weight through a step, so this one has to
+   as well. The whole `--t-small` set, not just the weight (§2 rule 6). */
+.qb-name-trim {
+  font-size: var(--t-small-size);
+  font-weight: var(--t-small-weight);
+  line-height: var(--t-small-lead);
+  letter-spacing: var(--t-small-track);
+  color: var(--fg-tertiary);
+  overflow-wrap: break-word;
+}
+
+/* THE WHOLE-STEP SWAP. Both arms take the complete --t-hero set —
+   size, weight, leading, tracking AND the width axis — because §2
+   rule 6 permits swapping steps and never permits reaching in for one
+   value. `wdth` is restated at 105 because `.ds-marque` states 100 at
+   its own definition and hero is the extended cut.
+
+   The letter-spacing is −0.036em rather than the step's declared
+   −0.033em, for the reason ds.css's own `.ds-hero` gives: Archivo
+   runs optically larger than Inter and its counters are tighter. */
+.qb-name.is-long .qb-name-model {
+  font-size: var(--t-hero-size);
+  font-weight: var(--t-hero-weight);
+  line-height: var(--t-hero-lead);
+  letter-spacing: -0.036em;
+  font-variation-settings: 'wdth' 105;
+}
+
+@container (max-width: 340px) {
+  .qb-name .qb-name-model {
+    font-size: var(--t-hero-size);
+    font-weight: var(--t-hero-weight);
+    line-height: var(--t-hero-lead);
+    letter-spacing: -0.036em;
+    font-variation-settings: 'wdth' 105;
+  }
+}
+
+/* ds.css walks the extended width back to 100 at higher contrast, for
+   `.ds-hero` and `.ds-display-lg` — "an extended width costs a little
+   counter where the reader has asked for legibility over voice". The
+   two rules above take the hero SET without taking the hero CLASS, so
+   that walk-back does not reach them and has to be restated here.
+   `.ds-marque` needs nothing: it states 100 at its own definition. */
+@media (prefers-contrast: more) {
+  .qb-name.is-long .qb-name-model,
+  .qb-name .qb-name-model {
+    font-variation-settings: 'wdth' 100;
+  }
 }
 
 /* SPECS AS HAIRLINES, IN TWO COLUMNS WHERE THERE IS ROOM.
@@ -872,26 +994,43 @@
   letter-spacing: var(--t-heading-track);
   line-height: 1.3;
   color: var(--fg);
-  /* THE FADE IS NARROWER THAN IT WAS, and the reason is a
-     measurement. It began at 84%, so the last SIXTH of every
-     summary was ramped to transparent whether or not there was
-     anything past the edge to hide — measured at 1280 and 1440 the
-     tail of a shut band, which is where the trailer's part number
-     and half the rigging kit are written, sat between 1.0 and
-     2.5:1 against its own ground. That is not a hint that there is
-     more; it is text a person cannot read with nothing to say it
-     was cut.
+  /* ── THE FADE IS GONE, AND IT WAS THE LAST CUT ON THIS SCREEN ───
+     A `nowrap` + `overflow: hidden` + 94% mask lived here. It was
+     narrowed from 84% to 94% once already, on the argument that a
+     fade "is still a fade and never an ellipsis" and that the whole
+     clause is on the `title`.
 
-     94% keeps the signal and stops eating the words. The principle
-     is unchanged — §3 still says nothing truncates mid-word, so it
-     is still a fade and never an ellipsis, and the whole of the
-     clause is on the `title`. It bites far less often than it did:
-     this row now has the head's full width rather than a 130px
-     strip beside a 15px name. */
-  white-space: nowrap;
-  overflow: hidden;
+     BOTH HALVES OF THAT ARGUMENT FAILED A MEASUREMENT. Chrome,
+     1280×800, real seed, a Highfield ADV9 with every band open and
+     every table shown: a range-rect sweep over every text leaf in
+     `.qb-body` found exactly ONE node whose ink is cut by its own box
+     or by a clipping ancestor, and it was this rule —
+
+       chosen: Helm Master L2 - 6X9 Binnacle | Built in DES |
+       Straight Helm | EKS | S⟨cut⟩
+
+     — 511px of track holding 701px of clause, with "Single" ending at
+     "S". A fade does not spare a word; it only makes the cut soft.
+     And a `title` is a hover tooltip, which is not where §3 says the
+     text has to be: §3 says nothing truncates mid-word, full stop.
+
+     IT SIMPLY WRAPS NOW, and this file already made that exact call
+     twelve rules up for `.qb-band-name`: "These five names are short
+     and a two-line one costs nothing, so it simply wraps." The reason
+     the clause could not wrap before was thought to be the figure
+     beside it, and that is not true of this grid: `.qb-band-fig` is
+     column 4, `grid-row: 1 / 3`, `align-self: center`. The state is
+     column 3, `minmax(0, 1fr)`. A second line grows the head and the
+     figure re-centres in it; it never moves sideways, and money still
+     never animates.
+
+     THE MEASURE IS IN `ch` because a clause is a sentence, and this
+     file measures every sentence in `ch` (see the header). 72ch stops
+     a shut band running the full width of a 2600px column without
+     capping anything a narrow one needs. */
   min-width: 0;
-  mask-image: linear-gradient(to right, #000 94%, transparent 100%);
+  max-width: 72ch;
+  overflow-wrap: break-word;
 }
 
 /* THE FIGURE SPANS BOTH ROWS, because it is the band's total and
@@ -2106,13 +2245,12 @@
   box-shadow: var(--e1);
 }
 
-/* ONE SECONDARY BUTTON, WORN THREE TIMES. The sheet door on the
-   price bar, the way to the customer box on the refusal strip and
-   the way to the rest of the reasons are the same kind of control —
-   a quiet bordered thing that opens something — so they are one
-   rule. Three separately-tuned greys on one 113px strip is exactly
-   the "uniformity" the owner keeps asking for. */
-.qb-give-fix,
+/* ONE SECONDARY BUTTON, WORN TWICE — the sheet door on the price bar
+   and the way to the rest of the reasons. It was worn three times;
+   the third was "Name the customer" on the refusal strip, and it went
+   with the strip it sat on (see `.qb-give-why`). Two separately-tuned
+   greys on one strip would be exactly the "uniformity" the owner
+   keeps asking about, so they are one rule. */
 .qb-give-more {
   display: inline-flex;
   align-items: center;
@@ -2131,18 +2269,15 @@
     transform var(--d-press) var(--ease);
 }
 
-.qb-give-fix:hover,
 .qb-give-more:hover {
   border-color: var(--line-strong);
   color: var(--fg);
 }
 
-.qb-give-fix:active,
 .qb-give-more:active {
   transform: scale(0.97);
 }
 
-.qb-give-fix:focus-visible,
 .qb-give-more:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -2220,23 +2355,44 @@
   }
 }
 
-/* RULE 10, ON ITS OWN LINE. Not `disabled` — a disabled control
-   drops out of the tab order and takes its own explanation with it —
-   and not squeezed in beside the total either: measured at 1024x768
-   the sentence wrapped to four lines inside the control row and the
-   price bar took 150px of a 768px window. A `--warning` rail, the
-   full width, one line at every size.
+/* RULE 10, ON ITS OWN LINE — FOR A REFUSAL NOTHING ELSE ON THE
+   SCREEN IS ALREADY MAKING.
 
-   IT IS A ROW NOW, NOT A PARAGRAPH. `refusalFact` leaves the strip
-   one sentence, and the act it used to describe in words stands
-   beside it as a control — so the strip reads fact, door, and the
-   count of anything else, left to right.
+   Not `disabled` — a disabled control drops out of the tab order and
+   takes its own explanation with it — and not squeezed in beside the
+   total either: measured at 1024×768 the sentence wrapped to four
+   lines inside the control row and the price bar took 150px of a
+   768px window. A `--warning` rail, the full width, one line at every
+   size.
 
-   Measured with all three children present, mark and both controls:
-   36.4px — one line — at 1600, 1440, 1280, 1024, 900, 768 and 600,
-   and 63.2px — two lines — at 480 and below. That is why it wraps
-   rather than scrolls: a refusal that has to be dragged sideways to
-   be read is not a refusal, and §3 allows the wrap. */
+   WHAT CHANGED: IT NO LONGER DRAWS FOR THE ORDINARY DRAFT. Measured
+   at 1280×800 and 1920×1080 on a fresh quote, this strip was 36.4px
+   and 37.0px of amber saying "This quote is addressed to nobody",
+   with a "Name the customer" button beside it — and 16px above it the
+   flow line already read `Address  nobody yet`, which is the same
+   fact AND the same door. Every draft starts unaddressed, so the
+   alarm was permanent, and a warning that is on for the whole of the
+   normal case is furniture.
+
+   That is the pattern this file has now deleted four times ("TWO
+   controls doing one act", "ONE DOOR PAST THE NARROWING, NOT TWO",
+   "the sheet door … 240px apart on one 113px strip"). `PriceBar`
+   drops the first refusal when the flow line is already carrying it,
+   which is exactly when `named === ''` — `issueBlockers` pushes the
+   no-customer sentence first and only then. The full sentence is
+   still in the ledger under the total, still against the customer box
+   in `CustomerField`, and still on the handover's own `title`.
+
+   IT STILL DRAWS, UNCHANGED, FOR EVERY OTHER REFUSAL: nothing on the
+   quote to offer, a total of nought, a typed price with no reason.
+   Those are not the normal state of a draft and nothing else on the
+   screen states them.
+
+   Measured with the mark, the fact and the count control: 36.4px —
+   one line — at 1600, 1440, 1280, 1024, 900, 768 and 600, and 63.2px
+   — two lines — at 480 and below. That is why it wraps rather than
+   scrolls: a refusal that has to be dragged sideways to be read is
+   not a refusal, and §3 allows the wrap. */
 .qb-give-why {
   display: flex;
   align-items: center;
@@ -2264,14 +2420,12 @@
   overflow-wrap: break-word;
 }
 
-/* SMALLER THAN THE SHEET DOOR, and deliberately: these two sit
-   inside a strip, not on the control row. Measured at 1600×1000 —
-   the strip was 35.0px tall as a plain paragraph; with these at the
-   sheet door's 7px it went to 44.4px; at 4px, with the strip's own
-   padding brought to 4px to match, it is 36.4px. The control is
-   27.4px tall, which is the size `.qb-line-drop` has used since the
-   redesign. */
-.qb-give-fix,
+/* SMALLER THAN THE SHEET DOOR, and deliberately: it sits inside a
+   strip, not on the control row. Measured at 1600×1000 — the strip
+   was 35.0px tall as a plain paragraph; with the control at the sheet
+   door's 7px it went to 44.4px; at 4px, with the strip's own padding
+   brought to 4px to match, it is 36.4px. The control is 27.4px tall,
+   which is the size `.qb-line-drop` has used since the redesign. */
 .qb-give-more {
   flex: none;
   padding: 4px var(--s-3);

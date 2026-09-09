@@ -516,13 +516,25 @@
   justify-content: center;
   color: var(--kind, var(--fg-secondary));
 }
-/* WITH NO PHOTOGRAPH BEHIND IT the mark is the card's whole face,
-   so a wordmark gets the room a heading would get rather than the
-   40px square a glyph needs. */
+/* WITH NO PHOTOGRAPH BEHIND IT the mark IS the card's face, and the
+   name below it steps back to let it be (see the `:has()` rule on
+   `.md-place-name`). A hero gets the room a hero needs.
+
+   190px WAS THE HALF-MEASURE. Measured at 1280 on a 282.5px face: a
+   9.17:1 wordmark capped at 190 wide resolves to 190x20.7 — twenty
+   pixels of ink floating in a 159px-tall field, which is a mark
+   being tolerated rather than a mark being the subject. 84% of the
+   face gives it 237x25.8, a quarter more mark for no layout change,
+   and the height cap only binds for a squarer file: a 3:1 mark takes
+   174x58 where the old slot held it to 138x46.
+
+   THE SLOT IS THE SHAPE, NOT THE MARK. `object-fit: contain` on
+   `.md-place-logo` still fits whatever ratio arrives inside it, so
+   nothing is cropped and nothing is stretched. */
 .md-place-mark:not(.is-over):has(.md-place-logo) {
   width: 100%;
-  max-width: 190px;
-  height: 46px;
+  max-width: 84%;
+  height: 58px;
 }
 .md-place-mark.is-over {
   position: absolute;
@@ -586,22 +598,69 @@
 }
 /* NOTHING TRUNCATES MID-WORD. Two lines, then a clamp, with the
    full name still in the DOM and on the card's accessible name. And
-   the two lines are BALANCED: an unbalanced "Parts &" / "Accessories"
-   makes a whole row of the grid look ragged, and it costs nothing. */
+   the lines are BALANCED: an unbalanced "Parts &" / "Accessories"
+   makes a whole row of the grid look ragged, and it costs nothing.
+
+   `.ds-display-lg` CARRIES THE STEP — see the note at the call site
+   for why the name went from 15px to it. This rule owns the clamp,
+   the wrap and the reserved box, and touches none of the step's own
+   values.
+
+   THREE LINES NOW, NOT TWO. At 15px every name in this seed fitted
+   two; at 26.88px "Haines Signature Factory Packages" and "OBSOLETE
+   Trailers — No Longer Available" do not, and a door that says
+   "Haines Signature Factory" is worse than a door with a third line.
+
+   AND THE BOX IS RESERVED AT TWO. `min-height` of two lines so a
+   one-word place and a two-word place are the same card, which is
+   what keeps a row of the grid level; the third line is the
+   exception that stretches its own row rather than the budget every
+   card pays. */
 .md-place-name {
-  font-size: var(--t-heading-size);
-  font-weight: var(--t-heading-weight);
-  line-height: 1.25;
-  letter-spacing: var(--t-heading-track);
   text-transform: none;
   color: var(--fg);
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  min-height: calc(2em * var(--t-display-lg-lead));
   overflow: hidden;
   overflow-wrap: break-word;
   text-wrap: balance;
+}
+/* ============================================================
+   WHERE THE MARK IS SAYING IT, THE NAME STOPS SHOUTING IT.
+
+   The same asymmetry the workspace header draws, one level out.
+   `.md-work-crest` exists because a 46px plate holding a wordmark
+   with the brand's name set in display type beside it said the
+   brand twice, once too small to read; a card whose FACE is the
+   wordmark and whose body repeats the name at 26.88px is the same
+   fault at the same scale.
+
+   SO THE QUESTION IS ASKED OF WHAT ACTUALLY RENDERED. `:has()` on
+   the drawn `<img>`, not on whether a mark was resolved —
+   `PlaceMark` may hold an address `useImageDisplay` refuses, and a
+   name demoted for a mark that never painted is a card with no
+   identity on it at all.
+
+   AND ONLY WHERE THE MARK IS THE FACE. `.is-over` is the 40px chip
+   on the corner of a photograph; a chip is not a hero and the name
+   below it is still the card's subject.
+
+   The step is the workspace's own `.is-quiet` — body size, 500,
+   secondary ink — so a demoted name reads the same on both screens.
+   ============================================================ */
+.md-place:has(.md-place-mark:not(.is-over) .md-place-logo) .md-place-name {
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0;
+  min-height: 0;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  color: var(--fg-secondary);
 }
 .md-place-fact {
   display: flex;
@@ -686,10 +745,15 @@
 .md-place-face--new::before {
   content: none;
 }
+/* NEW MODULE IS A CONTROL, NOT A PLACE. It borrows the card's shape
+   so creating one and opening one are the same gesture at the same
+   size, but its label is a verb — it takes neither the display step
+   nor the two-line box the names above reserve. */
 .md-place--new .md-place-name {
   padding: var(--s-2) 0 0;
   font-size: var(--t-small-size);
   font-weight: 560;
+  min-height: 0;
   color: inherit;
 }
 .md-place-refused {
@@ -794,6 +858,36 @@
     grid-template-columns: repeat(auto-fill, minmax(min(174px, 100%), 1fr));
     padding-left: var(--s-5);
     padding-right: var(--s-5);
+  }
+  /* ============================================================
+     THE NAME STEPS DOWN A WHOLE STEP; IT DOES NOT SHRINK.
+
+     This is the rule DESIGN_CONTRACT states for `--t-marque` —
+     "in a column narrower than ~360px the surface takes the whole
+     set instead; rule 6 permits swapping steps, it never permits
+     reaching in for one value" — applied to the step below it for
+     the same reason. Above 1100 a card track is 290–368px and a
+     26.9px name is the card's subject; at 1100 the track drops to
+     174 and, measured at 900x800, the card is 194.9px wide. A
+     display step in a 195px box gives "Haines Signature Factory
+     Packages" seven characters a line and clamps away half a
+     brand, which is the truncation rule broken by a type choice.
+
+     So the card takes `--t-heading-*` back — the step it had, all
+     six values restated because `.ds-display-lg` sets six and a
+     partial override is exactly the half-step this comment
+     forbids. The reserved box follows the step it belongs to.
+     ============================================================ */
+  .md-place-name {
+    font-family: var(--font-sans);
+    font-variation-settings: normal;
+    font-size: var(--t-heading-size);
+    font-weight: var(--t-heading-weight);
+    line-height: 1.25;
+    letter-spacing: var(--t-heading-track);
+    min-height: calc(2em * 1.25);
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
   .md-dash-mast,
   .md-filters,
@@ -4123,7 +4217,14 @@
   padding: var(--s-5) var(--s-6) var(--s-4);
 }
 /* THE DEALER'S OWN MARK, at the size the component reserves — so a
-   logo arriving late never moves the name beside it. */
+   logo arriving late never moves the name beside it.
+
+   AND IT IS THE CREST'S RECIPE, not a second one. Both halves of
+   this header stand a mark on the kind's own tint; drawing one with
+   `--line` and `--r-control` and the other with a kind-mixed border
+   and `--r-card` made the marked place and the unmarked place look
+   like two different applications. Same ground, same edge, same lit
+   hairline — the only difference is what is standing on it. */
 .md-work-mark {
   display: inline-flex;
   align-items: center;
@@ -4131,9 +4232,10 @@
   flex: none;
   width: 46px;
   height: 46px;
-  border-radius: var(--r-control);
-  background: color-mix(in srgb, var(--kind) 10%, var(--surface-1));
-  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--kind) 12%, var(--surface-1));
+  border: 1px solid color-mix(in srgb, var(--kind) 26%, var(--line));
+  box-shadow: inset 0 1px 0 var(--edge-light);
   color: var(--kind, var(--fg-secondary));
 }
 /* A WORDMARK NEEDS A WIDE PLATE, and a kind symbol needs a square
@@ -4171,11 +4273,18 @@
   margin-bottom: 2px;
   color: var(--fg-tertiary);
 }
-/* `.ds-display-lg` carries the whole step. Nothing here reaches in
-   for one of its four parts. */
+/* `.ds-hero` carries the whole step — size, weight, leading AND
+   tracking (rule 6). Nothing here reaches in for one of its four
+   parts, which is why the step could be swapped from display-lg to
+   hero in the component with a one-word change and no arithmetic.
+   `text-wrap: balance` because at 43.5px a name like "Haines
+   Signature Factory Packages" wraps, and a one-word orphan on the
+   second line of a page header is visible from across the room. It
+   still does not break mid-word. */
 .md-work-name {
   margin: 0;
   overflow-wrap: break-word;
+  text-wrap: balance;
 }
 .md-work-fact {
   display: flex;
@@ -4992,9 +5101,18 @@
   /* WIDE ENOUGH FOR THE MARK TO REACH ITS HEIGHT. These files are
      wordmarks — Highfield's is 6430x701, a ratio of 9.17:1 — so on a
      300px plate the width binds first and a 44px cap yields 28px of
-     actual mark. 380 gives the ratio room to hit the cap. */
-  max-width: 380px;
-  min-height: 64px;
+     actual mark. 380 gave the ratio room to hit a 44px cap; the cap
+     is `--t-hero-size` now and reaches 52px above 1529px, which at
+     9.17:1 wants 477. 480 keeps the HEIGHT the binding constraint at
+     every width this app resolves to, which is the point — a
+     wordmark that quietly shrinks as the window grows is the one
+     thing this plate must not do. */
+  max-width: 480px;
+  /* TIED TO THE HERO STEP RATHER THAN TO A NUMBER, so the crest and
+     the name that stands in for it (`.md-work-name`, `.ds-hero`)
+     cannot drift apart at any width: both are `--t-hero-size` of ink
+     inside the same padding. */
+  min-height: calc(var(--t-hero-size) + 2 * var(--s-3));
   padding: var(--s-3) var(--s-4);
   border: 1px solid color-mix(in srgb, var(--kind) 26%, var(--line));
   border-radius: var(--r-card);
@@ -5005,10 +5123,14 @@
 .md-work-crest-img {
   display: block;
   max-width: 100%;
-  /* THE SHOWPIECE SIZE. 32px was a favicon of a wordmark; 44
-     reads as the brand at arm's length and still clears the
-     64px panel with its padding. */
-  max-height: 44px;
+  /* THE SHOWPIECE SIZE, AND IT IS THE HERO STEP ITSELF. 32px was a
+     favicon of a wordmark; 44 read as the brand at arm's length and
+     was a number. `--t-hero-size` is the same 43.5px at 1280 and
+     grows with the window exactly as the name beside it does, so
+     "the mark IS the hero" and "the name IS the hero" resolve to the
+     same quantity of ink instead of to two constants somebody has to
+     keep in step by hand. */
+  max-height: var(--t-hero-size);
   object-fit: contain;
 }
 

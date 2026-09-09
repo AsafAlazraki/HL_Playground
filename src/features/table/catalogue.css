@@ -25,6 +25,84 @@
    THE PHOTOGRAPH IS THE REST OF THE COLOUR. 3:2, the ratio the
    seed was shot at, and large enough that turquoise water is a
    colour on the page rather than a 20px stamp in a cell.
+
+   ============================================================
+   THE DISPLAY TIER LANDED ON THIS SCREEN, AND WHERE IT LANDED
+   WAS DECIDED BY MEASURING THE DATA RATHER THAN BY TASTE.
+
+   WHAT WAS WRONG, at 1280x800 on Highfield Inflatables:
+
+     largest type on the screen   30.7px  `.ph-name`, which this
+                                  file does not own
+     the catalogue's own largest  15px    `.cat-tile-name`
+     against an 11px label        **1.36x**
+
+   PHASE_TWO §3's scale-contrast row wants about 7x. This screen
+   had a THIRD of the contrast the home stage had (2.97x, measured
+   by the design-system pass), because every word on it —
+   48 model names, 7 series heads — was set at 15px on white cards
+   with hairline borders. That is the generic-admin-template look,
+   and it is one of the screens the owner named.
+
+   WHERE THE MARQUE DOES NOT GO, and this is the load-bearing
+   refusal. `--t-marque` (72→110px) is reserved by its own note in
+   ds.css for "the name of the thing being sold … ONE PER SCREEN",
+   the configurator's identity column. Two separate things bar it
+   here:
+
+     1. THE TIER'S OWN FLOOR RULE. "a column narrower than ~360px
+        … drops to --t-hero — the whole step". A tile is **239px**
+        at 1280 and 168px at 768. A grid cell cannot hold a marque
+        at any width this screen ever has.
+     2. FORTY-EIGHT HEADLINES ARE NOT A HEADLINE. §2 gives Archivo
+        "headlines and nothing else". Painting 48 of them per
+        screenful spends the face until it means nothing, and it
+        would cost the density this screen exists for.
+
+   WHERE IT DOES GO: the band head, which is the only element on
+   this screen that is full-width, one-per-screenful and names a
+   thing the business sells. It is `position: sticky`, so however
+   far you scroll exactly ONE of them is on the screen — which is
+   PHASE_TWO §3's "one thing dominates per screen", literally.
+   It takes `.ds-hero` — the system's class, not four loose tokens,
+   so the display face's own tracking correction and its
+   prefers-contrast width walk-back come with it.
+
+   AND THE CARD DOES NOT GROW AT ALL — that was tried, measured,
+   and put back. The name went to the title step (20px) and cost a
+   whole row of four boats on two of the five tables driven,
+   because 20px turns a one-line name into a two-line one. The note
+   above `.cat-tile-name` has the table. What the card loses
+   instead is its BOX: no border and no shadow until it is
+   pointed at.
+
+   MEASURED AFTER, at 1280x800, tiles counted fully inside the
+   viewport, against the same screens measured before:
+
+     table                  largest type        tiles
+     Highfield              30.7 -> 43.5px      8 -> 8
+     Stabicraft             30.7 -> 43.5px      5 -> 5
+     Dunbier Trailers       30.7 -> 43.5px      6 -> 6
+     Parts & Accessories    30.7 -> 43.5px      4 -> 4
+     Yamaha Outboards       30.7 -> 43.5px      8 -> 8
+
+   43.5px against an 11px label is **3.96x**, from 1.36x. Not the
+   7x §3 asks for — that number belongs to the configurator's
+   identity column, where one product owns a 400px column and can
+   carry `--t-marque`. It is what a screen holding 48 photographs
+   at once can afford, and it cost nothing.
+
+   The tile also came DOWN, 244.5px to 235.9px, because the words
+   no longer sit inside a 12px box inset.
+
+   Contrast re-measured with the full ancestor chain composited
+   (the method in tools/check-contrast.mjs): **1,000 text nodes
+   over those five tables at 1280, 1024 and 768, and 239 more over
+   three of them in dark — nothing below its threshold.** The
+   chapter head is 10.96:1 on light and 11.39:1 on dark against a
+   large-text requirement of 3; the card name and the price are
+   16.18:1, the spec label 7.32:1, the chapter's own eyebrow
+   6.39:1 over the kind wash it sits on.
    ============================================================ */
 
 .cat-root {
@@ -418,6 +496,66 @@
   margin-top: var(--s-5);
 }
 
+/* ------------------------------------------------------------
+   THE CHAPTER HEAD — where the display tier lands, and the whole
+   argument is in the file header above. What is here is the
+   arithmetic that says it costs no rows.
+
+   IT IS STICKY, SO IT IS ONE PER SCREEN. Scroll anywhere in 588
+   variants and exactly one series name is on the glass. That is
+   the condition `--t-marque`'s note attaches to the display tier
+   ("one per screen"), met by the layout rather than asserted.
+
+   WHAT IT COSTS, measured at 1280x800 on Highfield Inflatables:
+
+     the scrollport                   625.1px
+     a row of tiles, before           244.5 + 12 gap = 256.5
+     a row of tiles, after            235.9 + 12 gap = 247.9
+     the head, before   15px name     36.4 + 12 margin = 48.4
+     the head, after    43.5px name   53.8 +  8 margin = 61.8
+
+     rows that fit, before   (625.1 - 48.4) / 256.5 = 2.25
+     rows that fit, after    (625.1 - 61.8) / 247.9 = 2.27
+
+   Two whole rows either way — **8 tiles fully visible before and
+   8 after**, and the same on Stabicraft (5), Dunbier (6), Parts
+   (4) and Yamaha (8). The head grew 17.4px and the tile gave 8.6
+   back, which is the only reason this size was affordable. A
+   `--t-marque` head would be 97px and take a row with it on every
+   table in the file.
+
+   THE 8px OF PADDING WAS THE MARGIN OF THE WHOLE THING, and that
+   is not a figure of speech. At `padding: 6px 12px 8px` the head
+   was 59.8px and Dunbier fell from 6 tiles to 2 — one band head
+   too many at the wrong height, and a whole row of trailers off
+   the bottom of the screen. Six compositions were driven before
+   this one held every table; the table is above `.cat-tile-name`.
+
+   THE FLOOR IS A WHOLE-STEP SWAP, NOT A SHRINK — ds.css's rule 6,
+   and on this screen it is not hypothetical. The level column is
+   whatever the business filed under, and it is not always a word:
+
+     Highfield   Series     "Roll-Up"                            7
+     Stabicraft  Series     "Frontier Series"                   15
+     Yamaha      Series     "Four Stroke Models"                18
+     Parts       Category   "PFD's - Personal Floatation …"     35
+     Dunbier     Series     "SPORT CENTRELINE WIDE SERIES
+                             (Width Between Guards 1790mm)"     58
+
+   58 characters at 43.5px is 1,260px of ink in a 992px column —
+   three lines, and a sticky head taller than a tile. So a name
+   over `BAND_HERO_MAX` characters takes the NEXT STEP DOWN whole
+   (`.ds-display-lg`, 26.9px at 1280), size, weight, leading,
+   tracking and width together. The threshold is written in
+   `Catalogue.tsx` beside the code that applies it.
+
+   SQUARE, NOT ROUNDED (PHASE_TWO §3, "square on large surfaces").
+   A 6px radius on a 992px-wide bar is what made this read as a
+   panel header in an admin template. The kind still carries the
+   section — `.k-band` is a 10% wash and a 28% kind rule along the
+   bottom, which at this size reads as a chapter rule rather than
+   as a filled strip.
+   ------------------------------------------------------------ */
 .cat-band-head {
   position: sticky;
   /* A STICKY OFFSET IS MEASURED FROM THE SCROLLPORT'S PADDING EDGE,
@@ -433,23 +571,58 @@
   display: flex;
   align-items: baseline;
   gap: var(--s-2);
-  margin: 0 0 var(--s-3);
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
+  margin: 0 0 var(--s-2);
+  /* 6 ABOVE AND 2 BELOW, WHICH IS OPTICAL AND NOT SYMMETRICAL.
+     Archivo's ink at this step sits 2.5px below the line box's top
+     and its baseline 10.6px above the box's bottom, so equal
+     padding draws a head that is visibly bottom-heavy. 6/2 puts
+     ~8.5px of air over the caps and ~12.6px under the baseline,
+     which is as near as an 8px budget gets. And the budget is 8:
+     the whole head is 53.8px, and the measurements below are what
+     that number had to be. */
+  padding: 6px 12px 2px;
   font-family: var(--font-sans);
-  font-size: var(--t-heading-size);
-  font-weight: 620;
-  letter-spacing: -0.01em;
   color: var(--fg);
 }
 .cat-band-lab {
+  flex: none;
   color: var(--fg-secondary);
 }
+
+/* NO TYPE DECLARED HERE, DELIBERATELY. The step is `.ds-hero` or
+   `.ds-display-lg`, written on this span by `Catalogue.tsx`, and
+   this file declares only layout — because catalogue.css loads
+   AFTER ds.css, so a `font-size` at equal specificity here would
+   silently beat the system's own step and the display face would
+   be defined in two places. That is the split ds.css already paid
+   for once with `--font-display`. */
 .cat-band-name {
   min-width: 0;
   overflow-wrap: break-word;
+  /* TWO LINES IS THE CEILING ON A STICKY HEAD, and it is the one
+     place the step swap alone was not enough. `BAND_HERO_MAX`
+     guarantees the hero step is a single line — 24 characters at
+     43.5px is 542px in a 992px column, and 424px at 34px in the
+     narrower column a 768 window gives. So this clamp only ever
+     catches the stepped-down step, and mostly at a narrow
+     window. Measured before it existed: Dunbier's "STEEL LOADER
+     PRO SERIES (Suits Fibreglass Boats)" drew a THREE-line head
+     100.8px tall at 768, over a 229.6px tile; it is 66.2px now.
+     The full string stays in the DOM for a reader, as it does on a
+     tile name, and it never breaks mid-word. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  /* AND WHEN IT DOES TAKE TWO LINES, THEY ARE EVEN. A one-word
+     orphan under a 43px head is visible from across the room —
+     `.ds-marque` takes `text-wrap: balance` for the same reason
+     and says so. It costs nothing when the head is one line,
+     which at 1280 it always is. */
+  text-wrap: balance;
 }
 .cat-band-count {
+  flex: none;
   margin-left: auto;
   color: var(--fg-secondary);
   font-size: var(--t-caption-size);
@@ -474,6 +647,35 @@
   position: relative;
 }
 
+/* ------------------------------------------------------------
+   A CARD EARNS ITS SHADOW. It used to be issued one.
+
+   WHAT WAS ON THE SCREEN: 48 white rectangles, each with a
+   hairline border, each with `--e1` under it, each identical. An
+   elevation that every card on the screen has is not elevation —
+   it is a texture, and it is the single strongest tell of the
+   generic admin template. §3 says elevation is `--e1`/`--e2`/`--e3`
+   for a reason; the reason is that they are supposed to MEAN
+   something about which surface is above which.
+
+   SO AT REST THERE IS NO CARD. The photograph is the card — which
+   is PHASE_TWO §3's row for this exact surface, "the photograph is
+   the colour" — and it sits on the page ground with the words
+   under it and the kind's rail down its edge. On hover ONE of the
+   48 materialises: it takes `--surface-1`, its hairline, `--e4`
+   and the kind glow, and lifts a pixel. That is a card earning it.
+
+   THE BORDER IS `transparent`, NOT REMOVED. The 1px is still in
+   the box model, so nothing in the grid moves when the hairline
+   arrives on hover — and `.k-rail`'s 3px left edge still lands on
+   a border that exists. Removing the shorthand would have meant
+   the rail changing the card's width.
+
+   THE PHOTOGRAPH KEEPS `--radius`. §3's "square on large surfaces"
+   is about the 992px chapter head above; a 239px tile is not a
+   large surface, and a square photograph on a square page ground
+   would lose the edge that says where one boat stops.
+   ------------------------------------------------------------ */
 .cat-card {
   display: flex;
   flex-direction: column;
@@ -482,13 +684,13 @@
   padding: 0;
   overflow: hidden;
   text-align: left;
-  border: 1px solid var(--line);
+  border: 1px solid transparent;
   border-radius: var(--radius);
-  background: var(--surface-1);
-  box-shadow: var(--e1);
+  background: transparent;
   cursor: pointer;
   transition:
     box-shadow var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
     border-color var(--d-fast) var(--ease),
     transform var(--d-fast) var(--ease);
 }
@@ -516,9 +718,21 @@
    flat while the pill — which has to travel with it or the two
    visibly part — moved. One hover, on the tile, and both surfaces
    answer it together. */
+/* AND THE HOVER RESTATES THREE EDGES RATHER THAN FOUR, which is a
+   defect this pass found rather than one it introduced. The rule
+   said `border-color: var(--line-strong)` — the shorthand, four
+   sides — at `.cat-tile:hover .cat-card`, which is three
+   compound selectors against `.cat-card.k-rail`'s two. So every
+   time the pointer crossed a tile the kind's own rail turned grey
+   and the card lost the one thing that said what it was. Named
+   sides, and the hue survives the hover it is supposed to explain.
+   `.s-held`'s grey rail survives it for the same reason. */
 .cat-tile:hover .cat-card {
   transform: translateY(-1px);
-  border-color: var(--line-strong);
+  background: var(--surface-1);
+  border-top-color: var(--line-strong);
+  border-right-color: var(--line-strong);
+  border-bottom-color: var(--line-strong);
 }
 
 /* AND THE ELEVATION WITH IT, WHICH IS `.k-lift:hover` RESTATED — the
@@ -552,6 +766,12 @@
 .cat-tile:hover .cat-card:active,
 .cat-tile:hover .cat-card.k-lift:active {
   transform: scale(0.994);
+  /* THE GROUND COMES WITH THE PRESS, because the card no longer
+     has one at rest. A `--e1` under a transparent element is a
+     shadow with nothing casting it — which is what a press from a
+     finger or a keyboard, neither of which raises `:hover`, would
+     otherwise have drawn. */
+  background: var(--surface-1);
   box-shadow: var(--e1);
 }
 .cat-card:focus-visible {
@@ -593,13 +813,57 @@
   color: color-mix(in srgb, var(--kind) 52%, transparent);
 }
 
+/* THE WORDS SIT UNDER THE PHOTOGRAPH, NOT INSIDE A BOX. With the
+   card's ground gone at rest there is nothing for a 12px inset to
+   be an inset OF, and a name hanging 12px right of the
+   photograph's left edge is a misalignment you can see across four
+   columns. 6px is a caption's inset rather than a box's padding —
+   near enough to flush to read as one column of text under one
+   picture, and far enough that the last line's descenders clear
+   the card's 10px bottom corner radius, which flush would clip.
+   The bottom drops 12 to 2 for the same reason the border went:
+   there is no box below the words to leave room inside. */
 .cat-card-say {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 10px 12px 12px;
+  padding: 10px 6px 2px;
 }
 
+/* ------------------------------------------------------------
+   THE NAME STAYS AT 15px, AND THAT IS THE MEASUREMENT OVERRULING
+   THE INSTINCT. Written down because the next person will want to
+   raise it, as this pass did.
+
+   IT WAS RAISED TO THE TITLE STEP (20px) AND PUT BACK. Nine
+   compositions were driven at 1280x800 on five real tables,
+   counting tiles fully inside the viewport. Five of them:
+
+     composition                    Highfield  Stabi  Dunbier  Parts  Yamaha
+     before                             8        5       6       4      8
+     20px name + hero head              8      **1**   **2**     4      8
+     15px name + hero head              8        5     **2**     4      8
+     15px name + head one step down     8        5       6       4      8
+     15px name + hero head, tightened   8        5       6       4      8
+
+   The 20px name turns a ONE-line card name into a TWO-line one on
+   every table whose names are 25-38 characters — measured, the
+   name box went 18.8px to 50px on Stabicraft and Dunbier — and
+   that 31px is a whole row of four boats off the bottom of the
+   screen. Five tiles became one. Density wins over decoration on
+   this screen, and this is the place it had to be enforced.
+
+   SO THE CARD'S HIERARCHY IS NOT SIZE. It is the photograph, then
+   weight and ink: 15/600 `--fg` for the name, 15px mono 500 for
+   the price, 12px `--fg-tertiary` for the spec, 11px for the
+   label. The SCREEN's scale contrast lives on the chapter head,
+   which is full-width and one-per-screenful and can afford it.
+
+   THESE FOUR VALUES ARE NOT `--t-heading-*` AND ARE LEFT ALONE. A
+   card name wants 600 where the heading step is 570, and 1.25
+   where it is 1.35, because this box clamps to two lines and the
+   step's leading would cost 3px a card for nothing.
+   ------------------------------------------------------------ */
 .cat-tile-name {
   font-family: var(--font-sans);
   font-size: var(--t-heading-size);
@@ -628,8 +892,19 @@
   letter-spacing: 0;
 }
 
+/* THE PRICE STANDS LEVEL WITH THE NAME, NOT UNDER IT. It moves
+   off `--t-body-size` onto the mono ramp's own large step, which
+   at 1280 is the same 15px the name is — so the two are peers, and
+   what tells them apart is the face and the weight rather than a
+   size difference nobody reads as a rank. On a catalogue card the
+   model and the money ARE the two things a person came for; a
+   price ranked below a spec label was the old card's real fault.
+
+   Still mono, still tabular — §2's "if it is a number in a column,
+   it is mono" holds, and four of these line up across a grid row.
+   It costs 1.5px of card height, measured. */
 .cat-price {
-  font-size: var(--t-body-size);
+  font-size: var(--t-mono-lg-size);
   font-weight: 500;
   color: var(--fg);
 }

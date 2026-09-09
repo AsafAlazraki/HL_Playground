@@ -5,7 +5,16 @@
    figures come back "small and secondary, per PHASE_TWO §2.1".
    §1's objection was to counts as the SUBJECT of a screen, not
    to counts existing — so this returns two facts and the header
-   draws them at 12px in tertiary ink beside a 33px greeting.
+   draws them at 12px in tertiary ink.
+
+   IT WAS "beside a 33px greeting", AND THE GREETING IS 12px NOW.
+   The display tier landed on this screen and the greeting lost
+   the hero position to the things a person came for — the doors
+   and the drafts. So the strip and the greeting are the same
+   step, which is right: they are two halves of one header
+   caption, one about the person and one about the file. What the
+   strip may not outrank is the SUBJECT, and the subject is now
+   26.9px and 33.4px at 1280 against this line's 12.
 
    THIS IS THE SHEET-WIDE READER, AND THAT IS A DELIBERATE CHOICE
    AGAINST `fileTally`.

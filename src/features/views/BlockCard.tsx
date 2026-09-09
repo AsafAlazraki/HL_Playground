@@ -13,7 +13,7 @@
    is a subtraction and never a surprise.
    ============================================================ */
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, DragEvent as ReactDragEvent, ReactElement } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import {
@@ -41,6 +41,7 @@ import {
   type ViewBlock,
 } from '@/types/model'
 import type { RowRef, RuleEngine } from '@/lib/rules/evaluate'
+import { sayUndoable } from '@/store/notes'
 import { useConstraints } from '@/features/constraints'
 import { CurationNote, readCuration, searchReach } from '@/features/curation'
 import type { Narrowing } from '@/features/curation'
@@ -60,6 +61,7 @@ import {
   ensureJoinTable,
   evalPairRule,
   joinRefFor,
+  joinTableName,
   relatedRows,
   writePair,
   type Ctx,
@@ -75,6 +77,31 @@ import { RowPicture, pictureField } from './pictures'
 import { SPRING, SPRING_QUICK, SPRING_SLOW, transitionFor, useStillness } from './stillness'
 import { isRowDrag, isTableDrag, readRowDrag, readTableDrag, setRowDragData } from './dnd'
 import { pairWarnings, warnRules, type PairWarning } from './warnings'
+
+/** An act that would have to CREATE A TABLE to be recorded, held at
+ *  the point of the press until a person has read what it will make.
+ *
+ *  `doing` is what they just tried, as a phrase — "Recommending
+ *  DUNBIER Sports - 4M-13SL". `verb` is the same act as the word on
+ *  the button — "recommend it". `run` is the write, unchanged,
+ *  waiting for the join it needs.
+ *
+ *  (`verb`, not `then`: a property called `then` makes the object a
+ *  thenable, and an accidental `await` on one deadlocks — oxlint's
+ *  unicorn/no-thenable, and it is right.) */
+interface LinkAsk {
+  doing: string
+  verb: string
+  run: (join: JoinRef) => void
+  /** THE ROWS THE HELD ACT WAS AIMED AT, as they were when it was
+   *  pressed. `run` is a closure and it carries them; the page header's
+   *  level chooser can change them while the ask is on screen, and a
+   *  yes that landed on a different set of rows than the sentence
+   *  described would be the same defect one turn further on. So the ask
+   *  is retired when the scope moves — nothing was written, so nothing
+   *  is lost, and the press is made again where it now means something. */
+  scope: string
+}
 
 /** A table dropped in and waiting for an answer. Nothing exists yet. */
 export interface PendingDrop {
@@ -171,6 +198,19 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
   const [openRemoved, setOpenRemoved] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [dropRowId, setDropRowId] = useState<string | null>(null)
+  /* AN ACT HELD BACK BECAUSE IT WOULD AUTHOR SCHEMA — see `withJoin`.
+     Not a stored setting and not a modal: it is one sentence and two
+     buttons, drawn on the block the press came from. */
+  const [linkAsk, setLinkAsk] = useState<LinkAsk | null>(null)
+  const linkRef = useRef<HTMLButtonElement>(null)
+
+  /* THE ASK TAKES THE FOCUS. A person who pressed a star with the
+     keyboard has just had nothing happen; the answer to that must be
+     under their hands, not somewhere down the page they have to go
+     and find. It is a press, so nothing about this animates. */
+  useEffect(() => {
+    if (linkAsk) linkRef.current?.focus()
+  }, [linkAsk])
 
   const target = ctx.entities[block.tableId]
 
@@ -496,18 +536,80 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
       : `The rule on this list keeps ${rule} — this one does not, so it is here only because you asked to see everything.`
   }
 
-  /* -- curation: every write lands on a join row -------------- */
+  /* ── CURATION: EVERY WRITE LANDS ON A JOIN ROW, AND SOMETIMES
+       THERE IS NO JOIN TO LAND ON ─────────────────────────────────
 
-  const withJoin = (fn: (j: JoinRef) => void): void => {
-    const resolved = join ?? ensureJoinTable(sourceEntity.id, target.id)
-    if (!resolved) return
-    if (block.joinTableId !== resolved.entityId) {
-      updateBlock(viewId, block.id, { joinTableId: resolved.entityId })
-    }
-    fn(resolved)
-  }
+     UX_PASS §5, audit finding 14: *"One click on an accessory, on a
+     view page, moved the selection onto a brand-new join table, made
+     both doors vanish, and took TABLES 21 → 22."* This function was
+     the click. `ensureJoinTable` sat on the first line of it, so a
+     star, an ×, a pin from the ADD panel or a drag to reorder — four
+     browse gestures and a keyboard one — each authored a table with
+     three columns, silently. Measured again on the real seed at
+     1280×800 on 2026-09-09: adding Dunbier Trailers to a Highfield
+     page and pressing one star took 53 tables to 54, with nothing
+     said and no toast raised.
+
+     THE RULE: *a structural change is never a side effect of a
+     browsing or picking action. It is offered, in a sentence that
+     names it, and it is undoable.* And under modules it is sharper
+     still — `relate` is a capability handed to a salesperson
+     (MODULE_SYSTEM §5), so pinning must not be able to author schema.
+
+     So: a join that ALREADY EXISTS is used, exactly as before —
+     nothing about the everyday act changes, and the second star on
+     the same block does not ask twice. A join that does not is not
+     made here. The act is held, the block says what pressing again
+     will create and what the sheet's table count becomes, and the
+     write runs only after somebody presses the button.
+
+     THE ACT SURVIVES THE ASK. `run` is the same closure the caller
+     wrote; nothing is re-derived on the far side, so what happens
+     after "Create it and recommend" is exactly what would have
+     happened before, with a table under it. */
+
+  /* The two facts the ask is made of, both read rather than written:
+     the name the table would be given (one source, `joinTableName`,
+     so the ask and the act cannot say different things) and what the
+     sheet holds today — §6's "compute and state what it is about to
+     do", which is the number the audit watched go 21 → 22. */
+  const linkName = joinTableName(sourceEntity, target)
+  const tableCount = Object.keys(ctx.entities).length
 
   const targets = appliesTo && appliesTo.length > 0 ? appliesTo : [sourceRow.id]
+  /** The rows a decision lands on, as one comparable string. */
+  const scopeKey = targets.join('|')
+
+  const withJoin = (fn: (j: JoinRef) => void, ask: Omit<LinkAsk, 'run' | 'scope'>): void => {
+    if (join) {
+      if (block.joinTableId !== join.entityId) {
+        updateBlock(viewId, block.id, { joinTableId: join.entityId })
+      }
+      fn(join)
+      return
+    }
+    setLinkAsk({ ...ask, run: fn, scope: scopeKey })
+  }
+
+  /** Yes — make the table, then do the thing that needed it.
+   *
+   *  ONE UNDO STEP. The store collapses everything written in a tick
+   *  into one history entry, so the table and the pin go back
+   *  together and `sayUndoable` can pin the toast to it (rule 9: a
+   *  reversible act gets a toast with UNDO, never a dialog). */
+  const acceptLink = (): void => {
+    if (!linkAsk || linkAsk.scope !== scopeKey) return
+    const made = ensureJoinTable(sourceEntity.id, target.id)
+    setLinkAsk(null)
+    if (!made) return
+    if (block.joinTableId !== made.entityId) {
+      updateBlock(viewId, block.id, { joinTableId: made.entityId })
+    }
+    linkAsk.run(made)
+    sayUndoable(
+      `${linkName} — a new table, so ${sourceEntity.name} and ${target.name} can record which goes with which. The sheet now holds ${tableCount + 1} tables.`,
+    )
+  }
 
   const address = (j: JoinRef, targetRowId: string) => ({
     join: j,
@@ -517,15 +619,25 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
   })
 
   const removeRow = (row: RowData): void => {
-    withJoin((j) => writePair(address(j, row.id), { origin: 'removed', recommended: false }))
+    withJoin((j) => writePair(address(j, row.id), { origin: 'removed', recommended: false }), {
+      doing: `Taking ${rowLabel(target, row)} off this list`,
+      verb: 'take it off',
+    })
   }
 
   const restoreRow = (row: RowData): void => {
-    withJoin((j) => writePair(address(j, row.id), { origin: fits(row) ? 'rule' : 'added' }))
+    withJoin((j) => writePair(address(j, row.id), { origin: fits(row) ? 'rule' : 'added' }), {
+      doing: `Putting ${rowLabel(target, row)} back`,
+      verb: 'put it back',
+    })
   }
 
   const addRow = (rowId: string): void => {
-    withJoin((j) => writePair(address(j, rowId), { origin: 'added' }))
+    const row = (ctx.rowsByEntity[target.id] ?? []).find((r) => r.id === rowId)
+    withJoin((j) => writePair(address(j, rowId), { origin: 'added' }), {
+      doing: `Pinning ${row ? rowLabel(target, row) : oneOf(target.name)} in`,
+      verb: 'pin it in',
+    })
     setPanel('none')
   }
 
@@ -540,14 +652,23 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
     r?.pair?.origin === 'added' ? 'added' : 'rule'
 
   const toggleStar = (r: RelatedRow): void => {
-    withJoin((j) => {
-      if (r.recommended) {
-        writePair(address(j, r.row.id), { recommended: false })
-        return
-      }
-      clearRecommended(ctx, j, sourceEntity, targets)
-      writePair(address(j, r.row.id), { recommended: true, origin: keepOrigin(r) })
-    })
+    withJoin(
+      (j) => {
+        if (r.recommended) {
+          writePair(address(j, r.row.id), { recommended: false })
+          return
+        }
+        clearRecommended(ctx, j, sourceEntity, targets)
+        writePair(address(j, r.row.id), { recommended: true, origin: keepOrigin(r) })
+      },
+      {
+        doing: `${r.recommended ? 'Clearing the recommendation on' : 'Recommending'} ${rowLabel(
+          target,
+          r.row,
+        )}`,
+        verb: r.recommended ? 'clear the recommendation' : 'recommend it',
+      },
+    )
   }
 
   /** Order is what the salesperson sees, so it is written on the pairs —
@@ -559,12 +680,18 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
     const to = order.indexOf(toRowId)
     if (from < 0 || to < 0) return
     order.splice(to, 0, ...order.splice(from, 1))
-    withJoin((j) => {
-      order.forEach((rowId, i) => {
-        const r = result.rows.find((x) => x.row.id === rowId)
-        writePair(address(j, rowId), { order: i, origin: keepOrigin(r) })
-      })
-    })
+    withJoin(
+      (j) => {
+        order.forEach((rowId, i) => {
+          const r = result.rows.find((x) => x.row.id === rowId)
+          writePair(address(j, rowId), { order: i, origin: keepOrigin(r) })
+        })
+      },
+      {
+        doing: `Putting these ${plural(target.name)} in your own order`,
+        verb: 'reorder them',
+      },
+    )
   }
 
   /* -- nesting ------------------------------------------------ */
@@ -798,6 +925,50 @@ export function BlockCard(props: BlockCardProps): ReactElement | null {
           </motion.div>
         ) : null}
       </AnimatePresence>
+
+      {/* ── STRUCTURE IS NEVER A SIDE EFFECT ─────────────────────────
+          UX_PASS §5's own shape, in this app's voice: what you did,
+          what it will make, what the sheet becomes, and two buttons.
+          It is drawn HERE — on the block the press came from, under
+          its header, above its rows — because rule 10 puts the
+          sentence where the thing is, and because a modal for
+          something this reversible is the instrument §5 rejects.
+
+          NOT A REFUSAL. Nothing is being denied: the answer is yes if
+          they want it, in one press, and undoable in one more. What
+          it refuses is doing it without saying so. */}
+      {linkAsk && !join && linkAsk.scope === scopeKey ? (
+        <div
+          className="vw-link-ask"
+          role="group"
+          aria-label={`${sourceEntity.name} and ${target.name} have never been linked`}
+        >
+          <p className="vw-link-say">
+            <WarningCircle
+              size={14}
+              weight="regular"
+              aria-hidden="true"
+              className="vw-link-mark"
+            />
+            <span>
+              <b className="vw-link-word">
+                {sourceEntity.name} and {target.name} have never been linked.
+              </b>{' '}
+              {linkAsk.doing} makes a table, {linkName}, to record it — {tableCount} tables
+              on the sheet becomes {tableCount + 1}. Nothing else changes, and one press of
+              UNDO takes it all back.
+            </span>
+          </p>
+          <div className="vw-link-acts">
+            <button ref={linkRef} type="button" className="btn btn-primary" onClick={acceptLink}>
+              Create it and {linkAsk.verb}
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => setLinkAsk(null)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {configuring && panel === 'remove' ? (
         <div className="vw-confirm" role="group">

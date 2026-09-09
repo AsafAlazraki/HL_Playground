@@ -39,6 +39,7 @@ import {
   type XY,
 } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
+import { sayUndoable } from '@/store/notes'
 import { readCsvSchema, type CsvSchemaPlan } from '@/features/io/csvSchema'
 import { CsvTableStep } from './CsvTableStep'
 import { TableKindSymbol } from './symbols'
@@ -538,6 +539,29 @@ export function NewTableDialog({
         base.levels.length === wanted.length &&
         base.levels.every((level, i) => level === wanted[i])
       if (!asBuilt) applyStructure(entity.id, wanted)
+
+      /* ── AND IT IS UNDOABLE, WHICH SOMEBODY HAS TO SAY ───────────
+         UX_PASS §5's rule ends "…and it is undoable", and this door
+         was the half of the sheet that never said so: the CSV twin
+         eighteen lines away counts what it made and raises a toast
+         with UNDO (CsvTableStep.tsx:210), and pressing CREATE TABLE
+         here simply closed the sheet. One table arriving on a sheet
+         of fifty-three is not a thing to discover afterwards.
+
+         COUNTED, NOT PROMISED. The preview counted what the table
+         WOULD arrive with; this reads what it DID, off the entity
+         `applyStructure` has already reconciled — so a level the
+         person added or dropped is in the figure rather than beside
+         it. `createTable` and `applyStructure` write inside one
+         tick, so the store folds them into a single history entry
+         and UNDO takes the whole table back, not the last column. */
+      const built = useProjectStore.getState().entities[entity.id]
+      const cols = built?.fields.length ?? 0
+      sayUndoable(
+        `${built?.name ?? entity.name} — a new table, ${cols} ${
+          cols === 1 ? 'column' : 'columns'
+        } and no rows yet.`,
+      )
 
       closeRef.current()
     },

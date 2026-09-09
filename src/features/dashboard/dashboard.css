@@ -164,74 +164,117 @@
      different ones. Measured on the modules page at 1600x1000:
      `.ph` gaps 20px between its title block and its acts, pads
      16px beneath itself, and `.ph-say` gaps 2px between the
-     eyebrow and the name. This header gapped 24, 20 and 4. The
-     greeting is untouched — it is still 44px at 1600 and still
-     the one big thing on the screen (§the dashboard exception);
-     what changed is the air around it, which is the part that was
-     answering to nothing. */
+     eyebrow and the name. This header gapped 24, 20 and 4.
+
+     THE GREETING IS NO LONGER THE ONE BIG THING, and this rule is
+     what makes that cheap. `.dsh-head-say` is a row of two
+     captions now rather than an eyebrow over a display line, so
+     the band is as tall as the Edit button and nothing else —
+     measured 49.7px before, 32px after, and the 17.7px goes
+     straight into `.dsh-grid`, which is the only `flex: 1 1 auto`
+     on the page. The subject took the display step downstairs; see
+     `.dsh-hail`. */
   gap: var(--s-5);
   flex-wrap: wrap;
   margin-bottom: var(--s-4);
 }
 
+/* ------------------------------------------------------------
+   ONE LINE, AND IT WAS A STACK — because the thing on top of the
+   stack was the wrong hero.
+
+   It was an 11px uppercase stamp OVER a display-size greeting: an
+   eyebrow and a title, which is the shape `.ph-say` keeps on every
+   other page. That shape is right when the title IS the subject.
+   Here the title was "Good afternoon, Asaf", and a greeting is not
+   the subject of anything — measured at 1280x800 it was 32.7px
+   against a 15px second place, so the one element this screen set
+   at display size was a courtesy.
+
+   Both are the same KIND of fact — who is here, and what day it
+   is — so they are one line at one step, and the line is a
+   caption. `baseline` rather than `center` because the two steps
+   differ by a pixel and their x-heights do not; `wrap` because at
+   600px the header is already stacking and this must stack with
+   it rather than clip.
+   ------------------------------------------------------------ */
 .dsh-head-say {
   display: flex;
-  flex-direction: column;
-  /* 2px, LIKE `.ph-say`, AND IT WAS 4. The stamp is this page's
-     eyebrow — an 11px uppercase label over a display-size name —
-     and 4px under an 11px label is enough to read as a separate
-     line rather than as the name's own caption. Measured at 1600,
-     stamp bottom 38.3: the greeting's top was 42.3 and is 40.3,
-     so the 4px is 2px — which is what the eyebrow and the title
-     keep on every other page. */
-  gap: 2px;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  /* 12px, AND 8 WAS TOO CLOSE. Measured on the real seed: at 8 the
+     three phrases in this band — the greeting, the stamp and the
+     census strip — read as one run-on sentence, because the strip
+     is 20px away and the stamp was 8. Twelve puts the two halves of
+     the caption nearer each other than either is to the strip, so
+     the band reads as two groups rather than three loose phrases. */
+  gap: var(--s-3);
   min-width: 0;
 }
 
 /* The date, off the clock the person is sitting in front of.
    Uppercase is legal here and only here on this screen: §2 allows
-   it on a section caption, a group caption and a stamp. */
+   it on a section caption, a group caption and a stamp.
+
+   IT IS SECOND NOW, AND IT WAS THE EYEBROW. An eyebrow sits above
+   the thing it qualifies; there is nothing above any more, so the
+   date is simply the other half of the line. The person's name
+   reads first because a shared dealership machine is the case this
+   line exists for. */
 .dsh-stamp {
   margin: 0;
   color: var(--fg-tertiary);
 }
 
 /* ------------------------------------------------------------
-   THE ONE BIG THING, AND IT IS A WHOLE TYPE STEP.
+   THE GREETING, AND IT IS NO LONGER THE BIG THING.
 
-   Measured before this pass: the largest type on the dashboard
-   was 34px at 1600 and 26px at 1024, across seven sizes. Seven
-   sizes with a 34px ceiling is not a hierarchy, it is the absence
-   of one, and a screen whose largest element is 34px has no focal
-   point at all.
+   WHAT IT WAS. `clamp(30px, min(3.1cqi, 5vh), 44px)` at weight
+   680 in Archivo — a whole display step, declared here because
+   `--t-display-lg` topped out at 34px and this wanted more. Its
+   own note said "it is still the first thing read, because
+   nothing else on the page is display type at all". That sentence
+   was the diagnosis and nobody read it as one: the reason the
+   greeting led was that it had no competition, and the reason it
+   had no competition is that the subject of this screen was set
+   at 15px.
 
-   `--t-display-lg` tops out at 34px, so this is declared here —
-   size, weight, leading and tracking together (§2 rule 6), with
-   the tracking negative because the size is large (rule 7). It is
-   Archivo through `--font-hero`, and its FLOOR is 38px: §2 bars
-   the display face below 26px and there is no width at which this
-   clamp can reach it.
+   MEASURED AT 1280x800 ON THE REAL SEED, BEFORE:
 
-   THE CLAMP TAKES THE SMALLER OF TWO MEASURES. `cqi` is the
-   column, because the rail collapses and one viewport width is
-   two different dashboard widths; `vh` is there because this
-   screen must FIT, and a 72px greeting on a 700px-tall window is
-   a tenth of the room the cards need. Whichever is tighter wins.
+     the greeting                     32.7px   Archivo 680
+     everything else, joint second      15px   card names, door
+                                               names, headings
+     the labels under them           11–12px
+
+   32.7 against 11 is 2.97x, and PHASE_TWO §2.3's scale-contrast
+   row wants about 7x. Worse than the ratio: the 32.7 was spent on
+   a hello. A greeting is not the subject of a dashboard — the
+   drafts and the doors are — so this steps down to the header's
+   own caption and the display tier goes to them.
+
+   IT IS THE CAPTION STEP WHOLE (§2 rule 6), not a shrunken
+   display step: size, weight, leading and tracking taken together
+   from `--t-caption-*`, in the sans, because at 12px Archivo is
+   not a display face doing display work — it is a second sans
+   arguing with the first. The display face is barred below 26px
+   and this is well under it, which is the rule being kept rather
+   than dodged.
+
+   `--fg-secondary` AND NOT `--fg-tertiary`. The stamp beside it
+   is tertiary, and the name of the person signed in is the more
+   load-bearing of the two on a shared machine — 7.7:1 on the page
+   ground against the stamp's 5.2. Both clear rule 4; the
+   difference is rank, not legibility.
    ------------------------------------------------------------ */
 .dsh-hail {
   margin: 0;
-  color: var(--fg);
-  font-family: var(--font-hero);
-  /* CAPPED AT 44px, AND IT WAS 72. At 1600 the greeting set at
-     72px and was, by a wide margin, the loudest thing on a screen
-     whose whole job is the three cards underneath it — a hello
-     taking more vertical room than the quotes card had content.
-     It is still the first thing read, because nothing else on the
-     page is display type at all; it is no longer the subject. */
-  font-size: clamp(30px, min(3.1cqi, 5vh), 44px);
-  font-weight: 680;
-  line-height: 1.02;
-  letter-spacing: -0.034em;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
   overflow-wrap: anywhere;
 }
 
@@ -253,18 +296,25 @@
 
    A strip in a row of its own, above the grid or below it, takes
    its height off `.dsh-grid` — which is `flex: 1 1 auto` — and so
-   comes out of the 509px window the 25 modules are already
-   scrolling through. Bottom-aligned inside the header it takes
-   nothing: `.dsh-head` is as tall as `.dsh-head-say`, which is a
-   stamp over a 33px greeting, and a 16px line cannot raise that.
-   The measurement after this pass is in the same shape, and the
-   grid is the number to watch.
+   comes out of the window the 25 modules are already scrolling
+   through. On the header's own line it takes nothing.
 
-   IT MUST NOT OUTRANK THE DOORS OR THE DRAFTS. Caption size
-   against a display greeting is a 2.8:1 size ratio; the ink is
-   tertiary; there is no surface under it, no rule beside it, no
-   elevation and nothing to press. The two lit cards below stay
-   the only paper on the screen.
+   THAT STILL HOLDS SINCE THE DISPLAY TIER LANDED, and the reason
+   changed. It used to be that `.dsh-head` was as tall as a stamp
+   over a 33px greeting and a 16px caption could not raise it. The
+   greeting is a 12px caption now, so the header is bounded by the
+   Edit button instead — `--h-md`, 32px — and the greeting, the
+   stamp and this strip are three 16px lines inside it. Measured at
+   1280x800: the header band is 32px with the strip and 32px
+   without.
+
+   IT MUST NOT OUTRANK THE DOORS OR THE DRAFTS, AND THAT IS NOW
+   MEASURED AGAINST THEM RATHER THAN AGAINST THE GREETING. 12px
+   here against 26.9px on a door name and 33.4px on the pipeline
+   figure, at 1280 — 1:2.24 and 1:2.79. The ink is tertiary, there
+   is no surface under it, no rule beside it, no elevation and
+   nothing to press. The lit cards below stay the only paper on
+   the screen.
 
    `--fg-tertiary` IS LEGAL HERE FOR THE REASON IT IS LEGAL ON
    `.dsh-card:has(.dsh-empty) .dsh-card-mark`: the ground beneath
@@ -303,10 +353,11 @@
   margin-inline-end: auto;
   flex: 0 0 auto;
   /* ITS OWN ALIGNMENT, NOT THE ROW'S. `.dsh-head` flips to
-     `align-items: flex-start` under a 720px column so the greeting
-     and the Edit button can stack; without this the caption would
-     jump from the greeting's line up beside the date stamp. It
-     wants the greeting's baseline at every width. */
+     `align-items: flex-start` under a 720px column so the caption
+     and the Edit button can stack; without this the strip would
+     rise off the caption's line and sit against the top of the
+     header. It wants the greeting's line at every width, and now
+     the greeting and the stamp are that one line. */
   align-self: flex-end;
   white-space: nowrap;
   color: var(--fg-tertiary);
@@ -743,11 +794,59 @@
 @container dsh (min-width: 760px) {
   .dsh-grid {
     grid-template-columns: none;
-    /* the two halves. `minmax(0, 1fr)` rather than `1fr` so a card
+    /* ------------------------------------------------------------
+       THE TWO ROWS WERE EQUAL HALVES, AND THE MEASUREMENT SAYS
+       THEY SHOULD NOT BE.
+
+       `repeat(2, minmax(0, 1fr))` gives every row the same share of
+       whatever height the page has left. That is right when both
+       rows hold something that can use it. Measured at 1280x800 on
+       the real seed, they did not:
+
+         row 1 · Quotes        311.2px box, 261.8px body,
+                               81px of it empty — 30.9%. On a file
+                               with no quotes raised yet it is an
+                               empty state: four short lines and a
+                               button, centred in a box twice their
+                               height.
+         row 2 · What we sell  311.2px box, and four doors whose
+                               photographs were 223x61 — the
+                               palette PHASE_TWO §1b asks for,
+                               drawn as a letterbox.
+         both   · My modules   638.3px, spanning the two, running
+                               975px of tiles through a 509px
+                               window.
+
+       So one row was holding air while the two things beside and
+       below it were starved. `fit-content(45%)` is the whole fix
+       and it is one line: the top row takes what its cards
+       actually need, and every pixel it does not need falls
+       through to the row underneath.
+
+       WHY 45 AND NOT `auto`. `auto` would let a full quotes card —
+       eight rows, four filter chips and the pipeline figure, about
+       480px — take three quarters of the front door and leave the
+       doors a strip. 45% is the point at which the row below is
+       still the larger of the two, whatever the row above holds.
+       So the rule reads: A CARD MAY TAKE WHAT IT NEEDS UP TO
+       ALMOST HALF, AND MAY NEVER TAKE MORE THAN THE ROW BENEATH
+       IT.
+
+       IT NAMES NO CARD. The top row is not "the quotes card"; it
+       is whichever cards a person has arranged there, and a person
+       who fills the top row gets the 45% cap rather than a broken
+       composition. `fit-content()` resolves its percentage against
+       this grid's own height, which is definite — it is a flex
+       item with `min-height: 0` in a fixed-height column. Measured
+       in Chrome at 1280x800: rows went 311.2 / 311.2 to 205.2 /
+       417.1, with the modules card unchanged at 638.3.
+
+       `minmax(0, 1fr)` on the second rather than `1fr` so a card
        whose content is taller than its share shrinks and scrolls
        inside itself instead of pushing the row open — `1fr` alone
-       means `minmax(auto, 1fr)`, and `auto` is content height. */
-    grid-template-rows: repeat(2, minmax(0, 1fr));
+       means `minmax(auto, 1fr)`, and `auto` is content height.
+       ------------------------------------------------------------ */
+    grid-template-rows: fit-content(45%) minmax(0, 1fr);
     grid-auto-flow: column;
     grid-auto-columns: minmax(300px, 1fr);
     grid-auto-rows: auto;
@@ -1856,11 +1955,14 @@
     padding-block: var(--s-5);
   }
 
-  /* THE GREETING AND THE EDIT BUTTON STACK, so they stop being a
-     row and the gap becomes a vertical one. The `margin-bottom`
-     that used to sit here is gone for the same reason it left the
-     short-window query: `--s-4` is now what this header closes at
-     every width. */
+  /* THE CAPTION LINE AND THE EDIT BUTTON STACK, so they stop being
+     a row and the gap becomes a vertical one. (It was "the
+     greeting and the Edit button" when the greeting was a display
+     line of its own; it is the greeting, the stamp and the census
+     strip on one line now, and they stack as one block.) The
+     `margin-bottom` that used to sit here is gone for the same
+     reason it left the short-window query: `--s-4` is now what
+     this header closes at every width. */
   .dsh-head {
     align-items: flex-start;
     gap: var(--s-3);
@@ -2369,14 +2471,54 @@
   padding: 0 var(--s-2);
 }
 
-/* MONO, TABULAR, AND NEVER A HUE. It is the largest figure on the
-   dashboard and money least of all is decorative. */
+/* ------------------------------------------------------------
+   THE PIPELINE FIGURE — THE DRAFTS, AT THE DISPLAY STEP.
+
+   It was 22px in IBM Plex Mono, and its own note said "it is the
+   largest figure on the dashboard". It was: 22px, on a screen
+   whose greeting was 32.7. The one number that answers "how is
+   the month going" was two thirds the size of a hello.
+
+   `--t-figure-xl-*` IS THE STEP AND ds.css ARGUES IT. "THE
+   COMMITTED TOTAL. The one figure a price bar exists to state...
+   a headline that happens to be a number." This is that figure on
+   this screen: one per card, computed from the filtered list so
+   it can never disagree with the rows under it, and read before
+   anything else on the card. 33.43px at 1280, 42 above 1920.
+
+   AND IT IS NOT MONO ANY MORE, WHICH IS THE PART THAT LOOKS LIKE
+   A BREACH AND IS NOT. §2's rule is "if it is a number IN A
+   COLUMN, it is mono" — mono is what lines a column up on the
+   decimal. This is not in a column. And ds.css measured what mono
+   costs at this size: IBM Plex Mono is fixed-pitch, so it gives
+   the thousands comma the same 20.05px cell as a digit and
+   "$8,557" sets as "$8 , 557"; no OpenType feature closes it,
+   because one advance is the point of a fixed-pitch family.
+   Archivo with `tabular-nums` gives every digit an identical
+   19.14px advance and the comma 9.61px — so the figure still
+   cannot jitter as the total changes, which is the property money
+   actually needs, and it is in the same voice as the door names
+   downstairs instead of a third face arguing with them.
+
+   EVERY OTHER FIGURE ON THIS PAGE IS STILL MONO. The chip counts,
+   the row totals, the tile counts, the census strip, the tail of
+   every list — all `--font-mono`, all tabular. This is one figure,
+   at display size, and ds.css says in as many words: do not read
+   it as permission.
+
+   'zero' IS NOT SET. A slashed zero is a code affordance and has
+   no business in a price. NEVER A HUE, either — money least of
+   all is decorative.
+   ------------------------------------------------------------ */
 .dsh-worth-n {
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-family: var(--font-hero);
+  font-variation-settings: 'wdth' 100;
+  font-size: var(--t-figure-xl-size);
+  font-weight: var(--t-figure-xl-weight);
+  line-height: var(--t-figure-xl-lead);
+  letter-spacing: var(--t-figure-xl-track);
   font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
   color: var(--fg);
 }
 .dsh-worth-say {
@@ -2612,7 +2754,30 @@
    two different backgrounds under one line. So the name and the
    count sit on the door's own surface beneath the picture, where
    the ratio is the one the ink ramp was measured at.
-   ============================================================ */
+
+   ------------------------------------------------------------
+   WHAT THE DISPLAY TIER PASS CHANGED HERE, AND WHY THE DOORS ARE
+   WHERE IT LANDED.
+
+   The subject of the front door is the drafts and the doors. The
+   drafts live on the card above and carry `--t-figure-xl`; these
+   carry `--t-display-lg` — see `.dsh-door-name` for why not the
+   marque and why not the hero.
+
+   THE PICTURES CAME WITH IT, and they are the half that was
+   costing this card its whole reason. Measured at 1280x800 on the
+   real seed:
+
+     the door's plate     60.8px tall  ->  108.3px
+     the door's name        15px      ->   26.9px
+     the card              311.2px    ->  434.8px
+
+   The 123.6px is not new space; it is the space the top row was
+   holding and could not use. §1b asks for the photographs to be
+   the palette; at 223x61 they were a letterbox, and doubling the
+   plate is the difference between a picture of a boat and a strip
+   of blue.
+   ------------------------------------------------------------ */
 
 .dsh-doors {
   display: grid;
@@ -2628,13 +2793,19 @@
      sizes this app is used at: 396px wide at 1920, 264 at 1440,
      225 at 1280, 173 at 1024. */
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  /* AN EQUAL SHARE OF THE CARD, WITH A FLOOR. Four doors take two
-     rows of whatever height the card has — 191px each at 1920,
-     124 at 1280. A business with six kinds behind one module each
-     gets three rows, the floor keeps every door tall enough for a
-     picture, and the CARD scrolls: a strip that does not fit
-     scrolls rather than being cut (§3). */
-  grid-auto-rows: minmax(104px, 1fr);
+  /* AN EQUAL SHARE OF THE CARD, WITH A FLOOR — AND THE FLOOR WENT
+     UP WITH THE NAME. Four doors take two rows of whatever height
+     the card has. 104px was the floor when the caption was a 15px
+     heading over a 12px count, about 40px of words; the name is
+     the display step now and the caption is 68px, so 104 would
+     leave 34px of photograph — a colour swatch rather than a
+     picture. 132 is the caption plus the plate's own 56px minimum
+     plus the border, which is the smallest door that still keeps
+     its promise: a name at display size and a photograph under it.
+     A business with six kinds behind one module each gets three
+     rows, and the CARD scrolls — a strip that does not fit scrolls
+     rather than being cut (§3). */
+  grid-auto-rows: minmax(132px, 1fr);
   /* AND IT TAKES THE ROOM, so `1fr` has something to be a share
      OF. `.dsh-card-body` is a column flex box, and a grid that
      only asks for its content height leaves its rows at their
@@ -2751,18 +2922,76 @@
   flex: none;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  /* 2px, AND IT WAS 1. A 12px count under a 27px name wants a
+     little more air than a 12px count under a 15px name did — the
+     gap is read relative to the type above it, not absolutely. */
+  gap: 2px;
   min-width: 0;
-  padding: var(--s-2) var(--s-3);
+  padding: var(--s-2) var(--s-3) var(--s-3);
 }
 
-/* A KIND'S NAME IS A NAME — rule 3, so it is not uppercase and
-   not tracked out. It wraps rather than ellipsing: nothing on
-   this screen truncates mid-word (§3). */
+/* ------------------------------------------------------------
+   THE DOOR'S NAME IS THE DISPLAY STEP, AND THIS IS WHERE THE
+   DISPLAY TIER LANDS ON THE FRONT DOOR.
+
+   IT WAS `.ds-heading` — 15px, the same step as the card's own
+   title, the module tile's name and every other heading on the
+   screen. Four kinds of thing a marine dealership sells, set at
+   the size the app uses for the word "Quotes".
+
+   `--t-display-lg-*` IS THE RIGHT STEP AND `--t-marque-*` IS NOT.
+   ds.css scopes the marque to "the name of the thing being sold,
+   ONE per screen, and only where the subject IS a product — the
+   configurator's identity column". Four doors are four names, and
+   a door is a way IN to a kind rather than a product with a
+   price. `--t-hero` is the other one ruled out: it is "the first
+   line of a stage", and there are four of these. `--t-display-lg`
+   is what is left and it is what it is for — a title with a page
+   behind it, which is exactly what a door is.
+
+   THE FOUR TOKENS RATHER THAN `.ds-display-lg`. ds.css's note
+   says take the class "unless you are writing a feature rule that
+   already owns the element", and this rule owns it. Two classes
+   on one element, both at (0,1,0), with this file loaded after
+   ds.css, is a cascade nobody can see: the utility would set the
+   size and this rule would set the colour, and the day somebody
+   adds a size here the utility silently loses. One rule, four
+   tokens, one place to look.
+
+   IT FITS, AND THAT WAS MEASURED RATHER THAN HOPED. Archivo at
+   640 through canvas, against a door 224px wide with 24px of
+   padding — 200px of room — at 1280x800:
+
+     Boats         74px      Trailers      94px
+     Motors        89px      Accessories  157px
+
+   at the 26.88px this clamp resolves to. The longest kind label a
+   marine dealer has clears the column by 43px. At 34px — the
+   clamp's ceiling, reached above 1620px — "Accessories" is 199px
+   in a door that is 396px wide there, so it never gets tighter as
+   the window grows.
+
+   A KIND'S NAME IS STILL A NAME — rule 3, so it is not uppercase
+   and not tracked out, and `break-word` keeps §3's promise that
+   nothing truncates mid-word: a business whose kinds are longer
+   than a marine dealer's wraps to two lines rather than clipping.
+   `balance` because a two-line name at this step with one word on
+   the second line is visible from across the room.
+   ------------------------------------------------------------ */
 .dsh-door-name {
   color: var(--fg);
   min-width: 0;
+  font-family: var(--font-hero);
+  /* the same width ladder ds.css keeps: 103 at display-lg. Stated
+     rather than inherited, so a door dropped inside an extended
+     host cannot pick the host's width axis up. */
+  font-variation-settings: 'wdth' 103;
+  font-size: var(--t-display-lg-size);
+  font-weight: var(--t-display-lg-weight);
+  line-height: var(--t-display-lg-lead);
+  letter-spacing: var(--t-display-lg-track);
   overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
 /* THE FIGURE IS INK AND MONO, NEVER THE HUE. §1: a price is not

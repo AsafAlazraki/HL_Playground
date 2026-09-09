@@ -327,20 +327,33 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
       <div className={`dsh-in${arranging ? ' is-arranging' : ''}`}>
         <header className="dsh-head ds-rise">
           <div className="dsh-head-say">
-            <p className="ds-label dsh-stamp">{stamp}</p>
-            {/* THE ONE BIG THING ON THIS SCREEN. Nothing on the
-                dashboard exceeded 34px across seven sizes, which is
-                the absence of a hierarchy rather than one. Its step
-                is declared in dashboard.css — size, weight, leading
-                and tracking together (§2 rule 6) — and its floor is
-                38px, well clear of the 26px below which Archivo may
-                not be set. The person's title and the org name were
-                under it and are gone: the rail already carries both,
-                and a line that repeats what is 200px to its left is
-                a line spent on nothing. */}
+            {/* A GREETING IS NOT THE SUBJECT, AND IT WAS THE HERO.
+                Measured at 1280x800 on the real seed: "Good
+                afternoon, Asaf" set at 32.7px in Archivo and was, by
+                a factor of 2.2, the largest glyph on the front door.
+                The second largest was 15px — the card names, the
+                door names, every heading on the screen. So the one
+                thing this dashboard set at display size was a hello,
+                and the things it exists to show were all one step
+                above a caption.
+
+                IT IS STILL HERE AND IT IS STILL AN `h1`. Heading
+                level is structure, not size: a screen still owes a
+                reader one top-level heading and this is it. What
+                changed is that it stopped shouting. The greeting and
+                the date are now one line of the header's own
+                caption — who is here and what day it is, which is
+                the whole of what they ever said.
+
+                WHAT TOOK THE DISPLAY STEP IS THE SUBJECT: the doors
+                downstairs (`.dsh-door-name`, --t-display-lg) and the
+                pipeline figure on the quotes card (`.dsh-worth-n`,
+                --t-figure-xl). Both are counted from the store, and
+                neither is a courtesy. */}
             <h1 className="dsh-hail">
               {greeting(now)}, {firstName(user.name)}
             </h1>
+            <p className="ds-label dsh-stamp">{stamp}</p>
           </div>
 
           {/* ============================================================
@@ -354,22 +367,34 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
 
               IT IS IN THE HEADER BECAUSE THAT IS THE ONE PLACE IT
               COSTS NOTHING. Measured at 1280x800 on the real seed
-              before this pass: the header band is 49.7px tall and
-              992px wide, of which the greeting uses 290 and the Edit
+              when it landed: the header band was 49.7px tall and
+              992px wide, of which the greeting used 290 and the Edit
               button 90 — about 600px of the page holding nothing at
-              all. Meanwhile the grid below it is 638.3px and the
-              modules card is already running 975px of tiles through a
-              509px window. A strip in its own row, above or below the
-              grid, is height taken straight off that window. Bottom-
-              aligned on the greeting's own line it takes none: the
-              header is as tall as `.dsh-head-say`, and 16px of
-              caption cannot raise that.
+              all. Meanwhile the grid below it was 638.3px and the
+              modules card was already running 975px of tiles through
+              a 509px window. A strip in its own row, above or below
+              the grid, is height taken straight off that window.
+              On the greeting's own line it takes none: the header is
+              as tall as `.dsh-head-say`, and 16px of caption cannot
+              raise that. That still holds now the greeting is a
+              caption too — the header is bounded by the Edit
+              button's own 32px, and all three of these lines fit
+              inside it with room over.
 
-              IT DOES NOT OUTRANK ANYTHING. 12px caption against a
-              33px display greeting, tertiary ink on the page ground,
-              no surface, no rule, no elevation, nothing pressable.
-              The two lit cards below it are still the only paper on
-              the screen.
+              IT DOES NOT OUTRANK ANYTHING, AND IT NOW HAS LESS TO
+              OUTRANK. It was written against a 33px display
+              greeting; the greeting is a 12px caption since the
+              display tier landed, so the strip and the greeting are
+              the same step. That is correct rather than a problem —
+              they are two halves of one header caption, one about
+              the person and one about the file, and neither is the
+              subject. What the strip must not outrank is the DOORS
+              and the DRAFTS, and those are now 26.9px and 33.4px at
+              1280 against its 12: it is quieter relative to the
+              subject than it has ever been. Tertiary ink on the page
+              ground, no surface, no rule, no elevation, nothing
+              pressable. The lit cards below are still the only paper
+              on the screen.
 
               IT IS NOT A CARD AND IT IS NOT ARRANGEABLE, which is
               why Edit does not offer to take it off. It belongs to

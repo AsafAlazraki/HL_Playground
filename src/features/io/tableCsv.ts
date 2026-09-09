@@ -281,6 +281,334 @@ export interface TableUploadInput {
 const plural = (n: number, one: string, many: string): string =>
   `${n.toLocaleString()} ${n === 1 ? one : many}`
 
+/* ============================================================
+   THE ENGINE BOTH DOORS TURN.
+
+   Two things arrive at a register from outside. A FILE, read back
+   after a trip through Excel — that is `planTableUpload` below. And
+   a BLOCK, pasted straight off the clipboard, which is
+   `./pasteBlock` and UX_PASS §3's front door to the product.
+
+   THEY DIFFER IN EXACTLY ONE THING: how a column of the incoming
+   data finds a column on this table. A file answers it BY NAME,
+   because a heading is all a `.csv` carries. A paste answers it BY
+   ASKING — the MAP step puts every incoming column beside where it
+   will go and a person says matched, new column, or skip. That
+   question is settled before this function runs.
+
+   EVERYTHING AFTER IT IS ONE SET OF RULES AND HAS TO STAY ONE SET
+   OF RULES. The four guarantees at the head of this file — never
+   delete a row, never resurrect a discontinued one, never write a
+   calculated or a picture column, say every cell that would change
+   with the old value beside the new one — are the reason a dealer
+   can let a file near their price list. A second copy of them for
+   the paste door would be a second place to forget one, and the
+   forgetting would be silent.
+
+   So the paste door builds `writable` from what the person chose
+   rather than from a heading, and turns this same engine.
+   ============================================================ */
+
+/** The nouns a plan's sentences are written with. A file has
+ *  headings and lines; a pasted block has columns and rows — and a
+ *  person who never opened a file must not be told about one. */
+export interface MergeWords {
+  /** mid-sentence, naming where the data came from: `that file` */
+  it: string
+  /** what one of its columns is called: `heading` */
+  head: string
+  /** what one of its rows is called: `line` */
+  line: string
+}
+
+/** The words the file door has always used, unchanged. */
+export const FILE_WORDS: MergeWords = { it: 'that file', head: 'heading', line: 'line' }
+
+/** What was found about the columns before a single line was read.
+ *  Reported on the plan, and most of these earn a sentence. */
+export interface PlanColumns {
+  matched: string[]
+  unknown: string[]
+  ambiguous: string[]
+  readOnly: string[]
+  missing: string[]
+}
+
+/**
+ * HOW A LINE FINDS ITS ROW, settled by the caller.
+ *
+ * `key` is the row's own identity and cannot be ambiguous. `name` is
+ * the display column, matched exactly and case-insensitively, which
+ * is what a sheet somebody built themselves out of a supplier's list
+ * has to be matched on — and which two rows can share, so the
+ * ambiguity is refused by name rather than guessed at.
+ */
+export type MergeIdentity =
+  | { on: 'key'; at: number }
+  | { on: 'name'; at: number; field: FieldDef }
+
+export interface MergeLinesInput {
+  entity: EntityDef
+  /** every row on the table — what a line is matched against */
+  rows: RowData[]
+  /** the data lines, cells as text, in the order they arrived */
+  lines: string[][]
+  /** cell index in a line -> the column on this table it writes */
+  writable: Map<number, FieldDef>
+  identity: MergeIdentity
+  columns: PlanColumns
+  /** what the plan calls where the lines came from */
+  fileName: string
+  /** how wide the incoming data is, including any key column */
+  fileColumns: number
+  /** the nouns its sentences are written with; the file's by default */
+  words?: MergeWords
+  refRowLabels?: (f: FieldDef) => Map<string, string> | undefined
+  refLabelOf?: (f: FieldDef) => ((rowId: string) => string | undefined) | undefined
+}
+
+/**
+ * READ THE LINES AGAINST THE TABLE AND SAY WHAT THE MERGE WOULD DO.
+ *
+ * Writes nothing, reads nothing but its arguments. The mapping is
+ * already made; this decides which row each line is about, which
+ * cells would change, which will not be written and why.
+ */
+export function mergeLines(input: MergeLinesInput): TableUploadPlan {
+  const { entity, rows, lines, writable, identity, columns, refRowLabels, refLabelOf } = input
+  const words = input.words ?? FILE_WORDS
+
+  const display = displayFieldOf(entity)
+  const matchedOn = identity.on
+
+  const byId = new Map<string, RowData>()
+  for (const r of rows) byId.set(r.id, r)
+
+  /** display value -> the one row that has it; a value shared by two
+   *  rows maps to `null`, which is "cannot answer", not "no answer" */
+  const byLabel = new Map<string, RowData | null>()
+  if (identity.on === 'name') {
+    const f = identity.field
+    for (const r of rows) {
+      const key = norm(cellToText(r.values[f.id] ?? null, f))
+      if (key === '') continue
+      byLabel.set(key, byLabel.has(key) ? null : r)
+    }
+  }
+
+  const changes: CellChange[] = []
+  const newRows: NewRow[] = []
+  const refusals: UploadRefusal[] = []
+
+  const touched = new Set<string>()
+  const foreignKeys: string[] = []
+  const ambiguousNames: string[] = []
+  const duplicateLines: string[] = []
+  const badValues: string[] = []
+  const resurrections: string[] = []
+
+  let unnamedNew = 0
+  let matched = 0
+  let overwritten = 0
+
+  const cellAt = (line: string[], i: number): string => line[i] ?? ''
+
+  /* A LINK COLUMN READS AS A WORD ON BOTH SIDES OF THE SENTENCE. The
+     file says "Yamaha F70" and the cell holds that row's key, so a
+     preflight built from the raw cell would print a change as
+     `-KS7x1XXCj → -KJ2p0QaBv` and tell a dealer nothing. */
+  const say = (v: CellValue, f: FieldDef): string => cellToText(v, f, refLabelOf?.(f))
+
+  for (const line of lines) {
+    /* which row is this line about */
+    let target: RowData | undefined
+    if (identity.on === 'key') {
+      const key = cellAt(line, identity.at).trim()
+      if (key !== '') {
+        target = byId.get(key)
+        if (!target) {
+          foreignKeys.push(key)
+          continue
+        }
+      }
+    } else {
+      const key = norm(cellAt(line, identity.at))
+      if (key !== '') {
+        const hit = byLabel.get(key)
+        if (hit === null) {
+          ambiguousNames.push(cellAt(line, identity.at).trim())
+          continue
+        }
+        target = hit ?? undefined
+      }
+    }
+
+    /* read every writable cell on the line, once, for both paths */
+    const read: Array<{ field: FieldDef; value: CellValue; text: string }> = []
+    for (const [i, f] of writable) {
+      const raw = cellAt(line, i)
+      const got = coerceCellText(raw, f, refRowLabels?.(f))
+      if (!got.ok) {
+        badValues.push(`${f.name}: ${got.reason}`)
+        continue
+      }
+      read.push({ field: f, value: got.value, text: raw })
+    }
+
+    if (!target) {
+      /* a new row. Its label is whatever the display column says,
+         because that is the word the preflight will list it under. */
+      const values: Record<string, CellValue> = {}
+      for (const r of read) if (!isBlank(r.value)) values[r.field.id] = r.value
+      const label = display ? say(values[display.id] ?? null, display) : ''
+      if (label.trim() === '') unnamedNew += 1
+      newRows.push({ label: label.trim() === '' ? '(no name)' : label, values })
+      continue
+    }
+
+    if (touched.has(target.id)) {
+      duplicateLines.push(rowLabel(entity, target))
+      continue
+    }
+    touched.add(target.id)
+    matched += 1
+
+    let changedHere = 0
+    for (const r of read) {
+      const current = target.values[r.field.id] ?? null
+      /* the same word back is no edit — see `sameAsExported` */
+      if (sameAsExported(r.text, say(current, r.field))) continue
+      if (sameCellValue(current, r.value)) continue
+
+      /* THE ONE DIRECTION A FILE MAY NOT TURN. See reason 2. */
+      if (
+        r.field.id === DISCONTINUED_FIELD_ID &&
+        isDiscontinued(target) &&
+        r.value !== true
+      ) {
+        resurrections.push(rowLabel(entity, target))
+        continue
+      }
+
+      changes.push({
+        rowId: target.id,
+        rowLabel: rowLabel(entity, target),
+        fieldId: r.field.id,
+        columnName: r.field.name,
+        from: say(current, r.field),
+        to: say(r.value, r.field),
+        value: r.value,
+      })
+      changedHere += 1
+    }
+    if (changedHere > 0) overwritten += 1
+  }
+
+  /* -- what will not happen, said once each ------------------ */
+
+  /* structurally file-only: a pasted block has no key column to
+     carry a key from another sheet, so this stays in the file's own
+     words rather than being parameterised for a door it cannot
+     reach */
+  if (foreignKeys.length > 0) {
+    refusals.push({
+      id: 'foreign-key',
+      say: `${plural(foreignKeys.length, 'line names a row key', 'lines name row keys')} that is not on this table — ${foreignKeys.slice(0, 3).join(', ')}${foreignKeys.length > 3 ? ' …' : ''}. Those lines came from somewhere else and are skipped. To add a row, clear its ${ROW_KEY_HEADER} cell.`,
+    })
+  }
+  if (ambiguousNames.length > 0) {
+    refusals.push({
+      id: 'ambiguous-name',
+      say: `${plural(ambiguousNames.length, `${words.line} matches`, `${words.line}s match`)} more than one row by name (${ambiguousNames.slice(0, 3).join(', ')}${ambiguousNames.length > 3 ? ' …' : ''}), so there is no way to tell which row ${words.it} means. Export this table first — the file it writes carries a ${ROW_KEY_HEADER} column that cannot be ambiguous.`,
+    })
+  }
+  if (duplicateLines.length > 0) {
+    refusals.push({
+      id: 'duplicate-line',
+      say: `${plural(duplicateLines.length, `later ${words.line} repeats`, `later ${words.line}s repeat`)} a row already read from ${words.it}. The first ${words.line} for a row wins; the rest are skipped.`,
+    })
+  }
+  if (resurrections.length > 0) {
+    refusals.push({
+      id: 'resurrect',
+      say: `${plural(resurrections.length, 'row is', 'rows are')} discontinued and ${words.it} marks them as sold again. That is left as it is: a model comes back by clearing the cell on the sheet, one at a time, not by ${words.it}.`,
+    })
+  }
+  if (badValues.length > 0) {
+    const first = [...new Set(badValues)].slice(0, 3)
+    refusals.push({
+      id: 'bad-value',
+      say: `${plural(badValues.length, 'cell could not be read', 'cells could not be read')} and ${badValues.length === 1 ? 'is left as it is' : 'are left as they are'} — ${first.join('; ')}${badValues.length > first.length ? ' …' : ''}.`,
+    })
+  }
+  if (columns.ambiguous.length > 0) {
+    refusals.push({
+      id: 'ambiguous-column',
+      say: `${plural(columns.ambiguous.length, `${words.head} names TWO columns`, `${words.head}s each name TWO columns`)} rather than one — ${columns.ambiguous.slice(0, 4).join(', ')}${columns.ambiguous.length > 4 ? ' …' : ''}. Nothing is written to either, because a name that fits two columns cannot say which one ${words.it} means. Rename one of each pair on the sheet and the next file can.`,
+    })
+  }
+  if (columns.readOnly.length > 0) {
+    refusals.push({
+      id: 'read-only',
+      say: `${columns.readOnly.join(', ')} ${columns.readOnly.length === 1 ? 'is' : 'are'} calculated or holds pictures. ${words.it === FILE_WORDS.it ? 'The file carries' : 'The block carries'} ${columns.readOnly.length === 1 ? 'it' : 'them'} so you can read ${columns.readOnly.length === 1 ? 'it' : 'them'} in Excel; nothing is written back.`,
+    })
+  }
+  if (columns.unknown.length > 0) {
+    refusals.push({
+      id: 'unknown-column',
+      say: `${plural(columns.unknown.length, `${words.head} in ${words.it} is`, `${words.head}s in ${words.it} are`)} not a column on this table — ${columns.unknown.slice(0, 4).join(', ')}${columns.unknown.length > 4 ? ' …' : ''}. A column is added on the sheet, where it gets a type; nothing here creates one.`,
+    })
+  }
+  if (columns.missing.length > 0) {
+    refusals.push({
+      id: 'missing-column',
+      say: `${plural(columns.missing.length, 'column on this table has', 'columns on this table have')} no ${words.head} in ${words.it} — ${columns.missing.slice(0, 4).join(', ')}${columns.missing.length > 4 ? ' …' : ''}. Every row keeps what it already has in ${columns.missing.length === 1 ? 'it' : 'them'}.`,
+    })
+  }
+  if (unnamedNew > 0 && display) {
+    refusals.push({
+      id: 'unnamed-new',
+      say: `${plural(unnamedNew, 'new row has', 'new rows have')} nothing in ${display.name}. They will be added and will read as untitled until somebody names them.`,
+    })
+  }
+
+  const untouched = rows.length - touched.size
+  if (untouched > 0) {
+    refusals.push({
+      id: 'not-in-file',
+      say: `${plural(untouched, `row on this table has`, `rows on this table have`)} no ${words.line} in ${words.it}. Nothing is deleted — a quote already given may have been written against ${untouched === 1 ? 'it' : 'them'}.`,
+    })
+  }
+  if (isRetired(entity)) {
+    refusals.push({
+      id: 'retired-table',
+      say: `${entity.name} is retired — it is history rather than stock, and no page a customer sees offers it. A file does not bring it back.`,
+    })
+  }
+
+  return {
+    tableId: entity.id,
+    tableName: entity.name,
+    fileName: input.fileName,
+    ok: true,
+    matchedOn,
+    fileRows: lines.length,
+    fileColumns: input.fileColumns,
+    columnsMatched: columns.matched,
+    columnsUnknown: columns.unknown,
+    columnsAmbiguous: columns.ambiguous,
+    columnsReadOnly: columns.readOnly,
+    columnsMissing: columns.missing,
+    matched,
+    overwritten,
+    added: newRows.length,
+    untouched,
+    changes,
+    newRows,
+    refusals,
+  }
+}
+
 /** Read a file against a table and say exactly what putting it back
  *  would do. Writes nothing, reads nothing but its arguments. */
 export function planTableUpload(input: TableUploadInput): TableUploadPlan {
@@ -409,20 +737,6 @@ export function planTableUpload(input: TableUploadInput): TableUploadPlan {
   const display = displayFieldOf(entity)
   const matchedOn: 'key' | 'name' = keyAt >= 0 ? 'key' : 'name'
 
-  const byId = new Map<string, RowData>()
-  for (const r of rows) byId.set(r.id, r)
-
-  /** display value -> the one row that has it; a value shared by two
-   *  rows maps to `null`, which is "cannot answer", not "no answer" */
-  const byLabel = new Map<string, RowData | null>()
-  if (matchedOn === 'name' && display) {
-    for (const r of rows) {
-      const key = norm(cellToText(r.values[display.id] ?? null, display))
-      if (key === '') continue
-      byLabel.set(key, byLabel.has(key) ? null : r)
-    }
-  }
-
   const nameAt = display ? header.findIndex((h) => norm(h) === norm(display.name)) : -1
   if (matchedOn === 'name') {
     if (!display) {
@@ -458,215 +772,30 @@ export function planTableUpload(input: TableUploadInput): TableUploadPlan {
     }
   }
 
-  /* -- the lines --------------------------------------------- */
+  /* -- and the rest is the engine both doors turn ----------- */
 
-  const changes: CellChange[] = []
-  const newRows: NewRow[] = []
-  const refusals: UploadRefusal[] = []
-
-  const touched = new Set<string>()
-  const foreignKeys: string[] = []
-  const ambiguousNames: string[] = []
-  const duplicateLines: string[] = []
-  const badValues: string[] = []
-  const resurrections: string[] = []
-
-  let unnamedNew = 0
-  let matched = 0
-  let overwritten = 0
-
-  const cellAt = (line: string[], i: number): string => line[i] ?? ''
-
-  /* A LINK COLUMN READS AS A WORD ON BOTH SIDES OF THE SENTENCE. The
-     file says "Yamaha F70" and the cell holds that row's key, so a
-     preflight built from the raw cell would print a change as
-     `-KS7x1XXCj → -KJ2p0QaBv` and tell a dealer nothing. */
-  const say = (v: CellValue, f: FieldDef): string => cellToText(v, f, refLabelOf?.(f))
-
-  for (const line of body) {
-    /* which row is this line about */
-    let target: RowData | undefined
-    if (matchedOn === 'key') {
-      const key = cellAt(line, keyAt).trim()
-      if (key !== '') {
-        target = byId.get(key)
-        if (!target) {
-          foreignKeys.push(key)
-          continue
-        }
-      }
-    } else if (display && nameAt >= 0) {
-      const key = norm(cellAt(line, nameAt))
-      if (key !== '') {
-        const hit = byLabel.get(key)
-        if (hit === null) {
-          ambiguousNames.push(cellAt(line, nameAt).trim())
-          continue
-        }
-        target = hit ?? undefined
-      }
-    }
-
-    /* read every writable cell on the line, once, for both paths */
-    const read: Array<{ field: FieldDef; value: CellValue; text: string }> = []
-    for (const [i, f] of writable) {
-      const raw = cellAt(line, i)
-      const got = coerceCellText(raw, f, refRowLabels?.(f))
-      if (!got.ok) {
-        badValues.push(`${f.name}: ${got.reason}`)
-        continue
-      }
-      read.push({ field: f, value: got.value, text: raw })
-    }
-
-    if (!target) {
-      /* a new row. Its label is whatever the display column says,
-         because that is the word the preflight will list it under. */
-      const values: Record<string, CellValue> = {}
-      for (const r of read) if (!isBlank(r.value)) values[r.field.id] = r.value
-      const label = display ? say(values[display.id] ?? null, display) : ''
-      if (label.trim() === '') unnamedNew += 1
-      newRows.push({ label: label.trim() === '' ? '(no name)' : label, values })
-      continue
-    }
-
-    if (touched.has(target.id)) {
-      duplicateLines.push(rowLabel(entity, target))
-      continue
-    }
-    touched.add(target.id)
-    matched += 1
-
-    let changedHere = 0
-    for (const r of read) {
-      const current = target.values[r.field.id] ?? null
-      /* the same word back is no edit — see `sameAsExported` */
-      if (sameAsExported(r.text, say(current, r.field))) continue
-      if (sameCellValue(current, r.value)) continue
-
-      /* THE ONE DIRECTION A FILE MAY NOT TURN. See reason 2. */
-      if (
-        r.field.id === DISCONTINUED_FIELD_ID &&
-        isDiscontinued(target) &&
-        r.value !== true
-      ) {
-        resurrections.push(rowLabel(entity, target))
-        continue
-      }
-
-      changes.push({
-        rowId: target.id,
-        rowLabel: rowLabel(entity, target),
-        fieldId: r.field.id,
-        columnName: r.field.name,
-        from: say(current, r.field),
-        to: say(r.value, r.field),
-        value: r.value,
-      })
-      changedHere += 1
-    }
-    if (changedHere > 0) overwritten += 1
-  }
-
-  /* -- what will not happen, said once each ------------------ */
-
-  if (foreignKeys.length > 0) {
-    refusals.push({
-      id: 'foreign-key',
-      say: `${plural(foreignKeys.length, 'line names a row key', 'lines name row keys')} that is not on this table — ${foreignKeys.slice(0, 3).join(', ')}${foreignKeys.length > 3 ? ' …' : ''}. Those lines came from somewhere else and are skipped. To add a row, clear its ${ROW_KEY_HEADER} cell.`,
-    })
-  }
-  if (ambiguousNames.length > 0) {
-    refusals.push({
-      id: 'ambiguous-name',
-      say: `${plural(ambiguousNames.length, 'line matches', 'lines match')} more than one row by name (${ambiguousNames.slice(0, 3).join(', ')}${ambiguousNames.length > 3 ? ' …' : ''}), so there is no way to tell which row the file means. Export this table first — the file it writes carries a ${ROW_KEY_HEADER} column that cannot be ambiguous.`,
-    })
-  }
-  if (duplicateLines.length > 0) {
-    refusals.push({
-      id: 'duplicate-line',
-      say: `${plural(duplicateLines.length, 'later line repeats', 'later lines repeat')} a row already read from this file. The first line for a row wins; the rest are skipped.`,
-    })
-  }
-  if (resurrections.length > 0) {
-    refusals.push({
-      id: 'resurrect',
-      say: `${plural(resurrections.length, 'row is', 'rows are')} discontinued and this file marks them as sold again. That is left as it is: a model comes back by clearing the cell on the sheet, one at a time, not by a file.`,
-    })
-  }
-  if (badValues.length > 0) {
-    const first = [...new Set(badValues)].slice(0, 3)
-    refusals.push({
-      id: 'bad-value',
-      say: `${plural(badValues.length, 'cell could not be read', 'cells could not be read')} and ${badValues.length === 1 ? 'is left as it is' : 'are left as they are'} — ${first.join('; ')}${badValues.length > first.length ? ' …' : ''}.`,
-    })
-  }
-  if (ambiguousColumns.length > 0) {
-    refusals.push({
-      id: 'ambiguous-column',
-      say: `${plural(ambiguousColumns.length, 'heading names TWO columns', 'headings each name TWO columns')} rather than one — ${ambiguousColumns.slice(0, 4).join(', ')}${ambiguousColumns.length > 4 ? ' …' : ''}. Nothing is written to either, because a name that fits two columns cannot say which one the file means. Rename one of each pair on the sheet and the next file can.`,
-    })
-  }
-  if (readOnly.length > 0) {
-    refusals.push({
-      id: 'read-only',
-      say: `${readOnly.join(', ')} ${readOnly.length === 1 ? 'is' : 'are'} calculated or holds pictures. The file carries ${readOnly.length === 1 ? 'it' : 'them'} so you can read ${readOnly.length === 1 ? 'it' : 'them'} in Excel; nothing is written back.`,
-    })
-  }
-  if (unknown.length > 0) {
-    refusals.push({
-      id: 'unknown-column',
-      say: `${plural(unknown.length, 'heading in that file is', 'headings in that file are')} not a column on this table — ${unknown.slice(0, 4).join(', ')}${unknown.length > 4 ? ' …' : ''}. A column is added on the sheet, where it gets a type; nothing here creates one.`,
-    })
-  }
-  if (missing.length > 0) {
-    refusals.push({
-      id: 'missing-column',
-      say: `${plural(missing.length, 'column on this table has', 'columns on this table have')} no heading in that file — ${missing.slice(0, 4).join(', ')}${missing.length > 4 ? ' …' : ''}. Every row keeps what it already has in ${missing.length === 1 ? 'it' : 'them'}.`,
-    })
-  }
-  if (unnamedNew > 0 && display) {
-    refusals.push({
-      id: 'unnamed-new',
-      say: `${plural(unnamedNew, 'new row has', 'new rows have')} nothing in ${display.name}. They will be added and will read as untitled until somebody names them.`,
-    })
-  }
-
-  const untouched = rows.length - touched.size
-  if (untouched > 0) {
-    refusals.push({
-      id: 'not-in-file',
-      say: `${plural(untouched, 'row on this table has', 'rows on this table have')} no line in that file. Nothing is deleted — a quote already given may have been written against ${untouched === 1 ? 'it' : 'them'}.`,
-    })
-  }
-  if (isRetired(entity)) {
-    refusals.push({
-      id: 'retired-table',
-      say: `${entity.name} is retired — it is history rather than stock, and no page a customer sees offers it. A file does not bring it back.`,
-    })
-  }
-
-  return {
-    tableId: entity.id,
-    tableName: entity.name,
+  return mergeLines({
+    entity,
+    rows,
+    lines: body,
+    writable,
+    identity:
+      matchedOn === 'key'
+        ? { on: 'key', at: keyAt }
+        /* checked above: on the name path both of these are settled */
+        : { on: 'name', at: nameAt, field: display as FieldDef },
+    columns: {
+      matched: matchedNames,
+      unknown,
+      ambiguous: ambiguousColumns,
+      readOnly,
+      missing,
+    },
     fileName,
-    ok: true,
-    matchedOn,
-    fileRows: body.length,
     fileColumns: header.length,
-    columnsMatched: matchedNames,
-    columnsUnknown: unknown,
-    columnsAmbiguous: ambiguousColumns,
-    columnsReadOnly: readOnly,
-    columnsMissing: missing,
-    matched,
-    overwritten,
-    added: newRows.length,
-    untouched,
-    changes,
-    newRows,
-    refusals,
-  }
+    ...(refRowLabels ? { refRowLabels } : {}),
+    ...(refLabelOf ? { refLabelOf } : {}),
+  })
 }
 
 /** Does this plan actually do anything? A file that matched perfectly

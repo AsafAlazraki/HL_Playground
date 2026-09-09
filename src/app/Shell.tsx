@@ -1,9 +1,19 @@
 /* ============================================================
    THE SHELL — masthead, one panel, the sheet. Nothing else.
 
-   ROUTING, in full: nothing named and nothing drawn → onboarding.
-   Otherwise → the configurator. There is no router, no URL and no
-   third state.
+   THE GATE, in full: nothing named and nothing drawn → onboarding.
+   Otherwise → the configurator. There is no third state.
+
+   AND THERE IS A URL NOW. This header said "there is no router, no
+   URL and no third state" from the day the shell was written until
+   2026-09-09, and the first two thirds of that stopped being true
+   at the foot of this file: the window in front has an address,
+   Back and Forward walk between places, and a link opens where it
+   points. It is thirty lines here and one file beside this one —
+   see `url.ts`, which carries the whole argument, the table of
+   addresses, and the four things that deliberately did NOT become
+   linkable. The stage model below is untouched: it was given an
+   address, not replaced.
 
    THE GATE IS ON THE SHEET, NOT ONLY ON THE ORGANISATION, and the
    organisation outlives a swap. `replaceProject` rebuilds meta from
@@ -116,6 +126,7 @@ import { keepSeedVersion, northsideFreshness, type SeedFreshness } from '@/demos
 import { applyDemoSet, realDemoSet } from './demoLoad'
 import { useViewPersistence } from './viewPersistence'
 import { rememberModule } from './moduleRecent'
+import { correctAddress, placeNow, queryFor, showPlace, titleFor } from './url'
 import './shell.css'
 
 /* THE SAME SELECTOR THE APP'S OTHER THREE MODALS USE, character for
@@ -160,6 +171,48 @@ export interface ShellProps {
    *  prepared BY somebody; the shell is where that person reaches
    *  the stages that need to know. */
   user: AppUser
+}
+
+/* ============================================================
+   THE STACK THE DOCUMENT OPENS WITH — home, and whatever the
+   address names standing on it.
+
+   IT IS A LAZY INITIALISER AND NOT AN EFFECT, and that is the
+   whole reason a deep link works. An effect that restored the
+   place would run in the same flush as the effect that WRITES the
+   address, in declaration order, with the first render having
+   already happened at Home — so the writer would see Home,
+   disagree with `?at=quote&id=…`, and push `/` over the link
+   before the restore landed. Restoring during the first render
+   means the address and the screen have never disagreed, there is
+   nothing to correct, and no history entry is spent on arriving.
+
+   IT READS THE ADDRESS LIVE, so it is pure in the sense React
+   cares about: StrictMode invokes this twice and both answers are
+   the same one. Nothing is consumed, so a shell that mounts again
+   in the same document — sign out, sign back in — lands where the
+   bar says it is, which is the only answer that is never stale.
+
+   HOME IS UNDERNEATH, so a link arrives somewhere with a way out.
+   Closing a quote opened from a pasted link lands on the day
+   rather than on an empty desktop, which is what the person who
+   sent the link would expect the recipient to get.
+   ============================================================ */
+function openingStack(): WinState[] {
+  const home: WinState = {
+    id: 'home',
+    stage: { kind: 'home' },
+    frame: bestFrame(0),
+    zoomed: false,
+    mini: false,
+  }
+  const { stage } = placeNow()
+  /* the drawing is the ABSENCE of a window, not a window — the
+     same thing `setStage(null)` means below */
+  if (stage === null) return []
+  if (stage.kind === 'home') return [home]
+  /* `w0`, because `seq` below starts at 1 and hands out `w1` first */
+  return [home, { id: 'w0', stage, frame: bestFrame(1), zoomed: false, mini: false }]
 }
 
 export function Shell({ user, onSignOut }: ShellProps) {
@@ -239,13 +292,17 @@ export function Shell({ user, onSignOut }: ShellProps) {
      focused one; raising a window moves it to the end. `zoomed`
      and `mini` are per-window and live on the entry.
      ========================================================== */
-  const [wins, setWins] = useState<WinState[]>([
-    { id: 'home', stage: { kind: 'home' }, frame: bestFrame(0), zoomed: false, mini: false },
-  ])
+  const [wins, setWins] = useState<WinState[]>(openingStack)
   const seq = useRef(1)
 
   const focusedId = wins.length ? wins[wins.length - 1].id : null
   const focused = wins.length ? wins[wins.length - 1] : null
+
+  /* WHERE THIS IS, AS AN ADDRESS. Both strings are derived during
+     render so the effect that writes them can depend on exactly
+     what it reads — see the note on `showPlace`. */
+  const address = queryFor(focused ? focused.stage : null)
+  const heading = titleFor(focused ? focused.stage : null)
 
   /* OPENING IS IDEMPOTENT PER SUBJECT. Pressing Boats twice does not
      make two Boats windows; the second press raises the one that is
@@ -439,6 +496,77 @@ export function Shell({ user, onSignOut }: ShellProps) {
       document.activeElement instanceof HTMLElement ? document.activeElement : null
     setConfiguring(true)
   }, [])
+
+  /* ============================================================
+     BACK AND FORWARD — PHASE_TWO §6 phase 7, and the last unbuilt
+     phase of it.
+
+     Measured before this existed, at 1280 x 800 on the real seed:
+     sign in, press Quotes, press Data, open Boats — `location.href`
+     is unchanged at every step, `history.length` never moves, and
+     pressing Back leaves the application entirely. A configurator
+     whose state cannot be sent to a colleague is the gap
+     `configurator-teardowns-2026.md` records against Mercedes'
+     "Copy Link to Build" and Audi's readable `?pr=`.
+
+     THE ADDRESS IS CORRECTED ON THE WAY IN, before anything below
+     can push. A person types and pastes into an address bar, so
+     `?at=quote` with no id and `?at=nonsense` both arrive here and
+     both read as home; `correctAddress` writes the spelling of the
+     place they were read as, with `replaceState`, so the bar and
+     the screen have never disagreed and no history entry is spent
+     saying so.
+
+     A POP SETS THE STAGE THE ADDRESS ALREADY NAMES, so the writer
+     below finds the two in agreement and does nothing. That is the
+     whole loop-guard, and it is sound only because one address
+     means exactly one window — `url.ts` carries that argument.
+
+     `setStage` IS REUSED RATHER THAN REPLACED. Back to a place
+     whose window is still open raises it, with its scroll and its
+     open row intact; Back to one that was closed opens it again.
+     Both are what `openWin` already did for a press on the rail,
+     which is the point: this gives the stage model an address, it
+     does not become a second way to navigate.
+     ============================================================ */
+  useEffect(() => {
+    correctAddress()
+    const onPop = (): void => {
+      correctAddress()
+      /* A BACK CLOSES WHAT IS OVER THE PAGE, and this line was
+         written because the first browser measurement of the
+         finished router found the bug it prevents: open Admin, open
+         Saved configurations, press Back — the page underneath
+         became the quote and the sheet was still standing on it,
+         `aria-modal` over a document it had never been opened from.
+         Before this pass Back left the application entirely, so the
+         stranding could not happen; giving the shell an address is
+         what made it possible, which makes it this pass's to fix.
+
+         THE FOUR THE SHELL HOSTS, and only those: the finder, the
+         new-table dialog by both of its ways in, and the
+         configurations sheet. The freshness notice is deliberately
+         NOT here — it is a QUESTION about a person's data, and its
+         dismissal records an answer (`keepSeedVersion`). A Back
+         must not answer it for them. */
+      setFinding(false)
+      setPicking(false)
+      setConfiguring(false)
+      clearNewTableRequest()
+      setStage(placeNow().stage)
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [setStage])
+
+  /* AND THE ADDRESS FOLLOWS THE WINDOW IN FRONT. Only the front
+     one: the stack underneath is the switcher's history and a
+     desktop's worth of open windows is not a thing a URL can say.
+     Stated in url.ts with the rest of what did not become
+     linkable. */
+  useEffect(() => {
+    showPlace(address, heading)
+  }, [address, heading])
 
   /* ============================================================
      THE CONFIGURATIONS SHEET OWNS THE KEYBOARD WHILE IT IS UP.

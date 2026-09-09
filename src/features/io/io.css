@@ -1435,3 +1435,511 @@
 .io-example-go:active {
   transform: scale(0.97);
 }
+
+/* ============================================================
+   THE PASTE DOOR — UX_PASS §3's four steps, drawn as ONE
+   surface rather than four.
+
+   "PASTE → HEADER → MAP → PREVIEW, none of them a wizard." So
+   there is no Next button and no step counter: the sheet grows
+   downward as each question is answered, and every answer
+   already given stays on screen and stays changeable. A person
+   who realises at the preview that row one was a header does not
+   go back — the answer is two centimetres above, and changing it
+   re-reads everything under it.
+
+   It is drawn INSIDE `ConfirmSheet`, which owns the sheet, the
+   scrim, the eyebrow, the question and the footer. What is added
+   here is the four sections and the map row.
+
+   CONTRAST, measured in Chrome through the full ancestor chain on
+   the confirm sheet's own opaque `--paper-high`, at 1280x800 on
+   the real seed:
+
+     --ink        on --paper-high   17.4 : 1   names, values
+     --ink-soft   on --paper-high    8.1 : 1   sentences, readings
+     --ink-faint  on --paper-high    5.5 : 1   the sample values
+     --ink        on --paper        16.5 : 1   the textarea
+     --ink        on --red-wash     15.6 : 1   a refusal's sentence
+
+   Nothing in this block sits on a translucent tint, which is the
+   cheapest way never to make the mistake DESIGN_PRINCIPLES §1
+   records: `--ink-faint` measures 4.72:1 over a 3.5% tint, which
+   fails, and it is 5.5:1 on this ground.
+   ============================================================ */
+
+.io-paste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* A STEP IS A SECTION WITH A CAPTION, and the caption is one of the
+   three sanctioned uppercase uses (DESIGN_PRINCIPLES §2). Nothing
+   else in this block is uppercase: not the column names, not the
+   dealer's own values, not a button. */
+.io-paste-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.io-paste-cap {
+  color: var(--ink-faint);
+}
+
+/* -- 1 · PASTE ---------------------------------------------- */
+
+/* THE BOX IS SHORT ONCE IT HAS SOMETHING IN IT. An empty box has
+   to look like a target; a full one is evidence the person has
+   already read, and forty rows of it would push the mapping and
+   the preview off the bottom of the sheet. */
+.io-paste-drop {
+  width: 100%;
+  min-height: 96px;
+  max-height: 30vh;
+  padding: var(--sp-3);
+  border: 1.5px dashed var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--ui-s-size);
+  line-height: 1.5;
+  letter-spacing: 0;
+  resize: vertical;
+  white-space: pre;
+  overflow: auto;
+  transition:
+    border-color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft);
+}
+.io-paste-drop::placeholder {
+  font-family: var(--font-ui);
+  color: var(--ink-soft);
+}
+.io-paste-drop:hover {
+  border-color: var(--blue);
+}
+.io-paste-drop:focus {
+  outline: none;
+  border-style: solid;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+.io-paste-drop.is-read {
+  min-height: 60px;
+  max-height: 92px;
+  border-style: solid;
+  border-color: var(--hairline);
+}
+
+/* what arrived, counted — mono because it is figures, and the
+   separator is said out loud rather than assumed */
+.io-paste-facts {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: var(--ui-s-size);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  color: var(--ink-soft);
+}
+
+.io-paste-again {
+  padding: 2px var(--sp-2);
+  margin-left: auto;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: var(--ui-xs-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-draft),
+    background var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.io-paste-again:hover {
+  color: var(--blue);
+  background: var(--blue-wash);
+}
+.io-paste-again:active {
+  transform: scale(0.97);
+}
+.io-paste-again:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+
+/* -- 2 · HEADER --------------------------------------------- */
+
+.io-paste-yn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+/* A LATCH, NOT A BUTTON PAIR. The two are one answer, so the
+   chosen one carries the accent surface and the other is plain —
+   never both lit, never neither. */
+.io-paste-yn-btn {
+  min-width: 62px;
+  height: 32px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-draft),
+    border-color var(--t-fast) var(--ease-draft),
+    color var(--t-fast) var(--ease-draft),
+    transform var(--t-fast) var(--ease-draft);
+}
+.io-paste-yn-btn:hover {
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+.io-paste-yn-btn:active {
+  transform: scale(0.97);
+}
+.io-paste-yn-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--blue-wash);
+}
+.io-paste-yn-btn.is-on {
+  border-color: var(--blue);
+  background: var(--blue-wash);
+  color: var(--blue);
+  font-weight: 560;
+}
+
+/* ROW ONE, SHOWN. The values are the dealer's own, so they keep
+   their case and they are not stamps. */
+.io-paste-row1 {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+.io-paste-cell {
+  padding: 2px var(--sp-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  font-family: var(--font-ui);
+  font-size: var(--ui-xs-size);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+.io-paste-cell-more {
+  align-self: center;
+  font-family: var(--font-ui);
+  font-size: var(--ui-xs-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+
+/* -- 3 · MAP ------------------------------------------------ */
+
+.io-paste-cols {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  max-height: clamp(180px, 34vh, 380px);
+  overflow-y: auto;
+  container-type: inline-size;
+}
+
+/* THE INCOMING COLUMN, THE ARROW, AND WHERE IT GOES — one line,
+   with everything a choice needs on the lines under it rather
+   than crammed onto this one. */
+.io-paste-col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 12px minmax(0, 1.15fr);
+  align-items: start;
+  gap: var(--sp-1) var(--sp-2);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.io-paste-col:last-child {
+  border-bottom: 0;
+}
+/* a row that cannot do what was asked wears the rule, not a fill:
+   this is a note about one column, never an alarm over the list */
+.io-paste-col.has-no {
+  padding-left: var(--sp-2);
+  border-left: 2px solid var(--red);
+}
+
+.io-paste-from {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+/* the SPREADSHEET's own heading — never uppercased, never clipped
+   mid-word (DESIGN_PRINCIPLES §3) */
+.io-paste-from-name {
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+  font-weight: 560;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+/* the column's own first values, so "where does this go" is a
+   question about something on screen */
+.io-paste-from-vals {
+  font-family: var(--font-mono);
+  font-size: var(--micro-size);
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+.io-paste-arrow {
+  padding-top: 5px;
+  text-align: center;
+  font-size: var(--ui-s-size);
+  color: var(--ink-soft);
+}
+
+.io-paste-to {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.io-paste-pick {
+  width: 100%;
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+}
+/* "matched" · "inferred" · "nothing to match" — §3's own words for
+   how the proposal was arrived at. A sentence fragment, so it is
+   not a stamp. */
+.io-paste-how {
+  font-family: var(--font-ui);
+  font-size: var(--micro-size);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+
+/* the second line, when a column is becoming a new one: its name,
+   what it holds, and the type chip between them */
+.io-paste-new {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 128px);
+  align-items: center;
+  gap: var(--sp-2);
+}
+.io-paste-name,
+.io-paste-type {
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+  min-width: 0;
+}
+
+/* the reading `csvSchema` argues the type with, in counts a person
+   can check against their own file */
+.io-paste-why {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--ui-xs-size);
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+/* WHY IT CANNOT, AND WHAT IT WOULD TAKE — rule 10. The flag is the
+   rule down the left of the row; the sentence is INK, because it
+   is the thing the person came to read. */
+.io-paste-no {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--ui-xs-size);
+  line-height: 1.55;
+  letter-spacing: 0;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.io-paste-step > .io-paste-no {
+  padding: var(--sp-3);
+  border-left: 2px solid var(--red);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--red-wash);
+}
+
+/* -- 4 · PREVIEW -------------------------------------------- */
+
+/* THE COLUMNS THIS PRESS WILL CREATE. A table growing a column is
+   a structural change and DESIGN_PRINCIPLES §7 says it is offered
+   in a sentence that names it — so it is a list of names, not a
+   count folded into the button. */
+.io-paste-made {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+}
+.io-paste-made-item {
+  display: grid;
+  grid-template-columns: minmax(0, auto) auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+.io-paste-made-name {
+  font-family: var(--font-ui);
+  font-size: var(--ui-s-size);
+  font-weight: 560;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.io-paste-made-why {
+  font-family: var(--font-ui);
+  font-size: var(--ui-xs-size);
+  line-height: 1.45;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+/* THE FIRST ROWS, AS THEY WILL APPEAR — with the label resolved,
+   which is the whole point: "a boat named Variant" is visible
+   before it exists rather than after. */
+.io-paste-prev {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.io-paste-prev-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--paper-high);
+}
+.io-paste-prev-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+/* the row's own name, in the row's own case */
+.io-paste-prev-label {
+  font-family: var(--font-ui);
+  font-size: var(--ui-m-size);
+  font-weight: 560;
+  letter-spacing: -0.004em;
+  text-transform: none;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.io-paste-prev-fate {
+  margin-left: auto;
+  flex: none;
+  font-family: var(--font-ui);
+  font-size: var(--ui-xs-size);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+.io-paste-prev-cells {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(112px, 100%), 1fr));
+  gap: var(--sp-1) var(--sp-3);
+}
+.io-paste-prev-cell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.io-paste-prev-col {
+  font-family: var(--font-ui);
+  font-size: var(--micro-size);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+.io-paste-prev-val {
+  font-family: var(--font-mono);
+  font-size: var(--ui-s-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+/* A CELL THAT WILL LAND BLANK IS THE ONE THING A PERSON MOST NEEDS
+   TO SEE BEFORE THEY PRESS. It is a dash in the soft ink, which
+   reads as "nothing" rather than as a value — and it clears the
+   floor at 8.1:1, because it is meaning and not a rule. */
+.io-paste-prev-val.is-empty {
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   THE MAP ROW, ON A NARROW SHEET.
+
+   Three across is right while the sheet has 520px of body. Below
+   about 420px of list the incoming name, the arrow and the picker
+   squeeze into three ribbons and every one of them wraps. It is a
+   component on somebody else's surface, so it answers its own
+   container and not the window (RESPONSIVE rule 5): the arrow goes
+   — it is decoration once the two are stacked — and the picker
+   takes the full width under the name it is answering for.
+   ============================================================ */
+@container (max-width: 420px) {
+  .io-paste-col {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .io-paste-arrow {
+    display: none;
+  }
+  .io-paste-new {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* MOVEMENT GOES; LIGHT AND COLOUR STAY. */
+@media (prefers-reduced-motion: reduce) {
+  .io-paste-again:active,
+  .io-paste-yn-btn:active {
+    transform: none;
+  }
+}
