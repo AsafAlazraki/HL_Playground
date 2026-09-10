@@ -25,7 +25,7 @@
    ============================================================ */
 import { describe, expect, it } from 'vitest'
 import type { ModuleDef } from '@/types/model'
-import { reorderPlan } from './designer'
+import { reorderTo } from './designer'
 
 const STAMP = '2026-01-01T00:00:00.000Z'
 
@@ -46,35 +46,31 @@ const mod = (id: string, order: number): ModuleDef => ({
 const drawn = [mod('a', 0), mod('b', 1), mod('c', 2), mod('d', 3), mod('e', 4)]
 
 describe('moving one card on the dashboard', () => {
-  it('swaps a card with the one before it, and writes only those two', () => {
-    expect(reorderPlan(drawn, 'c', -1)).toEqual([
+  /* THESE WERE THE ARROWS' PROPERTIES AND THEY ARE THE DRAG'S. The
+     two controls became one when the grid learned to be dragged
+     (MODULE_SYSTEM §3 Screen 5), and every property below is about
+     the RENUMBERING rather than about the gesture: canonical orders,
+     the drawn order winning over the stored one, and the list handed
+     in never being touched. A one-place drop is what an arrow used
+     to be. */
+
+  it('puts a card before the one it was dropped on, and writes only what moved', () => {
+    expect(reorderTo(drawn, 'c', 'b')).toEqual([
       { id: 'c', order: 1 },
       { id: 'b', order: 2 },
     ])
   })
 
-  it('swaps a card with the one after it, and writes only those two', () => {
-    expect(reorderPlan(drawn, 'c', 1)).toEqual([
+  it('puts a card after the one it was dropped on, going the other way', () => {
+    expect(reorderTo(drawn, 'c', 'd')).toEqual([
       { id: 'd', order: 2 },
       { id: 'c', order: 3 },
     ])
   })
 
-  it('refuses to move the first card earlier, and writes nothing', () => {
-    expect(reorderPlan(drawn, 'a', -1)).toEqual([])
-  })
-
-  it('refuses to move the last card later, and writes nothing', () => {
-    expect(reorderPlan(drawn, 'e', 1)).toEqual([])
-  })
-
-  it('writes nothing for a card that is not on the dashboard', () => {
-    expect(reorderPlan(drawn, 'nobody', 1)).toEqual([])
-  })
-
   it('leaves the list it was handed exactly as it found it', () => {
     const before = drawn.map((m) => `${m.id}:${m.order}`)
-    reorderPlan(drawn, 'c', -1)
+    reorderTo(drawn, 'c', 'b')
     expect(drawn.map((m) => `${m.id}:${m.order}`)).toEqual(before)
   })
 
@@ -84,7 +80,7 @@ describe('moving one card on the dashboard', () => {
        at all. The first move renumbers what it has to; every move
        after it is two records. */
     const gappy = [mod('a', 0), mod('b', 5), mod('c', 9)]
-    expect(reorderPlan(gappy, 'c', -1)).toEqual([
+    expect(reorderTo(gappy, 'c', 'b')).toEqual([
       { id: 'c', order: 1 },
       { id: 'b', order: 2 },
     ])
@@ -94,22 +90,72 @@ describe('moving one card on the dashboard', () => {
     /* the same three, handed over in the order they are drawn — the
        plan must never be worked out against the stored numbers */
     const cards = [mod('z', 0), mod('y', 1), mod('x', 2)]
-    const plan = reorderPlan(cards, 'x', -1)
-    expect(plan.map((p) => p.id)).toEqual(['x', 'y'])
+    expect(reorderTo(cards, 'x', 'y').map((q) => q.id)).toEqual(['x', 'y'])
   })
 
-  it('walks a card the whole way along, one place at a time', () => {
-    /* five moves, applied as the dashboard applies them, and the
+  it('walks a card the whole way along, one drop at a time', () => {
+    /* four drops, applied as the dashboard applies them, and the
        order that comes out is the order a person watched happen */
     let cards = drawn.map((m) => ({ ...m }))
     for (let i = 0; i < 4; i += 1) {
-      const plan = reorderPlan(cards, 'a', 1)
-      const at = new Map(plan.map((p) => [p.id, p.order]))
+      const after = cards[cards.findIndex((m) => m.id === 'a') + 1]
+      if (!after) break
+      const plan = reorderTo(cards, 'a', after.id)
+      const at = new Map(plan.map((q) => [q.id, q.order]))
       cards = cards
         .map((m) => ({ ...m, order: at.get(m.id) ?? m.order }))
-        .sort((p, q) => p.order - q.order)
+        .sort((x, y) => x.order - y.order)
     }
     expect(cards.map((m) => m.id)).toEqual(['b', 'c', 'd', 'e', 'a'])
-    expect(reorderPlan(cards, 'a', 1)).toEqual([])
+    /* and at the end there is nothing after it to drop onto */
+    expect(cards.findIndex((m) => m.id === 'a')).toBe(cards.length - 1)
   })
+})
+
+/* ---------------------------------------------------------- */
+
+describe('dropping one card where another one is', () => {
+  /* A DRAG IS NOT A STEP. An arrow moves a module one place and
+     refuses at the ends; a drop lands somewhere, and "somewhere" is
+     named by the module whose slot the pointer was over. */
+
+  it('LANDS THE MODULE WHERE THE TARGET IS, and shuffles only what it passed', () => {
+    /* e onto b: a, e, b, c, d — a keeps 0 and is not written. */
+    expect(reorderTo(drawn, 'e', 'b')).toEqual([
+      { id: 'e', order: 1 },
+      { id: 'b', order: 2 },
+      { id: 'c', order: 3 },
+      { id: 'd', order: 4 },
+    ])
+  })
+
+  it('carries a card the other way just as far', () => {
+    expect(reorderTo(drawn, 'a', 'd')).toEqual([
+      { id: 'b', order: 0 },
+      { id: 'c', order: 1 },
+      { id: 'd', order: 2 },
+      { id: 'a', order: 3 },
+    ])
+  })
+
+  it('writes nothing when a card is dropped on itself', () => {
+    expect(reorderTo(drawn, 'c', 'c')).toEqual([])
+  })
+
+  it('writes nothing for a module that is not there — a stale drag, not a crash', () => {
+    expect(reorderTo(drawn, 'zz', 'b')).toEqual([])
+    expect(reorderTo(drawn, 'b', 'zz')).toEqual([])
+  })
+
+  it('LEAVES THE MODULES NOBODY CAN SEE WHERE THEY WERE', () => {
+    /* The grid filters. A drop between two visible cards has to mean
+       something to the ones off screen, and the answer is that their
+       relative order never changes: c and d are untouched by a drop
+       of e onto a, beyond being pushed along one. */
+    const after = new Map(drawn.map((m) => [m.id, m.order]))
+    for (const { id, order } of reorderTo(drawn, 'e', 'a')) after.set(id, order)
+    const sorted = [...after.entries()].sort((x, y) => x[1] - y[1]).map(([id]) => id)
+    expect(sorted).toEqual(['e', 'a', 'b', 'c', 'd'])
+  })
+
 })

@@ -4160,6 +4160,73 @@
   gap: var(--s-1);
 }
 
+/* THE GRAB, AND IT IS THE FRONT DOOR'S GRAB.
+
+   Same size, same tokens, same three states, same `touch-action:
+   none` — which is the line that makes a touch drag a drag instead of
+   a scroll, and without which the reorder never gets a pointermove.
+   Declared here rather than borrowed from `dashboard.css` because a
+   feature's stylesheet is its own (CLAUDE.md), and importing that
+   sheet to reach one class would drag the whole front door's layout
+   in behind it.
+
+   THE CARD UNDER IT IS A BUTTON, so the handle sits ABOVE it — the
+   same absolute cluster the arrows stood in, with the same z-index —
+   or a press on the grip would open the place instead of grabbing
+   it. */
+.md-grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--h-sm);
+  height: var(--h-sm);
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+  color: var(--fg-tertiary);
+  cursor: grab;
+  touch-action: none;
+  transition:
+    background var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .md-grip:hover {
+    background: var(--surface-3);
+    color: var(--fg);
+  }
+}
+
+.md-grip:active {
+  cursor: grabbing;
+  background: var(--surface-4);
+  color: var(--fg);
+}
+
+.md-grip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* THE CARD BEING CARRIED LIFTS, AND DOES NOT GROW. DESIGN_PRINCIPLES
+   §4, as `reorder.ts` argues it: the grab is expressed in light, the
+   movement in the layout, and nothing is animated by two systems at
+   once. A 0.97 scale on a card this size is a 7px shrink and reads as
+   a glitch. */
+.md-grid-slot[data-held] {
+  z-index: 4;
+}
+
+.md-grid-slot[data-held] > * {
+  box-shadow: var(--e3);
+  outline: 1px solid var(--line-strong);
+  outline-offset: -1px;
+  border-radius: var(--r-card);
+}
+
 /* -- inside a card ------------------------------------------- */
 
 /* A `<Card>` is a flex column with no gap of its own. These two are

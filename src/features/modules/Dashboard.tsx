@@ -62,9 +62,14 @@
    named for the module they move.
    ============================================================ */
 
-import type { CSSProperties, ReactElement } from 'react'
-import { useMemo, useState } from 'react'
-import { CaretLeft, CaretRight, Lock, Plus, ShieldCheck } from '@phosphor-icons/react'
+import type {
+  CSSProperties,
+  KeyboardEvent as ReactKeyboardEvent,
+  PointerEvent as ReactPointerEvent,
+  ReactElement,
+} from 'react'
+import { useCallback, useMemo, useState } from 'react'
+import { DotsSixVertical, Lock, Plus, ShieldCheck } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import {
   canBeModuleMaster,
@@ -79,7 +84,7 @@ import { coverPhoto, type CoverPhoto } from '@/features/table/coverPhoto'
 import { ICON_SIZE } from '@/lib/icons'
 import { accessReading, type AccessReading } from './read'
 import { AccessScreen } from './AccessScreen'
-import { reorderPlan } from './designer'
+import { reorderTo } from './designer'
 import { placeFilters, placesOf, placesUnder, type Place } from './places'
 import { PageHead } from '@/features/page'
 /* THE PRIMITIVES. A card, a button and a caption are drawn by
@@ -93,6 +98,18 @@ import { Button, Card, SectionHead } from '@/ui'
    The two files reached for here are a hook over the store and a
    list of Rows, and neither knows anything about a dashboard. */
 import { Proposals, useProposals } from '@/features/dashboard/ProposeList'
+/* THE DRAG, AND IT IS THE FRONT DOOR'S OWN. By direct path for the
+   reason above: a hook over rectangles and pointer events, with no
+   dashboard behind it. */
+import { useReorder } from '@/features/dashboard/reorder'
+/* THE SPRING THE DRAG MOVES BY — DESIGN_PRINCIPLES §4, "springs own
+   anything a person can grab". The same three the front door uses, so
+   a card that slides here and a card that slides there move at one
+   speed. `transitionFor` returns no transition at all under reduced
+   motion and for the one commit after a KEYBOARD move (§4: never
+   animate a keyboard-initiated action). */
+import { SPRING, transitionFor, useStillness } from '@/features/views/stillness'
+import { motion } from 'motion/react'
 import { rememberPlace } from './openPlace'
 import { PlaceMark } from './PlaceMark'
 import './modules.css'
@@ -228,12 +245,52 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
       ),
     [modules],
   )
-  const firstModule = order[0]?.id
-  const lastModule = order[order.length - 1]?.id
 
-  const move = (id: string, dir: -1 | 1): void => {
-    for (const at of reorderPlan(order, id, dir)) updateModule(at.id, { order: at.order })
-  }
+  /* ── THE RUNS, WHICH ARE WHAT IS ACTUALLY DRAGGED ────────────────
+     MODULE_SYSTEM §3 Screen 5: "Cards are dragged into order." The
+     grid draws PLACES and ordering is a fact about MODULES, so what
+     a drag moves is a module's whole run — the seven Highfield-to-
+     Haines cards travel together, exactly as the arrows already move
+     them. One slot per run, on the card that leads it.
+
+     THE HOOK IS THE FRONT DOOR'S. `useReorder` carries the spring,
+     the window-bound pointer handling, the arrow keys and a hit test
+     with its own test (`slotAt`). A second drag implementation here
+     would be a second set of answers to "which slot is the pointer
+     over", and the two would drift. */
+  const runs = useMemo(() => {
+    const seen: string[] = []
+    for (const seat of deck) {
+      if (!seen.includes(seat.place.moduleId)) seen.push(seat.place.moduleId)
+    }
+    return seen
+  }, [deck])
+
+  /* THE DROP IS OVER THE WHOLE LIST, not the visible one — see
+     `reorderTo`. Five of twenty-six cards can be showing and the
+     twenty-one off screen keep their order. */
+  const drop = useCallback(
+    (from: number, to: number) => {
+      const fromId = runs[from]
+      const toId = runs[to]
+      if (fromId === undefined || toId === undefined) return
+      for (const at of reorderTo(order, fromId, toId)) updateModule(at.id, { order: at.order })
+    },
+    [runs, order, updateModule],
+  )
+
+  const reorder = useReorder({ count: runs.length, onMove: drop, slotAttr: 'data-md-run' })
+  const { still } = useStillness()
+  const spring = transitionFor(still || reorder.instant, SPRING)
+
+  /* THE DECK, IN THE ORDER THE DRAG IS PREVIEWING. Each run's cards
+     stay together and in their own order; only the runs move. */
+  const drawn = useMemo(() => {
+    if (reorder.order.every((n, i) => n === i)) return deck
+    return reorder.order.flatMap((runIndex) =>
+      deck.filter((seat) => seat.place.moduleId === runs[runIndex]),
+    )
+  }, [deck, reorder.order, runs])
 
   const moduleCount = Object.keys(modules).length
 
@@ -459,8 +516,8 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
           {/* THE GRID SCROLLS, THE PAGE NEVER DOES. `1fr` rows inside a
               definite height, so the cards grow when there are few and
               the box â€” not the document â€” scrolls when there are many. */}
-          <ul className="md-grid">
-            {deck.map((seat, i) => (
+          <ul className="md-grid" ref={reorder.containerRef}>
+            {drawn.map((seat, i) => (
               <PlaceCard
                 key={seat.place.key}
                 place={seat.place}
@@ -469,9 +526,12 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
                 cover={seat.cover}
                 onOpen={onOpen}
                 ordering={ordering}
-                first={seat.place.moduleId === firstModule}
-                last={seat.place.moduleId === lastModule}
-                onMove={move}
+                /* the run's own slot and grab, on the card that leads
+                   it — `leads` is the same flag the arrows used */
+                runIndex={runs.indexOf(seat.place.moduleId)}
+                grab={reorder.handleProps}
+                spring={spring}
+                held={reorder.held >= 0 && runs[reorder.order[reorder.held] ?? -1] === seat.place.moduleId}
                 index={i}
               />
             ))}
@@ -533,13 +593,22 @@ interface PlaceCardProps {
   cover: CoverPhoto | null
   onOpen: (moduleId: string, tableId?: string) => void
   ordering: boolean
-  /** the ends of the module ORDER, where one of the two moves is
-   *  refused. Not the ends of the grid: a filter can show any five of
-   *  twenty-six cards, and a control refused because of where a card
-   *  happens to sit under a filter would be refusing the wrong thing. */
-  first: boolean
-  last: boolean
-  onMove: (moduleId: string, dir: -1 | 1) => void
+  /** which RUN this card belongs to, and -1 for a card whose module
+   *  has gone. Only the card that LEADS a run carries the slot the
+   *  drag measures and the handle that starts one — a module moves as
+   *  a whole, so seven grabbable cards for one module would be seven
+   *  ways to do one thing. */
+  runIndex: number
+  /** the front door's own handle bindings, for the leading card */
+  grab: (index: number) => {
+    onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void
+    onKeyDown: (e: ReactKeyboardEvent<HTMLElement>) => void
+  }
+  /** this card's run is the one being carried */
+  held: boolean
+  /** how the card travels between slots — nothing at all under
+   *  reduced motion, or after a keyboard move */
+  spring: ReturnType<typeof transitionFor>
   index: number
 }
 
@@ -550,9 +619,10 @@ function PlaceCard({
   cover,
   onOpen,
   ordering,
-  first,
-  last,
-  onMove,
+  runIndex,
+  grab,
+  held,
+  spring,
   index,
 }: PlaceCardProps): ReactElement {
   /* Absent access reads as unrestricted, which is what every module
@@ -578,7 +648,17 @@ function PlaceCard({
     /* THE ENTRANCE IS THE SLOT'S. `<Card>` takes no class and no
        style, so the stagger (`--i`) and the rise sit on the slot
        that holds it — the same movement, one element out. */
-    <li className="md-grid-slot ds-rise" style={style}>
+    <motion.li
+      layout
+      transition={spring}
+      className="md-grid-slot ds-rise"
+      style={style}
+      /* ONE SLOT PER RUN, ON THE CARD THAT LEADS IT. `useReorder`
+         measures `[data-md-run]` and nothing else, so the hit test is
+         over modules even though the grid draws places. */
+      {...(place.leads && runIndex >= 0 ? { 'data-md-run': '' } : {})}
+      data-held={held ? '' : undefined}
+    >
       {/* THE CARD IS `<Card>`, AND THE KIND IS ITS `kind`. The rail
           this card wore is the primitive's kind ground now — 6% of
           the hue under the whole card and 14% on its edge, the mix
@@ -708,38 +788,38 @@ function PlaceCard({
 
       {/* REORDERING IS A FACT ABOUT MODULES, NOT ABOUT THE BRANDS
           INSIDE THEM — the seven Highfield-to-Haines cards are one
-          module's run and move together. So the arrows are drawn once
-          per run, on the card that leads it, and they name the module
-          they move rather than the card they sit on.
+          module's run and move together. So the grab is drawn once
+          per run, on the card that leads it, and it names the module
+          it moves rather than the card it sits on.
 
-          THE END OF THE LIST IS REFUSED, NOT DISABLED. `<Button
-          refusedBecause>` keeps the arrow in the tab order, blocks the
-          press and draws the sentence under it — the same shape the
-          card's own refusal takes, in the primitive rather than in a
-          title attribute nobody hovers. */}
-      {ordering && place.leads && module ? (
+          IT IS A HANDLE NOW, NOT TWO ARROWS. MODULE_SYSTEM §3 Screen
+          5 asks for "cards are dragged into order", and the front
+          door has dragged its own cards since the arrangement landed
+          — one gesture, one hook, one spring, one hit test with its
+          own test. Two arrows on this screen and a grip on that one
+          were two answers to one question.
+
+          NOTHING IS LOST WITH THEM. The arrows' whole accessible
+          story was the keyboard, and `handleProps` binds arrow keys
+          on the handle that move the module instantly (§4: never
+          animate a keyboard-initiated action). The refusal they drew
+          at the ends is not needed by a control that cannot be
+          pressed past one: a drag that ends where it started writes
+          nothing, and an arrow key at the end of the list moves
+          nothing. */}
+      {ordering && place.leads && module && runIndex >= 0 ? (
         <span className="md-place-order">
-          <Button
-            tone="neutral"
-            size="sm"
-            aria-label={`Move ${place.moduleName} earlier`}
-            refusedBecause={first ? `${place.moduleName} is already first` : undefined}
-            onClick={() => onMove(place.moduleId, -1)}
+          <button
+            type="button"
+            className="md-grip"
+            aria-label={`Move ${place.moduleName}. Arrow keys move it.`}
+            {...grab(runIndex)}
           >
-            <CaretLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-          </Button>
-          <Button
-            tone="neutral"
-            size="sm"
-            aria-label={`Move ${place.moduleName} later`}
-            refusedBecause={last ? `${place.moduleName} is already last` : undefined}
-            onClick={() => onMove(place.moduleId, 1)}
-          >
-            <CaretRight size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
-          </Button>
+            <DotsSixVertical size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+          </button>
         </span>
       ) : null}
-    </li>
+    </motion.li>
   )
 }
 

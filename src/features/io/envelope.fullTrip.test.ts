@@ -238,15 +238,22 @@ describe('export → import → export, on the real seed', () => {
     const read = validateEnvelope(first)
     expect(read.ok).toBe(true)
     if (!read.ok) return
+    /* THE COLLECTIONS ARE OPTIONAL ON THE ENVELOPE — a file written
+       before the design layer existed carries neither — so they are
+       read once and asserted present, rather than reached through
+       with a cast. `npm test`'s typecheck is what asked for this;
+       vitest alone was happy. */
+    const viewsOut = first.views ?? []
+    const modulesOut = first.modules ?? []
     /* and there is enough of both for an order to mean anything */
-    expect(first.views.length).toBeGreaterThan(5)
-    expect(first.modules.length).toBeGreaterThan(5)
+    expect(viewsOut.length).toBeGreaterThan(5)
+    expect(modulesOut.length).toBeGreaterThan(5)
 
     applyReplace({ ...read.data, quotes: first.quotes })
     const second = buildExportPayload(2, true)
 
-    expect(second.views.map((v) => v.name)).toEqual(first.views.map((v) => v.name))
-    expect(second.modules.map((m) => m.name)).toEqual(first.modules.map((m) => m.name))
+    expect((second.views ?? []).map((v) => v.name)).toEqual(viewsOut.map((v) => v.name))
+    expect((second.modules ?? []).map((m) => m.name)).toEqual(modulesOut.map((m) => m.name))
   })
 
   it('keeps the date each page and module was first made', () => {
@@ -263,11 +270,11 @@ describe('export → import → export, on the real seed', () => {
 
     const dates = (list: ReadonlyArray<{ id: string; createdAt: string }>) =>
       Object.fromEntries(list.map((x) => [x.id, x.createdAt]))
-    expect(dates(second.views)).toEqual(dates(first.views))
-    expect(dates(second.modules)).toEqual(dates(first.modules))
+    expect(dates(second.views ?? [])).toEqual(dates(first.views ?? []))
+    expect(dates(second.modules ?? [])).toEqual(dates(first.modules ?? []))
 
     /* not all one millisecond, which is what the bug looked like */
-    expect(new Set(second.views.map((v) => v.createdAt)).size).toBeGreaterThan(1)
+    expect(new Set((second.views ?? []).map((v) => v.createdAt)).size).toBeGreaterThan(1)
   })
 
   it('keeps a table’s own column DESCRIPTIONS, which are where the citations live', () => {

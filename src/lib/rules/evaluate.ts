@@ -488,9 +488,12 @@ export function createEngine(ctx: RuleRunContext): RuleEngine {
     if (!values) {
       const e = entity(ref.entityId)
       try {
-        values = e ? evaluateRowValues(e, ref.row, evalCtx) : { ...(ref.row.values ?? {}) }
+        values = e ? evaluateRowValues(e, ref.row, evalCtx) : { ...ref.row.values }
       } catch {
-        values = { ...(ref.row.values ?? {}) }
+        /* spreading a missing value yields {} on its own — the `?? {}`
+           that stood here read as a guard against something that
+           cannot happen */
+        values = { ...ref.row.values }
       }
       valuesCache.set(key, values)
     }

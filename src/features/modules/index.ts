@@ -179,10 +179,12 @@ export {
   effectiveColumns,
   moveId,
   moveViewBlock,
-  /* WHERE A CARD SITS ON THE DASHBOARD — one move, as the writes that
+  /* WHERE A CARD SITS ON THE DASHBOARD — a drop, as the writes that
      make it. Exported so the order a person arranges by hand is
-     worked out in one place rather than in the component drawing it. */
-  reorderPlan,
+     worked out in one place rather than in the component drawing it.
+     It replaced `reorderPlan`, which was the same answer for a
+     one-place step, when the grid learned to be dragged. */
+  reorderTo,
   DESIGNER_CAPABILITIES,
   NOT_YET_SAYS,
 } from './designer'
