@@ -138,11 +138,21 @@ export function useModuleConfiguresRules(moduleId: string): boolean {
  *
  *  INTERSECTED WITH THE MODULES THAT EXIST, never read off the
  *  registry's own size. Deleting a module does NOT drop its entry here,
- *  and must not: `deleteModule` goes through `mutate`, so it is
- *  undoable, and a switch thrown away on delete would come back off
+ *  and must not: a switch thrown away on delete would come back OFF
  *  after an undo that restored everything else. The consequence is that
  *  this set can hold ids nothing points at, and any count taken from it
- *  has to say which modules it means. */
+ *  has to say which modules it means.
+ *
+ *  AND THE UNDO IT GUARDS AGAINST IS NARROWER THAN THIS ONCE SAID.
+ *  It read "`deleteModule` goes through `mutate`, so it is undoable",
+ *  which is not how the stack works: a step is opened by `record()`,
+ *  and `deleteModule` never calls it. `modules` IS in the history
+ *  slice, so a module comes back when its deletion rode in the same
+ *  tick as an act that recorded — which is exactly the delete cascade,
+ *  where a table's own step captures the slice the module is in. On
+ *  its own, deleting a module opens no step at all. The conclusion is
+ *  unchanged and the reason is now the real one; both are asserted in
+ *  `store/undo.test.ts`. */
 export const configuringCount = (moduleIds: readonly string[]): number => {
   let n = 0
   for (const id of moduleIds) if (on.has(id)) n += 1

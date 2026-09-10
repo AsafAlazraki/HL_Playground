@@ -453,6 +453,58 @@ describe('what history deliberately ignores', () => {
     expect(store().undo()).toBeNull()
   })
 
+  /* ── MODULES: IN THE SLICE, OUT OF THE SCOPE ─────────────────────
+     UX_PASS §1 lists four things undo should cover if the scope has
+     to be cut — "cell edits, column removal, row deletion and
+     module-layout changes". Three are in. The fourth is deliberately
+     out and the store says why at its own line 115: views and modules
+     are configuration surfaces whose own doors ask in the app's
+     voice.
+
+     BUT `modules` IS IN THE HISTORY SLICE, which is a different fact
+     and an easy one to state wrongly — two files in this repo say
+     flatly that "deleteModule goes through mutate, so it is
+     undoable". It is undoable only when it rides in the same tick as
+     an act that RECORDED, which is exactly what the delete cascade
+     does. On its own it opens no step. Both halves are asserted here
+     because the difference is invisible from the call site. */
+  it('does not record a module being made, renamed or reordered', async () => {
+    const made = store().createModule(['e-boats'], 'Boats', '')
+    await turn()
+    const depth = store().past.length
+    expect(depth).toBe(0)
+
+    if (made) store().updateModule(made.id, { name: 'Our boats', order: 3 })
+    await turn()
+    expect(store().past).toHaveLength(0)
+  })
+
+  it('does not record a module being deleted on its own', async () => {
+    const made = store().createModule(['e-boats'], 'Boats', '')
+    await turn()
+    if (made) store().deleteModule(made.id)
+    await turn()
+    expect(store().past).toHaveLength(0)
+    expect(store().undo()).toBeNull()
+  })
+
+  it('BUT BRINGS ONE BACK when it went with a table that was deleted', async () => {
+    /* The cascade's whole promise, and the reason the module registry
+       must not drop a switch on delete: the table's own step captured
+       the slice, and modules are in it. */
+    const made = store().createModule(['e-boats'], 'Boats', '')
+    await turn()
+    expect(made).not.toBeNull()
+
+    store().deleteEntity('e-boats')
+    await turn()
+    expect(store().modules[made!.id]).toBeUndefined()
+
+    store().undo()
+    expect(store().modules[made!.id]?.name).toBe('Boats')
+    expect(store().entities['e-boats']).toBeDefined()
+  })
+
   it('does not record selection', async () => {
     store().select({ kind: 'entity', id: 'e-boats' })
     await turn()

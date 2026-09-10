@@ -101,6 +101,27 @@ A partial undo is worse than none, because people trust it. So:
 module-layout changes, session-scoped. That is roughly a day and covers the
 acts that actually lose work. Everything outside it says so out loud.
 
+> **AMENDED 2026-09-11. THREE OF THE FOUR SHIPPED; THE FOURTH IS OUT ON
+> PURPOSE.** Cell edits, column removal and row deletion are recorded
+> (`useProjectStore.ts` — "Cell edit", "Column deleted", "Row deleted"), and
+> the line held since then is a different one from the one drawn here: **only
+> DESTRUCTION is recorded.** So a deleted table, rule, step, wire, zone and
+> role are all on the stack, and renaming, reordering and moving are not —
+> "nothing about them is invisible a second later, and a fifty-deep stack full
+> of them is how undo stops being worth pressing".
+>
+> **Module-layout changes are the fourth and they are out.** Views and modules
+> are configuration surfaces whose own doors ask in the app's voice, and
+> reordering cards or renaming a place is one drag back rather than a lost
+> afternoon.
+>
+> One subtlety, because two files in `src/` stated it wrongly and have been
+> corrected: `modules` **is** in the history slice. A module therefore comes
+> back if its deletion rode in the same tick as an act that recorded — which is
+> exactly the delete cascade, where a table's own step captures the slice the
+> module is in. Deleting a module on its own opens no step. Both halves are
+> asserted in `src/store/undo.test.ts`.
+
 ---
 
 ## 2 · ONE SEARCH OVER EVERYTHING

@@ -387,11 +387,17 @@ describe('the rule-configuring verb', () => {
 
   it('counts only the modules it is asked about, never the registry', () => {
     /* WHY THE COUNT TAKES IDS. Deleting a module leaves its entry
-       here on purpose — `deleteModule` is undoable, and a switch
-       dropped on delete would not come back with the module. So the
-       registry legitimately holds ids nothing points at, and the
-       figure the export panel prints has to be about the modules that
-       exist rather than about the set's size. */
+       here on purpose: a switch dropped on delete would not come back
+       when the module does. So the registry legitimately holds ids
+       nothing points at, and the figure the export panel prints has
+       to be about the modules that exist rather than about the set's
+       size.
+
+       WHEN THE MODULE DOES COME BACK is narrower than this once said
+       — not "deleteModule is undoable", but "modules are in the
+       history slice, so one returns if its deletion rode in the same
+       tick as an act that recorded", which is the delete cascade.
+       `store/undo.test.ts` asserts both halves. */
     setModuleConfiguresRules(BOATS.id, true)
     setModuleConfiguresRules('m_deleted', true)
 
