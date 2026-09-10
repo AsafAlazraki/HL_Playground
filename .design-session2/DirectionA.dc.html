@@ -1,0 +1,149 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@450;500&display=swap">
+  <style>
+    body { margin: 0; font-family: Inter, system-ui, sans-serif; }
+    a { color: #7fb2f0; } a:hover { color: #a8ccf5; }
+    .lbl { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums; }
+    .band { display: flex; align-items: center; gap: 14px; padding: 0 24px; height: 56px; border-bottom: 1px solid rgba(255,255,255,.08); }
+  </style>
+</helmet>
+
+<div style="width: 1280px; height: 800px; display: flex; flex-direction: column; background: #0b0f14; color: #eaf1f8; overflow: hidden;">
+
+  <!-- masthead -->
+  <div style="display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 24px; border-bottom: 1px solid rgba(255,255,255,.08); flex: 0 0 auto;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#eaf1f8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h18l-2.5 4h-13z"/><path d="M6 17V6l11 6-5 2.7V17"/></svg>
+      <span class="lbl" style="color: #8fa6bb;">Northside Marine · Quote 4127</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 20px;">
+      <span class="lbl" style="color: #5a6f83;">Draft · saved 2 min ago</span>
+      <span class="mono" style="font-size: 11px; color: #8fa6bb;">K. WHITTAKER</span>
+    </div>
+  </div>
+
+  <div style="display: flex; flex: 1 1 auto; min-height: 0;">
+
+    <!-- stage: the boat -->
+    <div style="position: relative; flex: 1 1 auto; min-width: 0; background: #05080c;">
+      <img src="adv7-2560x1440-06b0b1a2.webp" alt="Highfield ADV 700" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .92;">
+      <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(5,8,12,.96) 0%, rgba(5,8,12,.45) 38%, rgba(5,8,12,0) 68%);"></div>
+
+      <div style="position: absolute; left: 40px; right: 40px; bottom: 36px;">
+        <div class="lbl" style="color: #8fa6bb; margin-bottom: 10px;">Highfield Boats · Ocean Master Series</div>
+        <div style="font-family: Archivo, Inter, sans-serif; font-weight: 700; font-size: 132px; line-height: .86; letter-spacing: -.045em; font-variation-settings: 'wdth' 92; color: #ffffff; margin-bottom: 22px;">ADV7</div>
+        <div style="display: flex; gap: 40px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.18);">
+          <div><div class="lbl" style="color: #5a6f83; margin-bottom: 5px;">Length</div><div class="mono" style="font-size: 15px; color: #eaf1f8;">7.00 m</div></div>
+          <div><div class="lbl" style="color: #5a6f83; margin-bottom: 5px;">Hull</div><div style="font-size: 15px; color: #eaf1f8;">Aluminium RIB</div></div>
+          <div><div class="lbl" style="color: #5a6f83; margin-bottom: 5px;">Rated to</div><div class="mono" style="font-size: 15px; color: #eaf1f8;">250 hp</div></div>
+          <div><div class="lbl" style="color: #5a6f83; margin-bottom: 5px;">Capacity</div><div class="mono" style="font-size: 15px; color: #eaf1f8;">10 persons</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- decision rail -->
+    <div style="flex: 0 0 468px; display: flex; flex-direction: column; background: #0e141b; border-left: 1px solid rgba(255,255,255,.08);">
+
+      <div class="band" style="height: 52px; border-bottom: 1px solid rgba(255,255,255,.12);">
+        <span class="lbl" style="color: #8fa6bb;">Five decisions</span>
+        <span class="mono" style="margin-left: auto; font-size: 11px; color: #5a6f83;">4 OF 5 SETTLED</span>
+      </div>
+
+      <!-- 01 done -->
+      <div class="band">
+        <span class="mono" style="font-size: 12px; color: #5a6f83; width: 20px;">01</span>
+        <span class="lbl" style="color: #8fa6bb; width: 96px;">The hull</span>
+        <span style="font-size: 14px; color: #eaf1f8;">Highfield ADV 700</span>
+        <span class="mono" style="margin-left: auto; font-size: 13px; color: #a8bccf;">$64,900</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#56d364" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.5 5.5L20 7"/></svg>
+      </div>
+
+      <!-- 02 open -->
+      <div style="background: #101923; border-bottom: 1px solid rgba(255,255,255,.08); border-left: 3px solid #58a6ff;">
+        <div class="band" style="border-bottom: none; padding-left: 21px;">
+          <span class="mono" style="font-size: 12px; color: #58a6ff; width: 20px;">02</span>
+          <span class="lbl" style="color: #eaf1f8; width: 96px;">Motor</span>
+          <span style="font-size: 14px; color: #8fa6bb;">Choose one</span>
+          <svg style="margin-left: auto;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8fa6bb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 4px 24px 20px;">
+          <div style="border: 1px solid #58a6ff; border-radius: 10px; background: rgba(88,166,255,.14); padding: 12px; box-shadow: 0 0 0 1px rgba(88,166,255,.28);">
+            <img src="f250xsb-right-product-profile-800x600-172a0075.webp" alt="Yamaha F250XSB" style="display: block; width: 100%; height: 92px; object-fit: contain;">
+            <div style="font-size: 13px; color: #eaf1f8; margin-top: 8px;">Yamaha F250XSB</div>
+            <div class="mono" style="font-size: 12px; color: #a8bccf; margin-top: 3px;">250 hp · $38,400</div>
+          </div>
+          <div style="border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 12px;">
+            <img src="f250xcb-product-profile-800x600-478d9b53.webp" alt="Yamaha F250XCB" style="display: block; width: 100%; height: 92px; object-fit: contain; opacity: .78;">
+            <div style="font-size: 13px; color: #a8bccf; margin-top: 8px;">Yamaha F250XCB</div>
+            <div class="mono" style="font-size: 12px; color: #8fa6bb; margin-top: 3px;">250 hp · $39,150</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 03 refusal -->
+      <div style="padding: 14px 24px 16px; border-bottom: 1px solid rgba(255,255,255,.08);">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <span class="mono" style="font-size: 12px; color: #5a6f83; width: 20px;">03</span>
+          <span class="lbl" style="color: #8fa6bb; width: 96px;">Trailer</span>
+          <span style="font-size: 14px; color: #eaf1f8;">Dunbier ATM 2000</span>
+          <span class="mono" style="margin-left: auto; font-size: 13px; color: #a8bccf;">$12,850</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 14px; margin-top: 10px; padding-left: 34px;">
+          <span style="font-size: 14px; color: #5a6f83; text-decoration: line-through;">Stacer SRT 1800</span>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 6px; padding-left: 34px;">
+          <svg style="flex: 0 0 auto; margin-top: 2px;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f0883e" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.4v.2"/></svg>
+          <span style="font-size: 13px; line-height: 1.45; color: #d4a373;">Not offered — this trailer's Series is built for Stacer. This hull is a Highfield.</span>
+        </div>
+      </div>
+
+      <!-- 04 -->
+      <div class="band">
+        <span class="mono" style="font-size: 12px; color: #5a6f83; width: 20px;">04</span>
+        <span class="lbl" style="color: #8fa6bb; width: 96px;">Dealer fit</span>
+        <span style="font-size: 14px; color: #8fa6bb;">4 items</span>
+        <span class="mono" style="margin-left: auto; font-size: 13px; color: #a8bccf;">$7,240</span>
+      </div>
+
+      <!-- 05 -->
+      <div class="band" style="border-bottom: none;">
+        <span class="mono" style="font-size: 12px; color: #5a6f83; width: 20px;">05</span>
+        <span class="lbl" style="color: #8fa6bb; width: 96px;">Admin</span>
+        <span style="font-size: 14px; color: #8fa6bb;">Rego, transfer, PDI</span>
+        <span class="mono" style="margin-left: auto; font-size: 13px; color: #a8bccf;">$4,718</span>
+      </div>
+
+      <div style="flex: 1 1 auto;"></div>
+    </div>
+  </div>
+
+  <!-- price bar -->
+  <div style="display: flex; align-items: center; gap: 32px; height: 84px; padding: 0 40px; background: #ffffff; color: #081b2e; flex: 0 0 auto;">
+    <div>
+      <div class="lbl" style="color: #5a6b7c; margin-bottom: 3px;">Drive away, incl. GST</div>
+      <div class="mono" style="font-size: 34px; font-weight: 500; letter-spacing: -.02em; line-height: 1;">$128,108</div>
+    </div>
+    <div style="width: 1px; height: 44px; background: rgba(8,27,46,.12);"></div>
+    <div>
+      <div class="lbl" style="color: #5a6b7c; margin-bottom: 3px;">Deposit to hold</div>
+      <div class="mono" style="font-size: 17px; color: #3d5266;">$5,000</div>
+    </div>
+    <div style="margin-left: auto; display: flex; gap: 12px;">
+      <button style="font: inherit; font-size: 14px; font-weight: 500; color: #081b2e; background: transparent; border: 1px solid rgba(8,27,46,.22); border-radius: 6px; padding: 11px 20px; cursor: pointer;">Save draft</button>
+      <button style="font: inherit; font-size: 14px; font-weight: 600; color: #ffffff; background: #0a5fc2; border: none; border-radius: 6px; padding: 11px 24px; cursor: pointer;">Send to customer</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

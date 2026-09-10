@@ -219,7 +219,7 @@ import {
   retiredPairsSentence,
   retiredTableSentence,
 } from '@/features/views/sellable'
-import { SPRING, SPRING_QUICK, transitionFor, useStillness } from '@/features/views/stillness'
+import { SPRING, transitionFor, useStillness } from '@/features/views/stillness'
 /* THE ONE SHAPE EVERY NARROWED LIST TAKES — hl-journeys.md §4, built
    once so a surface gets all four properties or narrows nothing. A
    band mounts the mechanism; it does not draw its own count chip. */
@@ -242,6 +242,8 @@ import { buildSteps, savedNote, weighPick } from './steps'
 import type { BuildStep, Weighing } from './steps'
 import { orderBands, type Band, type BandTable } from './bands'
 import { deltaSay, levelConflict, type Conflict } from './conflict'
+import { cascadeOfConflict } from './cascade'
+import { CascadeSheet } from './CascadeSheet'
 import { FlowFoot, FlowLine, RunningTotal, type FlowStop } from './flow'
 import { FrozenPhoto } from './photo'
 import type { QuoteDef, QuoteLine } from './types'
@@ -470,6 +472,9 @@ export function QuoteBuild({ quote, onIssued, onGo }: QuoteBuildProps): ReactEle
   const [proposal, setProposal] = useState<{
     conflict: Conflict
     levelKey: string
+    /* the rung's own label, which is what the person pressed and so
+       what the sheet has to call it back */
+    levelLabel: string
     /* whether a KEY opened it — the same `event.detail` reading the
        band head takes, carried this far because the sheet is drawn
        here and the press happened on the price bar. §6: nothing
@@ -490,7 +495,7 @@ export function QuoteBuild({ quote, onIssued, onGo }: QuoteBuildProps): ReactEle
         setLevel(quote.id, key)
         return
       }
-      setProposal({ conflict, levelKey: key, quiet })
+      setProposal({ conflict, levelKey: key, levelLabel: label, quiet })
     },
     [quote],
   )
@@ -552,11 +557,20 @@ export function QuoteBuild({ quote, onIssued, onGo }: QuoteBuildProps): ReactEle
         }}
       />
 
+      {/* ONE SHEET FOR EVERY CHANNEL. The level was drawing its own
+          sheet in its own grammar while fitment — the channel that
+          actually fires on a dealer's price file — drew none at all.
+          `cascadeOfConflict` maps this one onto the shape the
+          teardown settled, so a person learns the sheet once.
+          `docs/research/cascade-teardown-porsche-live.md`. */}
       <AnimatePresence>
         {proposal ? (
-          <ConflictSheet
+          <CascadeSheet
             key={proposal.conflict.id}
-            conflict={proposal.conflict}
+            cascade={cascadeOfConflict(proposal.conflict, {
+              label: proposal.levelLabel,
+              amount: null,
+            })}
             still={still || proposal.quiet}
             onAccept={() => {
               setLevel(quote.id, proposal.levelKey)
@@ -2413,143 +2427,6 @@ function LedgerLine({ line, index }: { line: QuoteLine; index: number }): ReactE
     </li>
   )
 }
-
-/* ============================================================
-   §THE CONFLICT SHEET — Porsche's shape with our reasons in it.
-
-   The committed total on the price bar DOES NOT MOVE while this is
-   open. Proposed cost and committed cost are two different numbers
-   in two different places, which is the difference between a sheet
-   a person decides and a notification they acknowledge.
-
-   The arithmetic is shown rather than hidden: every line that moves,
-   the column it moves from and to, every line that cannot move and
-   why, and the change to the total as one signed figure.
-
-   It scales from the control that caused it — PHASE_TWO §4.6 — at
-   200ms, transform and opacity only, and `still` turns it off.
-   ============================================================ */
-
-function ConflictSheet({
-  conflict,
-  still,
-  onAccept,
-  onCancel,
-}: {
-  conflict: Conflict
-  still: boolean
-  onAccept: () => void
-  onCancel: () => void
-}): ReactElement {
-  /* Focus lands on the accept button. Button takes no ref (its props
-     are the native ones less `className` and `style`, and a ref is
-     not a prop on a function component's type here), so the sheet's
-     own action row is what is held and the button is found under it
-     by the `data-ok` it carries. `autoFocus` would do the same in one
-     word and trip the linter's ratchet. */
-  const actsRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    actsRef.current?.querySelector<HTMLButtonElement>('[data-ok]')?.focus()
-  }, [])
-
-  return (
-    <div className="qb-sheet-scrim" role="presentation">
-      <motion.div
-        className="qb-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-label={conflict.title}
-        initial={{ opacity: 0, scale: 0.97, y: 12 }}
-        animate={{ opacity: 1, scale: 1, y: 0, transition: transitionFor(still, SPRING_QUICK) }}
-        exit={{ opacity: 0, scale: 0.98, transition: transitionFor(still, SPRING_QUICK) }}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') {
-            e.stopPropagation()
-            onCancel()
-          }
-        }}
-      >
-        <p className="qb-sheet-title">{conflict.title}</p>
-
-        {/* EACH LINE THAT MOVES IS A ROW: the name, the column it moves
-            to as the meta, and the arithmetic — from, arrow, to — as the
-            trail. `.qb-sheet-row`, `.qb-sheet-name` and `.qb-sheet-why`
-            were a grid, a name step and a caption step drawn by hand
-            for a line in a list; the row draws them. What the list
-            keeps is `.s-held`, ds.css's state for a line that stays
-            where it is, on the <li>. */}
-        {conflict.changed.length > 0 ? (
-          <div className="qb-sheet-group">
-            <p className="mono-label qb-sheet-cap">What changes</p>
-            <ul className="qb-sheet-rows">
-              {conflict.changed.map((row) => (
-                <li key={row.lineId}>
-                  <Row
-                    dense
-                    name={row.label}
-                    meta={row.toColumn}
-                    trail={
-                      <span className="qb-sheet-move">
-                        <span className="qb-sheet-from">
-                          {row.from === null ? '—' : money(row.from)}
-                        </span>
-                        <span className="qb-sheet-arrow" aria-hidden="true">
-                          →
-                        </span>
-                        <span className="qb-sheet-to">{row.to === null ? '—' : money(row.to)}</span>
-                      </span>
-                    }
-                  />
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
-        {conflict.held.length > 0 ? (
-          <div className="qb-sheet-group">
-            <p className="mono-label qb-sheet-cap">What stays as it is</p>
-            <ul className="qb-sheet-rows">
-              {conflict.held.map((row) => (
-                <li key={row.lineId} className="s-held">
-                  <Row
-                    dense
-                    name={row.label}
-                    meta={<span className="s-say">{row.why}</span>}
-                    trail={
-                      <span className="qb-sheet-move">
-                        <span className="qb-sheet-to">{row.to === null ? '—' : money(row.to)}</span>
-                      </span>
-                    }
-                  />
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
-        <div className="qb-sheet-foot">
-          <p className="qb-sheet-delta">
-            <span className="qb-sheet-delta-lab mono-label">Change to the total</span>
-            <span className="qb-sheet-delta-fig">{deltaSay(conflict.delta)}</span>
-          </p>
-          {/* Neutral and primary — the sheet's two acts were two more
-              hand-drawn buttons, one grey and one accent, each with its
-              own three states. Eight rules, deleted. */}
-          <div className="qb-sheet-acts" ref={actsRef}>
-            <Button tone="neutral" onClick={onCancel}>
-              Leave it
-            </Button>
-            <Button tone="primary" data-ok="true" onClick={onAccept}>
-              {conflict.accept}
-            </Button>
-          </div>
-        </div>
-      </motion.div>
-    </div>
-  )
-}
-
 
 /* ============================================================
    THE PRICE MOVING — derived from the ONE summation.

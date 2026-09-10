@@ -1,0 +1,38 @@
+{
+  "artboards": [
+    { "file": "DirectionA.dc.html", "title": "Direction A — The Hull", "x": 0, "y": 0, "w": 1280, "h": 800 },
+    { "file": "DirectionB.dc.html", "title": "Direction B — The Sheet", "x": 1400, "y": 0, "w": 1280, "h": 800 },
+    { "file": "Main.dc.html", "title": "Direction C — The Ledger", "x": 2800, "y": 0, "w": 1280, "h": 800 }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -300,
+      "w": 700,
+      "text": "Same quote in all three: Highfield ADV 700 hull, Yamaha F250 motor, Dunbier trailer, five decisions, one refusal shown with its reason, $128,108 drive away.\n\nThey differ on structure and surface, not on content. All three use the app's real accent (#0a5fc2), ink (#081b2e) and faces (Inter / IBM Plex Mono / Archivo) — so what you are picking is the shape of the screen, not the palette.\n\nStatic mockups, not clickable."
+    },
+    {
+      "id": "note-a",
+      "x": 0,
+      "y": -150,
+      "w": 620,
+      "text": "A — THE HULL. Dark, photographic, one boat filling the screen. The decisions live in a rail on the right; the price is a solid white bar under everything.\n\nWhy: makes a $128k purchase feel like a $128k purchase, and it is the only one a customer would want to look at over the salesperson's shoulder.\n\nCost: a dark photographic screen is hostile to the dense reading a dealer does all day, and the photo takes 60% of the width to say one thing you already know."
+    },
+    {
+      "id": "note-b",
+      "x": 1400,
+      "y": -150,
+      "w": 620,
+      "text": "B — THE SHEET. Light, layered white cards on a soft grey, generous spacing, the price floating in a pill.\n\nWhy: instantly legible, calm, nothing to learn. The card boundaries do the grouping so the five decisions never run together.\n\nCost: whitespace is paid for in density — fewer options visible at once, more scrolling on a real 40-motor list. And it looks like every other SaaS tool; it wins no argument on its own."
+    },
+    {
+      "id": "note-c",
+      "x": 2800,
+      "y": -150,
+      "w": 620,
+      "text": "C — THE LEDGER. Three columns: the five decisions as a permanent spine, the open decision as a real table, and a running itemised ledger that always shows what the total is made of.\n\nWhy: the price is never a surprise, and refusals sit in the table where the choice would have been, with the reason — 'Over the hull's rating. The ADV 700 is plated to 250 hp.' It extends Quiet Precision rather than replacing it.\n\nCost: the least immediately impressive of the three. It asks the dealer to read, and it gives the boat 82px of height."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}
