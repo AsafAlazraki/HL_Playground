@@ -27,6 +27,7 @@ import {
   type RoleDef,
   canBeModuleMaster,
   DEFAULT_CAPABILITIES,
+  orgSlug,
   type XY,
 } from '@/types/model'
 import { defaultMeta, repository, type ProjectSnapshot } from '@/db/repository'
@@ -842,6 +843,14 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
                sheet, so there is no reading where a new name is a new
                organisation. */
             createdAt: createdAt ?? s.meta.org?.createdAt ?? nowIso(),
+            /* THE TENANT KEY, minted once and then kept — TENANCY
+               §4.1, and the same rule as `createdAt` above it. Every
+               store scoped to a business was keyed on the lowercased
+               NAME, so a rename orphaned its business rules. The slug
+               is derived from the FIRST name and never recomputed;
+               re-deriving it on a rename would be the bug it exists
+               to fix. */
+            slug: s.meta.org?.slug ?? orgSlug(name.trim() || s.meta.name),
           },
         },
       }))

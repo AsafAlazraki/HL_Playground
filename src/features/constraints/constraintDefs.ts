@@ -34,11 +34,32 @@ import { sanitiseAllObserved, sanitiseObserved } from '@/lib/observed/adopt'
 
 const NO_ORG = '__unnamed'
 
-/** The organisation a constraint belongs to. Name-based because that
- *  is the only identity `OrgProfile` carries today; when the store
- *  owns constraints this becomes a plain foreign key. */
+/** The key everything scoped to a business is filed under.
+ *
+ *  TENANCY §4.1. This was the lowercased NAME, because the name was
+ *  the only identity `OrgProfile` carried — so renaming the business
+ *  orphaned its business rules. They were never deleted; they sat in
+ *  a map under a key nothing asked for again, and the rules pane went
+ *  quiet with no way to tell that from having written none.
+ *
+ *  THE FALLBACK IS THE MIGRATION'S OTHER HALF, not a hedge. A sheet
+ *  saved before slugs existed has no slug until `setOrganisation`
+ *  runs again, and its rules must keep resolving in the meantime —
+ *  so the old key still answers when there is nothing better.
+ *  `adoptSlugKey` below moves them across the first time it can see
+ *  both keys at once. */
 export const orgKeyOf = (meta: ProjectMeta): string =>
-  meta.org?.name?.trim().toLowerCase() || NO_ORG
+  meta.org?.slug?.trim() || meta.org?.name?.trim().toLowerCase() || NO_ORG
+
+/** The key this organisation USED to be filed under, or null when it
+ *  never had a different one. Only the name-based key is possible —
+ *  a slug never changes, which is the whole point of it. */
+export const legacyOrgKeyOf = (meta: ProjectMeta): string | null => {
+  const slug = meta.org?.slug?.trim()
+  if (!slug) return null
+  const old = meta.org?.name?.trim().toLowerCase()
+  return old && old !== slug ? old : null
+}
 
 /* ---------------------------------------------------------- */
 /* The registry                                               */
@@ -233,6 +254,41 @@ export function setConstraintEnabled(id: string, enabled: boolean): void {
   if (!current || current.enabled === enabled) return
   map.set(id, { ...current, enabled, updatedAt: nowIso() })
   publish()
+}
+
+/**
+ * MOVE A BUSINESS'S RULES ONTO ITS SLUG — TENANCY §4.1's migration.
+ *
+ * Called with the sheet's own meta, so it can see both keys at once:
+ * the slug it has now and the lowercased name it was filed under
+ * before. It moves anything sitting under the old key and takes the
+ * old key away, so the move happens once and the second call is free.
+ *
+ * NOTHING IS OVERWRITTEN. A rule already under the slug wins — it is
+ * the newer authoring by construction, since the slug key is the one
+ * everything writes to now. The old entry is dropped rather than
+ * merged, because two rules with one id are one rule.
+ *
+ * Returns how many moved, so a caller can say so rather than guess.
+ */
+export function adoptSlugKey(meta: ProjectMeta): number {
+  const from = legacyOrgKeyOf(meta)
+  if (!from) return 0
+  const stale = byOrg.get(from)
+  if (!stale || stale.size === 0) {
+    byOrg.delete(from)
+    return 0
+  }
+  const to = orgMap(orgKeyOf(meta))
+  let moved = 0
+  for (const [id, def] of stale) {
+    if (to.has(id)) continue
+    to.set(id, def)
+    moved += 1
+  }
+  byOrg.delete(from)
+  publish()
+  return moved
 }
 
 /** Seeding seam — an import, a demo, or the store once it owns these. */

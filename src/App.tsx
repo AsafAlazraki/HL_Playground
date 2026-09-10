@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
-import { adoptKeptPatterns, seedWorkbookConstraints } from '@/features/constraints'
+import { adoptKeptPatterns, adoptSlugKey, seedWorkbookConstraints } from '@/features/constraints'
 import { StillnessProvider } from '@/features/views/stillness'
 import { TabGuard } from '@/features/session'
 import { SignIn, currentUser, signOut, readTheme, applyTheme, type AppUser } from '@/features/auth'
@@ -95,6 +95,18 @@ export default function App() {
     /* a rule is made of columns — with no tables there is nothing for
        one to bind to, and a seed must never be written half-bound */
     if (Object.keys(entities).length === 0) return
+    /* THE RULES THIS BUSINESS ALREADY HAD, ONTO ITS TENANT KEY.
+       TENANCY §4.1: everything scoped to a business was filed under
+       the lowercased NAME, so a rename orphaned its business rules —
+       they were never deleted, they sat under a key nothing asked for
+       again and the pane went quiet. The slug replaces that key, and
+       this is where a sheet that predates it crosses over.
+
+       IT RUNS HERE because this is the first moment both keys are
+       knowable at once: the org is loaded and the slug is on it.
+       Idempotent by construction — it takes the old key away, so the
+       second call finds nothing and returns 0. */
+    adoptSlugKey(useProjectStore.getState().meta)
     seedWorkbookConstraints()
     /* AND THE PATTERNS A PERSON KEPT, on the same seam and for the
        same reason. A kept pattern becomes a rule carrying severity

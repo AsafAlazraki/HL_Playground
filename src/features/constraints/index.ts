@@ -101,6 +101,8 @@ export {
   getConstraint,
   getConstraints,
   useConstraint,
+  adoptSlugKey,
+  legacyOrgKeyOf,
   orgKeyOf,
 } from './constraintDefs'
 export type { NewConstraint } from './constraintDefs'

@@ -461,7 +461,41 @@ export interface OrgProfile {
   name: string
   industry: IndustryKey
   createdAt: string
+  /** THE TENANT KEY, and the one thing about an organisation that
+   *  never changes. TENANCY §4.1.
+   *
+   *  Everything scoped to a business — the constraint registry today,
+   *  and every localStorage store §4.3 lists — was keyed on the
+   *  LOWERCASED NAME, because the name was the only identity this
+   *  type carried. So renaming the business orphaned its business
+   *  rules: they are not deleted, they sit in a map under a key
+   *  nothing asks for any more, and the screen goes quiet.
+   *
+   *  MINTED ONCE FROM THE FIRST NAME AND KEPT, exactly like
+   *  `createdAt` beside it and for the same reason — a rename is a
+   *  rename, not a new business. Two dealerships that happen to pick
+   *  the same name are not a collision worth solving here: this is
+   *  one organisation per sheet, in one browser.
+   *
+   *  OPTIONAL, because a sheet saved before this existed has none.
+   *  `orgKeyOf` falls back to the old name key for exactly that
+   *  case, and the registry rewrites the old key under the slug the
+   *  first time it sees both. */
+  slug?: string
 }
+
+/** A name, as a key: lowercase, alphanumerics and single hyphens.
+ *
+ *  It is derived from the name ONCE and then never recomputed — the
+ *  point of the slug is that it survives what the name does not, so
+ *  a function that re-derives it on every read would be the bug it
+ *  exists to fix. `orgSlug` is for MINTING one, nothing else. */
+export const orgSlug = (name: string): string =>
+  name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'sheet'
 
 /** What a table IS, structurally. The three roles must not be confused —
  *  conflating them is precisely the mess we exist to replace.
