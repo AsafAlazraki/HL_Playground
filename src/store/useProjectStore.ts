@@ -358,7 +358,22 @@ interface ProjectStore {
    * pointing at nothing. Ignored when it is already taken, so a caller
    * can never fuse two pages into one by asking for an id twice.
    */
-  createView: (rootTableId: string, name?: string, keepId?: string) => ViewDef
+  /**
+   * @param createdAt WHEN THE PAGE WAS FIRST MADE, where a caller
+   *   knows it. Only a RESTORE knows: TENANCY §4.6 measured the round
+   *   trip and found every restored page sharing one millisecond,
+   *   because this minted a fresh stamp and the export sorts by it —
+   *   "views[1] was Stabicraft view before and ePropulsion Outboards
+   *   view after, the same set, reordered". A page's own age is a fact
+   *   about the page, exactly as `OrgProfile.createdAt` is a fact
+   *   about the business, and it moves with it.
+   */
+  createView: (
+    rootTableId: string,
+    name?: string,
+    keepId?: string,
+    createdAt?: string,
+  ) => ViewDef
   updateView: (id: string, patch: Partial<Omit<ViewDef, 'id' | 'createdAt'>>) => void
   deleteView: (id: string) => void
 
@@ -375,6 +390,9 @@ interface ProjectStore {
     /** the id to keep when this module is being RESTORED from a file —
      *  see `createView`'s note. Ignored when it is already taken. */
     keepId?: string,
+    /** when the module was first made, where a caller knows it — as
+     *  `createView`, and for the same measured reason. */
+    createdAt?: string,
   ) => ModuleDef | null
   updateModule: (id: string, patch: Partial<Omit<ModuleDef, 'id' | 'createdAt'>>) => void
   deleteModule: (id: string) => void
@@ -398,7 +416,13 @@ interface ProjectStore {
   /** `keepId` is for restoring one, and follows `createView`'s rule:
    *  ignored when the id is already taken. Returns null for an empty
    *  name — a role nobody can point at is not a role. */
-  createRole: (name: string, description?: string, keepId?: string) => RoleDef | null
+  /** @param createdAt as `createView` — a job's age travels with it */
+  createRole: (
+    name: string,
+    description?: string,
+    keepId?: string,
+    createdAt?: string,
+  ) => RoleDef | null
   updateRole: (id: string, patch: Partial<Omit<RoleDef, 'id' | 'createdAt'>>) => void
   /** Takes the role off every module's access list in the same step,
    *  so one Ctrl+Z puts the job AND its grants back together. A
@@ -1394,7 +1418,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     },
 
     /* -- views -------------------------------------------- */
-    createView: (rootTableId, name, keepId) => {
+    createView: (rootTableId, name, keepId, createdAt) => {
       const existing = Object.values(get().views).find((v) => v.rootTableId === rootTableId)
       if (existing) return existing
       const root = get().entities[rootTableId]
@@ -1408,7 +1432,8 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         name: name?.trim() || `${root?.name ?? 'Table'} view`,
         rootTableId,
         blocks: [],
-        createdAt: nowIso(),
+        /* KEPT WHERE A CALLER KNOWS IT — see the note on the type. */
+        createdAt: createdAt ?? nowIso(),
         updatedAt: nowIso(),
       }
       mutate((s) => ({ views: { ...s.views, [view.id]: view } }))
@@ -1434,7 +1459,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     /* -- modules ------------------------------------------------ */
 
 
-    createModule: (tableIds, name, description, keepId) => {
+    createModule: (tableIds, name, description, keepId, createdAt) => {
       const clean = tableIds.filter((id) => {
         const e = get().entities[id]
         return e !== undefined && canBeModuleMaster(e)
@@ -1520,7 +1545,8 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         viewId: view.id,
         accent: primary.accent,
         order,
-        createdAt: nowIso(),
+        /* KEPT WHERE A CALLER KNOWS IT — see `createView`. */
+        createdAt: createdAt ?? nowIso(),
         updatedAt: nowIso(),
       }
       mutate((s) => ({ modules: { ...s.modules, [mod.id]: mod } }))
@@ -1545,7 +1571,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
 
     /* -- roles -------------------------------------------------- */
 
-    createRole: (name, description, keepId) => {
+    createRole: (name, description, keepId, createdAt) => {
       const clean = name.trim()
       if (clean === '') return null
       const role: RoleDef = {
@@ -1554,7 +1580,7 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         ...(description && description.trim() !== ''
           ? { description: description.trim() }
           : {}),
-        createdAt: nowIso(),
+        createdAt: createdAt ?? nowIso(),
         updatedAt: nowIso(),
       }
       record({ one: 'Role added', where: role.name })

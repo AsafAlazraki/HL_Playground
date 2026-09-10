@@ -526,7 +526,15 @@ function restoreDesign(
      would leave the grants pointing at the old one. */
   for (const role of design.roles ?? []) {
     if (store().roles[role.id]) continue
-    store().createRole(role.name, role.description, role.id)
+    /* THE DATE TRAVELS WITH THE JOB. `exportPayload` sorts roles,
+       pages and modules by `createdAt` so that "diffs between two
+       revisions stay readable", and a restore that re-stamped them all
+       with one millisecond left that sort falling back to the name —
+       measured in TENANCY §4.6 on the round trip. Handed over here
+       rather than patched afterwards, because `updateRole` refuses
+       `createdAt` on purpose: when a thing was made is not an
+       editable field. */
+    store().createRole(role.name, role.description, role.id, role.createdAt)
   }
 
   /* -- pages ------------------------------------------------- */
@@ -549,7 +557,13 @@ function restoreDesign(
        the only thing that keeps two copies of one backup from
        colliding. So the id is offered on one path and withheld on the
        other, and `createView` refuses it anyway if it is taken. */
-    const record = store().createView(rootTableId, v.name, fresh ? undefined : v.id)
+    const record = store().createView(
+      rootTableId,
+      v.name,
+      fresh ? undefined : v.id,
+      /* the page's own age — see the note on the roles above */
+      v.createdAt,
+    )
     store().updateView(record.id, { name: v.name, blocks })
     viewIdMap.set(v.id, record.id)
     restored.push({ id: record.id, name: v.name, blocks, from: v })
@@ -570,6 +584,7 @@ function restoreDesign(
       mod.description,
       /* same rule as the page above — see the note there */
       fresh ? undefined : mod.id,
+      mod.createdAt,
     )
     /* the store refuses a master that cannot be one (a join records
        pairs and is not a place to stand) — its rule, kept, not copied */

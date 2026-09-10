@@ -224,6 +224,52 @@ describe('export → import → export, on the real seed', () => {
     expect(second.entities.map(shapeOf)).toEqual(first.entities.map(shapeOf))
   })
 
+  /* ── THE WRITTEN ORDER — TENANCY §4.6 ────────────────────────────
+     `exportPayload` sorts pages and modules by `createdAt`, in its own
+     words so that "diffs between two revisions stay readable". A
+     restore used to re-stamp every one of them through
+     `createView`/`createModule`, so a whole set shared one
+     millisecond and the sort fell back to the name: §4.6 measured
+     views[1] as "Stabicraft view" before and "ePropulsion Outboards
+     view" after — the same set, reordered, by a round trip that
+     changed nothing. */
+  it('KEEPS THE ORDER PAGES AND MODULES WERE WRITTEN IN', () => {
+    const first = buildExportPayload(1, true)
+    const read = validateEnvelope(first)
+    expect(read.ok).toBe(true)
+    if (!read.ok) return
+    /* and there is enough of both for an order to mean anything */
+    expect(first.views.length).toBeGreaterThan(5)
+    expect(first.modules.length).toBeGreaterThan(5)
+
+    applyReplace({ ...read.data, quotes: first.quotes })
+    const second = buildExportPayload(2, true)
+
+    expect(second.views.map((v) => v.name)).toEqual(first.views.map((v) => v.name))
+    expect(second.modules.map((m) => m.name)).toEqual(first.modules.map((m) => m.name))
+  })
+
+  it('keeps the date each page and module was first made', () => {
+    /* The fact under the order, asserted on its own: a page's age is
+       a fact about the page, and a restore moves it rather than
+       re-dating it — the same rule `OrgProfile.createdAt` follows one
+       field over. */
+    const first = buildExportPayload(1, true)
+    const read = validateEnvelope(first)
+    expect(read.ok).toBe(true)
+    if (!read.ok) return
+    applyReplace({ ...read.data, quotes: first.quotes })
+    const second = buildExportPayload(2, true)
+
+    const dates = (list: ReadonlyArray<{ id: string; createdAt: string }>) =>
+      Object.fromEntries(list.map((x) => [x.id, x.createdAt]))
+    expect(dates(second.views)).toEqual(dates(first.views))
+    expect(dates(second.modules)).toEqual(dates(first.modules))
+
+    /* not all one millisecond, which is what the bug looked like */
+    expect(new Set(second.views.map((v) => v.createdAt)).size).toBeGreaterThan(1)
+  })
+
   it('keeps a table’s own column DESCRIPTIONS, which are where the citations live', () => {
     const before = Object.values(useProjectStore.getState().entities)
       .flatMap((e) => e.fields)
