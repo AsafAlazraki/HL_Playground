@@ -30,9 +30,9 @@
    ============================================================ */
 
 import { describe, expect, it } from 'vitest'
-import type { CellValue, EntityDef, FieldDef, RowData } from '@/types/model'
+import type { CellValue, ColumnFilter, EntityDef, FieldDef, RowData } from '@/types/model'
 import { applyView } from '@/features/table/core'
-import type { ColumnFilter, ViewRow } from '@/features/table/core'
+import type { ViewRow } from '@/features/table/core'
 import { applyFilters } from './filter'
 import type { RelatedRow } from './pairs'
 
@@ -76,6 +76,12 @@ const related: RelatedRow[] = rows.map((r, i) => ({
 
 const read = (r: RelatedRow, fieldId: string): CellValue => r.row.values[fieldId] ?? ''
 
+/* TYPED AS THE MODEL'S `ColumnFilter`, which is the narrower of the
+   two: the register's own union adds `between`, so a model filter is
+   accepted by both engines and one fixture can be handed to each.
+   Found by `npm test` — a per-file `tsc` run before the test existed
+   said nothing, which is the third time this session the full
+   typecheck has caught what a partial one could not. */
 const EMPTY: ColumnFilter = { kind: 'values', fieldId: 'f-brand', selected: [] }
 const ONE: ColumnFilter = { kind: 'values', fieldId: 'f-brand', selected: ['REDCO'] }
 
