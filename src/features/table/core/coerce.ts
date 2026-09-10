@@ -125,6 +125,53 @@ function optionPreview(options: string[]): string {
   return options.length > 6 ? `${head}, …` : head
 }
 
+/* ============================================================
+   CACHED SPREADSHEET ERRORS — CONFIG_FINDINGS §4 Adopt 9:
+   "Quarantine, don't coerce."
+
+   A workbook cell holding `#N/A` is not data. It is the CACHED
+   RESULT of a formula that could not resolve when the file was last
+   saved, and a CSV carries the cache rather than the formula. On a
+   number column it was already refused — `#N/A` is not a number —
+   but on a TEXT column it sailed through as the literal string, and
+   then it is on a catalogue face in front of a customer, and it
+   sorts, and it exports, and somebody eventually types a price next
+   to it believing the row is real.
+
+   THE SEVEN EXCEL WRITES, AND NOTHING ELSE. Adopt 9's own words are
+   "any value starting with #", and taken literally that refuses
+   "#1 Best Seller", "#4 rigging kit" and every hashtag a dealer has
+   ever typed. Legitimate data starting with a hash is common;
+   `#DIV/0!` is not ambiguous at all. So the list is the tokens
+   themselves — the adaptation this repo's §8 asks for rather than
+   the verbatim adoption.
+
+   `#REF?` WITH A QUESTION MARK IS OURS AND IS NOT HERE. That is what
+   this app draws in a cell whose link has gone (`GridCell.tsx:182`),
+   and it is drawn, never stored.
+
+   IT GUARDS THE IMPORT DOORS AND ONLY THOSE. `coerceCellText` is the
+   one seam every file and every paste comes through (`csvSchema.ts`,
+   `pasteBlock.ts`, `tableCsv.ts`); the grid does not use it, so a
+   person typing into their own cell may still type whatever they
+   mean. A refused cell lands EMPTY and is counted where the count is
+   already promised — "N cells do not fit the types chosen and will
+   be empty" before a create, and a named refusal on an upload's
+   preflight.
+   ============================================================ */
+const SPREADSHEET_ERRORS = new Set([
+  '#N/A',
+  '#VALUE!',
+  '#REF!',
+  '#DIV/0!',
+  '#NAME?',
+  '#NULL!',
+  '#NUM!',
+  '#SPILL!',
+  '#CALC!',
+  '#GETTING_DATA',
+])
+
 /** Text -> typed cell value for one field.
  *  Empty (or whitespace-only) text always means "clear the cell" -> null. */
 export function coerceCellText(
@@ -134,6 +181,15 @@ export function coerceCellText(
 ): CoerceResult {
   const trimmed = text.trim()
   if (trimmed === '') return { ok: true, value: null }
+
+  /* BEFORE THE TYPE IS EVEN CONSULTED, because this is true of every
+     column: a cached error is not a value of any type. */
+  if (SPREADSHEET_ERRORS.has(trimmed.toUpperCase())) {
+    return {
+      ok: false,
+      reason: `"${trimmed}" is a spreadsheet error, not a value — the formula behind that cell could not resolve when the file was saved. Fix it at the source or leave the cell empty.`,
+    }
+  }
 
   switch (field.type) {
     case 'number':

@@ -249,7 +249,15 @@ function exceptionsFor(
   type: FieldType,
   options?: string[],
 ): { exceptions: ColumnException[]; emptied: number } {
-  if (type === 'text') return { exceptions: [], emptied: 0 }
+  /* TEXT USED TO RETURN EARLY, because nothing could fail to be text.
+     Something can now: `coerceCellText` quarantines a cached
+     spreadsheet error (`#N/A`, `#VALUE!` …) whatever the column's
+     type, so a text column with those in it DOES empty cells — and a
+     reading that promised "0 cells will be empty" while the create
+     emptied forty would be the count disagreeing with the act, which
+     is the one thing this file exists to prevent. The loop is over a
+     value histogram, so asking it of text costs a pass over distinct
+     values rather than over rows. */
   const field = asField(type, options)
   const bad: ColumnException[] = []
   let emptied = 0
@@ -456,10 +464,21 @@ export function describeColumn(
           ? ` ${count(judged - numberMiss)} of ${count(judged)} are numbers, but a column needs ${count(NUMBER_FLOOR)} values before an odd one can be treated as an exception.`
           : ` ${count(judged - numberMiss)} of ${count(judged)} are numbers; ${count(numberMiss)} are not, which is more than one in a hundred.`
     }
+    /* AND THE CACHED ERRORS, IF THERE ARE ANY. Text used to report
+       none of either, because nothing could fail to be text. A
+       workbook's `#N/A` can, now that `coerceCellText` quarantines it
+       whatever the column is, and the sentence has to carry the same
+       count the create will act on — said in the same shape the
+       number and list branches already use, so a person reads one
+       wording for one fact. */
+    const quarantined =
+      emptied === 0
+        ? ''
+        : ` ${count(emptied)} ${emptied === 1 ? 'is' : 'are'} a spreadsheet error rather than a value, and will land empty.`
     return {
-      why: `${scope}${plural(judged, 'value', 'values')}, ${different}.${nearly}`,
-      exceptions: [],
-      emptied: 0,
+      why: `${scope}${plural(judged, 'value', 'values')}, ${different}.${nearly}${quarantined}`,
+      exceptions,
+      emptied,
       judged,
     }
   }

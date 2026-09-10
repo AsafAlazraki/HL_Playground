@@ -473,3 +473,75 @@ describe('the table takes the file’s own name', () => {
     expect(tableNameFromFile('no-extension')).toBe('no-extension')
   })
 })
+
+/* ------------------------------------------------------------ */
+/* a workbook's cached errors — CONFIG_FINDINGS §4 Adopt 9        */
+/* ------------------------------------------------------------ */
+
+describe('a file exported with #N/A still in it', () => {
+  /* A supplier's own workbook, saved with two VLOOKUPs unresolved.
+     The CSV carries the CACHE, not the formula, so what arrives is
+     the literal text `#N/A` in a column of product names. */
+  const text = file([
+    ['Model', 'Cost'],
+    ['Sport 460', '15040'],
+    ['#N/A', '21990'],
+    ['Ultralite 340', '#VALUE!'],
+    ['#1 Best Seller', '8970'],
+  ])
+
+  it('THE READING AND THE CREATE AGREE ABOUT THE TEXT COLUMN', () => {
+    /* `exceptionsFor` returned early on text, because nothing could
+       fail to be text — so the reading said "0 cells will be empty"
+       and the create emptied one. That is the count disagreeing with
+       the act, which is worse than either answer alone. */
+    const plan = readCsvSchema(text, 'Boats.csv')
+    const model = describeColumn(col(plan, 'Model'), 'text')
+    expect(model.exceptions).toEqual([{ value: '#N/A', count: 1 }])
+    expect(model.emptied).toBe(1)
+
+    const choices: ColumnChoice[] = plan.columns.map((c, i) => ({
+      index: i,
+      name: c.header,
+      type: c.header === 'Cost' ? 'number' : 'text',
+    }))
+    const values = csvRowValues(plan.rows, choices)
+    /* the error lands EMPTY, and the row it was on survives — a
+       cached error is one bad cell, not a bad row */
+    expect(values[1]?.[0]).toBeNull()
+    expect(values[1]?.[1]).toBe(21990)
+  })
+
+  it('empties the error in a price column and keeps the name beside it', () => {
+    const plan = readCsvSchema(text, 'Boats.csv')
+    const choices: ColumnChoice[] = plan.columns.map((c, i) => ({
+      index: i,
+      name: c.header,
+      type: c.header === 'Cost' ? 'number' : 'text',
+    }))
+    const values = csvRowValues(plan.rows, choices)
+    expect(values[2]?.[0]).toBe('Ultralite 340')
+    expect(values[2]?.[1]).toBeNull()
+  })
+
+  it('LEAVES A REAL HASH ALONE — "#1 Best Seller" is a product name', () => {
+    const plan = readCsvSchema(text, 'Boats.csv')
+    const choices: ColumnChoice[] = plan.columns.map((c, i) => ({
+      index: i,
+      name: c.header,
+      type: c.header === 'Cost' ? 'number' : 'text',
+    }))
+    expect(csvRowValues(plan.rows, choices)[3]?.[0]).toBe('#1 Best Seller')
+  })
+
+  it('says the count before the press, in the sentence that already promised it', () => {
+    const plan = readCsvSchema(text, 'Boats.csv')
+    const model = describeColumn(col(plan, 'Model'), 'text')
+    /* the column's own reading names what it is, in the shape the
+       number and list branches already use */
+    expect(model.why).toContain('1 is a spreadsheet error rather than a value, and will land empty')
+    expect(describeBuild(2, 4, 'Boats', model.emptied)).toContain(
+      '1 cell does not fit the types chosen and will be empty',
+    )
+  })
+})
