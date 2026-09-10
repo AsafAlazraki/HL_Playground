@@ -112,7 +112,22 @@ export const NOT_YET_SAYS: Partial<Record<DesignerCapability, string>> = {
   delete: 'Taking one out is done from its face in the Catalog, and it is undoable.',
   relate: 'Ticked on an item’s own page today.',
   quote: 'Quoting starts from an item’s own page today.',
-  export: 'Taking a copy of this list out is not built yet.',
+  /* THE TWO TRAVEL VERBS, ON THE CATALOGUE'S OWN BAR. `export` read
+     "not built yet" for as long as the switch changed nothing; it now
+     puts Export on the bar and `import` puts Re-upload and Paste rows
+     beside it, both gated on these switches (`travelCaps.ts`). Same
+     shape as the four above: WHERE the verb works, not how to work
+     it. */
+  /* IT NAMES WHAT LEAVES, because that is the decision being made
+     here. The file is the REGISTER — every column the table holds,
+     buy prices included — and not the catalogue face, which shows a
+     name and a sell price. An administrator granting this to a job
+     is granting the cost structure with it, and finding that out in
+     Excel afterwards is finding it out too late. Measured on the
+     real sheet: Highfield's file is 588 rows and 33 columns, where
+     the face draws four. */
+  export: 'A file of this register comes off the bar above the Catalog — every column the table holds, cost columns included.',
+  import: 'A file comes back in from the bar above the Catalog, and it says what it would change before it changes it.',
 }
 
 export interface CapabilityState {

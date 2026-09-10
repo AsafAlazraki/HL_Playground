@@ -79,13 +79,15 @@ import {
   isRetired,
   type EntityDef,
   type FieldDef,
+  type ModuleCapability,
   type ModuleDef,
 } from '@/types/model'
 import { leafNoun } from '@/features/table/grouping'
 import { capabilityLabel, mayDo } from './access'
 
-/** The three verbs that WRITE a row. `relate`, `quote`, `export` and
- *  `configure` write other things and are answered elsewhere. */
+/** The three verbs that WRITE a row. `relate` and `configure` write
+ *  other things and are answered elsewhere; `export` and `import`
+ *  move rows as a FILE and are answered in `travelCaps.ts`. */
 export type WriteVerb = 'add' | 'edit' | 'delete'
 
 export interface WriteStance {
@@ -310,7 +312,13 @@ function andList(words: readonly string[]): string {
  */
 export function withheldSay(
   moduleName: string,
-  verbs: readonly WriteVerb[],
+  /* ANY VERB THE CATALOGUE OFFERS, not only the three that write a
+     row. `travelCaps.ts` withholds `export` and `import` on the same
+     page and for the same reason, and a second sentence saying the
+     same thing about two more verbs is exactly the stacking this
+     function exists to prevent — so the lists join and this stays
+     the one apology. */
+  verbs: readonly ModuleCapability[],
   roleId: string | null,
 ): string {
   const list = andList(verbs.map((v) => capabilityLabel(v).toLowerCase()))

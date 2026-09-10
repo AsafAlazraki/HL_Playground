@@ -215,6 +215,11 @@ import {
   renamedSay,
   withheldSay,
 } from './writeCaps'
+/* THE TWO TRAVEL VERBS. The reading is pure and lives beside
+   `writeCaps`; the controls it gates are the register's own, taken
+   off `io/TableRoundTrip` rather than written a second time. */
+import { readTravel } from './travelCaps'
+import { CatalogTravel } from './CatalogTravel'
 import './modules.css'
 
 /** How many items are drawn before the page asks you to narrow.
@@ -401,6 +406,17 @@ export function ModuleStock({
     [module, tables, listed, who],
   )
 
+  /* ── AND WHETHER A FILE MAY LEAVE, OR ARRIVE ─────────────────────
+     The same four outcomes for the two travel verbs. `export` was a
+     switch that changed nothing for as long as this page read three
+     verbs and stopped, and `import` was not in the contract at all —
+     an administrator could grant the right to take a price list out
+     and had no way to say whether one may be pushed back over it. */
+  const travel = useMemo(
+    () => readTravel(module, tables, listed, who),
+    [module, tables, listed, who],
+  )
+
   /* ONE WORDING PER FACT. With the tables off the sheet all three
      verbs are blocked by the same sentence, and printing it three
      times is how a person starts wondering whether they are three
@@ -418,7 +434,13 @@ export function ModuleStock({
      absent, so they stay here, under the header. */
   const refusals = useMemo(() => {
     const out: string[] = []
-    if (writes.withheld.length > 0) out.push(withheldSay(module.name, writes.withheld, who))
+    /* THE FIVE WITHHELD VERBS ARE ONE SENTENCE. The write verbs and
+       the travel verbs are refused on the same page for the same
+       reason — a job was not granted them — and `accessSay.ts`
+       recorded once already that two wordings of one fact is how a
+       person starts wondering whether they are two faults. */
+    const kept = [...writes.withheld, ...travel.withheld]
+    if (kept.length > 0) out.push(withheldSay(module.name, kept, who))
     const carried = writes.add.on ? writes.add.blocked : undefined
     for (const stance of [writes.edit, writes.delete]) {
       if (
@@ -429,8 +451,17 @@ export function ModuleStock({
         out.push(stance.blocked)
       }
     }
+    /* AND THE TRAVEL BLOCKS, which explain controls that are absent
+       from the bar rather than from this page — a person who has been
+       granted Export and cannot see one is owed the reason wherever
+       they are looking for it. Deduplicated against the write blocks:
+       "the tables went off the sheet" is one fact however many verbs
+       it stops. */
+    for (const stance of [travel.out, travel.back]) {
+      if (stance.blocked !== undefined && !out.includes(stance.blocked)) out.push(stance.blocked)
+    }
     return out
-  }, [writes, module.name, who])
+  }, [writes, travel, module.name, who])
 
   /* A NEW ONE, IN THE MASTER TABLE — MODULE_SYSTEM §5's own words for
      what this switch does. The row is blank, it is undoable, and the
@@ -693,6 +724,21 @@ export function ModuleStock({
 
   return (
     <section className="md-index" style={style} aria-label={module.name}>
+      {/* EXPORT AND RE-UPLOAD, ON THE PAGE'S OWN BAR. Drawn only
+          where a verb is on and nothing is blocking it — a module
+          drawing seven registers refuses in words instead, because a
+          file is one register and one that quietly held the first of
+          seven would be the confidently-wrong control §7 rates worse
+          than no control at all. */}
+      {travel.from !== undefined &&
+      ((travel.out.on && travel.out.blocked === undefined) ||
+        (travel.back.on && travel.back.blocked === undefined)) ? (
+        <CatalogTravel
+          tableId={travel.from.id}
+          canExport={travel.out.on && travel.out.blocked === undefined}
+          canImport={travel.back.on && travel.back.blocked === undefined}
+        />
+      ) : null}
       {/* THE BAR OF THE STOCK TAB — the find box, the density switch,
           and the one act that is about the WHOLE list rather than
           about an item on it.

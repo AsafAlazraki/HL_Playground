@@ -902,6 +902,7 @@ export type ModuleCapability =
   | 'relate'
   | 'quote'
   | 'export'
+  | 'import'
 
 export const MODULE_CAPABILITIES: Record<
   ModuleCapability,
@@ -916,6 +917,14 @@ export const MODULE_CAPABILITIES: Record<
   relate: { label: 'Relate', says: 'say what goes with what' },
   quote: { label: 'Quote', says: 'raise a price for a customer' },
   export: { label: 'Export', says: 'take a copy out' },
+  /* THE TENTH VERB, AND THE ONE THE CONTRACT WAS SHORT OF.
+     MODULE_SYSTEM §5 lists ten switches and this list carried nine:
+     a module could be granted the right to take a copy out and there
+     was no way to say whether it may take one back in. Those are
+     opposite risks — one leaks a price list, the other overwrites one
+     — and a single switch for both would have been the app deciding
+     that they are the same decision. */
+  import: { label: 'Import', says: 'bring a file of them back in' },
 }
 
 /** What a new module can do before anyone configures it: look, do not
