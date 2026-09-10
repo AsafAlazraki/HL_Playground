@@ -56,7 +56,7 @@ export function ruleEntityPlural(ctx: RuleContext): LintFinding[] {
     ruleId: 'entity-plural',
     severity: 'advisory',
     entityId: entity.id,
-    title: 'PLURAL ENTITY NAME',
+    title: 'PLURAL TABLE NAME',
     why: info.singular
       ? `An entity names one kind of record — each row here is a single ${info.singular.toLowerCase()} — so the card should read '${info.singular}', not '${name}'.`
       : `An entity names one kind of record, so it takes the singular form — every row inside '${name}' is just one of them.`,
@@ -83,8 +83,8 @@ export function ruleEntityVague(ctx: RuleContext): LintFinding[] {
       ruleId: 'entity-vague',
       severity: 'advisory',
       entityId: entity.id,
-      title: 'VAGUE ENTITY NAME',
-      why: `'${name}' describes storage rather than meaning — name the entity after the real-world thing one row stands for, the way 'Customer' or 'Invoice' does.`,
+      title: 'VAGUE TABLE NAME',
+      why: `'${name}' describes storage rather than meaning — name the table after the real-world thing one row stands for, the way 'Customer' or 'Invoice' does.`,
     },
   ]
 }
@@ -132,8 +132,8 @@ export function ruleEntityDupName(entityList: EntityDef[]): LintFinding[] {
         ruleId: 'entity-dup-name',
         severity: 'blocker',
         entityId: e.id,
-        title: 'DUPLICATE ENTITY NAME',
-        why: `${group.length} entities on this sheet are named '${name}', so a link, a formula, or a teammate pointing at '${name}' cannot say which one is meant — rename all but one.`,
+        title: 'DUPLICATE TABLE NAME',
+        why: `${group.length} tables on this sheet are named '${name}', so a link, a formula, or a teammate pointing at '${name}' cannot say which one is meant — rename all but one.`,
       })
     }
   }
@@ -162,7 +162,7 @@ export function ruleFieldDupName(ctx: RuleContext): LintFinding[] {
       entityId: entity.id,
       fieldIds,
       title: 'DUPLICATE FIELD NAME',
-      why: `This entity has ${group.length} fields named '${name}', so any value filed under that name is ambiguous — rename them to say how they differ.`,
+      why: `This table has ${group.length} fields named '${name}', so any value filed under that name is ambiguous — rename them to say how they differ.`,
     })
   }
   return out
@@ -253,7 +253,7 @@ export function ruleNoFields(ctx: RuleContext): LintFinding[] {
       title: 'NO STORED FIELDS',
       why: empty
         ? `An entity with no fields cannot hold a single fact — add the fields that describe one ${name} before anything is built on it.`
-        : 'Formulas only rearrange stored facts, and this entity stores none — give it at least one plain field for the calculations to stand on.',
+        : 'Formulas only rearrange stored facts, and this table stores none — give it at least one plain column for the calculations to stand on.',
     },
   ]
 }
@@ -290,7 +290,7 @@ export function ruleTextShouldLink(ctx: RuleContext): LintFinding[] {
       entityId: entity.id,
       fieldIds: [f.id],
       title: 'COPY INSTEAD OF LINK',
-      why: `Storing a ${tName.toLowerCase()}'s name as text keeps a copy that goes stale when the real ${tName.toLowerCase()} changes — link to the ${tName} entity so the truth lives in one place.`,
+      why: `Storing a ${tName.toLowerCase()}'s name as text keeps a copy that goes stale when the real ${tName.toLowerCase()} changes — link to the ${tName} table so the truth lives in one place.`,
       fix: {
         kind: 'convert-to-reference',
         entityId: entity.id,
@@ -318,7 +318,7 @@ export function ruleDanglingLink(ctx: RuleContext): LintFinding[] {
       entityId: entity.id,
       fieldIds: [f.id],
       title: 'BROKEN LINK',
-      why: 'This link points at an entity that no longer exists, so no row can ever resolve it — remove the field or rebuild it against a live entity.',
+      why: 'This link points at an table that no longer exists, so no row can ever resolve it — remove the field or rebuild it against a live table.',
       fix: {
         kind: 'remove-field',
         entityId: entity.id,
@@ -350,8 +350,8 @@ export function ruleIslandEntity(ctx: RuleContext): LintFinding[] {
       ruleId: 'island-entity',
       severity: 'advisory',
       entityId: entity.id,
-      title: 'UNLINKED ENTITY',
-      why: `Nothing links into or out of '${entity.name.trim()}', and a data model earns its keep through relationships — connect it to the entities it works with, or ask whether it belongs on this sheet.`,
+      title: 'UNLINKED TABLE',
+      why: `Nothing links into or out of '${entity.name.trim()}', and a data model earns its keep through relationships — connect it to the tables it works with, or ask whether it belongs on this sheet.`,
     },
   ]
 }
@@ -393,7 +393,7 @@ export function ruleRepeatingColumns(ctx: RuleContext): LintFinding[] {
       entityId: entity.id,
       fieldIds,
       title: 'REPEATING COLUMNS',
-      why: `Numbered fields like ${examples} are a list turned on its side — give each ${g.base.toLowerCase()} its own row in its own entity, and the model never runs out of columns.`,
+      why: `Numbered fields like ${examples} are a list turned on its side — give each ${g.base.toLowerCase()} its own row in its own table, and the model never runs out of columns.`,
       fix: {
         kind: 'extract-entity',
         entityId: entity.id,
@@ -467,7 +467,7 @@ export function rulePrefixCluster(
         entityId: entity.id,
         fieldIds,
         title: 'COPIED DETAILS',
-        why: `These '${c.prefix}' fields copy details that already belong to the ${target.name.trim()} entity — replace the copies with a single link so those details live in one place.`,
+        why: `These '${c.prefix}' fields copy details that already belong to the ${target.name.trim()} table — replace the copies with a single link so those details live in one place.`,
       }
       if (best) {
         finding.fix = {
@@ -486,14 +486,14 @@ export function rulePrefixCluster(
         severity: 'advisory',
         entityId: entity.id,
         fieldIds,
-        title: 'HIDDEN ENTITY',
-        why: `${c.fields.length} fields all starting with '${c.prefix}' describe a second thing hiding inside this one — give '${c.prefix}' its own entity and link to it, so those details live in one place.`,
+        title: 'HIDDEN TABLE',
+        why: `${c.fields.length} columns all starting with '${c.prefix}' describe a second thing hiding inside this one — give '${c.prefix}' its own table and link to it, so those details live in one place.`,
         fix: {
           kind: 'extract-entity',
           entityId: entity.id,
           fieldIds,
           newEntityName: c.prefix,
-          label: `Extract '${c.prefix}' entity`,
+          label: `Extract '${c.prefix}' table`,
         },
       })
     }

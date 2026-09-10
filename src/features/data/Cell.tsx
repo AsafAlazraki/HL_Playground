@@ -289,7 +289,7 @@ function ReferenceCell({
     return (
       <span
         className="dg-refbroken"
-        title="The linked entity no longer exists on this board"
+        title="The table this links to is no longer on this board"
       >
         #REF?
       </span>

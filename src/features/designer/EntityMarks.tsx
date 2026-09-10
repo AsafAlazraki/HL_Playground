@@ -38,7 +38,7 @@ export function EntityMarks({ entityId }: { entityId: string }) {
   const blockers = marks.filter((m) => m.severity === 'blocker').length
 
   return (
-    <section className="ds-marks" aria-label="Reviewer marks on this entity">
+    <section className="ds-marks" aria-label="Reviewer marks on this table">
       <div className="ds-sect ds-sect-mark">
         <span className="mono-label ds-sect-label">Marks</span>
         <span className="ds-sect-rule" aria-hidden="true" />

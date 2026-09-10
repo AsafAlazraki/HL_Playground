@@ -1027,14 +1027,14 @@ export const RULE_NODE_KINDS: Record<RuleNodeKind, RuleNodeKindMeta> = {
     label: 'Start',
     tag: 'RUN',
     cssVar: 'var(--accent-graphite)',
-    blurb: 'Where the rule begins — walks each row of the chosen entity.',
+    blurb: 'Where the rule begins — walks each row of the chosen table.',
   },
   match: {
     label: 'Match',
     tag: 'FIT',
     cssVar: 'var(--accent-carmine)',
     blurb:
-      'Find the rows of another entity that fit this one — a boat’s min/max HP against every motor’s HP.',
+      'Find the rows of another table that fit this one — a boat’s min/max HP against every motor’s HP.',
   },
   condition: {
     label: 'Condition',
