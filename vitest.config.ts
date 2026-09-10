@@ -15,6 +15,7 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { fileURLToPath, URL } from 'node:url'
+import { availableParallelism } from 'node:os'
 
 const alias = { '@': fileURLToPath(new URL('./src', import.meta.url)) }
 
@@ -78,8 +79,27 @@ const shared = {
        Eight workers keeps the suite parallel and keeps peak import
        contention bounded. This is a cap on CONCURRENCY, not on what
        any test measures — nothing is skipped and no ceiling is
-       loosened to accommodate it. */
-  maxWorkers: 8,
+       loosened to accommodate it.
+
+       BUT EIGHT WAS AN ABSOLUTE, AND THE MACHINE IS NOT. Measured
+       2026-09-10 on a FOUR-core box: eight workers is two-to-one
+       oversubscription, and `discoverNorthside` — which asserts
+       discovery finishes in under 10s because that is how long a
+       person will wait — came in at 10.7s inside the full suite and
+       failed. Run on its own it passed three times out of three, and
+       `trailerFitment` likewise: twice out of twice. So the engine
+       had not regressed by a millisecond. The wall clock was
+       measuring the other seven workers.
+
+       That is the SAME failure this cap exists to prevent, arriving
+       from the other end — and an absolute cannot see it, because
+       eight is a ceiling on 22 cores and a floor-through on four.
+       So the cap is now relative to the machine and the measured
+       decision above is preserved exactly where it was made: on 22
+       cores this still resolves to 8, unchanged. One core is left
+       for the runner itself rather than handing every core to a
+       worker and letting them fight over it. */
+  maxWorkers: Math.max(1, Math.min(8, availableParallelism() - 1)),
 }
 
 export default defineConfig({
