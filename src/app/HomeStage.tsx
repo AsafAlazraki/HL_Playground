@@ -117,6 +117,8 @@ import { useDemoLoad } from './useDemoLoad'
 import { Button, Card, SectionHead } from '@/ui'
 import type { CardKind } from '@/ui'
 import { useClipTitles } from './useClipTitles'
+import { exampleTableIds } from '@/features/io'
+import { readSeedStamp } from '@/demos'
 
 const KIND_ORDER: TableKind[] = [
   'boat',
@@ -191,6 +193,24 @@ export interface HomeStageProps {
 
 export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
   const entities = useProjectStore((s) => s.entities)
+
+  /* WHICH TABLES ARE NOT THIS DEALER'S — UX_PASS §4.1, "Provenance is
+     a property of a table, and it is visible."
+
+     The removal control in the import menu has read this since it was
+     built; nothing that DREW a table did. So a dealer looking at 53
+     cards had no way to tell which of them came with the app, while a
+     button two screens away offered to remove exactly those 53. Both
+     were describing the same tables and only one of them said so.
+
+     `exampleTableIds` is that same reading — a seed stamp plus the
+     cohort of tables sharing the earliest `createdAt`, because tables
+     a person makes arrive one at a time and never share an instant.
+     Read once per entities change rather than once per card. */
+  const exampleIds = useMemo(
+    () => new Set(exampleTableIds(entities, readSeedStamp()?.seed !== undefined)),
+    [entities],
+  )
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
   const org = useProjectStore((s) => s.meta.org)
 
@@ -932,6 +952,20 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                             ? 'Relationship'
                             : (TABLE_KINDS[kindOf(e.kind)]?.label ?? '')}
                         </span>
+                        {/* THE ONE BIT A READER NEEDS: did I make this,
+                            or did it come with the app. It sits beside
+                            the kind rather than over the photograph,
+                            because it is a fact ABOUT the table and the
+                            kind chip is where this card already keeps
+                            those.
+
+                            NEUTRAL, NOT WARNING-COLOURED. Example data
+                            is not a problem to fix — it is how the app
+                            teaches itself — and dressing it in amber
+                            would spend a state colour on a plain fact. */}
+                        {exampleIds.has(e.id) ? (
+                          <span className="hm-card-example">Example</span>
+                        ) : null}
                       </span>
                       <span className="hm-card-name">{e.name}</span>
                       {/* WHAT IS IN IT, not just how much of it there is.

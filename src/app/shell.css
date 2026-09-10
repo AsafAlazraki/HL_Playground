@@ -1417,6 +1417,27 @@
   letter-spacing: var(--t-label-track);
   text-transform: uppercase;
 }
+
+/* UX_PASS §4.1 — the one bit a reader needs about a table: did I make
+   this, or did it come with the app.
+
+   IT INHERITS THE LABEL STEP from `.hm-card-kind` above rather than
+   setting its own, so the two chips sit on one baseline and stay
+   there when the ramp moves. What it does NOT inherit is the kind
+   hue: a kind is what a table IS, and provenance is a different
+   question about the same table, so it answers in neutral.
+
+   A CHIP AND NOT A COLOUR. Example data is not a fault to fix — it is
+   how the app teaches itself what it is for — so it gets the chip
+   treatment `--chip-bg` already ships and none of the state colours.
+   Amber here would say "look at this", and there is nothing to do. */
+.hm-card-example {
+  padding: 1px var(--s-2);
+  border-radius: var(--r-full);
+  background: var(--chip-bg);
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
 /* TWO LINES RESERVED, THREE ALLOWED — and those are two separate
    arguments that happen to fit in one rule.
 

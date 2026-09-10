@@ -37,3 +37,9 @@ export { applyReplace, applyMerge } from './apply'
 /* any loader that calls replaceProject must wrap itself in this, or the
    organisation is lost and the app falls back to onboarding */
 export { keepingOrganisation } from './apply'
+
+/* UX_PASS §4.1 — "Provenance is a property of a table, and it is
+   visible." §4.2's removal control has read this since it was built;
+   the surfaces that DRAW a table need it too, so it leaves the lane. */
+export { exampleTableIds, exampleOnSheet } from './exampleData'
+export type { ExampleOnSheet } from './exampleData'
