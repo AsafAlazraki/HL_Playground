@@ -502,12 +502,32 @@ function remapConstraint(c: ConstraintDef, m: DesignRefs, stamp: string): Constr
  * every time somebody opened an older file that carries none.
  */
 function restoreDesign(
-  design: Pick<ProjectExport, 'views' | 'modules' | 'constraints'>,
+  design: Pick<ProjectExport, 'views' | 'modules' | 'constraints' | 'roles'>,
   m: DesignRefs,
   fresh = false,
 ): void {
   const store = () => useProjectStore.getState()
   const stamp = nowIso()
+
+  /* -- roles, BEFORE the modules that name them --------------- *
+     TENANCY §4.6. `ModuleDef.access` grants by role id, so a module
+     restored before its roles is a module whose permissions point at
+     nothing — and `orphanRoleIds` would then report them, correctly
+     and uselessly, on a file that carried the roles all along.
+
+     KEPT BY ID, AND AN EXISTING ONE WINS. `createRole` takes a
+     `keepId` and refuses an id already taken, which is the behaviour
+     we want on both paths: on a replace the sheet is this file, so
+     every id is free; on a merge a role id that already exists is the
+     SAME role — a job at this dealership does not become a second job
+     because a backup mentions it — so the one already here keeps its
+     name and its description, and only genuinely new roles arrive.
+     That is the one place a merge must not reissue an id: reissuing
+     would leave the grants pointing at the old one. */
+  for (const role of design.roles ?? []) {
+    if (store().roles[role.id]) continue
+    store().createRole(role.name, role.description, role.id)
+  }
 
   /* -- pages ------------------------------------------------- */
   /** imported view id → the id the store actually gave it */

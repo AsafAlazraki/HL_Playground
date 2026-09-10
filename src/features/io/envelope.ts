@@ -99,6 +99,7 @@ import {
   type OrgProfile,
   type ProjectExport,
   type RowData,
+  type RoleDef,
   type RuleDef,
   type RuleEdge,
   type RuleNode,
@@ -1282,6 +1283,8 @@ export function validateEnvelope(raw: unknown): Validated {
     return { ok: false, error: 'That copy is damaged: the modules block cannot be read.' }
   if (raw.constraints !== undefined && !Array.isArray(raw.constraints))
     return { ok: false, error: 'That copy is damaged: the business rules block cannot be read.' }
+  if (raw.roles !== undefined && !Array.isArray(raw.roles))
+    return { ok: false, error: 'That copy is damaged: the block naming who works here cannot be read.' }
   if (raw.quotes !== undefined && !Array.isArray(raw.quotes))
     return { ok: false, error: 'That copy is damaged: the customer quotes block cannot be read.' }
 
@@ -1530,6 +1533,38 @@ export function validateEnvelope(raw: unknown): Validated {
     if (isDuplicate(m.id)) return { ok: false, error: dupSay('a module', m.id) }
   }
 
+  /* THE ROLES THE GRANTS NAME. TENANCY §4.6 — `ModuleDef.access`
+     grants by role id, so a file whose roles were dropped at the door
+     imports every grant intact with nothing to resolve it against:
+     "the grants are not wrong, they are unreadable, which is worse
+     because it looks like a permission rather than a dangling id."
+
+     IN `seenIds`, because a role id keys a store record — the same
+     reason a module id is. A file carrying one id twice would make
+     the second edit silently move the first.
+
+     A role is three fields and none of them is optional except the
+     description, so there is no norm* helper to write: a row that is
+     not an object with a usable id and name is not a role and is
+     skipped, the way a malformed constraint is. */
+  const roles: RoleDef[] = []
+  for (const r of (raw.roles ?? []) as unknown[]) {
+    if (!isRecord(r)) continue
+    const id = typeof r.id === 'string' ? r.id.trim() : ''
+    const name = typeof r.name === 'string' ? r.name.trim() : ''
+    if (!id || !name) continue
+    if (isDuplicate(id)) return { ok: false, error: dupSay('a role', id) }
+    roles.push({
+      id,
+      name,
+      ...(typeof r.description === 'string' && r.description.trim()
+        ? { description: r.description.trim() }
+        : {}),
+      createdAt: typeof r.createdAt === 'string' ? r.createdAt : stamp,
+      updatedAt: typeof r.updatedAt === 'string' ? r.updatedAt : stamp,
+    })
+  }
+
   const constraints: ConstraintDef[] = []
   for (const c of (raw.constraints ?? []) as unknown[]) {
     const constraint = normConstraint(c, stamp)
@@ -1569,6 +1604,7 @@ export function validateEnvelope(raw: unknown): Validated {
     ...(org ? { org } : {}),
     ...(views.length ? { views } : {}),
     ...(modules.length ? { modules } : {}),
+    ...(roles.length ? { roles } : {}),
     ...(constraints.length ? { constraints } : {}),
     ...(quotes.length ? { quotes } : {}),
   }

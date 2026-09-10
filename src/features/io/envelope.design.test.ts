@@ -555,3 +555,74 @@ describe('an imported design is untrusted input', () => {
     expect(d.constraints).toHaveLength(1)
   })
 })
+
+/* ============================================================
+   THE ROLES THE GRANTS NAME — TENANCY §4.6.
+
+   `ProjectExport.roles` was declared in the contract with a
+   paragraph arguing for it, and then written by nobody and read by
+   nobody. `ModuleDef.access` grants by role id, so a project
+   exported and re-imported came back with every grant intact and
+   NOTHING TO RESOLVE THEM AGAINST — and the contract says why that
+   is the bad outcome rather than a small one: "the grants are not
+   wrong, they are unreadable, which is worse because it looks like
+   a permission rather than a dangling id."
+
+   `orphanRoleIds` in features/modules/access.ts existed to find
+   exactly that case and the settings panel said so in words. It was
+   reporting a fault the exporter had created.
+
+   These assert what a person gets back, not that a key is present.
+   ============================================================ */
+
+const role = (over: Record<string, unknown> = {}) => ({
+  id: 'rSales',
+  name: 'Sales',
+  description: 'Writes quotes, cannot change the price file.',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+  ...over,
+})
+
+describe('the roles a file’s grants name travel with it', () => {
+  it('comes back with the role, not just the grant that names it', () => {
+    const data = ok(file({ roles: [role()] }))
+    expect(data.roles?.map((r) => r.id)).toEqual(['rSales'])
+    expect(data.roles?.[0].name).toBe('Sales')
+    expect(data.roles?.[0].description).toBe('Writes quotes, cannot change the price file.')
+  })
+
+  it('keeps the dates the file carried, so a role does not look new', () => {
+    const data = ok(file({ roles: [role()] }))
+    expect(data.roles?.[0].createdAt).toBe('2026-01-01T00:00:00.000Z')
+  })
+
+  it('a file with no roles is silence, not an error — every v1 file is one', () => {
+    expect(ok(file()).roles).toBeUndefined()
+  })
+
+  it('refuses a damaged roles block rather than importing half of it', () => {
+    const r = validateEnvelope(file({ roles: 'Sales' }))
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.error).toContain('who works here')
+  })
+
+  it('refuses two roles under one id, because a role id keys a store record', () => {
+    /* The same reason a duplicated module id is refused: the second
+       edit would silently move the first. */
+    const r = validateEnvelope(file({ roles: [role(), role({ name: 'Workshop' })] }))
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.error).toContain('rSales')
+  })
+
+  it('skips a row that is not a role rather than inventing one', () => {
+    const data = ok(file({ roles: [role(), { id: '', name: 'Nameless' }, { name: 'No id' }] }))
+    expect(data.roles?.map((r) => r.id)).toEqual(['rSales'])
+  })
+
+  it('stamps a role that arrived without dates rather than refusing it', () => {
+    const data = ok(file({ roles: [{ id: 'rWorkshop', name: 'Workshop' }] }))
+    expect(data.roles?.[0].createdAt).toBeTruthy()
+    expect(data.roles?.[0].description).toBeUndefined()
+  })
+})

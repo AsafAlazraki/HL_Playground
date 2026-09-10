@@ -137,6 +137,8 @@ export function buildExportPayload(rev: number, includeData: boolean): ProjectFi
      copy — see the block above. Read at all only when it will be
      written, so nothing about a structure-only save touches the quote
      registry. */
+  const roles = Object.values(s.roles).sort(byCreatedAt)
+
   const quotes = includeData
     ? [...allQuotes()].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
     : []
@@ -154,6 +156,19 @@ export function buildExportPayload(rev: number, includeData: boolean): ProjectFi
     ...(s.meta.org ? { org: s.meta.org } : {}),
     ...(views.length ? { views } : {}),
     ...(modules.length ? { modules } : {}),
+    /* THE ROLES THE GRANTS NAME, TRAVELLING BESIDE THEM. TENANCY
+       §4.6, and the contract on `ProjectExport.roles` already argued
+       it: `ModuleDef.access` names roles by id, so without these a
+       project exported and re-imported comes back with every grant
+       intact and nothing to resolve them against — "the grants are
+       not wrong, they are unreadable, which is worse because it looks
+       like a permission rather than a dangling id."
+
+       Sorted by `createdAt` like every other collection here, so two
+       exports of one unchanged sheet are byte-identical. Omitted when
+       there are none, which is the common case: nothing seeds roles
+       and a sheet has none until somebody makes one. */
+    ...(roles.length ? { roles } : {}),
     ...(constraints.length ? { constraints } : {}),
     ...(quotes.length ? { quotes } : {}),
   }
