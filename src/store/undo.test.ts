@@ -8,7 +8,7 @@
    an undo is written through and cannot come back on reload.
    ============================================================ */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { EntityDef, RowData } from '@/types/model'
+import type { EntityDef, ModuleDef, RowData, ViewDef } from '@/types/model'
 
 const mockSaveAll = vi.fn(async (_snapshot: { rows: RowData[] }) => {})
 
@@ -557,6 +557,7 @@ describe('an undo is written through', () => {
   })
 })
 
+
 /* ============================================================
    DELETING A TABLE NOW TAKES ITS PAGES AND MODULES WITH IT, and
    the confirm sheet promises on screen that Ctrl+Z brings them
@@ -568,76 +569,74 @@ describe('an undo is written through', () => {
    carries the whole DataSlice — which includes `views` and
    `modules` — but "it holds because" is how a promise quietly
    stops holding.
+
+   TYPED, NOT CAST. The first draft reached for `as ... as never`
+   to satisfy `setState`, and that cast is exactly why the typecheck
+   passed: it silenced the checker on a fixture with `index: 'grid'`
+   in it, which is not a `ModuleIndexMode` — the modes are 'rows'
+   and 'tiles'. `tsc -b` in `npm run build` caught it afterwards,
+   which is late. A cast in a test is worse than one in source: a
+   test is the one place a wrong shape should fail loudly, and this
+   one was asserting a SAFETY promise while lying about its own
+   fixture.
    ============================================================ */
 
+const page = (over: Partial<ViewDef> & { id: string; rootTableId: string }): ViewDef => ({
+  name: over.id,
+  blocks: [],
+  createdAt: ISO,
+  updatedAt: ISO,
+  ...over,
+})
+
+const place = (over: Partial<ModuleDef> & { id: string; tableIds: string[] }): ModuleDef => ({
+  name: over.id,
+  description: '',
+  capabilities: [],
+  index: 'rows',
+  accent: 'blue',
+  order: 0,
+  createdAt: ISO,
+  updatedAt: ISO,
+  ...over,
+})
+
 describe('undo — a table delete that cascades', () => {
-  const withPagesAndModules = (): void => {
+  beforeEach(() => {
     useProjectStore.setState({
       views: {
-        'v-boats': {
-          id: 'v-boats',
-          name: 'Boats page',
-          rootTableId: 'e-boats',
-          blocks: [],
-          createdAt: ISO,
-          updatedAt: ISO,
-        },
-        'v-other': {
+        'v-boats': page({ id: 'v-boats', name: 'Boats page', rootTableId: 'e-boats' }),
+        'v-other': page({
           id: 'v-other',
           name: 'Rigs page',
           rootTableId: 'e-rigs',
-          blocks: [{ id: 'b1', tableId: 'e-boats' }, { id: 'b2', tableId: 'e-rigs' }],
-          createdAt: ISO,
-          updatedAt: ISO,
-        },
+          blocks: [
+            { id: 'b1', tableId: 'e-boats' },
+            { id: 'b2', tableId: 'e-rigs' },
+          ],
+        }),
       },
       modules: {
-        'm-only': {
-          id: 'm-only',
-          name: 'Boats',
-          description: '',
-          tableIds: ['e-boats'],
-          capabilities: [],
-          index: 'grid',
-          viewId: 'v-boats',
-          accent: 'blue',
-          order: 0,
-          createdAt: ISO,
-          updatedAt: ISO,
-        },
-        'm-wider': {
-          id: 'm-wider',
-          name: 'Sales',
-          description: '',
-          tableIds: ['e-boats', 'e-rigs'],
-          capabilities: [],
-          index: 'grid',
-          accent: 'blue',
-          order: 1,
-          createdAt: ISO,
-          updatedAt: ISO,
-        },
+        'm-only': place({ id: 'm-only', name: 'Boats', tableIds: ['e-boats'], viewId: 'v-boats' }),
+        'm-wider': place({ id: 'm-wider', name: 'Sales', tableIds: ['e-boats', 'e-rigs'] }),
       },
-    } as Partial<ReturnType<typeof store>> as never)
-  }
+    })
+  })
 
-  it('takes the page, the module and the block — and puts all three back', () => {
-    withPagesAndModules()
+  it('takes the page, the module and the block', () => {
     store().deleteEntity('e-boats')
-
-    /* the page about it is gone, the module standing only on it is
-       gone, the wider module kept its place with one table fewer,
-       and the page elsewhere lost just the block */
     expect(store().views['v-boats']).toBeUndefined()
     expect(store().modules['m-only']).toBeUndefined()
+    /* the wider module keeps its place with one table fewer, and the
+       page elsewhere loses only the block */
     expect(store().modules['m-wider'].tableIds).toEqual(['e-rigs'])
     expect(store().views['v-other'].blocks.map((b) => b.tableId)).toEqual(['e-rigs'])
+  })
 
-    const label = store().undo()
-    expect(label).toBe('Table deleted · Boats')
+  it('puts all four back, which is what the sheet says out loud', () => {
+    store().deleteEntity('e-boats')
+    expect(store().undo()).toBe('Table deleted · Boats')
 
-    /* and every one of them comes back, which is what the confirm
-       sheet says out loud before the act */
     expect(store().entities['e-boats']).toBeDefined()
     expect(store().views['v-boats']).toBeDefined()
     expect(store().modules['m-only']).toBeDefined()
