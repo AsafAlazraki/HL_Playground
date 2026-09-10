@@ -286,13 +286,40 @@ export const TABLE_KINDS: Record<TableKind, TableKindMeta> = {
       { id: 'dimensions', name: 'Dimensions' },
       { id: 'capacity', name: 'Capacity' },
       { id: 'cost-build', name: 'Cost Build', accent: 'graphite' },
-      { id: 'markups', name: 'Markups', accent: 'graphite' },
       { id: 'pricing', name: 'Hull Only Pricing', accent: 'viridian' },
       { id: 'motor-fitment', name: 'Motor Fitment', accent: 'carmine' },
     ],
+    /* ── WHAT A PRESET IS ALLOWED TO KNOW ────────────────────────
+       UX_PASS §4.4: "Presets are neutral, or they are not presets. A
+       `Boats` preset ships the columns every boat has — identity,
+       dimensions, capacity, price — and NOT `AUS Sailing`.
+       Brand-specific columns are what the import is for."
+
+       SIX COLUMNS AND A WHOLE SECTION CAME OUT, and every one of them
+       was one dealership's private vocabulary arriving on a table
+       somebody else had just made:
+
+         AUS Sailing        a named account of one business
+         Sub Dealer         that business's channel
+         Sub (Exclusive)    that business's channel
+         HO - MU            "hull only markup", their abbreviation
+         BMT - MU           "boat motor trailer markup", theirs
+         Matrix             their word for a code scheme
+
+       The `Markups` section went with the two that were in it,
+       because a band with no columns is a heading for nothing.
+
+       NOT RENAMED TO SOMETHING NEUTRAL, and that is deliberate. A
+       generic `Markup` would be a new name that `pricing.ts`'s
+       COST_COLUMNS does not know, and that list is what keeps a
+       dealer's buy price off a customer's quotation — so inventing a
+       column here would open a hole there. A dealer who marks up adds
+       their own, and the import brings the real ones.
+
+       This changes NEW tables only. The seeded file carries its own
+       columns from the real workbook and is untouched. */
     detailColumns: [
       { name: 'Model Code', type: 'text', section: 'identity' },
-      { name: 'Matrix', type: 'text', section: 'identity' },
       { name: 'Material', type: 'select', options: ['PVC', 'HYP'], section: 'identity' },
       { name: 'Colourway', type: 'text', section: 'identity' },
       { name: 'Image', type: 'image', section: 'identity' },
@@ -314,13 +341,8 @@ export const TABLE_KINDS: Record<TableKind, TableKindMeta> = {
       { name: 'Base Cost', type: 'number', section: 'cost-build' },
       { name: 'Road Freight', type: 'number', section: 'cost-build' },
       { name: 'Landed Hull Cost', type: 'number', section: 'cost-build' },
-      { name: 'HO - MU', type: 'number', unit: '%', section: 'markups' },
-      { name: 'BMT - MU', type: 'number', unit: '%', section: 'markups' },
       { name: 'Cash', type: 'number', section: 'pricing' },
       { name: 'Trade', type: 'number', section: 'pricing' },
-      { name: 'Sub Dealer', type: 'number', section: 'pricing' },
-      { name: 'Sub (Exclusive)', type: 'number', section: 'pricing' },
-      { name: 'AUS Sailing', type: 'number', section: 'pricing' },
       { name: 'Min HP', type: 'number', section: 'motor-fitment' },
       { name: 'Max HP', type: 'number', section: 'motor-fitment' },
       {
