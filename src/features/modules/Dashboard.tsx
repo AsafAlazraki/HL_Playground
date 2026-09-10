@@ -87,6 +87,12 @@ import { PageHead } from '@/features/page'
    from modules.css — the primitives take no className, so there was
    no way to keep one and layer the other. */
 import { Button, Card, SectionHead } from '@/ui'
+/* WHAT THE SHEET SUGGESTS, AND THE LIST THAT DRAWS IT — UX_PASS §8.
+   BY DIRECT PATH, not through `@/features/dashboard`: that barrel
+   pulls in the front door's cards, which import this screen back.
+   The two files reached for here are a hook over the store and a
+   list of Rows, and neither knows anything about a dashboard. */
+import { Proposals, useProposals } from '@/features/dashboard/ProposeList'
 import { rememberPlace } from './openPlace'
 import { PlaceMark } from './PlaceMark'
 import './modules.css'
@@ -188,6 +194,13 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
      refused rather than in a tooltip.
      ============================================================ */
   const canMakeModule = tableCount > 0
+
+  /* WHAT THIS SHEET SUGGESTS, read on every paint and drawn only in
+     the empty state. It is the SAME reading the front door takes —
+     one hook, one derivation — so the two screens cannot come to
+     different conclusions about the same tables. It goes silent on
+     its own: the reading is over tables no module holds. */
+  const proposed = useProposals()
 
   /* HOW MANY TABLES ARE NOT IN A PLACE YET — the one figure the cards
      cannot carry, because it is about what is NOT on this screen. It
@@ -348,8 +361,28 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
       />
 
       {moduleCount === 0 ? (
-        /* THE EMPTY STATE KEEPS ITS SENTENCE AND ITS ACT â€” the one
-           place on this screen prose earns its space. */
+        /* THE EMPTY STATE PROPOSES BEFORE IT EXPLAINS — UX_PASS §8.
+
+           WHAT IT USED TO SAY, on a sheet holding a dealer's whole
+           price file: a definition of the word module, a count of
+           the tables, and a button that opened a blank panel. Every
+           one of those is true and none of them is an answer. The
+           store already knew that fifty-three of those tables
+           declare a kind and that seven of them say boat.
+
+           THE COUNT LINE TURNS ROUND WHEN A PROPOSAL ARRIVES. It
+           said "You have 53 tables and no modules" — true, and it
+           ends on the word for what is missing. The same figure
+           reads "From your 53 tables, these look like places in
+           your business" and introduces the list under it, which is
+           §8's own sentence. It stays a SENTENCE: rule 3 keeps
+           uppercase for labels, and a shouted line with a number in
+           it reads as a heading that swallowed one.
+
+           THE DEFINITION STAYS EITHER WAY. Module is this app's own
+           noun and this is the one screen where somebody meets it;
+           the proposals show what one would be, and the sentence
+           says what one IS. */
         <div className="md-empty">
           <Card tone="raised" pad="lg">
             <div className="md-empty-in">
@@ -358,19 +391,56 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
                 A module is a place in your business — the boats you sell, the trailers, the
                 quotes you have raised. You pick the table it is about and give it a name.
               </p>
+              {/* THE COUNT LINE DOES §8's JOB NOW. It was "You have 53
+                  tables and no modules" — a true sentence that ends
+                  in the word for what is missing. The same figure,
+                  turned to face the other way, introduces the list
+                  underneath it. A sentence and not a heading: rule 3
+                  reserves uppercase for labels, and this one carries
+                  a value. */}
               <p className="md-empty-count">
-                You have{' '}
-                <strong>
-                  {tableCount} {tableCount === 1 ? 'table' : 'tables'}
-                </strong>{' '}
-                and no modules.
+                {proposed.proposals.length > 0 ? (
+                  <>
+                    From your{' '}
+                    <strong>
+                      {tableCount} {tableCount === 1 ? 'table' : 'tables'}
+                    </strong>
+                    , these look like places in your business.
+                  </>
+                ) : (
+                  <>
+                    You have{' '}
+                    <strong>
+                      {tableCount} {tableCount === 1 ? 'table' : 'tables'}
+                    </strong>{' '}
+                    and no modules.
+                  </>
+                )}
               </p>
+              {proposed.proposals.length > 0 ? (
+                <Proposals
+                  reading={proposed}
+                  /* NO LABEL OVER IT. The sentence above IS the
+                     label, and the list takes none rather than
+                     shouting a second one. */
+                  why
+                  /* THE THIRD CLICK LANDS IN THE MODULE, the same as
+                     it does from the front door. */
+                  onCreated={(id) => onOpen(id)}
+                />
+              ) : null}
               {/* REFUSED, NOT DISABLED. `<Button refusedBecause>` keeps
                   the control in the tab order, blocks the press and
                   draws the reason beneath it, tied by aria-describedby
-                  — rule 10, once, in the primitive. */}
+                  — rule 10, once, in the primitive.
+
+                  IT STEPS DOWN WHEN THERE IS A PROPOSAL. One accent
+                  per screen (§5): with places offered above it, the
+                  proposals are the act and this is the escape hatch
+                  §8 asks to keep one click away — so it says what it
+                  is for rather than repeating the primary's word. */}
               <Button
-                tone="primary"
+                tone={proposed.proposals.length > 0 ? 'ghost' : 'primary'}
                 glyph={<Plus size={ICON_SIZE.tiny} weight="bold" />}
                 onClick={onNew}
                 refusedBecause={
@@ -379,7 +449,7 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
                     : 'A module is about a table, and there are none yet. Start one from New table on the bar, or load your price file from Home.'
                 }
               >
-                New module
+                {proposed.proposals.length > 0 ? 'Pick a table myself' : 'New module'}
               </Button>
             </div>
           </Card>

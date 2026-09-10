@@ -127,16 +127,11 @@ import { doorsOf, type Door } from './doors'
 import type { DashboardActs } from './acts'
 import { useRecentPicks } from './useRecentPicks'
 import { usePlaces } from './usePlaces'
-import { proposeModules, seedFor } from './proposals'
-import type { ModuleProposal, ProposalReading } from './proposals'
+import { KindMark } from './KindMark'
+import { Proposals, useProposals } from './ProposeList'
 import { useReorder } from './reorder'
 import { applyOrder, useTileOrder, type TileWho } from './tileOrder'
-/* THE PANEL THAT MAKES A MODULE, MOUNTED FROM WHERE THE PROPOSAL
-   IS PRESSED. It portals itself to the body, so it can be raised
-   from a dashboard card as readily as from the modules screen —
-   which is what lets a proposal open the real create panel instead
-   of growing a second one. */
-import { NewModuleDialog, PlaceMark, placeFilters, rememberPlace } from '@/features/modules'
+import { PlaceMark, placeFilters, rememberPlace } from '@/features/modules'
 import { ActivityList, useActivity } from '@/features/activity'
 
 const MARK = ICON_SIZE.small
@@ -321,34 +316,6 @@ function Figure({
   )
 }
 
-/** THE KIND'S OWN MARK, at the head of a Row.
- *
- *  `data-kind` on the mark sets `--kind` (ds.css), so the glyph
- *  draws in the kind's hue — a glyph, which is exactly what §1
- *  allows a second hue to be. It only ever appears on something
- *  that HAS that kind: a table by what it holds, a quote by the
- *  table its subject came off. Two things of one kind are one
- *  colour everywhere in the app.
- *
- *  THE HUE IS NEVER THE ONLY CARRIER: the glyph is a different
- *  SHAPE per kind, so the row reads the same to somebody who
- *  cannot separate indigo from amber. Measured on the real set,
- *  the marks clear 4.09:1 at worst against every ground a row
- *  wears — rest, hover and press, both themes.
- *
- *  THE ROW ITSELF IS src/ui's. The rail, the hover, the press and
- *  the two type steps that used to be drawn here are Row's own;
- *  the one thing Row has no slot for is a FIGURE at the end of an
- *  activating line (its `trail` is controls, on a still row only),
- *  so the sum on a quote and the count on a table sit at the far
- *  edge of the meta line instead. Reported as the gap it is. */
-function KindMark({ kind }: { kind: TableKind }): JSX.Element {
-  return (
-    <span className="dsh-row-mark" data-kind={kind} aria-hidden="true">
-      <TableKindSymbol kind={kind} size={ICON_SIZE.small} />
-    </span>
-  )
-}
 
 /** The last line of a card: where the whole list lives. */
 function More({ say, onPick }: { say: string; onPick: () => void }): JSX.Element {
@@ -604,138 +571,6 @@ function RecentlyOpened({ acts }: { acts: DashboardActs }): JSX.Element {
   )
 }
 
-/* ---------------------------------------------------------- */
-/* What your tables suggest — the first-run moment            */
-/* ---------------------------------------------------------- */
-
-/* THE SCREEN THIS ANSWERS. A dealer imports their price file and
-   lands on a front door that does not know what they sell: 53
-   tables and 15,691 rows behind a card reading "No modules yet"
-   over one button called Modules. The app is not short of the
-   answer — `EntityDef.kind` records what each table holds and
-   `TABLE_KINDS` names it — it simply was not saying it.
-
-   THE PROPOSAL IS A READING, NEVER A VERDICT, which is the same
-   line `split.ts` draws for itself: it names the tables it would
-   hold and the rows under them, and a person presses it or does
-   not. `proposals.ts` holds the arithmetic and the argument for
-   every predicate in it.
-
-   AND PRESSING ONE OPENS THE PANEL THAT ALREADY EXISTS. There is
-   one create path in this application. `NewModuleDialog` is a
-   three-click create — pick a table, tick its siblings, Create —
-   and a proposal a person has read has already answered the first
-   two, so it hands them over as a seed and the panel opens on
-   them, editable and abandonable. Nothing here calls
-   `createModule`; a second create path would be a second set of
-   rules about what a module may be built from. */
-
-function useProposals(): ProposalReading {
-  const modules = useProjectStore((s) => s.modules)
-  const entities = useProjectStore((s) => s.entities)
-  const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
-  return useMemo(
-    () => proposeModules(modules, entities, rowsByEntity),
-    [modules, entities, rowsByEntity],
-  )
-}
-
-function Proposals({
-  reading,
-  lead,
-  why,
-  acts,
-}: {
-  reading: ProposalReading
-  /** the label over the list. Two callers, two different facts:
-   *  an empty card is being told what its tables suggest, and a
-   *  card with places on it is being told what is left over */
-  lead: string
-  /** draw the refusal. Only where the count line it qualifies is
-   *  directly above it — under a grid of tiles it would be a
-   *  sentence about a number that is not on screen */
-  why: boolean
-  acts: DashboardActs
-}): JSX.Element | null {
-  /* WHICH PROPOSAL THE PANEL IS STANDING ON, and it is the panel's
-     `key` as well as its seed: a different answer is a different
-     panel, which is what stops a half-typed name surviving into a
-     proposal somebody pressed afterwards. */
-  const [asked, setAsked] = useState<ModuleProposal | null>(null)
-  if (reading.proposals.length === 0) return null
-
-  return (
-    <div className="dsh-propose">
-      <SectionHead level="h3">{lead}</SectionHead>
-      <ul className="dsh-propose-list">
-        {reading.proposals.map((p) => {
-          const tables = plural(p.tables.length, 'table', 'tables')
-          const rows = plural(p.rows, 'row', 'rows')
-          const held = p.tables.map((t) => t.name)
-          return (
-            <li key={p.kind}>
-              {/* EVERYTHING IT WOULD DO IS IN THE LABEL, because a
-                  proposal a person cannot check before pressing is
-                  a guess with a button on it — and a reader who
-                  cannot see the second line has to be able to check
-                  it too. The kind's mark leads the Row, in the
-                  kind's hue: this is a thing that HAS that kind,
-                  which is the whole of the rule in §1. */}
-              <Row
-                onActivate={() => setAsked(p)}
-                label={`Make ${p.name} from ${tables} — ${rows}: ${held.join(', ')}`}
-                lead={<KindMark kind={p.kind} />}
-                name={p.name}
-                meta={
-                  <>
-                    {/* THE FIGURES ARE MONO AND THE NOUNS ARE NOT —
-                        the rule every other count on this page keeps */}
-                    <span className="dsh-propose-n" aria-hidden="true">
-                      <b className="dsh-propose-fig ds-mono">{p.tables.length}</b>{' '}
-                      {p.tables.length === 1 ? 'table' : 'tables'}
-                      {' · '}
-                      <b className="dsh-propose-fig ds-mono">{p.rows.toLocaleString()}</b>{' '}
-                      {p.rows === 1 ? 'row' : 'rows'}
-                    </span>
-                    {/* THE TABLES IT WOULD HOLD, BY NAME. This line
-                        is the reason the proposal is allowed to
-                        exist: nothing is invented, and a person can
-                        read what they are about to agree to before
-                        they agree to it. It wraps rather than
-                        truncating — a list cut short with an
-                        ellipsis is the reduced count
-                        DESIGN_CONTRACT §5 refuses. */}
-                    <span className="dsh-propose-holds" aria-hidden="true">
-                      {held.join(' · ')}
-                    </span>
-                  </>
-                }
-              />
-            </li>
-          )
-        })}
-      </ul>
-
-      {/* RULE 10, WHERE THE THING IS REFUSED. The tables that
-          declare no kind are inside the count above and outside
-          every proposal below it, and a person who cannot see why
-          has been handed a number that does not add up. */}
-      {why && reading.why ? <p className="dsh-propose-why ds-small">{reading.why}</p> : null}
-
-      {asked ? (
-        <NewModuleDialog
-          key={asked.kind}
-          seed={seedFor(asked)}
-          onClose={() => setAsked(null)}
-          /* THE THIRD CLICK LANDS IN THE MODULE. A place you then
-             have to go and find is a fourth — the same reasoning
-             `ModuleStage` states where it mounts this panel. */
-          onCreated={(id) => acts.onOpenModule(id)}
-        />
-      ) : null}
-    </div>
-  )
-}
 
 /* ---------------------------------------------------------- */
 /* My modules                                                 */
@@ -834,7 +669,7 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
             reading={proposals}
             lead="What your tables suggest"
             why
-            acts={acts}
+            onCreated={acts.onOpenModule}
           />
         }
       />
@@ -975,7 +810,7 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
           in the empty state's third line, and that line is not on
           this card — a sentence about a number a person cannot see
           is worse than no sentence. */}
-      <Proposals reading={proposals} lead="Not in a module yet" why={false} acts={acts} />
+      <Proposals reading={proposals} lead="Not in a module yet" why={false} onCreated={acts.onOpenModule} />
     </>
   )
 }
