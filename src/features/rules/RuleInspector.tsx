@@ -43,6 +43,7 @@ import {
 } from './describe'
 import { useRuleIssues } from './useRuleIssues'
 import './rules.css'
+import { obviousColumn, obviousLabel, obviousSay } from './obviousColumns'
 
 /* ------------------------------------------------------------ */
 /* Small shared pieces                                          */
@@ -953,10 +954,21 @@ function OutputPanel({ rule, node, entities, setConfig }: PanelProps<'output'>) 
     setColumns(next)
   }
 
+  /* THE NAME WAS ALREADY RIGHT AND THE BODY WAS NOT. This is called
+     `useDisplayFields` and it took `fields[0]` — column order, which
+     is an accident of how somebody's spreadsheet was written.
+     UX_PASS §5 Finding 18: prefer `displayFieldId`, and where the
+     guess is weak, say it is a guess. `obviousColumns.ts` carries
+     both halves. */
+  const obvious = useMemo(
+    () => ({ source: obviousColumn(source), match: obviousColumn(match) }),
+    [source, match],
+  )
+
   const useDisplayFields = () => {
     const next: ViewColumn[] = []
-    if (source?.fields[0]) next.push({ scope: 'source', fieldId: source.fields[0].id })
-    if (match?.fields[0]) next.push({ scope: 'match', fieldId: match.fields[0].id })
+    if (obvious.source) next.push({ scope: 'source', fieldId: obvious.source.field.id })
+    if (obvious.match) next.push({ scope: 'match', fieldId: obvious.match.field.id })
     if (next.length) setColumns(next)
   }
 
@@ -983,10 +995,20 @@ function OutputPanel({ rule, node, entities, setConfig }: PanelProps<'output'>) 
               Add one from {source?.name ?? 'the source'}
               {match ? ` and one from ${match.name}` : ''} to see them side by side.
             </span>
+            {/* WHAT IT WILL PICK, BEFORE IT IS PRESSED, and whether
+                either half is a guess. §7: a suggestion that is
+                confidently wrong is worse than no suggestion. The
+                button drops the word "obvious" the moment it stops
+                being true of both. */}
             {source || match ? (
-              <button type="button" className="btn rl-add" onClick={useDisplayFields}>
-                Use the obvious two
-              </button>
+              <>
+                <button type="button" className="btn rl-add" onClick={useDisplayFields}>
+                  {obviousLabel(obvious.source, obvious.match)}
+                </button>
+                <span className="rl-empty-pick">
+                  {obviousSay(obvious.source, obvious.match)}
+                </span>
+              </>
             ) : null}
           </div>
         ) : (

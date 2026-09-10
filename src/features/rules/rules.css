@@ -345,6 +345,20 @@
   line-height: 1.5;
   color: var(--ink-soft);
 }
+/* WHAT THE BUTTON ABOVE WOULD PICK, named before it is pressed, and
+   whether either half is a guess — §7's "if a guess is weak, say it
+   is a guess". It takes `--ink-soft` and not `--ink-faint` for the
+   reason the note below this rule already records: `--ink-faint`
+   measures 4.72:1 on white but 4.22:1 on `--paper-sunken`, which is
+   the ground every `.rl-empty` block sits on. This is a sentence a
+   person has to read before acting, so it takes the step that
+   clears. */
+.rl-empty-pick {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
 /* MEASURED: --ink-faint is 4.72:1 on white but 4.22:1 on --paper-sunken,
    which is the ground every `.rl-empty` block sits on — the documented
    trap, and this line names the open rule, so it is content. 6.84:1. */
