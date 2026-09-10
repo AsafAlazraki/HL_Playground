@@ -56,6 +56,7 @@ import { forgetModuleRuleCapabilities } from '@/features/modules/ruleCapability'
    the feature's barrel. */
 import { moduleFace } from '@/features/modules/read'
 import { newId, nowIso } from '@/lib/id'
+import { cascadeOfDelete } from './deleteCascade'
 
 export interface Selection {
   kind: 'entity' | 'group' | 'rule'
@@ -1038,10 +1039,23 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
         for (const [rid, r] of Object.entries(s.rules)) {
           if (r.rootEntityId !== id) rules[rid] = r
         }
+        /* AND INTO THE PAGES AND MODULES — MODULE_SYSTEM §2 defect 2.
+           Everything above cascaded; views and modules did not, so a
+           deleted table left a page whose `rootTableId` named
+           nothing and a module whose `tableIds[0]` did the same.
+           Neither crashed, which is why it survived: they drew
+           nothing and said nothing about why. The rules are argued
+           in `deleteCascade.ts`, and they live there rather than
+           here so a confirm can ask what a delete would cost without
+           performing it. */
+        const cascade = cascadeOfDelete(id, s.views, s.modules)
+
         return {
           entities,
           rowsByEntity,
           rules,
+          views: cascade.views,
+          modules: cascade.modules,
           selection: s.selection?.kind === 'entity' && s.selection.id === id ? null : s.selection,
         }
       })
