@@ -666,13 +666,72 @@ export function setLevel(id: string, levelKey: string): void {
  *  `Warranty` on a hull. It SWITCHES which frozen number the line
  *  charges and never adds a second one: `Sell` + `Labour ($)` is the
  *  double-charge the whole price ladder exists to avoid. */
-export const setLineLevel = (id: string, lineId: string, levelKey: string): void =>
+/**
+ * PRICE ONE LINE AT A DIFFERENT RUNG — and the way back.
+ *
+ * THE ASYMMETRY THIS CLOSES is the one `addLine` closed a wave
+ * earlier, one level down. `setLevel` re-prices the WHOLE quote and
+ * has toasted with an UNDO since it was written; this re-prices one
+ * line and said nothing at all — so moving a motor from Sell to Trade
+ * changed a figure a customer is about to be handed, silently, with
+ * no way back but remembering which rung it had been on.
+ *
+ * CONFIGURATOR §C: every pick is a toast with UNDO, never a
+ * confirmation. This is a pick — a chip per rung, pressed.
+ *
+ * THE NOTE NAMES THE RUNG IN THE BUSINESS'S OWN WORD, not the key:
+ * `quoteLevelChoices` reads the labels off the line's own levels, so
+ * a dealer who calls it "Sub Dealer" reads "Sub Dealer".
+ *
+ * TYPING IS NOT A PICK, and `setQty` and the override field stay
+ * silent for the store's own reason about `updateCell`: nothing about
+ * a number you just typed is invisible a second later, and a toast per
+ * keystroke is noise where a person is reading a total.
+ */
+export function setLineLevel(id: string, lineId: string, levelKey: string): void {
+  const before = registry.get(id)
+  if (!before || before.state !== 'draft') return
+
+  const line = before.lines.find((l) => l.id === lineId)
+  if (!line) return
+  /* THE RUNG IT WAS ON, captured before the write. `levelResolved` is
+     what the line is actually priced at — the quote's rung where the
+     line has not been moved, its own where it has — so undoing puts
+     back the price a person was looking at rather than the quote's. */
+  const wasKey = line.levelResolved
+  if (wasKey === levelKey) return
+
+  const label = (key: string): string =>
+    line.levels.find((l) => l.key === key)?.label ?? key
+
   mutate(id, (q) => ({
     ...q,
     lines: q.lines.map((l) =>
       l.id === lineId ? { ...l, ...priceAtLevel(l.levels, levelKey) } : l,
     ),
   }))
+
+  say({
+    text: `${line.label} priced at ${label(levelKey)}`,
+    act: {
+      label: 'Undo',
+      onPick: () => {
+        const now = draftForUndo(id)
+        if (!now) return
+        /* the line may have gone since — putting a price back on a
+           line that is off the quote would be writing to nothing */
+        if (!now.lines.some((l) => l.id === lineId)) return
+        mutate(id, (q) => ({
+          ...q,
+          lines: q.lines.map((l) =>
+            l.id === lineId ? { ...l, ...priceAtLevel(l.levels, wasKey) } : l,
+          ),
+        }))
+        say({ text: `${line.label} is priced at ${label(wasKey)} again` })
+      },
+    },
+  })
+}
 
 /* -- lines ---------------------------------------------------- */
 

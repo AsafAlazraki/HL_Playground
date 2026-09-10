@@ -26,7 +26,15 @@
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { onSaid, type Note } from '@/store/notes'
-import { addLine, forgetQuotes, getQuote, registerQuote, removeLine, setLevel } from './quotes'
+import {
+  addLine,
+  forgetQuotes,
+  getQuote,
+  registerQuote,
+  removeLine,
+  setLevel,
+  setLineLevel,
+} from './quotes'
 import { money } from './pricing'
 import type { FrozenLevel, QuoteDef, QuoteLine } from './types'
 
@@ -318,5 +326,70 @@ describe('an UNDO pressed on a quote that has since been issued', () => {
 
     note.act?.onPick()
     expect(said()).toEqual(['That quote is no longer here.'])
+  })
+})
+
+/* ---------------------------------------------------------- */
+/* ONE LINE, RE-PRICED — the pick that was still silent          */
+/* ---------------------------------------------------------- */
+
+describe('setLineLevel says what it did, like setLevel one level up', () => {
+  /* CONFIGURATOR §C: every pick is a toast with UNDO, never a
+     confirmation. `setLevel` re-prices the whole quote and has
+     toasted since it was written; this re-prices ONE line and said
+     nothing at all — so moving a hull from Cash to Trade changed a
+     figure a customer is about to be handed, silently, with no way
+     back but remembering which rung it had been on. */
+
+  it('NAMES THE LINE AND THE RUNG, in the business’s own word', () => {
+    seed()
+    setLineLevel('q1', 'l-hull', 'trade')
+    expect(offer().text).toBe('Highfield SP 560 priced at Trade')
+    expect(getQuote('q1')?.lines[0].unitPrice).toBe(58_000)
+  })
+
+  it('PUTS THE LINE BACK ON THE FIGURE IT CARRIED when UNDO is pressed', () => {
+    seed()
+    setLineLevel('q1', 'l-hull', 'trade')
+    offer().act?.onPick()
+
+    const line = getQuote('q1')?.lines[0]
+    expect(line?.levelResolved).toBe('cash')
+    expect(line?.unitPrice).toBe(62_000)
+    expect(said().at(-1)).toBe('Highfield SP 560 is priced at Cash again')
+  })
+
+  it('says nothing when the line is already on that rung', () => {
+    seed()
+    setLineLevel('q1', 'l-hull', 'cash')
+    expect(said()).toEqual([])
+  })
+
+  it('does not chain a second offer off the undo', () => {
+    /* The way back is an answer, not a new act to reverse — the same
+       rule the three acts above keep. */
+    seed()
+    setLineLevel('q1', 'l-hull', 'trade')
+    const first = offer()
+    first.act?.onPick()
+    expect(heard.filter((n) => n.act !== undefined)).toHaveLength(1)
+  })
+
+  it('is harmless when the line has gone since the note was raised', () => {
+    /* Putting a price back on a line that is off the quote would be
+       writing to nothing. */
+    seed()
+    setLineLevel('q1', 'l-hull', 'trade')
+    const note = offer()
+    removeLine('q1', 'l-hull')
+    note.act?.onPick()
+    expect(getQuote('q1')?.lines).toHaveLength(0)
+  })
+
+  it('says nothing at all on a quote that has been issued', () => {
+    seed('issued')
+    setLineLevel('q1', 'l-hull', 'trade')
+    expect(said()).toEqual([])
+    expect(getQuote('q1')?.lines[0].unitPrice).toBe(62_000)
   })
 })
