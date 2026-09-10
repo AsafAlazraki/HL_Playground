@@ -1,0 +1,8 @@
+{
+  "launch": { "view": "canvas" },
+  "artboards": [
+    { "file": "Main.dc.html", "title": "A · Porsche — dark, full-bleed", "x": 0, "y": 0, "w": 1280, "h": 800 },
+    { "file": "DirectionB.dc.html", "title": "B · Apple — light, depth", "x": 1360, "y": 0, "w": 1280, "h": 800 },
+    { "file": "DirectionC.dc.html", "title": "C · Quiet Precision — sharpened", "x": 2720, "y": 0, "w": 1280, "h": 800 }
+  ]
+}

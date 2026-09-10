@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,300..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; background: #f6f9fc; }
+    a { color: #0a5fc2; } a:hover { color: #084a97; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="position: relative; width: 1280px; height: 800px; overflow: hidden; background: #f6f9fc; color: #081b2e; font-family: Archivo, 'Helvetica Neue', Arial, sans-serif; display: flex; flex-direction: column;">
+
+  <!-- top rule: where you are, and the one figure that matters -->
+  <div style="flex: none; height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 1px solid rgba(8,27,46,0.12);">
+    <div style="display: flex; align-items: center; gap: 18px;">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: -0.005em;">HelmLogic</span>
+      <span style="font-size: 13px; color: #5a6b7c;">Quotes</span>
+      <span style="font-size: 13px; color: #5a6b7c;">/</span>
+      <span style="font-size: 13px; color: #3d5266;">Q-0418 · Margaret Doyle</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 22px;">
+      <span class="mono" style="font-size: 12px; color: #5a6b7c;">Saved 14:02</span>
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #0a5fc2;">Draft</span>
+    </div>
+  </div>
+
+  <div style="flex: 1 1 auto; display: grid; grid-template-columns: 500px minmax(0, 1fr); min-height: 0;">
+
+    <!-- THE RIG — identity column, ruled off from the decisions -->
+    <div style="display: flex; flex-direction: column; padding: 40px 40px 0 40px; border-right: 1px solid rgba(8,27,46,0.12); min-width: 0; background: #ffffff;">
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5a6b7c;">Highfield · Adventure</span>
+      <span style="font-size: 96px; line-height: 0.96; font-weight: 640; letter-spacing: -0.042em; margin-top: 10px; color: #081b2e;">ADV7</span>
+      <span style="font-size: 17px; color: #3d5266; margin-top: 14px; letter-spacing: -0.01em;">Hypalon · Black tube · Grey deck · Black console</span>
+
+      <img src="adv7-2560x1440-723f10af.webp" alt="Highfield ADV7" style="display: block; width: 100%; height: 236px; object-fit: cover; object-position: center 55%; border-radius: 10px; margin-top: 28px;">
+
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 24px; border-top: 1px solid rgba(8,27,46,0.12);">
+        <div style="padding: 14px 14px 0 0; display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5a6b7c;">Length</span><span class="mono" style="font-size: 22px; font-weight: 500; letter-spacing: -0.02em;">6.98 m</span></div>
+        <div style="padding: 14px 14px 0 14px; border-left: 1px solid rgba(8,27,46,0.07); display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5a6b7c;">Beam</span><span class="mono" style="font-size: 22px; font-weight: 500; letter-spacing: -0.02em;">2.68 m</span></div>
+        <div style="padding: 14px 0 0 14px; border-left: 1px solid rgba(8,27,46,0.07); display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5a6b7c;">Tube</span><span class="mono" style="font-size: 22px; font-weight: 500; letter-spacing: -0.02em;">32 cm</span></div>
+      </div>
+    </div>
+
+    <!-- THE DECISIONS — a ruled ledger. Rows, not cards. -->
+    <div style="display: flex; flex-direction: column; min-width: 0; overflow: hidden; padding: 0 40px;">
+
+      <!-- 01 done -->
+      <div style="display: grid; grid-template-columns: 44px minmax(0,1fr) auto; align-items: center; gap: 20px; padding: 26px 0 22px 0; border-bottom: 1px solid rgba(8,27,46,0.12);">
+        <span class="mono" style="font-size: 13px; color: #5a6b7c;">01</span>
+        <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5a6b7c;">The hull</span>
+          <span style="font-size: 19px; font-weight: 600; letter-spacing: -0.02em; color: #081b2e;">Highfield ADV7 (HYP) B-G-B</span>
+        </div>
+        <span class="mono" style="font-size: 17px; font-weight: 500;">$105,930</span>
+      </div>
+
+      <!-- 02 open: the accent lives here and nowhere else -->
+      <div style="display: flex; flex-direction: column; gap: 18px; padding: 24px 0 24px 0; border-bottom: 1px solid rgba(8,27,46,0.12); position: relative;">
+        <div style="position: absolute; left: -40px; top: 0; bottom: 0; width: 3px; background: #0a5fc2;"></div>
+        <div style="display: grid; grid-template-columns: 44px minmax(0,1fr) auto; align-items: center; gap: 20px;">
+          <span class="mono" style="font-size: 13px; color: #0a5fc2;">02</span>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #0a5fc2;">Motor · 3 of 209 fit this hull</span>
+            <span style="font-size: 30px; font-weight: 640; letter-spacing: -0.03em; line-height: 1.05; color: #081b2e;">Choose a motor</span>
+          </div>
+          <span style="font-size: 13px; color: #5a6b7c;">Why only 3?</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding-left: 64px;">
+          <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid rgba(8,27,46,0.12); border-radius: 10px; background: #ffffff;">
+            <img src="f250xcb-product-profile-800x600-478d9b53.webp" alt="Yamaha F250XCB" style="width: 100%; height: 84px; object-fit: contain;">
+            <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Yamaha F250XCB</span>
+            <span style="font-size: 12px; color: #5a6b7c;">Helm Master L2 · Bolt-on DES</span>
+            <span class="mono" style="font-size: 13px; font-weight: 500; margin-top: 2px;">$41,650</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid rgba(8,27,46,0.12); border-radius: 10px; background: #ffffff;">
+            <img src="f250xsb-right-product-profile-800x600-172a0075.webp" alt="Yamaha F250XSB" style="width: 100%; height: 84px; object-fit: contain;">
+            <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Yamaha F250XSB</span>
+            <span style="font-size: 12px; color: #5a6b7c;">Helm Master L2 · Built-in DES</span>
+            <span class="mono" style="font-size: 13px; font-weight: 500; margin-top: 2px;">$43,900</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid rgba(8,27,46,0.12); border-radius: 10px; background: #ffffff;">
+            <img src="f250xsb2-f250xsb-product-profile-800x600-fa1c6f6f.webp" alt="Yamaha F250XSB2" style="width: 100%; height: 84px; object-fit: contain;">
+            <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Yamaha F250XSB2</span>
+            <span style="font-size: 12px; color: #5a6b7c;">Twin rig · Built-in DES</span>
+            <span class="mono" style="font-size: 13px; font-weight: 500; margin-top: 2px;">$46,200</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 03 with a refusal, said where it is -->
+      <div style="display: grid; grid-template-columns: 44px minmax(0,1fr) auto; align-items: start; gap: 20px; padding: 22px 0; border-bottom: 1px solid rgba(8,27,46,0.12);">
+        <span class="mono" style="font-size: 13px; color: #5a6b7c; padding-top: 3px;">03</span>
+        <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5a6b7c;">Trailer</span>
+          <span style="font-size: 19px; font-weight: 600; letter-spacing: -0.02em;">REDCO Custom TA700T-EH</span>
+          <div style="display: flex; gap: 10px; align-items: baseline; margin-top: 8px;">
+            <span style="font-size: 13px; color: #8a2b20; text-decoration: line-through;">Stacer Alloy 6.0</span>
+            <span style="font-size: 13px; color: #8a2b20;">Not offered — this trailer's Series is built for Stacer. This hull is a Highfield.</span>
+          </div>
+        </div>
+        <span class="mono" style="font-size: 17px; font-weight: 500; padding-top: 22px;">$18,600</span>
+      </div>
+
+      <!-- 04 -->
+      <div style="display: grid; grid-template-columns: 44px minmax(0,1fr) auto; align-items: center; gap: 20px; padding: 22px 0;">
+        <span class="mono" style="font-size: 13px; color: #5a6b7c;">04</span>
+        <div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5a6b7c;">Dealer fit</span><span style="font-size: 19px; font-weight: 600; letter-spacing: -0.02em;">Tube covers <span style="color: #5a6b7c; font-weight: 400;">· +1 more</span></span></div>
+        <span class="mono" style="font-size: 17px; font-weight: 500;">$99</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- THE PRICE — one solid rule across the bottom -->
+  <div style="flex: none; height: 84px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; background: #081b2e; color: #ffffff;">
+    <div style="display: flex; align-items: baseline; gap: 18px;">
+      <span class="mono" style="font-size: 38px; font-weight: 500; letter-spacing: -0.03em;">$128,108</span>
+      <span style="font-size: 13px; color: rgba(255,255,255,0.7);">incl. tax</span>
+      <span style="font-size: 13px; color: rgba(255,255,255,0.7); border-left: 1px solid rgba(255,255,255,0.2); padding-left: 18px;">1 item not priced yet</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span style="padding: 10px 18px; font-size: 14px; font-weight: 500; color: #ffffff; border: 1px solid rgba(255,255,255,0.28); border-radius: 6px;">Cash</span>
+      <span style="padding: 10px 18px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.7); border-radius: 6px;">Trade-in</span>
+      <span style="padding: 11px 22px; font-size: 14px; font-weight: 600; color: #081b2e; background: #ffffff; border-radius: 6px; margin-left: 8px;">Give it to the customer</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
