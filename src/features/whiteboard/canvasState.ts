@@ -171,6 +171,23 @@ export function claimLayerFrame(layer: FrameKey): boolean {
 /* ============================================================
    LANE SEPARATION SESSION (UX_REWORK §3 + §5)
 
+   DORMANT, AND SAY SO. Nothing calls `claimRuleLayout`,
+   `markRuleArranged` or `isRuleArranged` today, and that is not rot:
+   the premise left the app. §3 asks to "relayout a rule's flow into
+   free space above the entity cluster", which was a real problem on
+   the WHITEBOARD, where a rule's plates and the table cards shared
+   one plane. The rule flow lives on `FlowStage` now and draws one
+   rule's plates and nothing else — there is no cluster to keep clear
+   of, so there is nothing to separate.
+
+   IT STAYS because this file's whole cohort does: the Whiteboard's
+   own header (§2 of its restoration recipe) names the lane-separation
+   relayout beside `SHEET_LAYERS` and `useSheetLayer`, which have no
+   callers either. Putting the rule flow back on the sheet is a
+   documented change, and deleting the state it needs would make that
+   recipe a lie. Read that header before assuming any of this is
+   unused rather than waiting.
+
    The flow-vs-cards relayout may fire ONCE per rule, and never on
    a rule whose plates the reader has arranged themselves. Both
    facts have to outlive the canvas component — it is unmounted on
