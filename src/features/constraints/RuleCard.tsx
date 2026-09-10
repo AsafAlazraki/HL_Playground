@@ -1,10 +1,24 @@
 /* ============================================================
    ONE RULE — a card holding one sentence, one switch and one reason.
 
-   The switch, not a delete button. A shipped rule that can only be
-   deleted is a rule nobody dares touch; a rule that can be switched
-   off is an experiment, and the whole "ask why → switch it off →
-   watch the option come back" loop depends on it.
+   THE SWITCH IS THE EVERYDAY CONTROL, and it is on the collapsed
+   card: a rule that can only be deleted is a rule nobody dares touch,
+   and the whole "ask why → switch it off → watch the option come
+   back" loop depends on being able to pause one.
+
+   DELETE IS THE OTHER ACT, and it is only on the OPEN card. Owner's
+   decision, 2026-09-11, overturning CONFIGURATOR_SPEC §4b's "rules
+   toggle off, they are never deleted" — the cost of that rule was
+   that dead rules accumulated for the life of the sheet and the only
+   removal threw away the good ones too. It sits beside Done rather
+   than beside the switch, because a list of collapsed cards is
+   something a person scrolls and a stray press there should never be
+   able to remove somebody's authoring.
+
+   IT ASKS NOTHING AND SAYS EVERYTHING. Rule 9: an undoable act gets
+   a toast with UNDO, not a dialog. The registry is outside the
+   project store's history, so Ctrl+Z cannot reach it — the toast
+   carries the definition itself and puts it back on press.
 
    Collapsed, the card is prose. Clicking it opens the SAME sentence
    with the same words as live dropdowns. There is no edit mode to
@@ -17,7 +31,9 @@ import { WarningDiamond } from '@phosphor-icons/react'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
 import type { ConstraintDef } from '@/types/model'
 import { RuleSentence } from './RuleSentence'
-import { putConstraint, setConstraintEnabled } from './constraintDefs'
+import { deleteConstraint, putConstraint, restoreConstraint, setConstraintEnabled } from './constraintDefs'
+import { describeConstraint } from './describe'
+import { say } from '@/store/notes'
 import { setBecause } from './edit'
 import { BADGE_LABEL, badgesFor, statusNote, type ConstraintStatus } from './state'
 import './constraints.css'
@@ -92,9 +108,31 @@ export function RuleCard({ constraint, status, open, onOpen }: RuleCardProps): R
         <span className="cn-meta">{note}</span>
         {constraint.source && <span className="cn-meta cn-meta--dim">{constraint.source}</span>}
         {open && (
-          <button type="button" className="cn-done" onClick={() => onOpen(false)}>
-            Done
-          </button>
+          <>
+            {/* THE SENTENCE IS THE NAME (there is no other), so the
+                toast quotes it — a note reading "Rule deleted" would
+                be about a thing a person cannot identify a minute
+                later, and this one has to be recognisable long enough
+                to decide whether to press UNDO. */}
+            <button
+              type="button"
+              className="cn-drop"
+              onClick={() => {
+                const gone = deleteConstraint(constraint.id)
+                if (!gone) return
+                onOpen(false)
+                say({
+                  text: `Deleted "${describeConstraint(gone)}"`,
+                  act: { label: 'Undo', onPick: () => restoreConstraint(gone) },
+                })
+              }}
+            >
+              Delete
+            </button>
+            <button type="button" className="cn-done" onClick={() => onOpen(false)}>
+              Done
+            </button>
+          </>
         )}
       </footer>
     </article>

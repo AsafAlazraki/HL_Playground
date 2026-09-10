@@ -338,9 +338,29 @@ When  Water  is  Salt ,   Prop material  must be  Stainless steel
   right-hand side they take obligation voice — `must be`, `must be at least`.
 - **Write a new rule** with the same sentence, six dropdowns and one button:
   *"It reads as a sentence, and it takes effect the moment you add it."*
-- **Rules toggle off, they are never deleted** — the experiment is reversible
-  and the authoring survives. Cards carry live state: `ACTIVE NOW` when the
-  rule is currently firing, plus `CONFLICT`, `OFF`, `EDITED`.
+- **Rules toggle off** — the experiment is reversible and the authoring
+  survives. Cards carry live state: `ACTIVE NOW` when the rule is currently
+  firing, plus `CONFLICT`, `OFF`, `EDITED`.
+
+  > **AMENDED 2026-09-11 — A RULE CAN NOW BE DELETED.** This read "rules
+  > toggle off, they are never deleted", and `constraintDefs.ts` implemented
+  > exactly that. CLUELESS_USER_TESTS Finding 15 disagreed and the owner
+  > settled it: it can be deleted. The cost of the rule as written was real —
+  > a dealer who wrote a bad rule could only ever switch it off, so dead rules
+  > accumulated for the life of the sheet, and `clearConstraints` (the only
+  > removal there was) threw away the good ones with them.
+  >
+  > **The switch is unchanged and is still the everyday control.** Delete is
+  > drawn only on the OPEN card, beside Done, because a list of collapsed
+  > cards is something a person scrolls and a stray press there must not be
+  > able to remove somebody's authoring. It asks nothing: rule 9, an undoable
+  > act gets a toast with UNDO. The registry sits outside the project store's
+  > history, so the toast carries the definition itself rather than relying on
+  > Ctrl+Z, and it quotes the rule's own sentence — which IS its name.
+  >
+  > **A deleted seeded rule stays deleted.** `workbookRules.ts` keeps a ledger
+  > of the ids it has written and never rebuilds one; its own comment said "a
+  > rule they removed stays gone" long before there was a way to remove one.
 
 ### Ask why — an unavailable option explains itself
 

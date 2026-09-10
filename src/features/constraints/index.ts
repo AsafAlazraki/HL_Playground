@@ -96,6 +96,12 @@ export {
   createConstraint,
   putConstraint,
   setConstraintEnabled,
+  /* THE ACT AND THE WAY BACK, TOGETHER. `deleteConstraint` hands the
+     definition back rather than a boolean, and `restoreConstraint`
+     takes it; exporting one without the other would be exporting a
+     delete with no undo behind it. */
+  deleteConstraint,
+  restoreConstraint,
   registerConstraints,
   clearConstraints,
   getConstraint,

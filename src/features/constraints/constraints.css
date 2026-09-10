@@ -662,8 +662,38 @@
   color: var(--ink-faint);
 }
 
-.cn-done {
+/* DELETE — the same plate as Done, in the danger ink, and it is the
+   one that takes the auto margin so the pair sits together at the far
+   edge rather than one of them drifting to the middle.
+
+   NOT A FILLED RED BUTTON. DESIGN_PRINCIPLES §5 keeps one accent per
+   screen and the rules pane already spends it; a destructive act that
+   is undoable in one press does not need to shout, and shouting here
+   would out-rank the sentence the card is actually about. */
+.cn-drop {
   margin-left: auto;
+  padding: 4px 10px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--paper-high);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--danger);
+  cursor: pointer;
+}
+
+.cn-drop:hover {
+  border-color: var(--danger);
+  background: var(--danger-wash);
+}
+
+.cn-drop:focus-visible {
+  outline: 2px solid var(--danger);
+  outline-offset: 2px;
+}
+
+.cn-done {
   padding: 4px 10px;
   border: 1px solid var(--hairline-strong);
   border-radius: var(--radius);

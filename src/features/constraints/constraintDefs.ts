@@ -245,9 +245,11 @@ export function putConstraint(constraint: ConstraintDef): void {
   publish()
 }
 
-/** The switch. Never a delete: the experiment is reversible and the
- *  authoring survives (CONFIGURATOR_SPEC §4b). Toggling is NOT an
- *  edit, so it does not raise the EDITED tag. */
+/** The switch, and it is still the everyday control: switching a rule
+ *  off is the reversible experiment the whole "ask why → switch it off
+ *  → watch the option come back" loop depends on, and it keeps the
+ *  authoring. Toggling is NOT an edit, so it does not raise the EDITED
+ *  tag. Deleting is the other act, below. */
 export function setConstraintEnabled(id: string, enabled: boolean): void {
   const map = orgMap(currentKey())
   const current = map.get(id)
@@ -301,8 +303,69 @@ export function registerConstraints(
   publish()
 }
 
-/** Used by a project reset; there is no per-rule delete by design. */
+/** Used by a project reset. Every rule this organisation has, at once
+ *  — `deleteConstraint` is the one-at-a-time act. */
 export function clearConstraints(orgKey: string = currentKey()): void {
   byOrg.get(orgKey)?.clear()
+  publish()
+}
+
+/* ============================================================
+   DELETING ONE RULE.
+
+   THIS WAS REFUSED BY DESIGN UNTIL 2026-09-11, and allowing it is the
+   owner's decision rather than a deduction. CONFIGURATOR_SPEC §4b
+   said "rules toggle off, they are never deleted — the experiment is
+   reversible and the authoring survives", and this file implemented
+   exactly that. CLUELESS_USER_TESTS Finding 15 disagreed, and the
+   cost of the spec as written was real: a dealer who writes a bad
+   rule could only ever switch it off, so dead rules accumulate for
+   the life of the sheet and `clearConstraints` — the only removal —
+   throws away the good ones with them.
+
+   THE SWITCH IS UNCHANGED AND IS STILL THE ORDINARY ACT. What is
+   added is a way to be finished with a rule, not a replacement for
+   being able to pause one.
+
+   IT IS UNDOABLE, AND NOT BY THE PROJECT STORE'S UNDO. This registry
+   is its own map behind its own localStorage key, so Ctrl+Z does not
+   reach it: the caller gets the removed definition back, and a toast
+   carrying UNDO puts it there again (rule 9 — an undoable act gets a
+   toast, never a dialog). Handing the definition back rather than a
+   boolean is what lets that happen without this file knowing anything
+   about toasts.
+
+   A DELETED SEED STAYS DELETED. `workbookRules.ts` keeps a ledger of
+   the seed ids it has already written and never rebuilds one. Its own
+   words, written long before this existed: "a rule they removed stays
+   gone."
+   ============================================================ */
+
+/** Take one rule out, and hand it back so the toast can put it back.
+ *  `undefined` means there was nothing to delete, which is the answer
+ *  a second press gets. */
+export function deleteConstraint(
+  id: string,
+  orgKey: string = currentKey(),
+): ConstraintDef | undefined {
+  const map = byOrg.get(orgKey)
+  const gone = map?.get(id)
+  if (!map || !gone) return undefined
+  map.delete(id)
+  publish()
+  return gone
+}
+
+/** The way back from a delete — the definition as it was, not an edit
+ *  of it. `putConstraint` re-stamps `updatedAt`, which is right for a
+ *  rewording and wrong here: undoing a delete did not change the rule,
+ *  so its own dates travel with it. Still through the observed
+ *  coercion, because that guard is about what a definition may claim
+ *  rather than about where it arrived from. */
+export function restoreConstraint(
+  constraint: ConstraintDef,
+  orgKey: string = currentKey(),
+): void {
+  orgMap(orgKey).set(constraint.id, sanitiseObserved(constraint))
   publish()
 }

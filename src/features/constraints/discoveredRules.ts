@@ -287,10 +287,14 @@ export function forget(orgKey: string, id: string): void {
   if (!map || !map.has(id)) return
   map.delete(id)
   publish()
-  /* STOP KEEPING IT AND THE RULE STOPS, but it is switched off and
-     never deleted — the registry has no per-rule delete by design,
-     and UNDO on the toast has to be able to bring it back with the
-     person's own edits and wording intact. */
+  /* STOP KEEPING IT AND THE RULE STOPS, but it is switched OFF rather
+     than deleted, and that is now a choice rather than the only
+     option: `deleteConstraint` exists as of 2026-09-11. It stays a
+     switch here because UNDO on this toast has to bring the rule back
+     with the person's own edits and wording intact, and because
+     un-keeping a DISCOVERED pattern is a statement about the pattern
+     rather than about the rule somebody may have since reworded. A
+     person who wants the rule gone deletes it on its own card. */
   if (isCurrentOrg(orgKey)) setConstraintEnabled(`${OBSERVED_ID_PREFIX}${id}`, false)
 }
 
