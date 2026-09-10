@@ -18,7 +18,14 @@
 
 import { describe, expect, it } from 'vitest'
 import { heldBackSentence, stillOnTheSheet, withheldClause } from '@/features/views/sellable'
-import { curationChip, curationNote, reachNote, readCuration, toggleWords } from './curation'
+import {
+  curationChip,
+  curationNote,
+  measuredRate,
+  reachNote,
+  readCuration,
+  toggleWords,
+} from './curation'
 import { searchReach } from './reach'
 import type { CurationInput } from './curation'
 
@@ -242,5 +249,53 @@ describe('a search that ignores the narrowing', () => {
     expect(reachNote(trailers({ search: { term: 'redco', beyond: 1 } }))).toContain(
       '1 more Trailer matches',
     )
+  })
+})
+
+/* ---------------------------------------------------------- */
+
+describe('a share is a fact, or it is not said', () => {
+  /* CONFIGURATOR §B item 4, in its own words: "the share, where a
+     share is a fact (`on 3 of 7`, never `on 1 of 1`)". */
+
+  it('IS SILENT ON ONE OF ONE — a rule that met one case was not measured', () => {
+    expect(measuredRate(1, 1, 'pairings')).toBe('')
+  })
+
+  it('is silent on nothing tested, and on a nonsense count', () => {
+    expect(measuredRate(0, 0, 'pairings')).toBe('')
+    expect(measuredRate(3, -2, 'pairings')).toBe('')
+  })
+
+  it('speaks the moment there are two, because two can disagree', () => {
+    expect(measuredRate(2, 2, 'pairings')).toBe('holds on 2 of 2 pairings, no exceptions')
+  })
+
+  it('says the rate where the rate is the fact, GROUPED like the count beside it', () => {
+    /* The chip says "10 of 434 Trailers". A rate reading "3890 of
+       4017" under it is the same reading written two ways. */
+    expect(measuredRate(3890, 4017, 'live pairings')).toBe(
+      'holds on 3,890 of 4,017 live pairings, 96.84%',
+    )
+    expect(measuredRate(7830, 7830, 'remote-helm cells')).toBe(
+      'holds on 7,830 of 7,830 remote-helm cells, no exceptions',
+    )
+  })
+
+  it('says "no exceptions" rather than 100%, which reads as a rounding', () => {
+    expect(measuredRate(581, 581, 'pairings')).toBe('holds on 581 of 581 pairings, no exceptions')
+  })
+
+  it('SAYS NOTHING INSTEAD, so a caller drops the clause rather than printing an empty one', () => {
+    /* `curationChipParts` pushes `w.measured` only when it is
+       truthy, so a narrowing whose rate is not worth stating carries
+       its reason alone. */
+    const chip = curationChip(
+      trailers({
+        narrowings: [{ id: 'f8', what: 'the series banner names this brand', measured: measuredRate(1, 1, 'pairings') }],
+      }),
+    )
+    expect(chip).toContain('the series banner names this brand')
+    expect(chip).not.toContain('1 of 1')
   })
 })

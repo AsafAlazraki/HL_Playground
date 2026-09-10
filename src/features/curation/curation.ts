@@ -375,10 +375,37 @@ export function toggleWords(input: CurationInput): { label: string; say: string 
  * line is for.
  */
 export function measuredRate(held: number, tested: number, noun: string): string {
-  if (tested <= 0) return ''
-  if (held >= tested) return `holds on ${tested} of ${tested} ${noun}, no exceptions`
+  /* A SHARE OF ONE IS NOT A SHARE — CONFIGURATOR §B item 4, in its
+     own words: "the share, where a share is a fact (`on 3 of 7`,
+     never `on 1 of 1`)".
+     
+     "Holds on 1 of 1 pairings, no exceptions" is TRUE and it is not
+     evidence. A rule that has met one case has not been measured
+     against anything, and dressing that up in the same sentence
+     shape as "holds on 3,890 of 4,017" is the app lending its own
+     credibility to a number that has not earned it — which is the
+     one thing this file exists to stop, since the whole argument for
+     computing a rate rather than typing one is that a computed
+     figure cannot lie.
+     
+     NOTHING IS SAID INSTEAD. A caller with no measurement carries no
+     sentence (see the note above), and evidence you do not have is
+     not evidence to report. Nothing in the seed is affected — the
+     smallest measure in `RULE_LEDGER` is 530 — so this guards the
+     rule somebody adds next month against the one table with one
+     row in it. */
+  if (tested <= 1) return ''
+  /* THE FIGURES ARE GROUPED, like every other figure this file
+     prints. They were not: the chip beside this sentence says "10 of
+     434 Trailers" through `fig`, and the rate under it said "holds on
+     7830 of 7830 remote-helm cells" — two figures in one reading
+     written two ways, which is the disagreement this file exists to
+     make impossible, in punctuation rather than in arithmetic. Found
+     because a test's own expectation was written grouped without
+     thinking about it, which is a reader's instinct being right. */
+  if (held >= tested) return `holds on ${fig(tested)} of ${fig(tested)} ${noun}, no exceptions`
   const pct = ((held / tested) * 100).toFixed(2).replace(/\.00$/, '')
-  return `holds on ${held} of ${tested} ${noun}, ${pct}%`
+  return `holds on ${fig(held)} of ${fig(tested)} ${noun}, ${pct}%`
 }
 
 /**
