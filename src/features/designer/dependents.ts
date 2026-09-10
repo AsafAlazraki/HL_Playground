@@ -31,9 +31,13 @@
                        link columns elsewhere the cascade removes, and
                        which rules are deleted outright rather than
                        merely marked
-     entityPages       the pages and the dashboard doors left pointing
-                       at a table that is gone — the two things
-                       `deleteEntity` does NOT cascade into
+     entityPages       the pages and the dashboard doors that go with
+                       a table when it goes. These were once the two
+                       things `deleteEntity` did NOT cascade into, so
+                       this counted what would be LEFT DANGLING; the
+                       cascade landed in `store/deleteCascade.ts` and
+                       the same count is now the blast radius of an
+                       act rather than a warning about a mess
      fieldViewers      the pages that name one column, and where
 
    The last four are the newest and the argument for them is written

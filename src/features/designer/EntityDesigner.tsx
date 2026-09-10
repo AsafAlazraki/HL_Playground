@@ -194,11 +194,13 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
      confirm whose five counts came from two different projects is
      worse than a confirm with no counts at all.
 
-     `pages` is the half `deleteEntity` does NOT cascade into: it
-     rewrites entities, rows and rules and returns them, so a page
-     rooted here keeps its record and loses its subject, and a module
-     keeps a dead id and comes up one table shorter. See the section
-     head in dependents.ts. */
+     `pages` WAS the half `deleteEntity` did not cascade into, and
+     is not any more: a page rooted here kept its record and lost its
+     subject, and a module kept a dead id. Both now go with the table
+     (`store/deleteCascade.ts`), so the four sentences below say what
+     happens rather than warning about what does not. The counts are
+     still read here, because a confirm has to state its blast radius
+     BEFORE the act — §7. */
   const doomed = useMemo(() => {
     if (!confirmingDelete) return null
     const { entities: all, rowsByEntity, rules, views, modules } = useProjectStore.getState()
@@ -728,17 +730,22 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
 
           {/* WHICH PAGES, BY NAME — a count says how much and only a
               name says what, which is the rule the rest of this sheet
-              already follows. And the verb is deliberately not "goes":
-              `deleteEntity` never touches `views`, so the page is still
-              in the file afterwards with nothing to be about. Saying it
-              went would be the easier sentence and the false one. */}
+              already follows.
+
+              THE VERB IS "GOES" NOW, and it used to be the opposite.
+              This sheet read "is left with nothing to draw … deleting
+              the table does not delete it", which was true and awful:
+              the page stayed in the file with no subject. It goes with
+              the table now — a page's `rootTableId` is what the page
+              IS, not a reference it can lose — so the sentence that
+              was carefully false is simply true. */}
           {doomed.pages.rootedViews.length > 0 ? (
             <p className="ds-cs-line ds-cs-line-warn">
               {doomed.pages.rootedViews.length === 1 ? 'This page is' : 'These pages are'} about{' '}
-              {entity.name} and {doomed.pages.rootedViews.length === 1 ? 'is' : 'are'} left with
-              nothing to draw —{' '}
-              {nameList(doomed.pages.rootedViews.map((v) => v.viewName))}. Deleting the table does
-              not delete {doomed.pages.rootedViews.length === 1 ? 'it' : 'them'}.
+              {entity.name} and {doomed.pages.rootedViews.length === 1 ? 'goes' : 'go'} with it —{' '}
+              {nameList(doomed.pages.rootedViews.map((v) => v.viewName))}. A page is what it is
+              about, so there is nothing left of{' '}
+              {doomed.pages.rootedViews.length === 1 ? 'it' : 'them'} to keep.
             </p>
           ) : null}
 
@@ -751,20 +758,29 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
             </p>
           ) : null}
 
-          {/* A MODULE WITH NO OTHER TABLE IS THE WORSE HALF OF THIS and
-              gets its own sentence: `moduleTables` skips an id that no
-              longer resolves, so a module standing on one table becomes
-              a door onto nothing rather than a door that is smaller. */}
-          {doomed.pages.places.length > 0 ? (
+          {/* A MODULE WITH NO OTHER TABLE AND ONE WITH TABLES LEFT ARE
+              TWO DIFFERENT OUTCOMES, so they are two sentences. They
+              used to be one, because neither happened: the module kept
+              a dead id either way and "would come up without it" was
+              all that could honestly be said. Now the first is deleted
+              — a module is the tables it is about, and stripped of them
+              there is no place to stand — and the second is narrowed
+              and carries on. */}
+          {doomed.pages.places.some((m) => m.last) ? (
             <p className="ds-cs-line ds-cs-line-warn">
-              {doomed.pages.places.length === 1 ? 'This module stands' : 'These modules stand'} on
-              it and would come up without it —{' '}
-              {nameList(
-                doomed.pages.places.map((m) =>
-                  m.last ? `${m.moduleName}, which has no other table to list` : m.moduleName,
-                ),
-              )}
-              .
+              {doomed.pages.places.filter((m) => m.last).length === 1
+                ? 'This module has no other table and goes with it — '
+                : 'These modules have no other table and go with it — '}
+              {nameList(doomed.pages.places.filter((m) => m.last).map((m) => m.moduleName))}.
+            </p>
+          ) : null}
+
+          {doomed.pages.places.some((m) => !m.last) ? (
+            <p className="ds-cs-line ds-cs-line-warn">
+              {doomed.pages.places.filter((m) => !m.last).length === 1
+                ? 'This module loses it and lists what it has left — '
+                : 'These modules lose it and list what they have left — '}
+              {nameList(doomed.pages.places.filter((m) => !m.last).map((m) => m.moduleName))}.
             </p>
           ) : null}
 
@@ -785,7 +801,7 @@ function DesignerSheet({ entity }: { entity: EntityDef }) {
             column and rule that went with it
             {doomed.pages.rootedViews.length + doomed.pages.blockViews.length + doomed.pages.places.length >
             0
-              ? ' — and the pages and modules above have their table again'
+              ? ' — and the pages and modules above come back with it'
               : ''}
             .
           </p>

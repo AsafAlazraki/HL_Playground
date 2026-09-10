@@ -556,3 +556,93 @@ describe('an undo is written through', () => {
     expect(snap?.rows.find((r) => r.id === 'r1')?.values['f-price']).toBe(52000)
   })
 })
+
+/* ============================================================
+   DELETING A TABLE NOW TAKES ITS PAGES AND MODULES WITH IT, and
+   the confirm sheet promises on screen that Ctrl+Z brings them
+   back: "the pages and modules above come back with it."
+
+   That sentence is a SAFETY CLAIM about the largest act in the
+   app, so it is asserted here rather than inspected. It holds
+   because `record()` runs before `mutate()` and a HistoryEntry
+   carries the whole DataSlice — which includes `views` and
+   `modules` — but "it holds because" is how a promise quietly
+   stops holding.
+   ============================================================ */
+
+describe('undo — a table delete that cascades', () => {
+  const withPagesAndModules = (): void => {
+    useProjectStore.setState({
+      views: {
+        'v-boats': {
+          id: 'v-boats',
+          name: 'Boats page',
+          rootTableId: 'e-boats',
+          blocks: [],
+          createdAt: ISO,
+          updatedAt: ISO,
+        },
+        'v-other': {
+          id: 'v-other',
+          name: 'Rigs page',
+          rootTableId: 'e-rigs',
+          blocks: [{ id: 'b1', tableId: 'e-boats' }, { id: 'b2', tableId: 'e-rigs' }],
+          createdAt: ISO,
+          updatedAt: ISO,
+        },
+      },
+      modules: {
+        'm-only': {
+          id: 'm-only',
+          name: 'Boats',
+          description: '',
+          tableIds: ['e-boats'],
+          capabilities: [],
+          index: 'grid',
+          viewId: 'v-boats',
+          accent: 'blue',
+          order: 0,
+          createdAt: ISO,
+          updatedAt: ISO,
+        },
+        'm-wider': {
+          id: 'm-wider',
+          name: 'Sales',
+          description: '',
+          tableIds: ['e-boats', 'e-rigs'],
+          capabilities: [],
+          index: 'grid',
+          accent: 'blue',
+          order: 1,
+          createdAt: ISO,
+          updatedAt: ISO,
+        },
+      },
+    } as Partial<ReturnType<typeof store>> as never)
+  }
+
+  it('takes the page, the module and the block — and puts all three back', () => {
+    withPagesAndModules()
+    store().deleteEntity('e-boats')
+
+    /* the page about it is gone, the module standing only on it is
+       gone, the wider module kept its place with one table fewer,
+       and the page elsewhere lost just the block */
+    expect(store().views['v-boats']).toBeUndefined()
+    expect(store().modules['m-only']).toBeUndefined()
+    expect(store().modules['m-wider'].tableIds).toEqual(['e-rigs'])
+    expect(store().views['v-other'].blocks.map((b) => b.tableId)).toEqual(['e-rigs'])
+
+    const label = store().undo()
+    expect(label).toBe('Table deleted · Boats')
+
+    /* and every one of them comes back, which is what the confirm
+       sheet says out loud before the act */
+    expect(store().entities['e-boats']).toBeDefined()
+    expect(store().views['v-boats']).toBeDefined()
+    expect(store().modules['m-only']).toBeDefined()
+    expect(store().modules['m-only'].viewId).toBe('v-boats')
+    expect(store().modules['m-wider'].tableIds).toEqual(['e-boats', 'e-rigs'])
+    expect(store().views['v-other'].blocks.map((b) => b.tableId)).toEqual(['e-boats', 'e-rigs'])
+  })
+})
