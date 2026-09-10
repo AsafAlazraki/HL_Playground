@@ -900,6 +900,18 @@ export type ModuleCapability =
   | 'edit'
   | 'delete'
   | 'relate'
+  /* THE TENTH VERB, AND IT WAS HELD OUTSIDE THIS UNION FOR A RELEASE.
+     `features/modules/ruleCapability.ts` carried it in a browser-local
+     registry because this file was owned by another hand at the time,
+     and wrote down the exact two lines it wanted so the day it landed
+     would be a deletion rather than a design. This is that day, and
+     these are those lines.
+
+     BETWEEN `relate` AND `quote` because this record's order IS the
+     display order: a person reads the three reads, then the three
+     writes, then the three acts a manager does — say what goes with
+     what, set what must always be true, raise a price. */
+  | 'configure'
   | 'quote'
   | 'export'
   | 'import'
@@ -915,6 +927,7 @@ export const MODULE_CAPABILITIES: Record<
   edit: { label: 'Edit', says: 'change what is there' },
   delete: { label: 'Remove', says: 'take an item out' },
   relate: { label: 'Relate', says: 'say what goes with what' },
+  configure: { label: 'Set rules', says: 'set what must always be true here' },
   quote: { label: 'Quote', says: 'raise a price for a customer' },
   export: { label: 'Export', says: 'take a copy out' },
   /* THE TENTH VERB, AND THE ONE THE CONTRACT WAS SHORT OF.

@@ -514,6 +514,21 @@ describe('an imported design is untrusted input', () => {
     expect(m?.capabilities).toEqual(['browse', 'quote'])
   })
 
+  it('CARRIES THE TWO VERBS THAT ARRIVED LATE, because the guard reads the contract', () => {
+    /* `configure` spent a release in a browser-local registry and
+       `import` was not in the union at all, so neither could travel —
+       the export panel carried a sentence apologising for the first.
+       Both are in `MODULE_CAPABILITIES` now, and `isModuleCapability`
+       asks that record rather than a list of its own, so they came
+       through the door the moment they were named. This asserts that
+       property rather than the two names: a verb added tomorrow
+       travels too. */
+    const m = ok(
+      full({ modules: [moduleDef({ capabilities: ['browse', 'configure', 'import'] })] }),
+    ).modules?.[0]
+    expect(m?.capabilities).toEqual(['browse', 'configure', 'import'])
+  })
+
   it('honours a module with every verb switched off, which is a choice', () => {
     const m = ok(full({ modules: [moduleDef({ capabilities: [] })] })).modules?.[0]
     expect(m?.capabilities).toEqual([])

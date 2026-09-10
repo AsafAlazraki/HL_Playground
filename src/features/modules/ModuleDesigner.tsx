@@ -72,11 +72,6 @@ import {
   type ModuleIndexMode,
   type ViewDef,
 } from '@/types/model'
-import {
-  RULE_CAPABILITY,
-  setModuleConfiguresRules,
-  useModuleConfiguresRules,
-} from './ruleCapability'
 import { ModuleRulesPanel } from './ModuleRulesPanel'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
@@ -142,19 +137,15 @@ export function ModuleDesigner({ module }: ModuleDesignerProps): ReactElement {
   const tables = moduleTables(module, entities)
   const bindings = tableBindings(module, entities, rowsByEntity)
 
-  /* THE TENTH VERB LIVES SOMEWHERE ELSE, AND ONLY THESE TWO LINES
-     KNOW IT. `capabilityStates` speaks for all ten and the strip
-     draws all ten the same way; when `ModuleCapability` grows
-     'configure', this hook and the branch in `onSet` are the whole of
-     the deletion. See `ruleCapability.ts`. */
-  const configures = useModuleConfiguresRules(module.id)
-  const caps = capabilityStates(module, tables, configures)
+  /* ALL TEN VERBS COME FROM ONE PLACE NOW. The tenth lived in a
+     browser-local registry for a release, and this component carried
+     the only two lines that knew — a hook beside `capabilityStates`
+     and a branch in the setter. `ruleCapability.ts` wrote its own
+     deletion down; this is it. */
+  const configures = module.capabilities.includes('configure')
+  const caps = capabilityStates(module, tables)
 
   const setCapability = (key: DesignerCapability, on: boolean): void => {
-    if (key === RULE_CAPABILITY) {
-      setModuleConfiguresRules(module.id, on)
-      return
-    }
     updateModule(module.id, {
       capabilities: nextCapabilities(module.capabilities, key, on),
     })

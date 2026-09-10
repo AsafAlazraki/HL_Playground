@@ -42,14 +42,7 @@ import {
   moduleKinds,
   workbookRulesFor,
 } from './moduleRules'
-import {
-  RULE_CAPABILITY,
-  RULE_CAPABILITY_META,
-  configuringCount,
-  forgetModuleRuleCapabilities,
-  moduleConfiguresRules,
-  setModuleConfiguresRules,
-} from './ruleCapability'
+import { DEFAULT_CAPABILITIES, MODULE_CAPABILITIES } from '@/types/model'
 import { DESIGNER_CAPABILITIES, capabilityStates, capabilityWords } from './designer'
 
 const STAMP = '2026-01-01T00:00:00.000Z'
@@ -309,71 +302,64 @@ describe('the workbook rules that govern a subject', () => {
 /* The tenth verb                                             */
 /* ---------------------------------------------------------- */
 
-describe('the rule-configuring verb', () => {
-  beforeEach(() => {
-    forgetModuleRuleCapabilities()
+describe('the tenth verb, now that the contract carries it', () => {
+  /* IT SPENT A RELEASE OUTSIDE `ModuleCapability`, in a browser-local
+     registry, because the model file was another hand's that session.
+     `ruleCapability.ts` wrote down the exact two lines the contract
+     needed and named the cost: the switch did not travel in an export.
+     The contract carries it now and the registry is deleted, so these
+     assert the verb the way the other nine are asserted — off the
+     module. */
+
+  it('carries the entry the registry wrote for it, word for word', () => {
+    expect(MODULE_CAPABILITIES.configure.label).toBe('Set rules')
+    expect(MODULE_CAPABILITIES.configure.says).toBe('set what must always be true here')
   })
 
-  it('carries the exact entry the contract needs, in that record’s voice', () => {
-    expect(RULE_CAPABILITY).toBe('configure')
-    expect(RULE_CAPABILITY_META.label).toBe('Set rules')
-    expect(RULE_CAPABILITY_META.says).toBe('set what must always be true here')
-  })
-
-  it('sits between relate and quote, where the contract will put it', () => {
-    const i = DESIGNER_CAPABILITIES.indexOf(RULE_CAPABILITY)
+  it('SITS BETWEEN RELATE AND QUOTE, which is where the words read right', () => {
+    /* The record's order IS the display order — a card prints the
+       verbs in it — so a person reads the three reads, then the three
+       writes, then the three a manager does: say what goes with what,
+       set what must always be true, raise a price. */
+    const i = DESIGNER_CAPABILITIES.indexOf('configure')
     expect(DESIGNER_CAPABILITIES[i - 1]).toBe('relate')
     expect(DESIGNER_CAPABILITIES[i + 1]).toBe('quote')
-    /* every contract verb still appears, and exactly once */
+    /* every verb appears, and exactly once */
     expect(new Set(DESIGNER_CAPABILITIES).size).toBe(DESIGNER_CAPABILITIES.length)
     expect(DESIGNER_CAPABILITIES).toContain('browse')
-    expect(DESIGNER_CAPABILITIES).toContain('export')
+    expect(DESIGNER_CAPABILITIES).toContain('import')
   })
 
-  it('is OFF until somebody switches it on — nothing that writes is on by default', () => {
-    expect(moduleConfiguresRules(BOATS.id)).toBe(false)
-    const states = capabilityStates(BOATS, [HIGHFIELD, STACER])
-    const rules = states.find((s) => s.key === RULE_CAPABILITY)
+  it('IS NOT IN THE DEFAULTS — nothing that writes is on by default', () => {
+    /* And writing a business rule is the most consequential write in
+       the product. */
+    expect(DEFAULT_CAPABILITIES).not.toContain('configure')
+    const rules = capabilityStates(BOATS, [HIGHFIELD, STACER]).find((s) => s.key === 'configure')
     expect(rules?.on).toBe(false)
     expect(rules?.refused).toBeUndefined()
   })
 
-  it('switches, per module, and forgets on a reset', () => {
-    setModuleConfiguresRules(BOATS.id, true)
-    expect(moduleConfiguresRules(BOATS.id)).toBe(true)
-    expect(moduleConfiguresRules(MOTORS.id)).toBe(false)
-
+  it('is read off the module, per module, like the other nine', () => {
+    const configuring = { ...BOATS, capabilities: [...BOATS.capabilities, 'configure' as const] }
     expect(
-      capabilityStates(BOATS, [HIGHFIELD, STACER], true).find(
-        (s) => s.key === RULE_CAPABILITY,
-      )?.on,
+      capabilityStates(configuring, [HIGHFIELD, STACER]).find((s) => s.key === 'configure')?.on,
     ).toBe(true)
-
-    setModuleConfiguresRules(BOATS.id, false)
-    expect(moduleConfiguresRules(BOATS.id)).toBe(false)
-
-    setModuleConfiguresRules(BOATS.id, true)
-    forgetModuleRuleCapabilities()
-    expect(moduleConfiguresRules(BOATS.id)).toBe(false)
+    expect(
+      capabilityStates(MOTORS, [HIGHFIELD]).find((s) => s.key === 'configure')?.on,
+    ).toBe(false)
   })
 
   it('says the same list on the dashboard card as on the index', () => {
-    /* The card printed `module.capabilities`, which stopped being the
-       whole list the moment one verb was held outside the type. A card
-       promising less than the place it opens onto is the same class of
-       lie as a disabled control with no reason on it. */
-    expect(capabilityWords(BOATS, false)).toEqual(['Browse', 'Search', 'Open one'])
-    expect(capabilityWords(BOATS, true)).toEqual([
-      'Browse',
-      'Search',
-      'Open one',
-      'Set rules',
-    ])
+    /* One reader for both, so a card promising less than the place it
+       opens onto is not possible. */
+    expect(capabilityWords(BOATS)).toEqual(['Browse', 'Search', 'Open one'])
+    const configuring = { ...BOATS, capabilities: [...BOATS.capabilities, 'configure' as const] }
+    expect(capabilityWords(configuring)).toEqual(['Browse', 'Search', 'Open one', 'Set rules'])
   })
 
   it('refuses, with the reason and the fix, on tables no sentence can name', () => {
     const plates = mod('m_plates', ['plates'])
-    const state = capabilityStates(plates, [PLATES]).find((s) => s.key === RULE_CAPABILITY)
+    const state = capabilityStates(plates, [PLATES]).find((s) => s.key === 'configure')
     expect(state?.refused).toContain('Reference Plates')
     expect(state?.refused).toContain('switches on')
   })
@@ -385,34 +371,10 @@ describe('the rule-configuring verb', () => {
     }
   })
 
-  it('counts only the modules it is asked about, never the registry', () => {
-    /* WHY THE COUNT TAKES IDS. Deleting a module leaves its entry
-       here on purpose: a switch dropped on delete would not come back
-       when the module does. So the registry legitimately holds ids
-       nothing points at, and the figure the export panel prints has
-       to be about the modules that exist rather than about the set's
-       size.
-
-       WHEN THE MODULE DOES COME BACK is narrower than this once said
-       — not "deleteModule is undoable", but "modules are in the
-       history slice, so one returns if its deletion rode in the same
-       tick as an act that recorded", which is the delete cascade.
-       `store/undo.test.ts` asserts both halves. */
-    setModuleConfiguresRules(BOATS.id, true)
-    setModuleConfiguresRules('m_deleted', true)
-
-    expect(configuringCount([BOATS.id, MOTORS.id])).toBe(1)
-    expect(configuringCount([MOTORS.id])).toBe(0)
-    expect(configuringCount([])).toBe(0)
-
-    /* and the stale one is still there to be restored by an undo */
-    expect(moduleConfiguresRules('m_deleted')).toBe(true)
-  })
-
   it('is never described as not-yet-built — it is performed', () => {
-    setModuleConfiguresRules(BOATS.id, true)
-    const state = capabilityStates(BOATS, [HIGHFIELD, STACER], true).find(
-      (s) => s.key === RULE_CAPABILITY,
+    const configuring = { ...BOATS, capabilities: [...BOATS.capabilities, 'configure' as const] }
+    const state = capabilityStates(configuring, [HIGHFIELD, STACER]).find(
+      (s) => s.key === 'configure',
     )
     expect(state?.on).toBe(true)
     expect(state?.note).toBeUndefined()

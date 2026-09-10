@@ -234,22 +234,12 @@ export {
 } from './writeCaps'
 export type { CatalogWrites, WriteStance, WriteVerb } from './writeCaps'
 
-/* THE TENTH VERB — `configure`, "set what must always be true here".
-   It is not in `ModuleCapability` yet and `ruleCapability.ts` carries
-   the exact line the contract needs, plus the registry holding it in
-   the meantime. Exported so a host can reset it with the project and
-   so a test can assert the deliberate default: OFF. */
-export {
-  RULE_CAPABILITY,
-  RULE_CAPABILITY_META,
-  forgetModuleRuleCapabilities,
-  configuringCount,
-  moduleConfiguresRules,
-  setModuleConfiguresRules,
-  useConfiguringCount,
-  useModuleConfiguresRules,
-} from './ruleCapability'
-export type { RuleCapabilityKey } from './ruleCapability'
+/* THE TENTH VERB CAME HOME. `configure` — "set what must always be
+   true here" — is in `ModuleCapability` now, so it is read like the
+   other nine and no registry holds it. What is left is the crossing:
+   a browser that switched it on while it lived outside the contract
+   keeps it on, and it travels in an export for the first time. */
+export { adoptConfigureVerb } from './adoptConfigure'
 
 /* WHICH RULES GOVERN A MODULE — computed off the columns, never
    stored. Exported because a quote, an export or a review that has to

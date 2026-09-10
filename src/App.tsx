@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { adoptKeptPatterns, adoptSlugKey, seedWorkbookConstraints } from '@/features/constraints'
+import { adoptConfigureVerb } from '@/features/modules'
 import { StillnessProvider } from '@/features/views/stillness'
 import { TabGuard } from '@/features/session'
 import { SignIn, currentUser, signOut, readTheme, applyTheme, type AppUser } from '@/features/auth'
@@ -107,6 +108,12 @@ export default function App() {
        Idempotent by construction — it takes the old key away, so the
        second call finds nothing and returns 0. */
     adoptSlugKey(useProjectStore.getState().meta)
+    /* AND THE TENTH MODULE VERB, on the same seam and for the same
+       reason. `configure` spent a release in a browser-local registry
+       because the contract could not carry it; now it can, and a
+       dealer who switched Set rules on keeps it on — and it travels
+       in their next export, which the registry never did. */
+    adoptConfigureVerb()
     seedWorkbookConstraints()
     /* AND THE PATTERNS A PERSON KEPT, on the same seam and for the
        same reason. A kept pattern becomes a rule carrying severity

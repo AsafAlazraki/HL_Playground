@@ -44,7 +44,7 @@ import { registerViewDef } from '@/features/views'
 import { buildConcepts } from '@/features/constraints/columns'
 import { nowIso } from '@/lib/id'
 import { imageFieldOf, priceReadOf, type PriceRead } from './read'
-import { RULE_CAPABILITY, RULE_CAPABILITY_META } from './ruleCapability'
+
 
 /* ---------------------------------------------------------- */
 /* The verbs                                                  */
@@ -56,7 +56,11 @@ import { RULE_CAPABILITY, RULE_CAPABILITY_META } from './ruleCapability'
  *  below this line treats all ten identically — only the two writers
  *  (`ModuleDesigner`'s switch handler, and `capabilityStates`' third
  *  argument) know one of them is stored somewhere else. */
-export type DesignerCapability = ModuleCapability | typeof RULE_CAPABILITY
+/** Kept as a name for one release while the tenth verb lived outside
+ *  the contract. It IS `ModuleCapability` now — `configure` landed in
+ *  the union — and the alias stays only so the callers that speak of
+ *  "the designer's verbs" keep reading as they did. */
+export type DesignerCapability = ModuleCapability
 
 /** Every verb in the contract's own declaration order, with the tenth
  *  spliced in where it will live: after `relate`, before `quote`.
@@ -65,17 +69,9 @@ export type DesignerCapability = ModuleCapability | typeof RULE_CAPABILITY
  *  appears here — and on the dashboard card, and on the index — without
  *  this file changing. That is the property `capabilityStates` has
  *  always had and it does not get traded away for one insertion. */
-export const DESIGNER_CAPABILITIES: DesignerCapability[] = (() => {
-  const out: DesignerCapability[] = []
-  for (const key of Object.keys(MODULE_CAPABILITIES) as ModuleCapability[]) {
-    if (key === 'quote') out.push(RULE_CAPABILITY)
-    out.push(key)
-  }
-  /* If `quote` is ever renamed away, the tenth verb still appears
-     rather than vanishing silently. */
-  if (!out.includes(RULE_CAPABILITY)) out.push(RULE_CAPABILITY)
-  return out
-})()
+export const DESIGNER_CAPABILITIES: DesignerCapability[] = Object.keys(
+  MODULE_CAPABILITIES,
+) as ModuleCapability[]
 
 /** WHAT A SWITCHED-ON VERB ACTUALLY DOES, said beside the switch.
  *  Shared with the index's own stub strip, so the promise made on the
@@ -158,7 +154,6 @@ export interface CapabilityState {
 export function capabilityStates(
   module: ModuleDef,
   tables: EntityDef[],
-  configures = false,
 ): CapabilityState[] {
   const gone = tables.length === 0
   const priced = tables.some((e) => priceReadOf(e) !== undefined)
@@ -174,8 +169,8 @@ export function capabilityStates(
     : buildConcepts(Object.fromEntries(tables.map((e) => [e.id, e])))
 
   return DESIGNER_CAPABILITIES.map((key) => {
-    const meta = key === RULE_CAPABILITY ? RULE_CAPABILITY_META : MODULE_CAPABILITIES[key]
-    const on = key === RULE_CAPABILITY ? configures : module.capabilities.includes(key)
+    const meta = MODULE_CAPABILITIES[key]
+    const on = module.capabilities.includes(key)
     let refused: string | undefined
     let note: string | undefined
 
@@ -187,7 +182,7 @@ export function capabilityStates(
          unavailable" would send an admin looking for a setting on the
          module, and there is none: a price is a column on a table. */
       refused = `Nothing on ${tables[0].name} is marked as a price, so there is no figure to quote. Give the table a price column on the sheet and this switches on.`
-    } else if (key === RULE_CAPABILITY && ruleable.length === 0) {
+    } else if (key === 'configure' && ruleable.length === 0) {
       /* SAME SHAPE AS THE QUOTE REFUSAL, AND THE SAME REASON. A rule
          reads words, numbers, yes/no, dates and lists; a table of
          pictures and totals gives a sentence nothing to name. The fix
@@ -216,10 +211,10 @@ export function capabilityStates(
  *  "Set rules" and whose card does not is the same class of lie as a
  *  disabled control with no reason on it. One reader, so they cannot
  *  drift while the tenth verb is waiting for the contract. */
-export function capabilityWords(module: ModuleDef, configures = false): string[] {
-  return DESIGNER_CAPABILITIES.filter((key) =>
-    key === RULE_CAPABILITY ? configures : module.capabilities.includes(key),
-  ).map((key) => (key === RULE_CAPABILITY ? RULE_CAPABILITY_META : MODULE_CAPABILITIES[key]).label)
+export function capabilityWords(module: ModuleDef): string[] {
+  return DESIGNER_CAPABILITIES.filter((key) => module.capabilities.includes(key)).map(
+    (key) => MODULE_CAPABILITIES[key].label,
+  )
 }
 
 /** The capability list after one switch moves, in the contract's own

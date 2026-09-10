@@ -86,7 +86,6 @@ import { AccessGrid } from './AccessGrid'
 import { ACCESS_ENFORCEMENT, ROLE_IS } from './accessSay'
 import { ModuleDesigner } from './ModuleDesigner'
 import { rulesPanelId } from './ModuleRulesPanel'
-import { useModuleConfiguresRules } from './ruleCapability'
 import { censusLine, moduleCensus, moduleTables } from './read'
 import { isUnrestricted } from './access'
 import { linkedThings, namedFew, type LinkedThing } from './links'
@@ -644,7 +643,7 @@ function Attached({ module }: { module: ModuleDef }): ReactElement {
   const constraints = useConstraints()
   const ctx = useSentenceCtx()
   const quotes = useQuotes()
-  const configures = useModuleConfiguresRules(module.id)
+  const configures = module.capabilities.includes('configure')
 
   const things = useMemo(
     () =>

@@ -41,7 +41,6 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { forgetSeedStamp } from '@/demos/seedStamp'
 import { ConfirmFacts, ConfirmSheet } from '@/features/designer/ConfirmSheet'
 import { useQuotes } from '@/features/quote'
-import { useConfiguringCount } from '@/features/modules'
 import { applyMerge, applyReplace } from './apply'
 import { exampleNote, exampleOnSheet, removeExampleData, removeLabel } from './exampleData'
 /* the envelope this build reads and writes: ProjectExport plus the
@@ -217,21 +216,18 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
      this panel, so the figure on the card is the figure the export
      writes rather than a count taken at a different moment. */
   const quoteCount = useQuotes().length
-  /* THE ONE SWITCH THE FILE CANNOT CARRY. A module's tenth verb —
-     "Set rules" — is held in a browser-local registry rather than on
-     `ModuleDef.capabilities`, because `ModuleCapability` is a closed
-     union this session does not own (features/modules/ruleCapability.ts
-     writes down the exact line the contract wants). So it does not
-     travel, and this panel has twice been fixed for exactly this shape
-     of silence: quotes, and retired tables. It is named below rather
-     than discovered by a dealer who opened their copy and found the
-     rules panel gone.
+  /* THE ONE SWITCH THE FILE COULD NOT CARRY — AND NOW DOES. A
+     module's tenth verb, "Set rules", was held in a browser-local
+     registry because `ModuleCapability` could not name it, so a copy
+     of the sheet arrived with the module intact and that switch off.
+     This panel carried a sentence warning about it, in the same place
+     it warns about quotes and retired tables.
 
-     THE RECORD, NOT ITS KEYS. `Object.keys` would be a new array on
-     every render and zustand compares with Object.is; the record's
-     identity only changes when a module does. */
-  const modules = useProjectStore((s) => s.modules)
-  const configuringCount = useConfiguringCount(Object.keys(modules))
+     `configure` is in the contract now, so it is a field on the
+     module and travels like the other nine. The warning is DELETED
+     rather than reworded: a sentence apologising for a gap that has
+     been closed is worse than no sentence, because a reader spends
+     attention deciding whether it still applies to them. */
 
   const closeMenu = useCallback(() => {
     setOpen(false)
@@ -645,15 +641,6 @@ export function ImportExportMenu({ align = 'right' }: ImportExportMenuProps = {}
                       panel, so a person told about it can undo it in
                       seconds and a person not told cannot know to. It
                       is drawn only when there is something to lose. */}
-                  {!blank && configuringCount > 0 && (
-                    <p
-                      className="io-kept-note"
-                      title="Every other verb a module carries is a field on the module and travels with it. This one is held in this browser until the module contract can name it, so the copy arrives with the module intact and this switch off."
-                    >
-                      {plural(configuringCount, 'module sets', 'modules set')} rules — that
-                      switch stays in this browser, so switch it back on in the copy
-                    </p>
-                  )}
                 </section>
 
                 {/* ---------------- import ---------------- */}
