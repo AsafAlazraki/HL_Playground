@@ -770,6 +770,44 @@
      does not have. Naming the container is the whole cost of getting
      that right; nothing else about this box changes. */
   container: qb / inline-size;
+
+  /* ── AND IT ENDS IN A FADE, NOT A CUT ────────────────────────────
+
+     This is the ONE scrollport on the screen — the note in §THE
+     PRODUCT argues at length why the product pane beside it may not
+     have a second — and its content runs under a fixed price bar. So
+     the last row a person sees is sliced off mid-height by an edge
+     that is not there for any reason they can see. Every catalogue in
+     the teardown cohort softens this and it is the cheapest thing on
+     any of their screens.
+
+     A MASK, NOT A BACKDROP-FILTER, which is what magicui's Progressive
+     Blur uses. §5 retired glass with exactly two exceptions and says a
+     third "wants an argument, not a commit" — and there is no argument
+     here, because blur is not what this needs. What a cut edge gets
+     wrong is that content STOPS; a fade says it continues. Blurring it
+     would say the same thing at the cost of a compositor layer over a
+     scrolling list of hundreds of rows.
+
+     BOTTOM ONLY. The top of this box is where the band heads are, and
+     a head is a control: fading it would make the thing you are about
+     to press look disabled. Nothing is hidden that was not already
+     under the bar. */
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 calc(100% - var(--s-5)),
+    transparent 100%
+  );
+}
+
+/* `prefers-reduced-transparency` is about translucency people find
+   hard to read through, and a mask that fades the last 24px of a
+   scroll is that. Squared off, nothing else about the box changes. */
+@media (prefers-reduced-transparency: reduce) {
+  .qb-scroll {
+    mask-image: none;
+  }
 }
 
 .qb-bands {
@@ -866,6 +904,7 @@
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
+
 
 /* NOT A <Row>, AND THE GAP IS NAMED. Row is lead + name + meta +
    trail, and an activating Row may carry no trail. This head is an
