@@ -2184,11 +2184,64 @@
   color: var(--fg-secondary);
 }
 /* a price that no longer applies is struck, not hidden — a dealer
-   needs to see that the option exists and what it would have cost */
+   needs to see that the option exists and what it would have cost
+
+   AND THE STRIKE IS DRAWN, IN 200ms. PHASE_TWO §4.2 — "Options
+   strike through in place when the solver removes them" — is the one
+   of that section's six motions that was never built; the other five
+   ship. It matters more than it sounds: the line arriving IS the
+   causality. A person presses a hull and a price on the other side of
+   the screen goes quiet; if the strike is simply there on the next
+   paint, they have to work out that their own press did it.
+
+   `text-decoration` cannot be animated, so the rule is a pseudo-
+   element and the animation is `scaleX` from a left origin —
+   transform only, off the main thread, no layout. Emil's rule and
+   §4's budget agree on the curve: entering, so ease-out, and
+   `--ease` is already a strong one.
+
+   THE RESTING STATE IS THE STRUCK ONE, and the keyframe runs FROM
+   zero rather than to it. A refusal that depends on an animation
+   having run is a refusal that disappears when the animation does
+   not — reduced motion, a print stylesheet, an old engine. This way
+   the line is always there and the draw is the decoration. */
 .s-refused .s-figure {
-  text-decoration: line-through;
-  text-decoration-color: var(--danger);
+  position: relative;
   color: var(--fg-tertiary);
+}
+
+.s-refused .s-figure::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  /* A BORDER, NOT A BACKGROUND, and that is about paper. Browsers
+     drop pseudo-element backgrounds whenever "print background
+     graphics" is off, which is the default — the struck price would
+     have printed unstruck on the one artefact a dealer hands over.
+     A border-top prints. The outgoing `text-decoration` printed too,
+     and losing that quietly is exactly the kind of regression a
+     motion pass is not allowed to introduce. */
+  height: 0;
+  border-top: 1.5px solid var(--danger);
+  transform: scaleX(1);
+  transform-origin: left center;
+  animation: s-strike 200ms var(--ease);
+}
+
+@keyframes s-strike {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* Reduced motion means gentler feedback, not none — §4. The line is
+   the meaning and it stays; only the drawing of it goes. */
+@media (prefers-reduced-motion: reduce) {
+  .s-refused .s-figure::after {
+    animation: none;
+  }
 }
 .s-warned {
   border-left: 3px solid var(--warning);

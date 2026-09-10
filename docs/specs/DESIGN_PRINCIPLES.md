@@ -402,12 +402,39 @@ two stylesheets fighting over one screen is worse than the problem it solves.
 **Changing the system itself?** That is `ds.css`, and it changes every screen at
 once — so it wants a reason, and a note in this file.
 
-**The one change made to `ds.css` since this file was written** is `--scrim`,
-light and dark. A modal's dim had no token, so the two features that needed a
-wash that gets *darker* on dark — the board's deal popup and the saved-
-configuration sheet — wrote literal `rgba()` instead. Every other scrim in the
-app builds from `--mat-dim-bg`, `--bg-sunken` or a `color-mix` of `--ink`, and
-none of those three deepens on dark.
+**Two changes have been made to `ds.css` since this file was written.**
+
+**`--scrim`, light and dark.** A modal's dim had no token, so the two features
+that needed a wash that gets *darker* on dark — the board's deal popup and the
+saved-configuration sheet — wrote literal `rgba()` instead. Every other scrim in
+the app builds from `--mat-dim-bg`, `--bg-sunken` or a `color-mix` of `--ink`,
+and none of those three deepens on dark.
+
+**`.s-refused` draws its strike, in 200ms** (2026-09-10). PHASE_TWO §4.2 —
+*"Options strike through in place when the solver removes them"* — was the one
+of that section's six motions never built; the other five ship. The line
+arriving **is** the causality: press a hull, and a price on the other side of
+the screen goes quiet. If the strike is simply present on the next paint, a
+person has to deduce that their own press caused it.
+
+`text-decoration` cannot be animated, so the strike is a pseudo-element and the
+motion is `scaleX` from a left origin — transform only, off the main thread, no
+layout. Two things about it are deliberate and are the reason it is recorded
+here rather than left as a detail:
+
+- **The resting state is the struck one**, and the keyframe runs *from* zero
+  rather than *to* one. A refusal that depends on an animation having run is a
+  refusal that vanishes when the animation does not.
+- **It is a `border-top`, not a `background`.** Browsers drop pseudo-element
+  backgrounds whenever *print background graphics* is off, which is the
+  default. The struck price would have printed unstruck on the one artefact a
+  dealer hands to a customer. The `text-decoration` it replaced printed
+  correctly, and a motion pass may not quietly take that away.
+
+It is in `ds.css` because `.s-refused` is a system state worn by five surfaces
+across four features — `LeftOutList`, `FanOut`, `Rig` and the quote's own
+reference list — and a strike that animated on one of them would be the
+inconsistency this file exists to prevent.
 
 ---
 
