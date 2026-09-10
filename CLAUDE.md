@@ -46,6 +46,15 @@ you may not add a 20th. Clear one and run `node tools/check-styles.mjs
 It also prints the dead rules — 177 at `530597d`, 110 today — which it does
 not fail on, which is why that number drifts.
 
+**And it fails on a `var()` nothing declares.** An undefined custom property
+does not warn — it voids the whole declaration that reads it. That has now bitten
+this project three times: `--chrome` and its twelve ink tiers (shell.css records
+it), and then `--ease-settle`, `--s-7` and `--fg-primary`, found by writing this
+sweep. Measured before the fix: `.win`'s computed `animation-name` was `none`,
+so the window materialise shell.css describes in a paragraph never ran. A
+`var(--x, fallback)` is not a finding — a fallback declares the name optional —
+and a name set from TSX (`style={{'--i': n}}`) counts as declared.
+
 **It also holds the type floor.** DESIGN_PRINCIPLES rule 2 — "never write a
 `font-size` below 11px" — was kept by hand for a year and then was not:
 `.ds-chip` in `ds.css`, the system's own chip, sat at 10.5px. The sweep fails

@@ -217,6 +217,69 @@ for (const f of css) {
   }
 }
 
+/* ---------- custom properties that nothing declares ----------
+
+   AN UNDEFINED CUSTOM PROPERTY DOES NOT WARN; IT VOIDS THE WHOLE
+   DECLARATION THAT READS IT. shell.css records the first two times
+   that bit this project, at length: `--chrome` and its twelve ink
+   tiers went missing in a duplicate-collapsing pass, and "the navy
+   rail with white ink was a transparent column of page-coloured
+   text" across 132 rules.
+
+   This sweep is the third time. Measured in the browser before it
+   was written: `--ease-settle` (five uses in shell.css, and a
+   comment two thousand lines down insisting it is declared)
+   resolved to "" and `.win`'s computed `animation-name` was
+   `none` — the window materialise that file describes in a
+   paragraph never ran. `--s-7` is not a step, so a banner's
+   padding measured 0. `--fg-primary` is not a token, so a figure
+   was inheriting its colour rather than being given one.
+
+   Every one of those is invisible: the page renders, nothing
+   throws, and the only way to find it is to measure the computed
+   style of the element you happen to suspect.
+
+   WHAT IS NOT A FINDING:
+
+     · `var(--x, fallback)` — a fallback is a declaration that the
+       name is optional, which is how a component takes a value from
+       an inline style and has an answer when nobody set one
+       (`--origin-x`, `--cn-grp-accent`).
+     · a name set from TSX — `style={{'--i': n}}` and
+       `setProperty('--x', v)` both count as declaring it, so the
+       sweep reads the components as well as the stylesheets.
+     · anything inside a comment, which is where the fourth
+       false positive lived (`bridge.css` counts "4,787
+       var(--token) uses" in prose). */
+const COMMENTS = /\/\*[\s\S]*?\*\//g
+const DECLARED_VAR = /(--[A-Za-z0-9_-]+)\s*:/g
+/** a name written as a string in TSX is a name something sets */
+const NAMED_VAR = /['"`](--[A-Za-z0-9_-]+)['"`]/g
+const READ_VAR = /var\(\s*(--[A-Za-z0-9_-]+)\s*([,)])/g
+
+const declaredVars = new Set()
+for (const f of files) {
+  const text = readFileSync(f, 'utf8').replace(COMMENTS, '')
+  for (const m of text.matchAll(DECLARED_VAR)) declaredVars.add(m[1])
+  for (const m of text.matchAll(NAMED_VAR)) declaredVars.add(m[1])
+}
+
+const undeclared = []
+for (const f of css) {
+  const text = readFileSync(f, 'utf8').replace(COMMENTS, '')
+  for (const m of text.matchAll(READ_VAR)) {
+    /* a comma means a fallback, and a fallback means optional */
+    if (m[2] === ',') continue
+    if (declaredVars.has(m[1])) continue
+    const line = text.slice(0, m.index).split('\n').length
+    undeclared.push({
+      name: m[1],
+      /* `~`, because the comments were stripped before counting */
+      at: `${f.replace(SRC, 'src').split(sep).join('/')}:~${line}`,
+    })
+  }
+}
+
 const pad = (s, n) => String(s).padEnd(n)
 console.log('\nSTYLE CONTRACT')
 console.log(`  ${css.length} stylesheets · ${tsx.length} components`)
@@ -233,6 +296,12 @@ if (cleared.length) {
   console.log('')
 }
 
+if (undeclared.length) {
+  console.log(`READ BUT NEVER DECLARED — an undefined var voids its whole declaration (${undeclared.length}):`)
+  for (const u of undeclared) console.log(`  ${pad(u.name, 34)} ${u.at}`)
+  console.log('')
+}
+
 if (small.length) {
   console.log(`BELOW THE TYPE FLOOR — rule 2 says never under ${FLOOR}px (${small.length}):`)
   for (const t of small) console.log(`  ${pad(`${t.px}px`, 34)} ${t.at}`)
@@ -246,11 +315,11 @@ if (dead.length) {
   console.log('')
 }
 
-const bad = fresh.length + small.length
+const bad = fresh.length + small.length + undeclared.length
 console.log(
   bad
-    ? `FAIL — ${fresh.length} new orphan(s), ${small.length} under the type floor. ${known.size} known, ${dead.length} dead rules.\n`
-    : `OK — no new orphans, nothing under ${FLOOR}px. ${known.size} known (baselined), ${dead.length} dead rules.\n`,
+    ? `FAIL — ${fresh.length} new orphan(s), ${small.length} under the type floor, ${undeclared.length} undeclared var(s). ${known.size} known, ${dead.length} dead rules.\n`
+    : `OK — no new orphans, nothing under ${FLOOR}px, every var declared. ${known.size} known (baselined), ${dead.length} dead rules.\n`,
 )
 
 process.exit(bad ? 1 : 0)

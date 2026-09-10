@@ -39,6 +39,25 @@
    An undefined custom property does not warn; it just makes every
    calc() that touches it disappear. Declare it here, once. */
 :root {
+  /* THE CURVE A WINDOW SETTLES ON, AND IT WAS NEVER DECLARED.
+     Five rules in this file read `--ease-settle` and a comment two
+     thousand lines down says it "is declared with the rest of this
+     file's tokens on the one :root, below". It is not, and was not:
+     measured in the browser on the default theme,
+     `getComputedStyle(:root)['--ease-settle']` is "" and
+     `.win`'s computed `animation-name` is `none` — the window
+     materialise this file describes in a paragraph does not run.
+     That is the THIRD time an undefined custom property has voided
+     a declaration here; see the note below on `--chrome`, which
+     records the first two.
+
+     ALIASED, NOT INVENTED. The paragraph asks for the critically
+     damped curve — no overshoot, because "a window opening was not
+     thrown by anybody" — and that is exactly what the system's own
+     `--ease` is. A new cubic-bezier typed here would be a fourth
+     easing nobody chose. */
+  --ease-settle: var(--ease);
+
   /* 224px, FROM 264. Forty pixels back on every screen in the app,
      which is what the fifty-one-table tree cost and no longer buys.
      The business's name still fits whole: the head hands

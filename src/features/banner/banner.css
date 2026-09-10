@@ -251,7 +251,10 @@
     flex-direction: column;
     align-items: flex-start;
     gap: var(--s-4);
-    padding: var(--s-7) var(--s-5) var(--s-5);
+    /* `--s-7` is not a step — the scale stops at `--s-6` (24px) —
+       and an undefined var voids the whole shorthand, so this
+       padding measured 0 on every narrow screen. */
+    padding: var(--s-6) var(--s-5) var(--s-5);
   }
   .bn-title {
     max-width: 100%;
