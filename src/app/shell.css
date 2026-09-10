@@ -2362,6 +2362,21 @@
   color: var(--fg-tertiary);
   white-space: nowrap;
 }
+/* WHAT THE FIGURE ABOVE DOES NOT COUNT. The cell is
+   `column-reverse`, so this sits UNDER the label and further from
+   the figure than the label is — which is the order it should be
+   read in: the number, what it is, then what it leaves out.
+
+   It wraps where the label does not. A label is two words and a
+   reconciliation is a sentence, and §3 forbids truncating one. */
+.hm-tally-note {
+  margin: 0;
+  max-width: 22ch;
+  font-size: var(--t-label-size);
+  line-height: 1.35;
+  color: var(--fg-tertiary);
+  text-wrap: pretty;
+}
 /* MONO, TABULAR, AND BIG. §2: a figure is mono, and this is the
    largest figure on the screen because it is the one fact the
    page exists to state. */

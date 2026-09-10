@@ -433,6 +433,45 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
     return { rows, sellable, joins }
   }, [groups, rowsByEntity])
 
+  /* ============================================================
+     WHAT THESE FIGURES DO NOT COUNT, SAID RATHER THAN LEFT TO BE
+     DISCOVERED.
+
+     MEASURED in the running app on the seeded file, and the three
+     numbers disagreed: this header said 51 Tables and 15,651 rows,
+     the nav rail said Data 53, and the removal control in the
+     import menu offered to take away "53 example tables and 15,691
+     rows".
+
+     NONE OF THEM IS WRONG. `groups` above filters `!isRetired(e)`,
+     so this header counts LIVE tables — which is right for a
+     gallery of what a dealer sells — and the other two count what
+     is on the sheet, which is right for a delete. Two tables on
+     this file are retired and they hold 40 rows between them.
+
+     WHAT WAS WRONG IS THAT NOBODY SAID SO. §6 turns on counted
+     figures rather than typed ones, and a counted figure that does
+     not say what it counted is the same failure one step further
+     back: a person comparing two screens finds a two-table gap and
+     no way to close it. The comment on the cells above records the
+     last time this happened — a term "read as an overclaim the
+     moment the strip drew the split, so the term is corrected to
+     what is counted". Same correction, one figure over.
+
+     IT IS ABSENT WHEN THERE IS NOTHING TO SAY. A sheet with no
+     retired tables gets no note, because "0 retired" is a sentence
+     about a thing that never happened. */
+  const retired = useMemo(() => {
+    let n = 0
+    let rows = 0
+    for (const e of tables) {
+      if (!isRetired(e)) continue
+      n += 1
+      rows += rowsByEntity[e.id]?.length ?? 0
+    }
+    return { n, rows }
+  }, [tables, rowsByEntity])
+
   /* A CARD NAME THAT WAS CUT SAYS SO, AND SAYS ALL OF ITSELF.
      `.hm-card-name` clamps to two lines, which is right for a 230px
      card and leaves one of the fifty — "Haines Signature ×
@@ -713,6 +752,19 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                 <div className="hm-tally-cell">
                   <dt>Tables</dt>
                   <dd className="hm-tally-fig">{total}</dd>
+                  {/* A `dt` may carry more than one `dd`, so the
+                      reconciliation rides the figure it reconciles
+                      rather than becoming a fifth cell for a fact
+                      that is usually absent. */}
+                  {retired.n > 0 ? (
+                    <dd className="hm-tally-note">
+                      {retired.n === 1 ? '1 retired table' : `${retired.n} retired tables`}
+                      {retired.rows > 0
+                        ? ` and their ${retired.rows.toLocaleString()} rows`
+                        : ''}{' '}
+                      are not counted here
+                    </dd>
+                  ) : null}
                 </div>
                 <div className="hm-tally-cell">
                   <dt>Things you sell</dt>
