@@ -49,7 +49,7 @@
    ============================================================ */
 
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 /* fileURLToPath, not URL.pathname — this repo lives in a directory
@@ -185,6 +185,38 @@ if (process.argv.includes('--update-baseline')) {
   process.exit(0)
 }
 
+/* ---------- the type floor: rule 2 ----------
+
+   DESIGN_PRINCIPLES rule 2 is "Never write a font-size below 11px",
+   and it had no guard. It was kept by hand for a year and then not:
+   `.ds-chip` in ds.css sat at 10.5px, which is the SYSTEM'S OWN chip
+   — the one the next screen copies. Found by sweeping for backlog
+   row 29's clause rows, which had already been corrected. That is
+   the shape of every rule with no guard: the reported instance gets
+   fixed and the unreported one keeps shipping.
+
+   src/design IS EXEMPT, and it is the only exemption. The gallery
+   draws MINIATURES of screens — a whole register at 5.8px, so a page
+   of them fits — and that type is a picture of type rather than type
+   a person reads. Anything a person is meant to read is in a feature
+   or in the system.
+
+   px ONLY. rem and em are relative to something this sweep cannot
+   see, and a guard that guessed at the root size would be inventing
+   the number it fails on. */
+const FLOOR = 11
+const small = []
+for (const f of css) {
+  if (f.includes(`${sep}design${sep}`)) continue
+  const src = readFileSync(f, 'utf8')
+  for (const m of src.matchAll(/font-size:\s*([0-9]*\.?[0-9]+)px/g)) {
+    const px = Number(m[1])
+    if (px >= FLOOR) continue
+    const line = src.slice(0, m.index).split('\n').length
+    small.push({ px, at: `${f.replace(SRC, 'src').split(sep).join('/')}:${line}` })
+  }
+}
+
 const pad = (s, n) => String(s).padEnd(n)
 console.log('\nSTYLE CONTRACT')
 console.log(`  ${css.length} stylesheets · ${tsx.length} components`)
@@ -201,6 +233,12 @@ if (cleared.length) {
   console.log('')
 }
 
+if (small.length) {
+  console.log(`BELOW THE TYPE FLOOR — rule 2 says never under ${FLOOR}px (${small.length}):`)
+  for (const t of small) console.log(`  ${pad(`${t.px}px`, 34)} ${t.at}`)
+  console.log('')
+}
+
 if (dead.length) {
   console.log(`DEAD RULES — declared in CSS, referenced nowhere (${dead.length}):`)
   for (const d of dead.slice(0, 30)) console.log(`  ${pad(d.cls, 34)} ${d.where[0]}`)
@@ -208,10 +246,11 @@ if (dead.length) {
   console.log('')
 }
 
+const bad = fresh.length + small.length
 console.log(
-  fresh.length
-    ? `FAIL — ${fresh.length} new orphan(s). ${known.size} known, ${dead.length} dead rules.\n`
-    : `OK — no new orphans. ${known.size} known (baselined), ${dead.length} dead rules.\n`,
+  bad
+    ? `FAIL — ${fresh.length} new orphan(s), ${small.length} under the type floor. ${known.size} known, ${dead.length} dead rules.\n`
+    : `OK — no new orphans, nothing under ${FLOOR}px. ${known.size} known (baselined), ${dead.length} dead rules.\n`,
 )
 
-process.exit(fresh.length ? 1 : 0)
+process.exit(bad ? 1 : 0)

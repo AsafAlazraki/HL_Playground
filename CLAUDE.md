@@ -43,8 +43,16 @@ number in the same commit. The 401st warning is a failure, not a new baseline.
 declares. 19 pre-existing orphans are baselined in `tools/style-baseline.json`;
 you may not add a 20th. Clear one and run `node tools/check-styles.mjs
 --update-baseline`. It was 35 before the prose pass cleared sixteen of them.
-It also prints the dead rules — 177 at `530597d` — which it does not fail
-on, which is why that number drifts.
+It also prints the dead rules — 177 at `530597d`, 110 today — which it does
+not fail on, which is why that number drifts.
+
+**It also holds the type floor.** DESIGN_PRINCIPLES rule 2 — "never write a
+`font-size` below 11px" — was kept by hand for a year and then was not:
+`.ds-chip` in `ds.css`, the system's own chip, sat at 10.5px. The sweep fails
+on any `px` font-size under 11 in `src/`, with `src/design/` exempt because the
+gallery draws miniatures of whole screens and that type is a picture of type
+rather than type a person reads. `rem` and `em` are not checked: a guard that
+guessed at the root size would be inventing the number it failed on.
 
 `npm run build` must also pass.
 
