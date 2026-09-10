@@ -243,6 +243,8 @@ import type { BuildStep, Weighing } from './steps'
 import { orderBands, type Band, type BandTable } from './bands'
 import { deltaSay, levelConflict, type Conflict } from './conflict'
 import { cascadeOfConflict } from './cascade'
+import { distinguishingFacts, type ShownFact } from './distinguish'
+import { PAIR_SLOT_LABEL } from './freeze'
 import { CascadeSheet } from './CascadeSheet'
 import { FlowFoot, FlowLine, RunningTotal, type FlowStop } from './flow'
 import { FrozenPhoto } from './photo'
@@ -1412,6 +1414,36 @@ function Shortlist({
     : null
 
   const candidates = offer.candidates
+
+  /* WHICH FACTS EACH CARD PRINTS, decided across the whole band.
+     Measured on the Northside seed: of the three facts a card
+     showed for a Highfield ADV7's three Yamaha motors, TWO were the
+     same string on every card — `Prop Part No. 6CE-45978-20` and
+     `Prop Description PROPELLER - Saltwater T II SDS - 17"` —
+     because the card took the join table's first three columns in
+     whatever order the workbook carried them. Two thirds of every
+     card said nothing that could help anyone choose, and the one
+     fact that did differ was the longest and sat at the bottom.
+
+     "Does this differ from the others" is not a question a card can
+     answer about itself, so it is answered here, once per band, and
+     each card is handed its own row. `distinguish.ts` carries the
+     rule and the measurement. */
+  const shownFacts = useMemo(
+    () =>
+      distinguishingFacts(
+        candidates.map((c) =>
+          /* THE SLOT IS LEFT OUT HERE AND NOWHERE ELSE. It varies
+             across a shelf for the same reason a row number varies,
+             so the rule below would keep it and it would take a
+             third of every card to say "Slot 9". It is the pair's
+             identity and the printed quote still needs it. */
+          (c.line.pairFacts ?? []).filter((f) => f.label !== PAIR_SLOT_LABEL),
+        ),
+      ),
+    [candidates],
+  )
+
   useEffect(() => {
     setHi(-1)
   }, [query, all])
@@ -1711,6 +1743,7 @@ function Shortlist({
               <OfferCard
                 candidate={c}
                 index={i}
+                facts={shownFacts[i] ?? []}
                 still={still}
                 lit={i === hi}
                 tabbable={i === (hi < 0 ? 0 : hi)}
@@ -2620,9 +2653,15 @@ function OfferCard({
   onLeave,
   onFocus,
   onPick,
+  facts,
 }: {
   candidate: Candidate
   index: number
+  /* CHOSEN OVER THE WHOLE BAND, NOT BY THIS CARD. "Does this fact
+     differ from the other options" is not a question one card can
+     answer about itself, so the shelf answers it once and hands
+     each card its own row. See `distinguish.ts`. */
+  facts: readonly ShownFact[]
   still: boolean
   lit: boolean
   /** the shelf's one tab stop — see the roving note where it is set */
@@ -2636,7 +2675,6 @@ function OfferCard({
 }): ReactElement {
   const line = candidate.line
   const on = candidate.alreadyLineId !== undefined
-  const facts = (line.pairFacts ?? []).slice(0, 3)
 
   return (
     <button
@@ -2684,8 +2722,16 @@ function OfferCard({
         {facts.length > 0 ? (
           <span className="qb-card-facts">
             {facts.map((f) => (
-              <span key={f.label} className="qb-card-fact">
-                <span className="qb-card-fact-lab">{f.label}</span> {f.value}
+              <span
+                key={f.label}
+                className={`qb-card-fact${f.reduced ? ' is-reduced' : ''}`}
+                /* NOTHING IS HIDDEN. When the value was reduced to
+                   the segments that differ, the whole string is
+                   still here for a pointer and for copy. */
+                title={f.reduced ? f.full : undefined}
+              >
+                <span className="qb-card-fact-lab">{f.label}</span>
+                <span className="qb-card-fact-val">{f.value}</span>
               </span>
             ))}
           </span>

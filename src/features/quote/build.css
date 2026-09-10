@@ -1422,6 +1422,35 @@
   color: var(--fg-secondary);
 }
 
+/* THE LABEL IS NOT A WORD IN THE SENTENCE. On a card it sat at the
+   same size and nearly the same colour as its value, so
+   "Rigging Kit Option Helm Master L2 - 6X9 Binnacle" read as one
+   run of eight words and the reader had to find the seam. The value
+   is what is being compared across the shelf, so the value keeps
+   the reading size and the label drops to the system's one label
+   step above it — the Porsche and Boston Whaler pattern, where the
+   figure is large and what it is called is small underneath.
+
+   §3 allows uppercase on a group caption, which is what this is. */
+.qb-card-facts .qb-card-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.qb-card-facts .qb-card-fact-val {
+  color: var(--fg-secondary);
+}
+
+.qb-card-facts .qb-card-fact-lab {
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+}
+
 /* A PAIR FACT WRAPS. `nowrap` was right for a fact like `HP 175`
    and wrong for `Rigging Kit Option  Mech Rigging Kit - 703 Side
    Mount w CL5 Gauge Kit`, which ran off the card and was cut inside
@@ -1433,6 +1462,17 @@
 
 .qb-card-fact-lab {
   color: var(--fg-tertiary);
+}
+
+/* A FACT SHOWN AS ONLY ITS DIFFERING SEGMENTS carries the whole
+   value on its `title`, so the pointer has somewhere to go. The
+   dotted underline is the long-standing sign for that and it is the
+   only mark: no colour, no weight, because the fact is not more
+   important than its neighbours — it is shorter than it was. */
+.qb-card-fact.is-reduced {
+  text-decoration: underline dotted var(--line-strong);
+  text-underline-offset: 3px;
+  cursor: help;
 }
 
 /* RULE 10, ON THE ROW. What measurement put this off the shortlist,

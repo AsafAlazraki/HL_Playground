@@ -174,6 +174,18 @@ function sourceNoteOf(entity: EntityDef | undefined, row: RowData | undefined): 
  *                   provenance about the CATALOGUE, not a fact about
  *                   the goods. It stays on the join row, which is
  *                   where the view page reads and draws it. */
+/** The label `pairFactsOf` gives the pair's own `__order` column.
+ *
+ *  Exported because ONE SURFACE HAS TO LEAVE IT OUT. The slot is the
+ *  pair's identity — two lines for the same motor differ by it and by
+ *  the kit and by nothing else — so a printed quote needs it. A SHELF
+ *  OF DIFFERENT MOTORS DOES NOT: there the slot varies for the same
+ *  reason a row number varies, it is not a property of the goods, and
+ *  "Slot 9" is the sort of jargon DESIGN_PRINCIPLES §6 keeps out of
+ *  chrome. Named here rather than matched as a string at the far end,
+ *  so the two places cannot drift apart. */
+export const PAIR_SLOT_LABEL = 'Slot'
+
 function pairFactsOf(
   ctx: Ctx,
   join: JoinRef | null | undefined,
@@ -199,7 +211,7 @@ function pairFactsOf(
     if (field.id === PAIR_ORDER_FIELD) {
       const slot = joinRow.values[field.id]
       if (typeof slot === 'number' && Number.isFinite(slot)) {
-        facts.push({ label: 'Slot', value: String(slot) })
+        facts.push({ label: PAIR_SLOT_LABEL, value: String(slot) })
       }
       continue
     }
