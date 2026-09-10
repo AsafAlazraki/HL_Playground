@@ -215,8 +215,32 @@ export function applyView(
         return true
       })
     } else if (filter.kind === 'values') {
-      // Empty `selected` means "no value is allowed through" (Excel's
-      // uncheck-everything). To CLEAR a filter, drop the object entirely.
+      /* EMPTY `selected` MEANS "NO VALUE IS ALLOWED THROUGH" — Excel's
+         uncheck-everything. To CLEAR a filter, drop the object entirely.
+
+         AND THE OTHER ENGINE DOES THE OPPOSITE, deliberately.
+         `@/features/views/filter.ts` skips an empty `values` filter,
+         so empty there means UNRESTRICTED — CONFIG_FINDINGS §4 Adopt
+         3, "empty means unrestricted… Empty list = no filter".
+
+         THE TWO ARE NOT IN CONFLICT AND MUST NOT BE RECONCILED. This
+         is a REGISTER FACET: a person opened a column's menu and
+         unticked every box, which is a gesture with an obvious
+         intent, made in a surface that imitates a spreadsheet on
+         purpose. That one is a CURATED LIST — which trailers are
+         attached to this hull — where empty means nobody has curated
+         anything yet, and a fresh list that showed nothing would hide
+         a dealer's whole catalogue behind a setting they have never
+         opened.
+
+         The difference is who wrote the emptiness: here a person
+         emptied it, there it was never filled. `BlockCard` never
+         creates the empty state at all — unticking the last value
+         drops the filter object — so that `continue` guards a filter
+         arriving from an import. Both are asserted in
+         `emptyFilter.test.ts`, together, in one file, because the
+         only way this stays straight is if the two readings are read
+         side by side. */
       const allowed = new Set(filter.selected)
       out = out.filter((r) => allowed.has(r.text[filter.fieldId] ?? ''))
     } else {

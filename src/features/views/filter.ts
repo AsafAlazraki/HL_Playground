@@ -64,6 +64,14 @@ export function applyFilters({
     for (const f of filters) {
       const raw = read(r, f.fieldId)
       if (f.kind === 'values') {
+        /* EMPTY MEANS UNRESTRICTED — CONFIG_FINDINGS §4 Adopt 3, and
+           the opposite of what the REGISTER's engine does with the
+           same-shaped filter (`@/features/table/core/view.ts`, where
+           an emptied facet admits nothing). Both are right for what
+           they are, and the argument for each is written out at that
+           site and asserted in `emptyFilter.test.ts`. In short: here
+           the emptiness means nobody has curated yet, there it means
+           a person unticked every box. */
         if (f.selected.length === 0) continue
         if (!f.selected.includes(text(raw).trim())) return false
       } else if (f.text.trim() !== '') {
