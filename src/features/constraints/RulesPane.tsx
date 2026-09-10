@@ -87,6 +87,10 @@ import { useConstraints } from './constraintDefs'
 import { describeConstraint } from './describe'
 import { FitCard } from './FitCard'
 import { describeFit, readFit } from './fit'
+/* THE PROVENANCE READING, BY DIRECT PATH. `@/features/io` re-exports
+   the whole import/export menu; this needs one predicate. */
+import { exampleTableIds } from '@/features/io/exampleData'
+import { readSeedStamp } from '@/demos/seedStamp'
 import { LeftOutList } from './LeftOutList'
 import { NewFitSentence } from './NewFitSentence'
 import { NewRuleSentence } from './NewRuleSentence'
@@ -135,6 +139,20 @@ export function RulesPane(): ReactElement {
   const [verb, setVerb] = useState<Verb>('limit')
 
   const entities = useProjectStore((s) => s.entities)
+
+  /* IS THE PREPARED SET ACTUALLY ON THIS SHEET — the one fact two of
+     the three views depend on, and it goes false the moment the set is
+     removed.
+
+     THE PURE READER, GIVEN ITS INPUTS, rather than `exampleOnSheet`,
+     which reaches for the store itself. Same answer, and the
+     dependency is then a real one: a memo whose body ignores
+     `entities` while depending on it is a memo the linter is right
+     about and a reader cannot check. */
+  const prepared = useMemo(
+    () => exampleTableIds(entities, readSeedStamp()?.seed !== undefined).length > 0,
+    [entities],
+  )
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
 
   /* THE FITS THIS BUSINESS HAS WRITTEN. They live in the store as
@@ -303,17 +321,42 @@ export function RulesPane(): ReactElement {
      control, the panel it opens and the sentence under it can never
      disagree. Every figure is counted above, on this render. */
   const views: { id: ViewId; name: string; count: number }[] = [
-    { id: 'file', name: 'From your price file', count: tally.total },
+    /* TWO OF THE THREE ARE ABOUT A FILE, AND THEY ARE ONLY OFFERED
+       WHEN THE FILE IS HERE — UX_PASS §4.3, "no surface may name a
+       file the user did not import… where there is none, the sentence
+       does not render".
+
+       MEASURED BEFORE THIS GATE EXISTED, on a blank sheet holding one
+       table the person made themselves: this screen named SIX
+       workbooks on the first tab, six more on the third, and "Master
+       Price File" three times. Every one of them belongs to Northside
+       Marine's prepared set, and none of them had been imported by the
+       person reading. The tab NAMES were part of it — "From your price
+       file" claims a file before a single card is drawn.
+
+       THE READING IS `exampleOnSheet`, the same one the removal
+       control uses (UX_PASS §4.2), so the screen that offers to take
+       the prepared set away and the screens that speak for it cannot
+       disagree about whether it is here. */
+    ...(prepared
+      ? [{ id: 'file' as const, name: 'From your price file', count: tally.total }]
+      : []),
     /* both verbs, counted together, because the segment names one
        PLACE and that place now holds limits and fits alike */
     { id: 'mine', name: 'Rules you write', count: constraints.length + fits.length },
-    { id: 'checks', name: 'What is checked', count: tally.checked },
+    ...(prepared ? [{ id: 'checks' as const, name: 'What is checked', count: tally.checked }] : []),
   ]
+
+  /* A VIEW THAT IS NO LONGER OFFERED IS NOT THE VIEW ANY MORE. The
+     prepared set can be removed while this screen is open (the control
+     is one menu away), and a tabpanel whose tab has gone would be a
+     surface nothing can navigate back to. */
+  const shown: ViewId = views.some((v) => v.id === view) ? view : 'mine'
 
   /* Arrow keys move between segments, which is what a tablist owes
      anybody not using a pointer. */
   const segKeys = (e: KeyboardEvent<HTMLDivElement>): void => {
-    const i = views.findIndex((v) => v.id === view)
+    const i = views.findIndex((v) => v.id === shown)
     const to =
       e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? views.length - 1 : -1
     if (to < 0 || to > views.length - 1) return
@@ -418,9 +461,9 @@ export function RulesPane(): ReactElement {
                   role="tab"
                   id={`cn-tab-${v.id}`}
                   aria-controls={`cn-view-${v.id}`}
-                  aria-selected={view === v.id}
-                  tabIndex={view === v.id ? 0 : -1}
-                  className={view === v.id ? 'cn-seg-btn is-on' : 'cn-seg-btn'}
+                  aria-selected={shown === v.id}
+                  tabIndex={shown === v.id ? 0 : -1}
+                  className={shown === v.id ? 'cn-seg-btn is-on' : 'cn-seg-btn'}
                   onClick={() => setView(v.id)}
                 >
                   <span className="cn-seg-name">{v.name}</span>
@@ -436,16 +479,24 @@ export function RulesPane(): ReactElement {
                 it may warn, and it may never remove a row from a list.
                 It runs off the render path and brings its own
                 stylesheet. */}
+            {/* MOUNTED, NOT MERELY HIDDEN. `hidden` keeps a panel in
+                the DOM, and a panel that names twelve of somebody
+                else's workbooks is not made honest by being invisible
+                — a find-in-page, a copy of the screen or an
+                accessibility tree dump still has it. §4.3 says the
+                sentence does not RENDER. */}
+            {prepared ? (
             <div
               className="cn-view"
               id="cn-view-file"
               role="tabpanel"
               aria-labelledby="cn-tab-file"
-              hidden={view !== 'file'}
+              hidden={shown !== 'file'}
             >
               <RulesLedger liveIds={liveIds} live={live} />
-              <DiscoveryPanel showActions={view === 'file'} />
+              <DiscoveryPanel showActions={shown === 'file'} />
             </div>
+            ) : null}
 
             {/* 2 · THE PERSON'S OWN RULES, and the composer that writes
                 them. It is a view of its own now rather than the third
@@ -462,7 +513,7 @@ export function RulesPane(): ReactElement {
               id="cn-view-mine"
               role="tabpanel"
               aria-labelledby="cn-tab-mine"
-              hidden={view !== 'mine'}
+              hidden={shown !== 'mine'}
               ref={mine}
               aria-label="Rules you have written"
             >
@@ -500,7 +551,7 @@ export function RulesPane(): ReactElement {
               />
 
               {verb === 'limit' ? (
-                <NewRuleSentence onAdded={setOpenId} showActions={view === 'mine'} />
+                <NewRuleSentence onAdded={setOpenId} showActions={shown === 'mine'} />
               ) : (
                 <NewFitSentence onAdded={setOpenId} />
               )}
@@ -578,17 +629,19 @@ export function RulesPane(): ReactElement {
                 price file will look for the service schedule; without
                 this they cannot tell a decision from a gap, and both
                 guesses cost us. */}
+            {prepared ? (
             <div
               className="cn-view"
               id="cn-view-checks"
               role="tabpanel"
               aria-labelledby="cn-tab-checks"
-              hidden={view !== 'checks'}
+              hidden={shown !== 'checks'}
             >
               <TrailerFitmentPanel />
               <RegistrationTheme />
               <LeftOutList />
             </div>
+            ) : null}
           </div>
         )}
       </div>
