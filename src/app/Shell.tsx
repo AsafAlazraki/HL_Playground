@@ -718,7 +718,11 @@ export function Shell({ user, onSignOut }: ShellProps) {
   useLayoutEffect(() => {
     const remembered = knownOrg.current
     if (org || !remembered || tableCount === 0) return
-    setOrganisation(remembered.name, remembered.industry)
+    /* THE WHOLE PROFILE, not two thirds of it. `knownOrg` has held
+       `createdAt` all along and this dropped it on the floor, so the
+       swap this effect exists to survive was itself re-dating the
+       business to the moment of the swap. */
+    setOrganisation(remembered.name, remembered.industry, remembered.createdAt)
   }, [org, tableCount, setOrganisation])
 
   /* WHAT THE ACTION BAR COSTS THE PAGE, AND ONLY WHILE THERE IS ONE.

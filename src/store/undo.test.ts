@@ -645,3 +645,60 @@ describe('undo — a table delete that cascades', () => {
     expect(store().views['v-other'].blocks.map((b) => b.tableId)).toEqual(['e-boats', 'e-rigs'])
   })
 })
+
+/* ============================================================
+   TENANCY §4.6 — "OrgProfile.createdAt cannot survive a replace."
+
+   It stamped `nowIso()` on every call, and `Shell.tsx` calls
+   `setOrganisation` after EVERY project swap to put the business
+   back on the masthead. So the one effect written to survive a
+   swap was itself re-dating the business to the moment of the
+   swap, and loading a prepared set quietly moved the date to
+   today.
+
+   These assert WHEN THE BUSINESS STARTED, which is the fact the
+   field is for — not the shape of the object holding it.
+   ============================================================ */
+
+describe('when the business was set up', () => {
+  const WAS = '2019-04-01T00:00:00.000Z'
+
+  it('is stamped once on a sheet that never had one', () => {
+    store().setOrganisation('Northside Marine', 'marine')
+    const at = store().meta.org?.createdAt
+    expect(at).toBeTruthy()
+    expect(Number.isNaN(Date.parse(at ?? ''))).toBe(false)
+  })
+
+  it('SURVIVES A RENAME — a new name is not a new business', () => {
+    store().setOrganisation('Northside Marine', 'marine', WAS)
+    store().setOrganisation('Northside Marine Group', 'marine')
+    expect(store().meta.org?.createdAt).toBe(WAS)
+    expect(store().meta.org?.name).toBe('Northside Marine Group')
+  })
+
+  it('survives a change of industry', () => {
+    store().setOrganisation('Northside', 'marine', WAS)
+    store().setOrganisation('Northside', 'automotive')
+    expect(store().meta.org?.createdAt).toBe(WAS)
+  })
+
+  it('is restored across a project swap rather than re-stamped', () => {
+    /* What Shell.tsx does: remember the profile, let the swap drop
+       it, hand the whole thing back — including the date. */
+    store().setOrganisation('Northside', 'marine', WAS)
+    const remembered = store().meta.org
+    expect(remembered).toBeDefined()
+
+    store().replaceProject({
+      name: 'Another sheet',
+      entities: [boats()],
+      groups: [],
+      rules: [],
+      rowsByEntity: {},
+    })
+    store().setOrganisation(remembered!.name, remembered!.industry, remembered!.createdAt)
+
+    expect(store().meta.org?.createdAt).toBe(WAS)
+  })
+})

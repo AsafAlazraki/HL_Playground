@@ -233,7 +233,10 @@ interface ProjectStore {
   setInspectorTab: (tab: InspectorTab) => void
 
   /* onboarding */
-  setOrganisation: (name: string, industry: IndustryKey) => void
+  /** `createdAt` is only passed when RESTORING a profile across a
+   *  project swap; omitted, the existing date is kept and only a sheet
+   *  that never had one is stamped. See the implementation. */
+  setOrganisation: (name: string, industry: IndustryKey, createdAt?: string) => void
 
   /** Create a table from a kind + structure preset: builds the hierarchy
    *  columns, then the kind's detail columns, resolving `linkTo` columns
@@ -814,12 +817,32 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
     setInspectorTab: (tab) => set({ inspectorTab: tab }),
 
     /* -- onboarding --------------------------------------- */
-    setOrganisation: (name, industry) => {
+    setOrganisation: (name, industry, createdAt) => {
       mutate((s) => ({
         meta: {
           ...s.meta,
           name: name.trim() || s.meta.name,
-          org: { name: name.trim(), industry, createdAt: nowIso() },
+          org: {
+            name: name.trim(),
+            industry,
+            /* WHEN THE BUSINESS WAS SET UP, NOT WHEN THIS RAN.
+               TENANCY §4.6: "OrgProfile.createdAt cannot survive a
+               replace." It stamped `nowIso()` unconditionally, so
+               every call reset it — and `Shell.tsx` calls this after
+               EVERY project swap to put the organisation back, which
+               means loading a prepared set silently re-dated the
+               business to today.
+
+               Three sources, in the order they can be trusted: what
+               the caller restored (the Shell hands back the profile
+               it remembered across the swap), what is already on the
+               sheet, and only then now. A RENAME KEEPS THE DATE —
+               changing what a business is called does not change when
+               it started, and this app holds one organisation per
+               sheet, so there is no reading where a new name is a new
+               organisation. */
+            createdAt: createdAt ?? s.meta.org?.createdAt ?? nowIso(),
+          },
         },
       }))
     },
