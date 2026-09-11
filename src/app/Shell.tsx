@@ -950,6 +950,33 @@ export function Shell({ user, onSignOut }: ShellProps) {
             if (rowId) requestRowReveal(entityId, rowId)
             setStage({ kind: 'table', entityId })
           }}
+          /* AND THE TWO KINDS THAT ARE NOT A TABLE. `Finder.tsx` has
+             said since it was written that leaving these unset does
+             not grey a module out — it takes MODULES and QUOTES out
+             of the index entirely, because §2's fourth rule is that a
+             result a person cannot open does not appear. This shell
+             was the only host, so two of the five kinds §2 asks for
+             were matched by 474 lines of passing tests and reachable
+             from nowhere in the running app.
+
+             MEASURED BEFORE THE FIX, and it is the search's own worked
+             example: ⌘K, "boats" — a MODULE holding seven brand
+             tables — answered with ten rows out of two registers that
+             merely carry the word in a part name, and offered no way
+             to reach the place at all.
+
+             The doors are the rail's, unchanged: this is the same
+             pair of lines `SideNav` is handed forty lines above. A
+             palette that opens a module by a different route than the
+             rail does is two answers to one question. */
+          onOpenModule={(moduleId) => {
+            setFinding(false)
+            setStage({ kind: 'module', moduleId })
+          }}
+          onOpenQuote={(quoteId) => {
+            setFinding(false)
+            setStage({ kind: 'quote', quoteId })
+          }}
           onClose={() => setFinding(false)}
         />
       ) : null}
