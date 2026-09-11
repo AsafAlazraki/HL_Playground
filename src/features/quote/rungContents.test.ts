@@ -36,7 +36,7 @@
 
 import { describe, expect, it, vi } from 'vitest'
 import type { EntityDef, RowData } from '@/types/model'
-import type { FrozenLevel } from './types'
+import type { FrozenLevel } from '@/types/model'
 
 vi.mock('@/db/repository', () => ({
   defaultMeta: () => ({
@@ -61,7 +61,7 @@ const {
   priceLevelsFor,
   rungIncludes,
 } = await import('./pricing')
-const { CHARGE_TITLE } = await import('./types')
+const { CHARGE_TITLE } = await import('@/types/model')
 
 const project = buildNorthsideProject()
 const byKind = (kind: string): EntityDef[] =>

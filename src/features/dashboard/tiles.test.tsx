@@ -39,7 +39,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { EntityDef, ModuleDef, RowData } from '@/types/model'
-import type { QuoteDef } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 
 /* The store reaches Dexie through the repository. Mocked exactly as
    the logic suites mock it (store/undo.test.ts:14) — the subject here

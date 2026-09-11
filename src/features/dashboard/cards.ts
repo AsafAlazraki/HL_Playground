@@ -30,7 +30,7 @@ import {
 } from '@/types/model'
 import type { LintFinding } from '@/lib/lint'
 import type { RecentPick } from '@/features/search'
-import type { QuoteDef } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 import { ACTIVITY_EMPTY } from '@/features/activity'
 import type { CardId } from './arrangement'
 

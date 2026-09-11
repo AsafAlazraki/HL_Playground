@@ -38,7 +38,7 @@ import { QuoteEditor } from './QuoteEditor'
 import { FlowSurface } from './flow'
 import type { FlowBy, FlowStop } from './flow'
 import { makeNewVersion, useQuote } from './quotes'
-import type { QuoteDef } from './types'
+import type { QuoteDef } from '@/types/model'
 import './quote.css'
 
 export interface QuotePageProps {

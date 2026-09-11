@@ -33,7 +33,7 @@ import { sizeSay } from '@/features/modules'
 import { say } from '@/store/notes'
 import { useProjectStore } from '@/store/useProjectStore'
 import type { RoleDef } from '@/types/model'
-import type { QuoteDef } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 import { composeNote, dropNote, saveNote, useDealNotes, whyNotNote } from './dealNotes'
 import {
   composeLink,

@@ -62,7 +62,7 @@ const { singular } = await import('@/features/views/describe')
 const { mintQuoteFromView, stepOffer } = await import('./freeze')
 const { SUBJECT_STEP } = await import('./steps')
 import type { Candidate } from './freeze'
-import type { QuoteDef, QuoteSection } from './types'
+import type { QuoteDef, QuoteSection } from '@/types/model'
 
 const project = buildNorthsideProject()
 const entities: Record<string, EntityDef> = Object.fromEntries(

@@ -21,7 +21,7 @@ import {
   type ModuleDef,
   type RowData,
 } from '@/types/model'
-import type { QuoteDef } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 import {
   buildEntries,
   capEntries,

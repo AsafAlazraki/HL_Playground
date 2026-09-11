@@ -104,7 +104,7 @@
    clock.
    ============================================================ */
 
-import type { QuoteDef } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 import { issueBlockers } from '@/features/quote/totals'
 import type { StageDef } from './stageStore'
 

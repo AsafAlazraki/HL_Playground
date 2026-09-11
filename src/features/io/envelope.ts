@@ -117,14 +117,7 @@ import { newId, nowIso } from '@/lib/id'
 /* TYPE-ONLY, so the validator still depends on the model and nothing
    else at runtime. The quote shapes live in the quote feature because
    `@/types/model` is orchestrator-owned — see `ProjectFile` below. */
-import type {
-  AdjustmentKind,
-  FrozenLevel,
-  QuoteAdjustment,
-  QuoteDef,
-  QuoteLine,
-  QuoteSection,
-} from '@/features/quote'
+import type { AdjustmentKind, FrozenLevel, QuoteAdjustment, QuoteDef, QuoteLine, QuoteSection } from '@/types/model'
 
 export type Validated =
   | { ok: true; data: ProjectFile }

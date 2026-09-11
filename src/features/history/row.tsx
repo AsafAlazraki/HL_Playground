@@ -19,7 +19,8 @@ import type { ReactElement } from 'react'
 import { CaretDown, CaretRight, MagnifyingGlass } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import { noteImageFailed, noteImageLoaded, useImageDisplay } from '@/lib/imageSources'
-import { localDay, money, quoteTotals, type QuoteDef } from '@/features/quote'
+import { localDay, money, quoteTotals } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 import { STANDING_TITLE, standingOf, versionMark, versionsOf, type HistoryIndex, type Standing } from './history'
 
 /* THE WHOLE CLASS, WRITTEN OUT, rather than `hy-state is-${standing}`.

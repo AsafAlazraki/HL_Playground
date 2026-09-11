@@ -47,7 +47,8 @@
    and version 3 of the same conversation", which is what it is.
    ============================================================ */
 
-import { lineAmount, localDay, quoteTotals, type QuoteDef } from '@/features/quote'
+import { lineAmount, localDay, quoteTotals } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 
 /* ---------------------------------------------------------- */
 /* Standing                                                   */

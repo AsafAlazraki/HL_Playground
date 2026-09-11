@@ -39,14 +39,8 @@ import { useMemo, useState } from 'react'
 import type { ReactElement } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { liveTableCount } from '@/features/crm'
-import {
-  discardDraft,
-  localDay,
-  money,
-  quoteTotals,
-  useQuotes,
-  type QuoteDef,
-} from '@/features/quote'
+import { discardDraft, localDay, money, quoteTotals, useQuotes } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 import { LedgerRow } from './row'
 import {
   ANY_CUSTOMER,

@@ -43,7 +43,8 @@ import { ArrowLeft, Plus } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import { useProjectStore } from '@/store/useProjectStore'
 import { customerRegister, readCustomer } from '@/features/crm'
-import { money, useQuotes, type QuoteDef } from '@/features/quote'
+import { money, useQuotes } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 import {
   customerHistory,
   indexQuotes,

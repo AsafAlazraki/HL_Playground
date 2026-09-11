@@ -44,7 +44,7 @@ import type { ReactElement } from 'react'
 import { money } from './pricing'
 import { lineAmount, linesOf, looseLines, quoteTotals } from './totals'
 import { FrozenPhoto } from './photo'
-import type { QuoteDef, QuoteLine } from './types'
+import type { QuoteDef, QuoteLine } from '@/types/model'
 
 export interface QuoteDocumentProps {
   quote: QuoteDef

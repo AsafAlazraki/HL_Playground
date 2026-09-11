@@ -36,7 +36,7 @@ import {
   setLineLevel,
 } from './quotes'
 import { money } from './pricing'
-import type { FrozenLevel, QuoteDef, QuoteLine } from './types'
+import type { FrozenLevel, QuoteDef, QuoteLine } from '@/types/model'
 
 /* ---------------------------------------------------------- */
 /* Listening                                                   */

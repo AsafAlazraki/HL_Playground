@@ -31,7 +31,7 @@ import { describe, expect, it } from 'vitest'
 import { deltaSay, levelConflict, optionConflict, type Fix, type LineValues } from './conflict'
 import { money, repricedAt } from './pricing'
 import { quoteTotals } from './totals'
-import type { FrozenLevel, QuoteAdjustment, QuoteDef, QuoteLine } from './types'
+import type { FrozenLevel, QuoteAdjustment, QuoteDef, QuoteLine } from '@/types/model'
 
 /* ---------------------------------------------------------- */
 /* A quote, by value — the only kind there is                  */

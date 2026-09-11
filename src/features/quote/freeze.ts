@@ -84,7 +84,7 @@ import {
   type CustomerRead,
 } from '@/features/crm/customers'
 import { freezeLevels, isCostColumn, looksMonetary, normName, priceAtLevel, defaultLevelKey } from './pricing'
-import type { FrozenLevel, QuoteDef, QuoteLine, QuoteSection } from './types'
+import type { FrozenLevel, QuoteDef, QuoteLine, QuoteSection } from '@/types/model'
 
 /* ---------------------------------------------------------- */
 /* Reading the store, once                                    */

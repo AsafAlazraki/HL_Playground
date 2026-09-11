@@ -70,7 +70,7 @@ const {
   SUBJECT_STEP,
 } = await import('./steps')
 const { lineAmount, quoteTotals } = await import('./totals')
-import type { QuoteDef, QuoteSection } from './types'
+import type { QuoteDef, QuoteSection } from '@/types/model'
 
 /* ---------------------------------------------------------- */
 /* One real quote, off the real sheet                          */

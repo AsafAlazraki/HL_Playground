@@ -38,7 +38,7 @@
    ============================================================ */
 
 import { useCallback, useSyncExternalStore } from 'react'
-import type { QuoteDef } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 
 /** A stage id is whatever the dealership called it — the list is
  *  theirs now, and lives in `stageStore.ts`. Two ids are anchors

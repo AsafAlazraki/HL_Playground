@@ -20,7 +20,7 @@
    ============================================================ */
 
 import { money } from '@/lib/money'
-import type { QuoteAdjustment, QuoteDef, QuoteLine } from './types'
+import type { QuoteAdjustment, QuoteDef, QuoteLine } from '@/types/model'
 
 /** What one line contributes, and why. `amount` is null when the
  *  line has no price at all — a real state, never a silent zero. */

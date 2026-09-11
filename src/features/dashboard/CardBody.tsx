@@ -80,7 +80,7 @@ import {
 import type { Icon } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { useQuotes, quoteTotals } from '@/features/quote'
-import type { QuoteDef } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 import { useLintFindings } from '@/features/review'
 /* BY DIRECT PATH, and for the reason the store's own imports
    give: `@/features/constraints` is the feature's barrel and

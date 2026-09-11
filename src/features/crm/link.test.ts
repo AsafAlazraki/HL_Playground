@@ -22,7 +22,7 @@
    by anything except the button that names it.
    ============================================================ */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { QuoteDef, QuoteLine } from '@/features/quote/types'
+import type { QuoteDef, QuoteLine } from '@/types/model'
 
 vi.mock('@/db/repository', () => ({
   defaultMeta: () => ({

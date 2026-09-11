@@ -57,7 +57,8 @@ import {
   type SortId,
 } from './finding'
 import { say } from '@/store/notes'
-import { quoteTotals, useQuotes, type QuoteDef } from '@/features/quote'
+import { quoteTotals, useQuotes } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 import { DealOverview } from './DealOverview'
 import { DealPage } from './DealPage'
 import { waitedSay } from './dealParts'

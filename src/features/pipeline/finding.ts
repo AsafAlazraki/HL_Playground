@@ -10,7 +10,8 @@
 
 import type { EntityDef, TableKind } from '@/types/model'
 import { TABLE_KINDS } from '@/types/model'
-import { quoteTotals, type QuoteDef } from '@/features/quote'
+import { quoteTotals } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 
 /* ------------------------------------------------------------
    WHAT SORT OF THING IS BEING SOLD

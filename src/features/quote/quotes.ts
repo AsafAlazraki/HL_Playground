@@ -39,7 +39,7 @@ import { localDay, localDayOf } from './day'
 import { mintFreeLine, mintQuoteFromView, referenceFor, type PriceChange } from './freeze'
 import { money, priceAtLevel, quoteLevelChoices, repricedAt } from './pricing'
 import { issueBlockers, lineAmount } from './totals'
-import type { AdjustmentKind, QuoteAdjustment, QuoteDef, QuoteLine } from './types'
+import type { AdjustmentKind, QuoteAdjustment, QuoteDef, QuoteLine } from '@/types/model'
 
 /* ---------------------------------------------------------- */
 /* The registry                                               */

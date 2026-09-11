@@ -52,7 +52,7 @@ const { summariseEnvelope } = await import('./readEnvelope')
 const { sheetNow, quotesSurviveSentence } = await import('./sheetNow')
 const { allQuotes, getQuote, registerQuote, quoteTotals } = await import('@/features/quote')
 
-import type { QuoteDef, QuoteLine } from '@/features/quote'
+import type { QuoteDef, QuoteLine } from '@/types/model'
 
 /* ---------------------------------------------------------- */
 /* two documents: one draft, one given to a customer           */

@@ -40,7 +40,7 @@ const { registerQuote, getQuote, issueQuote, setOverride, discardDraft, patchQuo
 const { quoteTotals, unexplainedOverrides, needsOverrideReason, issueBlockers } =
   await import('./totals')
 
-import type { QuoteDef, QuoteLine } from './types'
+import type { QuoteDef, QuoteLine } from '@/types/model'
 
 /* ---------------------------------------------------------- */
 /* the smallest honest quote — one hull, one motor             */

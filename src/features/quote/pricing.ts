@@ -72,7 +72,7 @@ import {
   type PriceLevel,
   type RungCharge,
   type RungContents,
-} from './types'
+} from '@/types/model'
 
 /* ---------------------------------------------------------- */
 /* Names                                                      */

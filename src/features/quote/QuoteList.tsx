@@ -19,7 +19,7 @@ import { money } from './pricing'
 import { quoteTotals } from './totals'
 import { discardDraft, useQuotes } from './quotes'
 import { FrozenPhoto } from './photo'
-import type { QuoteDef } from './types'
+import type { QuoteDef } from '@/types/model'
 import './quote.css'
 
 export interface QuoteListProps {

@@ -83,7 +83,7 @@ import type { CellValue } from '@/types/model'
 import { formatValue } from '@/lib/configure'
 import { money, repricedAt } from './pricing'
 import { lineAmount, quoteTotals } from './totals'
-import type { QuoteDef, QuoteLine } from './types'
+import type { QuoteDef, QuoteLine } from '@/types/model'
 
 /* ---------------------------------------------------------- */
 /* What a sheet is                                             */

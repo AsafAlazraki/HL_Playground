@@ -33,7 +33,7 @@ import {
   type RowData,
 } from '@/types/model'
 import { quoteTotals } from '@/features/quote/totals'
-import type { QuoteDef, QuoteLine } from '@/features/quote/types'
+import type { QuoteDef, QuoteLine } from '@/types/model'
 import { curatedOnly } from './describe'
 import { makeEngine, relatedRows, type Ctx, type JoinRef } from './pairs'
 import { defaultBlocksFor, existingRelations, withheldRelations } from './relations'

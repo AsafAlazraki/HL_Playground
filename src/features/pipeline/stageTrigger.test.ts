@@ -16,7 +16,7 @@
    ============================================================ */
 
 import { describe, expect, it } from 'vitest'
-import type { QuoteDef } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 import { issueBlockers } from '@/features/quote/totals'
 import { NOT_LOCKED, arrivalClause, lockDemand, locksButOpen } from './stageTrigger'
 import { DEFAULT_STAGES, type StageDef } from './stageStore'

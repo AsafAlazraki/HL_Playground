@@ -37,7 +37,7 @@ const { registerQuote, makeNewVersion, discardDraft, allQuotes } = await import(
 const { localDay, localDayOf } = await import('./day')
 const { referenceFor } = await import('./freeze')
 
-import type { QuoteDef } from './types'
+import type { QuoteDef } from '@/types/model'
 
 /* ---------------------------------------------------------- */
 

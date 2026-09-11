@@ -33,7 +33,7 @@ import { render, screen } from '@testing-library/react'
 
 const { QuoteDocument } = await import('./QuoteDocument')
 
-import type { QuoteDef, QuoteLine } from './types'
+import type { QuoteDef, QuoteLine } from '@/types/model'
 
 /* ---------------------------------------------------------- */
 /* the smallest honest quote — the shape issue.test.ts uses,   */

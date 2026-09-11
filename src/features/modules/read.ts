@@ -52,7 +52,8 @@ import {
   sellableRowCount,
   sellableTables,
 } from '@/features/views/sellable'
-import { isCostColumn, localDay, priceLevelsFor, type QuoteDef } from '@/features/quote'
+import { isCostColumn, localDay, priceLevelsFor } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 /* the store-free derivation both a view page and `createModule` read,
    by direct path for the same reason `columns` is above: nothing here
    needs the views feature's React surface */

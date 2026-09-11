@@ -36,7 +36,7 @@
    ============================================================ */
 
 import { describe, expect, it } from 'vitest'
-import type { QuoteDef, QuoteLine } from '@/features/quote'
+import type { QuoteDef, QuoteLine } from '@/types/model'
 import {
   ANY_CUSTOMER,
   NO_CUSTOMER,

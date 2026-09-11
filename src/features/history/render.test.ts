@@ -37,7 +37,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import type { EntityDef, RowData } from '@/types/model'
-import type { QuoteDef, QuoteLine } from '@/features/quote'
+import type { QuoteDef, QuoteLine } from '@/types/model'
 
 /* The one global the picture machinery reads. Assigned before any
    import runs anything — the module only touches it inside

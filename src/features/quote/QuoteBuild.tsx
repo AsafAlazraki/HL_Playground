@@ -248,7 +248,7 @@ import { PAIR_SLOT_LABEL } from './freeze'
 import { CascadeSheet } from './CascadeSheet'
 import { FlowFoot, FlowLine, RunningTotal, type FlowStop } from './flow'
 import { FrozenPhoto } from './photo'
-import type { QuoteDef, QuoteLine } from './types'
+import type { QuoteDef, QuoteLine } from '@/types/model'
 import './build.css'
 
 /** What a band that offers nothing reads as — the subject's band, and

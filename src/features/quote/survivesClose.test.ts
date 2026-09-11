@@ -28,7 +28,7 @@
    ============================================================ */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { QuoteDef, QuoteLine } from './types'
+import type { QuoteDef, QuoteLine } from '@/types/model'
 
 /* ---------------------------------------------------------- */
 /* A tab: a storage that outlives a reload, and two event      */

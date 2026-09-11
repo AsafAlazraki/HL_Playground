@@ -50,7 +50,7 @@ import type {
   ViewDef,
 } from '@/types/model'
 import type { ColumnConcept } from '@/features/constraints/columns'
-import type { QuoteDef } from '@/features/quote/types'
+import type { QuoteDef } from '@/types/model'
 import { moduleTables, relatedTables } from './read'
 import { constraintsFor, flowRulesFor, moduleKinds, workbookRulesFor } from './moduleRules'
 import { isUnrestricted } from './access'

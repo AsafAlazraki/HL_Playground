@@ -52,7 +52,7 @@ import type { JSX, KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { ArrowSquareOut, ArrowsOutSimple, X } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import { Button } from '@/ui'
-import type { QuoteDef } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 import { useDealDesk } from './dealDesk'
 import {
   DealFacts,

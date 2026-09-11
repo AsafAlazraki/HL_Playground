@@ -11,7 +11,7 @@
 
 import { describe, expect, it } from 'vitest'
 import type { EntityDef } from '@/types/model'
-import type { QuoteDef } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 import { arrivedAt, boardOf, derivedStage, stageOf } from './stages'
 import { DEFAULT_STAGES, forgetStageStore, stagesOf } from './stageStore'
 import { kindOfQuote, matches, sortDeals, typeChips } from './finding'

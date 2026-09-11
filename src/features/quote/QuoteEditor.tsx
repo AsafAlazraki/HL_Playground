@@ -115,7 +115,7 @@ import {
 } from './quotes'
 import { FlowFoot, FlowLine, RunningTotal, type FlowStop } from './flow'
 import { FrozenPhoto } from './photo'
-import { CHARGE_TITLE } from './types'
+import { CHARGE_TITLE } from '@/types/model'
 import type {
   AdjustmentKind,
   FrozenLevel,
@@ -123,7 +123,7 @@ import type {
   QuoteLine,
   QuoteSection,
   RungCharge,
-} from './types'
+} from '@/types/model'
 
 /** The four controls under the sections. Each is a sentence, and
  *  each signs what a person types (see SIGN in quotes.ts) so nobody

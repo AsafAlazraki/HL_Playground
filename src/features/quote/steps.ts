@@ -29,7 +29,7 @@
 
 import { heldBackSentence } from '@/features/views/sellable'
 import { lineAmount, quoteTotals } from './totals'
-import type { QuoteDef, QuoteLine, QuoteSection } from './types'
+import type { QuoteDef, QuoteLine, QuoteSection } from '@/types/model'
 
 /** The first section of every quote is the subject itself — the hull
  *  the whole document is about. It is a step because a person walking

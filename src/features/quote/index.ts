@@ -312,17 +312,12 @@ export type { QuoteTotals, LineAmount } from './totals'
    fault this fixes got in. See day.ts for the measurement. */
 export { localDay } from './day'
 
-/* -- the shapes (move these to model.ts) --------------------- */
-export { QUOTE_LEVEL_ORDER, LEVEL_TITLE, CHARGE_TITLE } from './types'
-export type {
-  AdjustmentKind,
-  FrozenLevel,
-  PriceLevel,
-  RungCharge,
-  RungContents,
-  QuoteAdjustment,
-  QuoteDef,
-  QuoteLine,
-  QuoteSection,
-  QuoteState,
-} from './types'
+/* -- THE SHAPES ARE IN THE CONTRACT NOW ----------------------
+   MODULE_SYSTEM §9's move, done: `PriceLevel`, `QuoteDef` and their
+   satellites live in `@/types/model` beside everything else a
+   `ProjectExport` carries. This barrel used to re-export them from
+   here, and that block is deleted rather than pointed at the new
+   home — a feature barrel re-exporting the contract is a second name
+   for one thing, and nothing outside this feature was using it
+   (checked: zero importers). Anything that needs a quote's shape
+   imports it from the contract, like every other shape. */

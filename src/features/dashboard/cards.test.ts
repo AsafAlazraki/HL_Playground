@@ -26,7 +26,7 @@ import type {
   RowData,
 } from '@/types/model'
 import type { LintFinding } from '@/lib/lint'
-import type { QuoteDef } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 import {
   CARDS,
   LENS_NAME,

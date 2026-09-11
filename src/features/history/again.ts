@@ -33,15 +33,8 @@
    the quote registry's own exported functions.
    ============================================================ */
 
-import {
-  freezeCustomer,
-  linkCustomer,
-  patchQuote,
-  quoteLikeThisOne,
-  subjectStillOnSheet,
-  unsellableSubject,
-  type QuoteDef,
-} from '@/features/quote'
+import { freezeCustomer, linkCustomer, patchQuote, quoteLikeThisOne, subjectStillOnSheet, unsellableSubject } from '@/features/quote'
+import type { QuoteDef } from '@/types/model'
 
 /**
  * Why quoting this row again would be wrong, in one sentence, or ''
