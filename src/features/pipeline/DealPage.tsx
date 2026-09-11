@@ -14,13 +14,19 @@
 
    WHY IT LIVES INSIDE THE BOARD RATHER THAN BEING A STAGE OF ITS
    OWN. A stage is the shell's to make, and `src/app` is not this
-   feature's to edit. What that costs is stated rather than hidden:
-   the page above still carries the Quotes header while this is
-   open, which is one line in `QuoteStage.tsx` — draw the header
-   only when no deal record is open — and it is left for whoever
-   owns that file. Everything else about this screen is finished:
-   it takes the whole board region, it has its own way back, and
-   the board's arrangement is restored exactly when you use it.
+   feature's to edit. What that cost was stated here rather than
+   hidden — the page above carried the Quotes header while this was
+   open, a second header naming a screen that is not on — and THE
+   SHELL HAS SINCE PAID IT: `QuoteStage.tsx` draws its `PageHead`
+   only when neither a quote nor a deal record is open, off the
+   `onRecord` signal this board publishes. The note is kept rather
+   than deleted because the shape it describes is the useful part:
+   a feature that cannot reach the shell says what it needs in the
+   file that needs it, and the shell answers in its own.
+
+   Everything else about this screen is finished: it takes the whole
+   board region, it has its own way back, and the board's
+   arrangement is restored exactly when you use it.
 
    THE WAY BACK IS ONE CONTROL, TOP LEFT, ALWAYS THERE — the shape
    every stage in this app uses, so a person who has learned it
