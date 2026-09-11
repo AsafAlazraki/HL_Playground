@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "npm run check:types && npm run lint && vitest run && npm run check:reachable && npm run check:styles && npm run check:words",
+    "test": "npm run check:types && npm run lint && vitest run && npm run check:reachable && npm run check:styles && npm run check:words && npm run check:stores",
     "test:watch": "vitest",
     "check:reachable": "node tools/check-reachability.mjs",
     "check:styles": "node tools/check-styles.mjs",
@@ -16,7 +16,8 @@
     "check:shots": "node tools/check-shots.mjs",
     "lint": "oxlint src tools --max-warnings 355",
     "lint:fix": "oxlint src tools --fix",
-    "check:words": "node tools/check-words.mjs"
+    "check:words": "node tools/check-words.mjs",
+    "check:stores": "node tools/check-stores.mjs"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",

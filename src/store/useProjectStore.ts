@@ -41,6 +41,7 @@ import { noteRefusedWrite, writesHeld } from '@/lib/writeGate'
    neither, which is what makes it safe here. Same precedent and same reason
    as src/features/modules/read.ts. */
 import { defaultBlocksFor } from '@/features/views/relations'
+import { forgetBusiness } from './forgetBusiness'
 /* AND ONE READER FOR THE FACE A NEW MODULE IS BORN WITH. By direct
    path for the same reason `defaultBlocksFor` is above: `read.ts`
    knows about no React surface and must not drag one back in through
@@ -765,6 +766,15 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
          `modules` takes it, and there is nothing left to forget.
          `modules/configureVerb.test.ts` still asserts the property. */
       await repository.wipe()
+      /* AND EVERYTHING THAT IS NOT IN DEXIE, which is sixteen stores
+         and was none of them. `repository.wipe()` empties the database;
+         the quotes, the rules, the workbook seeds, the sales board, the
+         merge log, the column-mapping memory and the seed stamp all
+         live in localStorage, so a wiped project used to come back
+         carrying the previous business entire. See `forgetBusiness`,
+         which also says what is deliberately KEPT — the session, the
+         theme and the writer lock. */
+      await forgetBusiness()
       set({
         past: [],
         future: [],
