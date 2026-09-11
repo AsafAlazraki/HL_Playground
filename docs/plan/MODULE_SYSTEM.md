@@ -629,6 +629,9 @@ Named so their absence reads as a decision and not an oversight.
 | **A designable quote document** | §6.2. A designed document can omit a total or expose cost. |
 | **A page builder** | No positioning, no typography, no colour, no page geometry, no nesting. §4, rule 3. |
 | **Deep links / URLs** | There is no router (`Shell.tsx:4-6`). A module a person is *sent* into needs an address, and `UID_FIELD` was built to be one (`model.ts:955-967`). Named as a real cost, deferred because a dashboard of cards is navigable without it. |
+
+> **BUILT 2026-09-09 — `src/app/url.ts`.** The paragraph above is kept for its reasoning and is no longer true of the tree. The app has a router: three browser primitives (`history.pushState`, `popstate`, `URLSearchParams`), no library, imported by `Shell.tsx`. Seventeen places are addressable and `queryFor`/`placeFor` are each other’s inverse, walked in both directions by 37 tests in `url.test.ts`. The URL names the WINDOW — so the module tab, the row open inside a module, the Admin panel and the quote picker’s starting place are deliberately NOT addressable, being positions inside a place rather than places. See backlog rows 77, 78 and 80.
+
 | **Email, PDF, sharing** | Already excluded by `QUOTE_SPEC §7` (`quote/index.ts:89-96`). Unchanged. |
 | **Module templates / a starter gallery** | A module is three clicks. A gallery of pre-built ones would be marine-shaped by the second entry. |
 | **Cross-module search** | Search belongs to the module that owns the data. HelmLogic's one global search is unlinked, covers no products, and its result rows are non-clickable `<div>`s (`hl-journeys.md` §2.2). |

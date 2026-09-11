@@ -107,6 +107,9 @@ We have no router and no route table at all. The whole app is one
 `Shell`, and everywhere you can "go" is a five-arm discriminated union
 held in React state:
 
+> **BUILT 2026-09-09 — `src/app/url.ts`.** The paragraph above is kept for its reasoning and is no longer true of the tree. The app has a router: three browser primitives (`history.pushState`, `popstate`, `URLSearchParams`), no library, imported by `Shell.tsx`. Seventeen places are addressable and `queryFor`/`placeFor` are each other’s inverse, walked in both directions by 37 tests in `url.test.ts`. The URL names the WINDOW — so the module tab, the row open inside a module, the Admin panel and the quote picker’s starting place are deliberately NOT addressable, being positions inside a place rather than places. See backlog rows 77, 78 and 80.
+
+
 ```ts
 type Stage =
   | { kind: 'view'; entityId: string }

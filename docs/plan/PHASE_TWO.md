@@ -68,6 +68,9 @@ So: **take the composition, not the list.**
   reason at the moment of removal and theirs reconstructs it server-side.
 - **Deep-linkable state** — take it. This is new work; the app has no router.
 
+> **BUILT 2026-09-09 — `src/app/url.ts`.** The paragraph above is kept for its reasoning and is no longer true of the tree. The app has a router: three browser primitives (`history.pushState`, `popstate`, `URLSearchParams`), no library, imported by `Shell.tsx`. Seventeen places are addressable and `queryFor`/`placeFor` are each other’s inverse, walked in both directions by 37 tests in `url.test.ts`. The URL names the WINDOW — so the module tab, the row open inside a module, the Admin panel and the quote picker’s starting place are deliberately NOT addressable, being positions inside a place rather than places. See backlog rows 77, 78 and 80.
+
+
 ---
 
 ## 1 · THE INFORMATION ARCHITECTURE
@@ -687,7 +690,7 @@ Every one inside the motion budget; nothing keyboard-initiated animates.
 | 4 | **The conflict sheet** | Needs 3 in place. The differentiator. | Medium |
 | 5 | **Landing** | Cheap once 2 exists — it is mostly the catalogue's doors plus drafts. | Low |
 | 6 | **Motion and scale pass** | Last, over finished screens. Doing it earlier polishes things that are about to move. | Low |
-| 7 | **URL state** | Deep-linkable builds. New: the app has no router. | Medium |
+| 7 | **URL state** | Deep-linkable builds. ~~New: the app has no router.~~ **BUILT 2026-09-09, `src/app/url.ts`** — see the note above. | Medium |
 
 **1 and 2 together are the test.** If the app still feels like a database after
 those two, the diagnosis in this document is wrong and we stop and re-plan
