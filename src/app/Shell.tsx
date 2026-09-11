@@ -118,7 +118,6 @@ import { useQuotes } from '@/features/quote'
    reads a module's catalogue, would close a cycle through
    `quote/index.ts` if it were re-exported there. The note at the foot
    of `quote/index.ts` says the same thing from the other side. */
-import { QuoteStart } from '@/features/quote/QuoteStart'
 import { CUSTOMER_TABLE_ID } from '@/features/crm'
 import { Finder } from '@/features/search'
 import { Freshness } from '@/features/io'

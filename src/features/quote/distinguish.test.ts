@@ -8,7 +8,7 @@
    ============================================================ */
 
 import { describe, expect, it } from 'vitest'
-import { distinguishingFacts, reduceToDifference, type Fact } from './distinguish'
+import { distinguishingFacts, reduceToDifference, type Fact, splitOnSharedStem } from './distinguish'
 
 const PROP_NO = { label: 'Prop Part No.', value: '6CE-45978-20' }
 const PROP_DESC = { label: 'Prop Description', value: 'PROPELLER - Saltwater T II SDS - 17"' }
@@ -144,5 +144,71 @@ describe('inside the fact, the segment that is actually the decision', () => {
     /* `Single` and `Single Prop` are different facts, and a
        substring test would call the first shared with the second. */
     expect(reduceToDifference(['Head | Single', 'Head | Single Prop'], 0)).toBe('Single')
+  })
+})
+
+/* ---------------------------------------------------------- */
+
+describe('siblings that share a stem', () => {
+  /* Measured on the real sheet: seven hulls under "Adventure ▸ ADV7"
+     whose names agree for twenty-two of twenty-eight characters and
+     whose price is identical. The six that differ are LAST. */
+  const adv7 = [
+    'Highfield - ADV7 (HYP) B-G-B',
+    'Highfield - ADV7 (HYP) B-G-LB',
+    'Highfield - ADV7 (HYP) LG-W-WB',
+  ]
+
+  it('QUIETENS WHAT THEY SHARE AND KEEPS WHAT THEY ARE', () => {
+    expect(splitOnSharedStem(adv7, 0)).toEqual({
+      stem: 'Highfield - ADV7 (HYP)',
+      tail: 'B-G-B',
+    })
+    expect(splitOnSharedStem(adv7, 2)).toEqual({
+      stem: 'Highfield - ADV7 (HYP)',
+      tail: 'LG-W-WB',
+    })
+  })
+
+  it('NOTHING IS REMOVED — the two parts are the whole label', () => {
+    /* The row a person reads back to a customer is still the row. */
+    for (let i = 0; i < adv7.length; i += 1) {
+      const { stem, tail } = splitOnSharedStem(adv7, i)
+      expect([stem, tail].filter((s) => s !== '').join(' ')).toBe(adv7[i])
+    }
+  })
+
+  it('is word-wise, so a stem is never half a word', () => {
+    /* A character-wise prefix would cut "ADV7" out of "ADV70". */
+    const near = ['Stacer 449 Proline Angler', 'Stacer 449 Proline Angler XL']
+    expect(splitOnSharedStem(near, 0).tail).toBe('Angler')
+    expect(splitOnSharedStem(near, 1).tail).toBe('Angler XL')
+  })
+
+  it('says nothing about a row with no sibling', () => {
+    expect(splitOnSharedStem(['Highfield - ADV7 (HYP) B-G-B'], 0)).toEqual({
+      stem: '',
+      tail: 'Highfield - ADV7 (HYP) B-G-B',
+    })
+  })
+
+  it('leaves labels that already differ alone', () => {
+    const distinct = ['Sport 460', 'Ultralite 340', 'Patrol 660']
+    for (let i = 0; i < distinct.length; i += 1) {
+      expect(splitOnSharedStem(distinct, i).stem).toBe('')
+    }
+  })
+
+  it('REFUSES A ONE-WORD STEM, which reads as a rendering fault', () => {
+    /* "Highfield" alone is the brand, and the door above already
+       says it; dimming one word of four looks like a bug. */
+    const oneWord = ['Yamaha F250XCB', 'Yamaha F115LB']
+    expect(splitOnSharedStem(oneWord, 0).stem).toBe('')
+  })
+
+  it('never swallows the whole label, however alike two rows are', () => {
+    /* A row with no name left is worse than a row that repeats one. */
+    const same = ['Dealer Fit Package', 'Dealer Fit Package']
+    expect(splitOnSharedStem(same, 0).tail).not.toBe('')
   })
 })

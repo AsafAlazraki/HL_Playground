@@ -166,3 +166,88 @@ export function reduceToDifference(values: readonly string[], i: number): string
   if (kept.length === 0 || kept.length === parts.length) return ''
   return kept.join(' · ')
 }
+
+/* ============================================================
+   SIBLINGS THAT SHARE A STEM — the variant list's own problem.
+
+   MEASURED ON THE REAL SHEET. Choosing a hull, the list draws
+   seven rows under "Adventure ▸ ADV7":
+
+     Highfield - ADV7 (HYP) B-G-B      $105,930
+     Highfield - ADV7 (HYP) B-G-LB     $105,930
+     Highfield - ADV7 (HYP) B-G-WB     $105,930
+     Highfield - ADV7 (HYP) B-W-WG     $105,930
+     Highfield - ADV7 (HYP) LG-G-MB    $105,930
+     Highfield - ADV7 (HYP) LG-W-LB    $105,930
+     Highfield - ADV7 (HYP) LG-W-WB    $105,930
+
+   Twenty-two of the twenty-eight characters are identical, the
+   price is identical, and the six that differ are last — past
+   where the eye stops on a scan. A person choosing between them
+   is reading the same string seven times.
+
+   NOTHING IS REMOVED, AND THAT IS THE WHOLE DESIGN. This is a
+   list somebody picks a $105,930 boat from; a row reduced to
+   "B-G-B" is shorter and less useful, and the full name is what
+   they will read back to a customer. So the stem stays and
+   changes WEIGHT: the shared part goes quiet, the part that
+   differs carries the ink. The row reads whole and the eye lands
+   on the six characters that are the actual decision.
+
+   IT IS WORD-WISE, NOT CHARACTER-WISE. A common-prefix cut at the
+   character would split "ADV7" out of "ADV70" and print a stem
+   that is not a word anybody wrote.
+
+   AND IT REFUSES THE CASES WHERE IT WOULD LIE. One sibling has
+   nothing to be distinguished from; a stem that swallows the whole
+   label leaves a row with no name; and labels that share nothing
+   are already distinct, so there is nothing to quieten.
+   ============================================================ */
+
+/** A label split into the part its siblings share and the part
+ *  that is this row's own. `stem` is `''` when there is nothing
+ *  worth quietening, and the caller prints `tail` alone. */
+export interface LabelParts {
+  stem: string
+  tail: string
+}
+
+
+const WORDS = /\s+/
+
+/** The longest leading run of whole words every label shares, or ''.
+ *
+ *  ONE STEM FOR THE WHOLE GROUP, not one per row, and the first
+ *  draft got that wrong. Computed per row, "Stacer 449 Proline
+ *  Angler" and "... Angler XL" came back with different stems — the
+ *  first showing "Angler", the second showing "XL" — so a reader saw
+ *  two stems in one group, which is worse than the repetition it was
+ *  meant to cure. A test caught it, and the code's answer was better
+ *  than the expectation written for it. */
+function sharedStem(values: readonly string[]): string {
+  if (values.length < 2) return ''
+  const rows = values.map((v) => v.split(WORDS).filter((w) => w !== ''))
+  const first = rows[0]
+  if (first === undefined) return ''
+
+  /* NEVER THE WHOLE OF THE SHORTEST LABEL. A row left with no name
+     is worse than a row that repeats one, so the run stops one word
+     short of the shortest sibling. */
+  const ceiling = Math.min(...rows.map((r) => r.length)) - 1
+  let shared = 0
+  while (shared < ceiling && rows.every((r) => r[shared] === first[shared])) shared += 1
+
+  /* A ONE-WORD STEM IS NOT WORTH TWO INK TIERS: "Highfield" on its
+     own is the brand, which the door above already says, and dimming
+     one word of four reads as a rendering fault rather than as a
+     hierarchy. */
+  return shared < 2 ? '' : first.slice(0, shared).join(' ')
+}
+
+export function splitOnSharedStem(values: readonly string[], i: number): LabelParts {
+  const mine = values[i] ?? ''
+  const stem = sharedStem(values)
+  if (stem === '' || !mine.startsWith(stem)) return { stem: '', tail: mine }
+  const tail = mine.slice(stem.length).trim()
+  return tail === '' ? { stem: '', tail: mine } : { stem, tail }
+}

@@ -132,6 +132,10 @@ import { branchNoun } from '@/features/table/grouping'
 import { useConstraints } from '@/features/constraints/constraintDefs'
 import { createViewFor, useViewDefs } from '@/features/views/viewDefs'
 import type { IndexEntry } from '@/features/modules/read'
+/* WHAT A ROW SHARES WITH THE ROWS BESIDE IT — the reduction the
+   option cards already use, applied to the list a hull is chosen
+   from. */
+import { splitOnSharedStem, type LabelParts } from './distinguish'
 import {
   SEARCH_MIN,
   SUBJECT_CAP,
@@ -789,6 +793,15 @@ export function QuoteStart({
                                   key={`${entry.tableId}::${entry.rowId}`}
                                   entry={entry}
                                   entity={entities[entry.tableId]}
+                                  /* WHAT THIS ROW SHARES WITH ITS
+                                     SIBLINGS AND WHAT IT DOES NOT,
+                                     computed over the GROUP — which
+                                     is the set a person is actually
+                                     choosing between. */
+                                  parts={splitOnSharedStem(
+                                    grp.entries.map((e) => e.label),
+                                    grp.entries.indexOf(entry),
+                                  )}
                                   at={at}
                                   on={at === hi}
                                   titled={grp.trail !== ''}
@@ -1156,6 +1169,7 @@ function Refusal({
 function SubjectRow({
   entry,
   entity,
+  parts,
   at,
   on,
   titled,
@@ -1165,6 +1179,9 @@ function SubjectRow({
 }: {
   entry: IndexEntry
   entity: EntityDef | undefined
+  /** the label cut into what the siblings share and what this row
+   *  is. Both are printed; only the weight differs. */
+  parts: LabelParts
   at: number
   on: boolean
   /** Does the group above this row already print its trail? When it
@@ -1228,7 +1245,25 @@ function SubjectRow({
           </span>
         ) : null}
         <span className="qs-row-say">
-          <span className="qs-row-name">{entry.label}</span>
+          {/* THE NAME, WITH THE EYE SENT TO WHAT DIFFERS.
+
+              Measured: seven hulls under "Adventure ▸ ADV7" whose
+              names agree for twenty-two of twenty-eight characters,
+              at one identical price, with the six that differ LAST —
+              past where the eye stops on a scan. A person choosing a
+              $105,930 boat was reading the same string seven times.
+
+              NOTHING IS REMOVED. The full name is what a salesperson
+              reads back to a customer, so the stem stays and changes
+              WEIGHT: the shared part quiet, this row's own part in
+              ink. `splitOnSharedStem` hands back an empty stem
+              wherever the reduction would not be honest — one
+              sibling, a one-word stem, a tail that would be empty —
+              and then this is exactly what it was. */}
+          <span className="qs-row-name">
+            {parts.stem === '' ? null : <span className="qs-row-stem">{parts.stem} </span>}
+            {parts.tail}
+          </span>
           {/* THE TRAIL, AND ONLY WHERE IT HAS NOT JUST BEEN SAID.
               Groups are cut BY the trail, so a row inside a titled
               group carries the heading's own words by construction —

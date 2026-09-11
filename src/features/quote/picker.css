@@ -719,6 +719,29 @@
   overflow-wrap: break-word;
 }
 
+/* THE PART EVERY SIBLING SHARES, SAID QUIETLY.
+
+   Seven hulls under one heading whose names agree for twenty-two of
+   twenty-eight characters, at one price, with the six that differ
+   LAST — a person choosing a $105,930 boat was reading the same
+   string seven times and finding the decision past where the eye
+   stops.
+
+   WEIGHT, NOT DELETION. The full name is what a salesperson reads
+   back to a customer, so the stem stays and goes to secondary ink at
+   the same size. Measured on this row's grounds — rest, hover and
+   the selected outline, both themes — `--fg-secondary` is the tier
+   card.css was measured at for a name, so this clears 4.5:1 where a
+   tertiary would not.
+
+   `font-weight: inherit` DELIBERATELY. Dropping the weight as well
+   as the colour reads as two different type styles in one line; one
+   axis is a hierarchy, two is a fault. */
+.qs-row-stem {
+  color: var(--fg-secondary);
+  font-weight: inherit;
+}
+
 .qs-row-trail {
   color: var(--fg-tertiary);
   font-size: var(--t-caption-size);
