@@ -39,7 +39,7 @@ export default async function (page, k) {
   console.log('BANDS ' + JSON.stringify(bands))
   await page.evaluate(() => {
     const b = [...document.querySelectorAll('button')].find((x) =>
-      /^Address/.test((x.innerText || '').trim()),
+      (x.innerText || '').trim().startsWith('Address'),
     )
     b?.click()
   })

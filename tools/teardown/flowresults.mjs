@@ -17,7 +17,7 @@ export default async function (page, k) {
   await k.wait(2500)
   await k.snap('fitment')
   /* the rule canvas is one door deeper now */
-  const door = page.getByRole('button', { name: /^Rule builder$/ })
+  const _door = page.getByRole('button', { name: /^Rule builder$/ })
   console.log('DOORS ' + JSON.stringify(
     (await page.evaluate(() => [...document.querySelectorAll('button')]
       .map((b) => (b.innerText || '').replace(/s+/g, ' ').trim())

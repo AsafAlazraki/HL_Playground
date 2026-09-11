@@ -27,7 +27,14 @@
    ============================================================ */
 
 import type { ReactElement } from 'react'
-import { FlowArrow, Graph, Scales, Stack, TreeStructure } from '@phosphor-icons/react'
+import {
+  FlowArrow,
+  Graph,
+  MagnifyingGlass,
+  Scales,
+  Stack,
+  TreeStructure,
+} from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { useConstraints } from '@/features/constraints/constraintDefs'
@@ -37,6 +44,11 @@ import { ICON_SIZE, weightFor } from '@/lib/icons'
 import { Card } from '@/ui'
 import { stageKeys, useStageEscape } from './stageKeys'
 import { useStageEntry } from './stageEntry'
+/* THE BAR'S OWN SENTENCE, BORROWED. The door says what the stage's
+   own bar will say the moment it opens, from the same function, so
+   the promise and the page cannot print two different figures. */
+import { reviewSay } from './ReviewStage'
+import { useLintFindings } from '@/features/review'
 
 const MARK = ICON_SIZE.medium
 const MARK_WEIGHT = weightFor(MARK)
@@ -96,6 +108,9 @@ export interface DataStageProps {
   onOpenRules: () => void
   /** what fits what — the pairings behind every shortlist */
   onOpenFitment: () => void
+  /** the reviewer — see `ReviewStage.tsx` for why its door is here
+   *  and not on Admin */
+  onOpenReview: () => void
   onClose: () => void
 }
 
@@ -105,6 +120,7 @@ export function DataStage({
   onOpenLevels,
   onOpenRules,
   onOpenFitment,
+  onOpenReview,
   onClose,
 }: DataStageProps): ReactElement {
   const entities = useProjectStore((s) => s.entities)
@@ -146,6 +162,8 @@ export function DataStage({
      told nothing about where they were. "Data" is the word `PageHead`
      below prints as the page's own `h1`. See stageEntry.ts. */
   const stage = useStageEntry('Data')
+  const findings = useLintFindings()
+  const blockers = findings.reduce((n, f) => n + (f.severity === 'blocker' ? 1 : 0), 0)
 
   /* `ad`, THE SAME ROOT CLASS ADMIN'S STAGE CARRIES. This was written
      as `ad-root`, which no stylesheet declares — so the screen was
@@ -204,6 +222,19 @@ export function DataStage({
               name="What fits what"
               fact="every pairing behind a shortlist"
               onPick={onOpenFitment}
+            />
+            {/* THE REVIEWER CLOSES THE BAND, and it is worth two cells
+                for the same reason the drawing that opens it is: it is
+                about everything above it rather than about one thing,
+                and its fact is two figures rather than one. Eight
+                cells into two columns, still exactly — see the note at
+                the head of this grid. */}
+            <Door
+              glyph={MagnifyingGlass}
+              name="Review"
+              fact={reviewSay(blockers, findings.length - blockers)}
+              wide
+              onPick={onOpenReview}
             />
           </div>
         </section>

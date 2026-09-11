@@ -441,6 +441,18 @@ take, in order: confirm-gate every fix, teach the lint rules what a brand price
 table is (they predate table kinds and read one as a mis-named entity), then cut
 a door. Until then a person is right to say the feature does not exist.
 
+> **CLOSED 2026-09-11.** All three, in that order. The gate is
+> `review/FixConfirm.tsx`, and it is not on every fix: a fix that can drop a
+> value or make a table asks first and states its blast radius counted from the
+> real rows; a fix that only renames keeps the toast with UNDO, because a dialog
+> in front of "rename Boats to Boat" is the full stop rule 9 exists to remove.
+> The rules learned about kinds — `entity-plural` was firing on 22 of 25 kinded
+> tables, telling a dealer to rename Highfield Inflatables to Highfield
+> Inflatable. And the door is on **Data**, beside the shape it reviews, worth
+> two cells because its fact is two figures. Driven on the prepared file: the
+> door reads *Review · 4 blockers · 138 advisories* and opens a page that leads
+> with 142 marks and the seven rules that made them, worst first.
+
 **O9 · The rules rail's rename and delete buttons are hover-only hit targets.**
 Lifted out of the row to give the name its width (F15), they are
 `pointer-events: none` until the row is hovered or focused. Correct for a mouse

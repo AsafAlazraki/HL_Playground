@@ -56,6 +56,7 @@
      ?at=configure                Configure, before a table is chosen
      ?at=configure&id=<entity>    Configure, on one table
      ?at=rules                    business rules
+ *     ?at=review                   the reviewer
      ?at=fitment                  what fits what
      ?at=quotes                   every quote
      ?at=quote&id=<quote>         one quote
@@ -145,6 +146,8 @@ export function queryFor(stage: Stage | null): string {
       return query('columns', stage.entityId)
     case 'rules':
       return query('rules')
+    case 'review':
+      return query('review')
     case 'flow':
       return query('fitment')
     case 'quote':
@@ -209,6 +212,8 @@ export function placeFor(search: string): Place {
       return id ? { stage: { kind: 'design', entityId: id } } : home()
     case 'rules':
       return { stage: { kind: 'rules' } }
+    case 'review':
+      return { stage: { kind: 'review' } }
     case 'fitment':
       return { stage: { kind: 'flow' } }
     case 'quotes':
@@ -265,6 +270,8 @@ export function titleFor(stage: Stage | null): string {
         return 'Columns'
       case 'rules':
         return 'Business rules'
+      case 'review':
+        return 'Review'
       case 'flow':
         return 'Fitment'
       case 'quote':

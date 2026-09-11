@@ -51,7 +51,7 @@ export default async function (page, k) {
   await openCanvas(page, k)
   await page.evaluate(() => {
     const b = [...document.querySelectorAll('button')].find((x) =>
-      /^Motor fitment/.test((x.innerText || '').trim()),
+      (x.innerText || '').trim().startsWith('Motor fitment'),
     )
     b?.click()
   })

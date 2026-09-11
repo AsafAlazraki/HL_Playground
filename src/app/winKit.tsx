@@ -21,6 +21,7 @@ import { TableStage } from './TableStage'
 import { ViewStage } from './ViewStage'
 import { DesignStage } from './DesignStage'
 import { RulesStage } from './RulesStage'
+import { ReviewStage } from './ReviewStage'
 import { FlowStage } from './FlowStage'
 import { QuoteStage } from './QuoteStage'
 /* DEEP, NOT THROUGH THE BARREL — `quote/index.ts` says why:
@@ -66,6 +67,10 @@ export type Stage =
   | { kind: 'view'; entityId: string }
   | { kind: 'design'; entityId: string }
   | { kind: 'rules' }
+  /* THE REVIEWER, WHICH HAD NO DOOR AT ALL until CLUELESS_USER_TESTS
+     O8's third step was done — the same failure the note beside
+     `flow` below records, and the same answer. */
+  | { kind: 'review' }
   | { kind: 'flow' }
   | { kind: 'quote'; quoteId: string | null }
   /* ============================================================
@@ -210,6 +215,7 @@ export function winTitle(s: Stage, entities: Record<string, EntityDef>): ReactNo
   if (s.kind === 'history') return s.customerId ? 'Customer history' : 'History'
   if (s.kind === 'levels') return 'Configure'
   if (s.kind === 'rules') return 'Business rules'
+  if (s.kind === 'review') return 'Review'
   if (s.kind === 'flow') return 'Fitment'
   if (s.kind === 'quote') return s.quoteId ? 'Quote' : 'Quotes'
   if (s.kind === 'module') return s.moduleId ? 'Module' : 'Modules'
@@ -388,6 +394,8 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
       return <DesignStage entityId={s.entityId} onClose={h.close} />
     case 'rules':
       return <RulesStage onClose={h.close} />
+    case 'review':
+      return <ReviewStage onClose={h.close} />
     case 'flow':
       return (
         <FlowStage
@@ -451,6 +459,7 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
           onOpenLevels={() => h.openWin({ kind: 'levels', entityId: null })}
           onOpenRules={() => h.openWin({ kind: 'rules' })}
           onOpenFitment={() => h.openWin({ kind: 'flow' })}
+          onOpenReview={() => h.openWin({ kind: 'review' })}
           onClose={h.close}
         />
       )

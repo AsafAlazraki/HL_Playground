@@ -3213,3 +3213,31 @@
   }
 }
 
+
+/* ============================================================
+   THE REVIEW STAGE'S WELL.
+
+   `ReviewPanel` is a RAIL: `review.css` gives it a deliberate
+   clamp(340px, 22vw, 440px) measure, which is a reading width
+   somebody chose. A stage is 1,200px wide, and a 440px column pinned
+   to its left edge with 760px of ground beside it reads as a screen
+   that failed to load rather than as a column that knows its width.
+
+   SO THE STAGE CENTRES IT AND CHANGES NOTHING ELSE. It does not
+   stretch the panel — a stage overruling a feature's own measure is
+   how one surface ends up with two opinions about a reading width.
+
+   AND THE PANEL'S OWN × GOES, here and only here. It was drawn for a
+   rail that could be shut while you stayed on the screen behind it;
+   on a stage there is nowhere else to be, so it and the bar's Back
+   are one act drawn twice, four inches apart. Escape still reaches
+   the same handler, so nothing is lost but the second button.
+   ============================================================ */
+.shell-review-well {
+  display: flex;
+  justify-content: center;
+  padding-block-start: var(--s-3);
+}
+.shell-review-well .rv-close {
+  display: none;
+}
