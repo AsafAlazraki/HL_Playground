@@ -50,8 +50,25 @@ import { Button } from '@/ui'
 import { SPRING, SPRING_QUICK, transitionFor } from '@/features/views/stillness'
 import { money } from './pricing'
 import { deltaSay } from './conflict'
-import { groupDelta, rowFigure, type Cascade, type CascadeRow } from './cascade'
+import {
+  groupDelta,
+  rowFigure,
+  type Alternative,
+  type Cascade,
+  type CascadeRow,
+} from './cascade'
 import './cascade.css'
+
+/** THE ROW THAT IS NOT AN ALTERNATIVE — "leave it off" — drawn in the
+ *  same radio group because it is the same kind of decision. Its id is
+ *  a word no `selectPartners` row can mint: those are
+ *  `tableId:rowId`, and this has no colon. */
+const NOTHING: Alternative = {
+  id: 'nothing',
+  label: 'Leave it off',
+  amount: 0,
+  note: 'Nothing goes on in its place',
+}
 
 /* ---------------------------------------------------------- */
 /* One row                                                     */
@@ -153,7 +170,12 @@ export function CascadeSheet({
      has to move the footer or the footer is decoration. */
   const swap = cascade.alternatives.find((a) => a.id === chosen)
   const base = cascade.alternatives[0]?.amount ?? 0
-  const shift = (swap?.amount ?? base) - base
+  /* LEAVING IT OFF COSTS THE CHEAPEST FIX BACK. `cascade.to` was
+     computed WITH the cheapest alternative in it, so choosing to add
+     nothing subtracts that amount rather than adding zero — the
+     footer has to price the decision actually in front of the
+     person. */
+  const shift = chosen === NOTHING.id ? -base : (swap?.amount ?? base) - base
   const to = cascade.to + shift
   const delta = to - cascade.from
 
@@ -225,8 +247,27 @@ export function CascadeSheet({
                   </p>
                 </div>
               </header>
+              {/* ============================================================
+                  AND THE THIRD ANSWER, WHICH IS A REAL ONE.
+
+                  §2.4's shape is three rows, not two: the cheapest fix,
+                  every dearer one, and *Leave the motor off*. Without
+                  it the sheet offers a person who has decided they do
+                  not want the thing at all no way to say so — they can
+                  only take the cheapest swap and then go and delete the
+                  line, which is two acts for one decision and leaves
+                  the undo pointing at the wrong one.
+
+                  IT IS A RADIO AND NOT A SECOND BUTTON. Choosing to add
+                  nothing is a choice among the alternatives, priced
+                  like the rest at nothing; putting it in the footer
+                  would make it read as a cancel, and cancel already
+                  means "leave the quote as it stands", which is the
+                  opposite act — that one keeps the lines this sheet is
+                  removing.
+                  ============================================================ */}
               <ul className="cs-alts" role="radiogroup" aria-label="What to put on instead">
-                {cascade.alternatives.map((alt) => {
+                {[...cascade.alternatives, NOTHING].map((alt) => {
                   const on = alt.id === chosen
                   return (
                     <li key={alt.id}>
@@ -276,7 +317,11 @@ export function CascadeSheet({
             <Button tone="neutral" onClick={onCancel}>
               Leave it as it is
             </Button>
-            <Button tone="primary" data-ok="true" onClick={() => onAccept(chosen)}>
+            <Button
+              tone="primary"
+              data-ok="true"
+              onClick={() => onAccept(chosen === NOTHING.id ? null : chosen)}
+            >
               {cascade.accept}
             </Button>
           </div>
