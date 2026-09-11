@@ -29,8 +29,7 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import { newId, nowIso } from '@/lib/id'
-import { useProjectStore } from '@/store/useProjectStore'
-import { orgKeyOf } from '@/lib/orgKey'
+import { currentOrgKey } from '@/lib/orgKey'
 /* THE APP'S ONE PLACE FOR SAYING WHAT HAS JUST HAPPENED. It is a
    bus, not a store read: `say` touches no project data, and this
    file is already downstream of `freeze.ts`, which is the single
@@ -72,7 +71,7 @@ import type { AdjustmentKind, QuoteAdjustment, QuoteDef, QuoteLine } from '@/typ
    ============================================================ */
 const LEGACY_KEY = 'helmlogic.quotes.v1'
 
-const storeKey = (): string => `${LEGACY_KEY}:${orgKeyOf(useProjectStore.getState().meta)}`
+const storeKey = (): string => `${LEGACY_KEY}:${currentOrgKey()}`
 
 const registry = new Map<string, QuoteDef>()
 let list: QuoteDef[] = []

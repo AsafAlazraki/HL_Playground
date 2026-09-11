@@ -53,7 +53,7 @@
 import { useCallback, useSyncExternalStore } from 'react'
 import type { EntityDef } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
-import { orgKeyOf } from '@/lib/orgKey'
+import { currentOrgKey, orgKeyOf } from '@/lib/orgKey'
 import type { MapTo } from './pasteBlock'
 
 /** What a person chose for one heading. `new` is deliberately not
@@ -77,7 +77,11 @@ export interface Remembered {
 export const KEEP = 24
 
 const key = (orgKey: string): string => `hl.colmap.v1:${orgKey}`
-const currentKey = (): string => orgKeyOf(useProjectStore.getState().meta)
+/* ONE COPY OF THIS LINE, IN THE FILE THAT OWNS THE KEY. It was
+   written out in five places before `currentOrgKey` existed, and a
+   line copied five times is five places for it to drift the next
+   time the key changes — which it has done once already. */
+const currentKey = currentOrgKey
 
 /** One heading, reduced to what identifies it: case, punctuation and
  *  spacing are how the same column arrives spelled three ways. */

@@ -59,7 +59,22 @@ export const RECENT_LIMIT = 6
 /** Namespaced the way the rest of the app namespaces: feature,
  *  then what it is. Never a bare word that another script on the
  *  page could plausibly own. */
-const KEY = 'helmlogic.finder.recent.v1'
+import { currentOrgKey } from '@/lib/orgKey'
+
+/* ============================================================
+   SCOPED TO THE BUSINESS — TENANCY §4.3.
+
+   A recent is a ROW ID beside a table id, and both belong to one sheet. Unscoped, a second organisation was offered rows that resolve to nothing — or, where two sheets mint the same id, to the WRONG row, which is worth more than the convenience it costs.
+
+   NO MIGRATION, AND THAT IS A DECISION RATHER THAN AN OMISSION. What
+   sits under the old key is a convenience and not a record: losing it
+   costs one gesture and nothing anybody typed. A migration would be
+   more code than the value it protects, running once on every load
+   forever. The old key is left where it is rather than deleted —
+   removing somebody's data to tidy a key name is the worse trade.
+   ============================================================ */
+const RECENT_KEY = 'helmlogic.finder.recent.v1'
+const keyFor = (): string => `${RECENT_KEY}:${currentOrgKey()}`
 
 const store = (): Storage | null => {
   try {
@@ -105,7 +120,7 @@ export function readRecent(): RecentPick[] {
   const s = store()
   if (!s) return []
   try {
-    return parse(s.getItem(KEY))
+    return parse(s.getItem(keyFor()))
   } catch {
     return []
   }
@@ -133,7 +148,7 @@ export function rememberPick(entityId: string, rowId?: string): void {
   if (!s) return
   const pick: RecentPick = rowId === undefined ? { entityId } : { entityId, rowId }
   try {
-    s.setItem(KEY, JSON.stringify(withPick(parse(s.getItem(KEY)), pick)))
+    s.setItem(keyFor(), JSON.stringify(withPick(parse(s.getItem(keyFor())), pick)))
   } catch {
     /* quota, or a private window that allows reads and refuses
        writes. Nothing is reported: there is nothing a person could
@@ -149,7 +164,7 @@ export function clearRecent(): void {
   const s = store()
   if (!s) return
   try {
-    s.removeItem(KEY)
+    s.removeItem(keyFor())
   } catch {
     /* nothing to do, and nothing lost that was not already gone */
   }

@@ -48,7 +48,7 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import { currentUser } from '@/features/auth'
-import { orgKeyOf } from '@/lib/orgKey'
+import { currentOrgKey, orgKeyOf } from '@/lib/orgKey'
 import { useProjectStore } from '@/store/useProjectStore'
 import type { CellChange } from './tableCsv'
 
@@ -107,7 +107,11 @@ const key = (orgKey: string): string => `hl.merges.v1:${orgKey}`
  *  `orgKeyOf`. Not `AppUser.orgSlug`: the log is a fact about the
  *  SHEET, so a colleague signing in on the same machine reads the
  *  same merges, which is the case an apply-log exists for. */
-const currentKey = (): string => orgKeyOf(useProjectStore.getState().meta)
+/* ONE COPY OF THIS LINE, IN THE FILE THAT OWNS THE KEY. It was
+   written out in five places before `currentOrgKey` existed, and a
+   line copied five times is five places for it to drift the next
+   time the key changes — which it has done once already. */
+const currentKey = currentOrgKey
 
 let cache: { slug: string; rows: MergeEvidence[] } | null = null
 const listeners = new Set<() => void>()

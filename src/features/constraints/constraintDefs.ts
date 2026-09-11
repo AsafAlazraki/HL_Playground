@@ -38,7 +38,7 @@ import { sanitiseAllObserved, sanitiseObserved } from '@/lib/observed/adopt'
    because a second store is now keyed the same way — the merge log in
    `features/io/evidence.ts` — and the fallback below is the one part
    of this app that must never exist twice. */
-import { legacyOrgKeyOf, orgKeyOf } from '@/lib/orgKey'
+import { currentOrgKey, legacyOrgKeyOf, orgKeyOf } from '@/lib/orgKey'
 export { legacyOrgKeyOf, orgKeyOf }
 
 /* ---------------------------------------------------------- */
@@ -175,7 +175,11 @@ export function getConstraint(id: string): ConstraintDef | undefined {
 /* Writing                                                    */
 /* ---------------------------------------------------------- */
 
-const currentKey = (): string => orgKeyOf(useProjectStore.getState().meta)
+/* ONE COPY OF THIS LINE, IN THE FILE THAT OWNS THE KEY. It was
+   written out in five places before `currentOrgKey` existed, and a
+   line copied five times is five places for it to drift the next
+   time the key changes — which it has done once already. */
+const currentKey = currentOrgKey
 
 export interface NewConstraint {
   kind?: ConstraintKind

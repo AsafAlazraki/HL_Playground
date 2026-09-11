@@ -45,6 +45,15 @@ const scoped = (): string => {
 
 beforeEach(() => {
   localStorage.clear()
+  /* THE SLUG IS MINTED ONCE AND KEPT — that is the whole point of it
+     (TENANCY §4.1: a rename is a rename, not a new business). So a
+     suite that calls `setOrganisation` with a new name between cases
+     carries the FIRST case's slug through all of them, and every key
+     below would be the same key. Clearing the profile first is how a
+     test says "a different sheet" rather than "a renamed business". */
+  useProjectStore.setState({
+    meta: { ...useProjectStore.getState().meta, org: undefined },
+  })
   useProjectStore.getState().setOrganisation('Northside', 'marine')
 })
 
@@ -95,5 +104,47 @@ describe('two businesses in one browser', () => {
     useProjectStore.getState().setOrganisation('Someone Else', 'marine')
     expect(scoped()).not.toBe(first)
     expect(localStorage.getItem(scoped())).toBeNull()
+  })
+})
+
+/* ============================================================
+   THE OTHER THREE STORES — TENANCY §4.3.
+
+   Two of them are conveniences and carry no migration, which is a
+   decision rather than an omission: losing a cursor or a recents list
+   costs one gesture and nothing anybody typed. The seed STAMP is
+   different — losing it costs the app its answer to "where did this
+   data come from", which is the question that file exists for — so it
+   moves once and refuses to overwrite.
+   ============================================================ */
+
+describe('the rest of the unscoped stores', () => {
+  it('KEEPS EACH BUSINESS RECENTS APART, because a recent is a row id on one sheet', async () => {
+    const { rememberPick, readRecent, clearRecent } = await import(
+      '@/features/search/recent'
+    )
+    clearRecent()
+    rememberPick('e1', 'r1')
+    expect(readRecent()).toHaveLength(1)
+
+    useProjectStore.setState({
+      meta: { ...useProjectStore.getState().meta, org: undefined },
+    })
+    useProjectStore.getState().setOrganisation('Someone Else', 'marine')
+    expect(readRecent()).toHaveLength(0)
+  })
+
+  it('MOVES THE SEED STAMP ONCE and refuses to overwrite one already there', async () => {
+    const { adoptLegacyStamp } = await import('@/demos/seedStamp')
+    localStorage.setItem('helmlogic.seed.v1', JSON.stringify({ seed: 'northside', at: ISO }))
+    expect(adoptLegacyStamp()).toBe(true)
+    expect(localStorage.getItem('helmlogic.seed.v1')).toBeNull()
+    /* idempotent */
+    expect(adoptLegacyStamp()).toBe(false)
+
+    /* and it will not stand on one this business already has */
+    localStorage.setItem('helmlogic.seed.v1', JSON.stringify({ seed: 'other', at: ISO }))
+    expect(adoptLegacyStamp()).toBe(false)
+    expect(localStorage.getItem('helmlogic.seed.v1')).not.toBeNull()
   })
 })

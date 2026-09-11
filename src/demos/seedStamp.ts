@@ -49,7 +49,43 @@
    ============================================================ */
 
 /** the key, versioned so a later shape change cannot misread this one */
-const STAMP_KEY = 'helmlogic.seed.v1'
+import { currentOrgKey } from '@/lib/orgKey'
+
+/* ============================================================
+   SCOPED TO THE BUSINESS — TENANCY §4.3.
+
+   The stamp says which prepared set this SHEET was built from, and a
+   sheet belongs to one business. Unscoped, a second organisation
+   opened in the same browser inherited the first one's provenance:
+   the freshness notice would offer to replace a sheet with a newer
+   copy of a set that sheet was never built from.
+
+   AND THIS ONE IS MIGRATED, unlike the recents and the build place
+   beside it. Losing a cursor costs a gesture; losing a stamp costs
+   the app its answer to "where did this data come from", which is
+   the question the whole file exists for. It moves once, refuses to
+   overwrite a stamp this business already has, and is idempotent.
+   ============================================================ */
+const LEGACY_STAMP_KEY = 'helmlogic.seed.v1'
+const stampKey = (): string => `${LEGACY_STAMP_KEY}:${currentOrgKey()}`
+
+/** Move an unscoped stamp under this business, once. Returns true
+ *  when something moved, so a test can say so rather than infer it. */
+export function adoptLegacyStamp(): boolean {
+  if (!hasStorage()) return false
+  try {
+    const legacy = localStorage.getItem(LEGACY_STAMP_KEY)
+    if (legacy === null) return false
+    const key = stampKey()
+    if (key === LEGACY_STAMP_KEY) return false
+    if (localStorage.getItem(key) !== null) return false
+    localStorage.setItem(key, legacy)
+    localStorage.removeItem(LEGACY_STAMP_KEY)
+    return true
+  } catch {
+    return false
+  }
+}
 
 export interface SeedStamp {
   /** the seed fingerprint this browser was actually seeded from.
@@ -80,8 +116,9 @@ const hasStorage = (): boolean => {
 
 export function readSeedStamp(): SeedStamp | null {
   if (!hasStorage()) return inMemory
+  adoptLegacyStamp()
   try {
-    const raw = localStorage.getItem(STAMP_KEY)
+    const raw = localStorage.getItem(stampKey())
     if (raw === null) return inMemory
     const parsed: unknown = JSON.parse(raw)
     if (typeof parsed !== 'object' || parsed === null) return inMemory
@@ -101,7 +138,7 @@ function put(stamp: SeedStamp): void {
   inMemory = stamp
   if (!hasStorage()) return
   try {
-    localStorage.setItem(STAMP_KEY, JSON.stringify(stamp))
+    localStorage.setItem(stampKey(), JSON.stringify(stamp))
   } catch {
     /* memory holds it for this session; nothing on screen changes */
   }
@@ -127,7 +164,7 @@ export function forgetSeedStamp(): void {
   inMemory = null
   if (!hasStorage()) return
   try {
-    localStorage.removeItem(STAMP_KEY)
+    localStorage.removeItem(stampKey())
   } catch {
     /* nothing to do: the in-memory record is already gone */
   }

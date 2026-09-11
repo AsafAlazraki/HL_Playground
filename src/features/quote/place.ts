@@ -46,7 +46,22 @@
    that one slice rather than a timestamp per entry.
    ============================================================ */
 
-const KEY = 'helmlogic.build.place.v1'
+import { currentOrgKey } from '@/lib/orgKey'
+
+/* ============================================================
+   SCOPED TO THE BUSINESS — TENANCY §4.3.
+
+   Where a person was in a document names a MODULE ID, and a module id exists on one sheet. Unscoped, a second organisation opened in the same browser inherited a cursor pointing at a place it does not have.
+
+   NO MIGRATION, AND THAT IS A DECISION RATHER THAN AN OMISSION. What
+   sits under the old key is a convenience and not a record: losing it
+   costs one gesture and nothing anybody typed. A migration would be
+   more code than the value it protects, running once on every load
+   forever. The old key is left where it is rather than deleted —
+   removing somebody's data to tidy a key name is the worse trade.
+   ============================================================ */
+const PLACE_KEY = 'helmlogic.build.place.v1'
+const keyFor = (): string => `${PLACE_KEY}:${currentOrgKey()}`
 
 /** How many quotes keep a cursor. Twenty is a fortnight of one
  *  salesperson's drafts and about 700 bytes. */
@@ -57,7 +72,7 @@ type Places = Record<string, string>
 function read(): Places {
   if (typeof localStorage === 'undefined') return {}
   try {
-    const raw = localStorage.getItem(KEY)
+    const raw = localStorage.getItem(keyFor())
     if (raw === null) return {}
     const parsed: unknown = JSON.parse(raw)
     if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
@@ -94,7 +109,7 @@ export function rememberPlace(quoteId: string, stepId: string): void {
   const kept: Places = {}
   for (const id of ids.slice(Math.max(0, ids.length - KEEP))) kept[id] = places[id]
   try {
-    localStorage.setItem(KEY, JSON.stringify(kept))
+    localStorage.setItem(keyFor(), JSON.stringify(kept))
   } catch {
     /* quota, private mode, storage off — all the same answer */
   }

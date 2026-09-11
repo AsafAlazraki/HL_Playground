@@ -14,6 +14,7 @@
    ============================================================ */
 
 import type { ProjectMeta } from '@/types/model'
+import { useProjectStore } from '@/store/useProjectStore'
 
 const NO_ORG = '__unnamed'
 
@@ -43,3 +44,22 @@ export const legacyOrgKeyOf = (meta: ProjectMeta): string | null => {
   const old = meta.org?.name?.trim().toLowerCase()
   return old && old !== slug ? old : null
 }
+
+/**
+ * THE KEY FOR THE SHEET THAT IS OPEN, read imperatively.
+ *
+ * `orgKeyOf(useProjectStore.getState().meta)` was written out in five
+ * files by the time this existed — the constraint registry, the merge
+ * log, the column-mapping memory, the quote store and the build
+ * place — and a line copied five times is five places for it to drift
+ * when the key changes again, which it has done once already
+ * (TENANCY §4.1, name → slug).
+ *
+ * IT IS NOT A HOOK AND MUST NOT BECOME ONE. Every caller is a plain
+ * localStorage reader outside React; a hook here would drag five
+ * stores into the render cycle to answer a question that changes
+ * about once a session. Where a COMPONENT needs it to re-render, it
+ * subscribes itself — `useProjectStore((s) => orgKeyOf(s.meta))` —
+ * which is what `useMerges` and `useMappings` do.
+ */
+export const currentOrgKey = (): string => orgKeyOf(useProjectStore.getState().meta)
