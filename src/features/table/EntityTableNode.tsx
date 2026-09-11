@@ -90,6 +90,7 @@ import { accentVar, displayFieldOf, type TableKind } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 import {
   distinctValues,
+  type CellRef,
   type ColumnFilter,
   type SortState,
 } from '@/features/table/core'
@@ -292,6 +293,14 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
        register is still wider than the card. Every figure counted. */
     onFit: sayWhatFitDid,
   })
+
+  /* THE ONE INLINE ARROW `Grid` USED TO BE HANDED. A ticked box is an
+     edit begun on that cell, and it reads as its own verb at the call
+     site — but written inline it was a new function on every render,
+     which is all it takes to defeat the memo around a register of 588
+     rows. See the note at the foot of `Grid.tsx`. */
+  const beginEdit = cmd.beginEdit
+  const toggleBool = useCallback((cell: CellRef) => beginEdit(cell), [beginEdit])
 
   const columns = useColumnCommands(entityId, pushToast)
   const groups = useGroupCommands(
@@ -712,7 +721,7 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
               onDraft={cmd.setDraft}
               onPick={cmd.pickValue}
               onCommitEdit={cmd.commitEdit}
-              onToggleBool={(cell) => cmd.beginEdit(cell)}
+              onToggleBool={toggleBool}
               onFill={cmd.applyFill}
               onResize={onResizeColumn}
               onSort={onSort}

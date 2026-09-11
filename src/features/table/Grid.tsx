@@ -46,7 +46,7 @@
    header 6 · corner 7. The active-cell ring can never draw over the
    frozen chrome, and the frozen chrome always wins over the pin.
    ============================================================ */
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { JSX, MouseEvent as ReactMouseEvent, RefObject } from 'react'
 import {
   accentVar,
@@ -324,7 +324,7 @@ interface AnchoredMenu {
   rect: DOMRect
 }
 
-export function Grid(props: GridProps): JSX.Element {
+function GridImpl(props: GridProps): JSX.Element {
   const {
     entity,
     fields,
@@ -2191,3 +2191,30 @@ export function Grid(props: GridProps): JSX.Element {
     </div>
   )
 }
+
+/* ============================================================
+   A SELECTION IS NOT A CHANGE TO THE REGISTER.
+
+   MEASURED, on the real seed at 1280x800 with seven legible cards in
+   the window: pressing a card's title bar — the ordinary way a table
+   is selected — took 87, 237, 316 and 99ms to reach the screen. With
+   three cards up the same press took 95-156ms. The cost tracked the
+   number of MOUNTED GRIDS, not the press: React Flow hands every node
+   a new `selected`, every node re-renders, and each one re-rendered
+   its entire register underneath it. Panning and dragging with the
+   same seven cards up are at this machine's floor (p90 17.4ms against
+   a floor of 17.9), so nothing about drawing those grids is slow —
+   they were simply being rebuilt for a fact that is drawn on the
+   frame around them.
+
+   `selected` reaches the frame class and the resizer and NOTHING in
+   here, so the comparison below is the honest one: same columns, same
+   rows, same handlers — same grid.
+
+   WHAT MAKES THIS SAFE. Every prop is a value or a handler from a
+   memoising hook; nothing is mutated in place. The one inline arrow
+   that was left (`onToggleBool`) is a `useCallback` at the call site
+   now, because a memo defeated by one prop is a memo that costs a
+   comparison and saves nothing.
+   ============================================================ */
+export const Grid = memo(GridImpl)

@@ -64,6 +64,9 @@ export default async function (page, k) {
   await k.wait(3000)
   await k.snap('after')
 
+  console.log('GRID HOLDS THE MERGED VALUE ' + (await page.evaluate(() =>
+    [...document.querySelectorAll('[role="gridcell"], .gr-cell')].map((e) => (e.textContent || '').trim()).includes('123.45'),
+  )))
   await openFold(page, k)
   console.log('LOGBTN ' + (await press(page, 'Merge log')))
   await k.wait(1800)

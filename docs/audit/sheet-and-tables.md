@@ -52,6 +52,30 @@ Ranked by how early they stop someone.
 
 ## S-1 · The sheet runs at 12–24 fps at every zoom where a table can be read. This is the second minute of the app.
 
+> **RE-MEASURED 2026-09-11 AND NO LONGER TRUE OF PANNING.** This was taken
+> against the old seed (21 tables, 651 rows) and before `src/features/table/
+> tableLod.ts` existed. Taken again on today's tree — 53 tables, 15,691 rows,
+> 1280×800, the same harness — with **seven legible grid cards in the window at
+> zoom 0.846 and 3,564 elements inside the viewport**:
+>
+> | gesture | p50 | p90 | max | frames > 33ms |
+> |---|---|---|---|---|
+> | this machine's floor, no gesture at all | 16.5 | 17.9 | 28.6 | 0 of 57 |
+> | pan, 7 grid cards up | 16.5 | **17.4** | 17.6 | **0 of 57** |
+> | drag a card, 7 grid cards up | 16.5 | **17.5** | 18.0 | **0 of 57** |
+>
+> Panning and dragging are AT THE FLOOR — p90 below what the same loop measures
+> with nothing happening at all. What killed S-1 is the plate band, the settle
+> gate and `onlyRenderVisibleElements`, all of which `tableLod.ts` argues for in
+> its own header. The canvas element count at zoom 0.5 is **567**, against the
+> 6,648 `PERF_DIAGNOSIS` asked to see a small fraction of.
+>
+> **TWO THINGS ARE STILL SLOW, and they are not this finding.** A sustained
+> wheel-zoom that traverses the bands measures p50 24–54ms and p90 85–248ms with
+> 6–13 of 19 frames over 33ms; and a press on a card's title bar — selecting it
+> — takes 76–220ms to reach the screen, scaling with the number of mounted
+> grids. Both are open as BACKLOG 43 and 44.
+
 **What I did.** Pressed FIT, then the `+` control five times to reach the first
 zoom at which any card draws a grid, waited 1s for the sheet to settle, then
 panned four times (two directions, alternating) with the harness above.
