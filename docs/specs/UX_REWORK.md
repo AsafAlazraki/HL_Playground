@@ -219,8 +219,30 @@ The UID is the row's existing unique id surfaced as a **locked system column**.
 It deliberately lives OUTSIDE `EntityDef.fields`, so it costs no storage, cannot
 collide with a user field name, and never trips the linter.
 
-Every surface that lists columns must show it **first**, and must render it as
-system-owned — mono, `--ink-soft`, a small lock/key affordance — and make it:
+> **AMENDED 2026-09-11 — "FIRST ON EVERY SURFACE" IS OVERTURNED, and the rest
+> of this section stands.** Two later rulings say a register may not open on a
+> machine key: DESIGN_PRINCIPLES §6 names "UID" among the system jargon this app
+> refuses in chrome, and the redesign's own audit of that screen concluded, in
+> one sentence, "a dealer's first column should not be a machine key".
+> `useTableData.ts` records the measurement that settled it — the first thing in
+> every register in this app was a heading reading UID SYSTEM over a
+> ten-character key like `-KS7x1XXCj`, and what a person should see instead was
+> already on screen one column to the left: the row NUMBER in the frozen gutter.
+>
+> So the column is shown where the machine key is the thing being read — the
+> whiteboard's table card, the designer's field list, and the `Row key` header
+> of an exported register — and is not prepended to the register or the
+> inspector. Every OTHER clause below is enforced and unaffected: not editable,
+> not deletable or renameable or retypeable, outside `EntityDef.fields`, and
+> refused as a price level (`levels.ts`), as a customer field
+> (`customers.ts`) and as an ordinary exported column (`envelope.ts`).
+>
+> `visibleFields` is the UID-first reader and survives for the surfaces that
+> want it; a caller that wants the table's own columns uses `entity.fields`.
+
+Every surface where the machine key is the thing being read must show it
+**first**, and must render it as system-owned — mono, `--ink-soft`, a small
+lock/key affordance — and make it:
 - **not editable** (no cell editor, no paste target, cleared by nothing),
 - **not deletable, renameable, retypeable or reorderable** (no controls in the
   designer field list),
