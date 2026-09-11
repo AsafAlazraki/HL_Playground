@@ -499,6 +499,89 @@
 .qt-section-head {
   margin-bottom: var(--sp-2);
 }
+/* A SECTION WITH NOTHING ON IT — one row, and the row is the act.
+
+   Measured: a quote raised on a Highfield hull opens with eight
+   sections and two of them have a line. The other six each drew a
+   rule, a heading, a sentence and a button — six headings about
+   suppliers nobody had quoted, on the screen where a person came to
+   type a customer's name.
+
+   NO RULE ABOVE IT. The hairline is what separates parts of a
+   DOCUMENT, and a row offering to add something is not a part of the
+   document yet. */
+.qt-section--bare {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* CONSECUTIVE OFFERS ARE A LIST, and a list has list spacing. Each
+   bare section is its own <section>, so without this the document's
+   own section rhythm (--sp-5) sat between two one-line controls and
+   six offers took the height of six paragraphs. */
+.qt-section--bare + .qt-section--bare {
+  margin-top: calc(var(--sp-1) * -1);
+}
+
+/* AND THE RUN OF THEM IS SEPARATED FROM THE DOCUMENT ONCE. A hairline
+   above the first offer says "the quote ends here and these are
+   things you could add"; a hairline between each of them would be
+   claiming six documents. */
+.qt-section:not(.qt-section--bare) + .qt-section--bare {
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+}
+
+.qt-bare {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-soft);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-draft);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qt-bare:hover {
+    background: var(--paper-high);
+    color: var(--ink);
+  }
+}
+
+.qt-bare:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.qt-bare-say {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.qt-bare-name {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* THE REASON, WHERE IT IS NEEDED. It was a paragraph in the document;
+   here it is the second line of the control it explains — read while
+   deciding whether to add, rather than while reading the quote. */
+.qt-bare-why {
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .qt-section-empty {
   padding: var(--sp-2) 0;
   color: var(--ink-faint);

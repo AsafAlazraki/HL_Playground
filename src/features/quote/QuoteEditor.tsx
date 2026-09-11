@@ -996,6 +996,59 @@ function SectionCard({
              have nothing behind them to switch off. */
           ''
 
+  /* WHY THERE IS NOTHING HERE, IN ONE SENTENCE, COMPUTED ONCE so the
+     bare row and the opened section cannot say different things.
+
+     The distinction is the one people asked about: a block whose view
+     page had rows PICKED but none starred is not a block nobody
+     configured — the quote deliberately declines to choose between a
+     menu of three, and saying only "nothing on this quote yet" read
+     as "you configured nothing" and sent people back to re-pick what
+     they had already picked. '' where there is genuinely nothing to
+     say, and then no second line is drawn at all. */
+  const emptySay =
+    section.pickedCount !== undefined && section.pickedCount > 1
+      ? `${section.pickedCount} ${section.title} were picked for this one, so none was chosen for you. Starring one makes it come across on its own next time.${
+          section.heldCount ? ` ${heldBackSentence(section.heldCount, section.title)}` : ''
+        }`
+      : section.heldCount
+        ? heldBackSentence(section.heldCount, section.title)
+        : ''
+
+  /* ── AN EMPTY SECTION IS ONE ROW, NOT FOUR ELEMENTS ──────────────
+     MEASURED ON THE REAL SHEET. A quote raised on a Highfield hull
+     opens with eight sections and two of them have a line on them.
+     The other six each drew a rule, a heading, a sentence and a
+     button — and this screen's job is to ADDRESS the quote, so a
+     person came here to type a customer's name and met six headings
+     about suppliers they had not quoted.
+
+     NOTHING IS DELETED. The sentence an empty section carries is
+     true and hard-won — "3 Yamaha Outboards were picked for this
+     one, so none was chosen for you; starring one makes it come
+     across on its own next time" is the answer to a question people
+     really asked. It moves to where it is needed: on the row, as its
+     second line, at caption size — read while deciding whether to
+     add, rather than while reading the quote.
+
+     AND IT KEEPS ITS ACT. The row IS the Add control, so a section
+     with nothing on it costs one line and one press. */
+  const bare = lines.length === 0 && !picking && !subject
+
+  if (bare) {
+    return (
+      <section className="qt-section qt-section--bare">
+        <button type="button" className="qt-bare" onClick={() => setPicking(true)}>
+          <Plus size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
+          <span className="qt-bare-say">
+            <span className="qt-bare-name">Add from {section.title}</span>
+            {emptySay === '' ? null : <span className="qt-bare-why">{emptySay}</span>}
+          </span>
+        </button>
+      </section>
+    )
+  }
+
   return (
     <section className="qt-section">
       <header className="qt-section-head">
@@ -1014,21 +1067,8 @@ function SectionCard({
           sent people back to re-pick what they had already picked. So
           the count comes with it, and it names the star as the way to
           make the choice stick next time. */}
-      {lines.length === 0 && !picking ? (
-        section.pickedCount && section.pickedCount > 1 ? (
-          <p className="qt-section-empty">
-            {section.pickedCount} {section.title} were picked for this one, so none was
-            chosen for you. Starring one makes it come across on its own next time.
-            {section.heldCount ? ` ${heldBackSentence(section.heldCount, section.title)}` : ''}
-          </p>
-        ) : (
-          <p className="qt-section-empty">
-            Nothing from {section.title} on this quote yet.
-            {/* AND WHY THERE MIGHT BE NOTHING. Frozen at mint, so this
-                still reads true after the sheet changes. */}
-            {section.heldCount ? ` ${heldBackSentence(section.heldCount, section.title)}` : ''}
-          </p>
-        )
+      {lines.length === 0 && !picking && emptySay !== '' ? (
+        <p className="qt-section-empty">{emptySay}</p>
       ) : null}
 
       {subject ? null : picking ? (
