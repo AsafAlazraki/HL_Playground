@@ -39,3 +39,8 @@ tools/seed/.imgcache/
 # Competitor captures. The decisive frames are copied into docs/research/img/;
 # the rest is a scratch directory that would otherwise add megabytes per run.
 tools/teardown/out/
+
+# check-shots output — the BASELINE is source (above); these two are
+# what a failing run produced, so they are never committed
+tools/shots/*.actual.png
+tools/shots/*.diff.png

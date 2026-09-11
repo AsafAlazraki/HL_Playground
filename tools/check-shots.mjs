@@ -101,15 +101,31 @@ const SCREENS = [
     },
   },
   { name: 'data', at: 'data', open: async (p) => door(p, /^Data/) },
+  /* WHAT A PERSON IS ACTUALLY HANDED WHEN THEY OPEN A TABLE, which
+     is the JOBS lens now and not the gallery — `catalogueLens.ts`
+     moved the default when UX_PASS §12 landed. This screen went
+     UNREACHED for exactly that reason, and an unreached screen is a
+     picture nobody is taking: the guard said so on the run that
+     found it, which is the guard working. */
   {
     name: 'catalogue',
     at: 'table',
-    sure: '.cat-gallery',
+    sure: '.jb-list',
     open: async (p) => {
       await door(p, /^Data/)
       await p.getByRole('button', { name: /^All tables/ }).first().click()
       await p.getByRole('button', { name: /^Open .+ — / }).first().click()
     },
+  },
+  /* AND THE GALLERY KEEPS ITS OWN PICTURE. It is still a lens a
+     person can choose, and dropping the only photograph of it to
+     follow a changed default would have quietly reduced what this
+     guard covers at the moment it was being repaired. */
+  {
+    name: 'gallery',
+    at: 'table',
+    sure: '.cat-gallery',
+    open: async (p) => p.getByRole('button', { name: /^Gallery$/ }).first().click(),
   },
   {
     name: 'register',
@@ -207,7 +223,40 @@ function compare([was, now, tol]) {
         Math.abs(a[i + 3] - b[i + 3]) > tol
       )
         n++
-    return { differing: n, total: a.length / 4 }
+    /* AND A PICTURE OF WHERE, because "43.152% of pixels" is a
+       number nobody can act on. The mask is the NEW screen at a
+       quarter strength with every differing pixel painted solid, so
+       what moved is legible against where it moved. Built here, in
+       the browser that has already decoded both sides, so no image
+       library is added for it. */
+    const c = document.createElement('canvas')
+    c.width = A.width
+    c.height = A.height
+    const x = c.getContext('2d')
+    const out = x.createImageData(A.width, A.height)
+    const o = out.data
+    for (let i = 0; i < a.length; i += 4) {
+      const moved =
+        Math.abs(a[i] - b[i]) > tol ||
+        Math.abs(a[i + 1] - b[i + 1]) > tol ||
+        Math.abs(a[i + 2] - b[i + 2]) > tol ||
+        Math.abs(a[i + 3] - b[i + 3]) > tol
+      if (moved) {
+        /* a colour nothing in this design system paints, so a mark
+           can never be mistaken for the screen under it */
+        o[i] = 255
+        o[i + 1] = 0
+        o[i + 2] = 255
+        o[i + 3] = 255
+      } else {
+        o[i] = 255 - (255 - b[i]) * 0.25
+        o[i + 1] = 255 - (255 - b[i + 1]) * 0.25
+        o[i + 2] = 255 - (255 - b[i + 2]) * 0.25
+        o[i + 3] = 255
+      }
+    }
+    x.putImageData(out, 0, 0)
+    return { differing: n, total: a.length / 4, mask: c.toDataURL('image/png') }
   })
 }
 
@@ -286,7 +335,7 @@ const run = async () => {
       }
       await settle(page)
       const png = await page.screenshot({ animations: 'disabled', caret: 'hide' })
-      shots.push([s.name, png])
+      shots.push([s.name, png, s])
       /* Written and reported AS IT GOES: a ten-screen walk is a
          minute of silence otherwise, and a silent minute cannot be
          told from a hang on the one screen that stuck. */
@@ -303,7 +352,7 @@ const run = async () => {
   let failed = 0
   if (!UPDATE) {
     const bench = await browser.newPage()
-    for (const [name, png] of shots) {
+    for (const [name, png, s] of shots) {
       const path = file(name)
       if (!existsSync(path)) {
         console.log(`  ${name.padEnd(13)} NO BASELINE — run with --update`)
@@ -325,7 +374,24 @@ const run = async () => {
       }
       const pct = (r.differing / r.total) * 100
       const over = pct > THRESHOLD
-      if (over) failed++
+      if (over) {
+        failed++
+        /* WHAT IT ACTUALLY LOOKED LIKE, AND WHERE IT MOVED — written
+           beside the baseline so the next step is opening two files
+           rather than guessing. A guard that reports a percentage and
+           shows nothing gets `--update`d until it means nothing,
+           which is the same death the contrast sweep was written to
+           avoid. These two are OUTPUT, not source: .gitignore keeps
+           them out while the baseline itself stays in. */
+        writeFileSync(join(DIR, `${s.name}.actual.png`), png)
+        if (r.mask) {
+          writeFileSync(
+            join(DIR, `${s.name}.diff.png`),
+            Buffer.from(r.mask.split(',')[1], 'base64'),
+          )
+        }
+        console.log(`  ${' '.repeat(13)} wrote ${s.name}.actual.png and ${s.name}.diff.png`)
+      }
       console.log(
         `  ${name.padEnd(13)} ${over ? 'CHANGED' : 'within'} — ${pct.toFixed(3)}% of pixels (${r.differing.toLocaleString()} of ${r.total.toLocaleString()}), threshold ${THRESHOLD}%`,
       )

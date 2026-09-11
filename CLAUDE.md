@@ -96,13 +96,43 @@ class is renamed and passes when the screen is broken.
 
 **What is still uncovered:**
 
-- **No visual regression tooling.** Nothing compares a screen against a picture
-  of itself, so a layout can break in silence. This is the gap the four `.tsx`
-  suites do *not* close — they assert structure, role and text, never pixels.
-- **No E2E.** Nothing drives the real app end to end. `check-contrast` is the
-  only thing that opens a browser and it measures one property, colour.
+- **No E2E.** Nothing drives the real app end to end. `check-contrast` and
+  `check-shots` open a browser, but each measures one thing — colour, and
+  pixels.
 - **158 non-test `.tsx` files, and 4 suites.** A foothold, not coverage.
 - **Whether a screen makes sense is a person's job**, still.
+
+**Visual regression IS automated**, on eleven screens — home, modules, one
+module, data, a catalogue (its Jobs lens), a gallery, a register, quotes,
+customers, the quote picker and the configurator:
+
+```bash
+npm run dev                        # in one terminal
+npm run check:shots                # compares, exit 1 on drift
+npm run check:shots -- --update    # re-takes the baselines
+```
+
+`tools/check-shots.mjs` drives the real Chrome through `playwright-core`,
+signs in, loads the real seed and photographs each screen at 1280x800. The
+baselines under `tools/shots/` **are committed** — the one place a PNG is
+source in this repo (`.gitignore:36`) — so a fresh clone has something to
+compare against. Not in `npm test`: it needs a server, exactly as
+`check:contrast` does.
+
+Identical renders give byte-identical PNGs, which is the fast path. When they
+differ, both are decoded in the browser already running and counted pixel by
+pixel, and a screen over the 0.1% threshold writes `<name>.actual.png` and
+`<name>.diff.png` beside its baseline — the new screen at quarter strength
+with every moved pixel painted magenta. **A guard that reports "43.152% of
+pixels" and shows you nothing gets `--update`d until it means nothing.**
+
+**Re-baseline only after looking at the diff and naming the commit that
+caused it.** Measured 2026-09-11: six screens were red and every one traced
+to deliberate committed work — the dashboard redesign (`b7eead0`), the
+reviewer's door on Data, the Jobs lens, the pair-fact rule (`8908d95`) — and
+a seventh, the catalogue, was UNREACHED because its default lens had moved
+and the harness still looked for `.cat-gallery`. An unreached screen is a
+picture nobody is taking; the guard says so on its own line.
 
 **A performance number taken against `npm run dev` is not a number about
 this product.** Measure against the build:
