@@ -54,6 +54,12 @@ export interface FieldProps {
   readOnly?: boolean
   name?: string
   id?: string
+  /** WHEN THE PERSON HAS FINISHED, as distinct from while they are
+   *  typing. A value that writes to a store on every keystroke is a
+   *  history entry per character, and Ctrl+Z walks somebody backwards
+   *  through their own typing one letter at a time. `onChange` keeps
+   *  the draft; this commits it. */
+  onBlur?: () => void
 }
 
 export function Field({
@@ -70,6 +76,7 @@ export function Field({
   readOnly = false,
   name,
   id,
+  onBlur,
 }: FieldProps) {
   const auto = useId()
   const inputId = id ?? auto
@@ -102,6 +109,7 @@ export function Field({
         aria-invalid={refused || undefined}
         aria-describedby={note ? noteId : undefined}
         onChange={(event) => onChange(event.target.value)}
+        {...(onBlur ? { onBlur } : {})}
       />
       {note ? (
         <p className={refused ? 'ui-field-why' : 'ui-field-note'} id={noteId}>

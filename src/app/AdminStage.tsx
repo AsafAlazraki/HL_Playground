@@ -52,6 +52,7 @@ import {
   ArrowLeft,
   Archive,
   ArrowsLeftRight,
+  Quotes,
   CaretLeft,
   FlowArrow,
   Graph,
@@ -75,7 +76,7 @@ import type { AppUser } from '@/features/auth'
 import { PageHead } from '@/features/page'
 import { atLeast, ROLE_NAME } from '@/features/auth'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
-import { Button, Card, SectionHead } from '@/ui'
+import { Button, Card, Field, SectionHead } from '@/ui'
 import { stageKeys, useStageEscape } from './stageKeys'
 import { useStageEntry } from './stageEntry'
 
@@ -378,10 +379,77 @@ export function AdminStage({
                   </span>
                 </Card>
               </div>
+              {/* THE SENTENCE EVERY QUOTE STARTS WITH. A setting and
+                  not a door — pressing it goes nowhere — so it takes
+                  the cell's shape around a control, exactly as
+                  Import / export does beside it, rather than being
+                  drawn as a door that lies about what a press will
+                  do. Four cells is two clean rows. */}
+              <QuoteTermsCell />
             </div>
           </section>
         </div>
       )}
+    </div>
+  )
+}
+
+/* ============================================================
+   THE SENTENCE EVERY QUOTE STARTS WITH — CONFIG_FINDINGS adopt 10's
+   first layer, given somewhere to be typed.
+
+   `OrgProfile.quoteTerms` explains the model half: it is a STARTING
+   VALUE copied onto a document at `freeze`, never a layer resolved at
+   read time, because a quote is a photograph and a sentence resolved
+   later would rewrite terms on a quote already handed over.
+
+   IT COMMITS ON BLUR, NOT ON EVERY KEYSTROKE. A store write per
+   character would be a history entry per character, and Ctrl+Z would
+   walk somebody backwards through their own typing one letter at a
+   time.
+
+   AND IT RAISES NO TOAST. Rule 9 is about an act whose effect is
+   somewhere else — a merge, a delete, a level written across 187
+   rows. This one's effect is the field it was typed into: the screen
+   IS the receipt, and a note saying "saved" over a control that
+   plainly holds the value is the app talking about itself.
+   ============================================================ */
+function QuoteTermsCell(): ReactElement {
+  const terms = useProjectStore((s) => s.meta.org?.quoteTerms ?? '')
+  const setQuoteTerms = useProjectStore((s) => s.setQuoteTerms)
+  const [draft, setDraft] = useState(terms)
+
+  /* WHAT THE STORE HOLDS WINS WHEN IT CHANGES UNDER US — a project
+     swap, an import, an undo. This is React's own "adjust state
+     during render" shape rather than an effect: the draft is
+     corrected before anything paints, so nothing flashes the old
+     sentence. A ref would read the same and is what the linter
+     objects to, correctly — a ref read during render is a value the
+     renderer cannot see change. */
+  const [seen, setSeen] = useState(terms)
+  if (seen !== terms) {
+    setSeen(terms)
+    setDraft(terms)
+  }
+
+  return (
+    <div className="ad-cell">
+      <Card pad="md">
+        <span className="ad-door-mark" aria-hidden="true">
+          <Quotes size={MARK} weight={MARK_WEIGHT} />
+        </span>
+        <span className="ds-display-xl ad-door-name">Quote terms</span>
+        <span className="ad-door-fact">
+          <Field
+            label="The sentence every new quote starts with"
+            value={draft}
+            onChange={setDraft}
+            placeholder="This quote is valid for 30 days."
+            hint="Copied onto a quote when it is made. Editing it here leaves quotes already written alone."
+            onBlur={() => setQuoteTerms(draft)}
+          />
+        </span>
+      </Card>
     </div>
   )
 }
