@@ -17,9 +17,17 @@
    Everything here is a PURE READING of things the caller already
    holds. No React, no store, no registry: the surface hands over
    `modules`, `entities` and `rowsByEntity` and gets back doors,
-   refusals and a flow preview. That is what keeps `@/features/quote`
-   able to say, in one grep, that `useProjectStore` appears in
-   `freeze.ts` and nowhere else.
+   refusals and a flow preview.
+
+   THAT CLAIM USED TO END "so `useProjectStore` appears in
+   `freeze.ts` and nowhere else", and it had stopped being true —
+   `index.ts`, `subjectRules.ts` and `quotes.ts` all read the store
+   now, each for a reason it states. The rule this file actually
+   keeps is the one worth keeping: NOTHING HERE reads it, because a
+   pure reading of what a caller already holds is testable without a
+   store and cannot disagree with the screen that called it. A count
+   of importers was a proxy for that, and a proxy that drifts is worse
+   than the property it stood for.
 
    ── WHY A DOOR CAN BE SHUT, AND WHY IT IS STILL DRAWN ─────────
 

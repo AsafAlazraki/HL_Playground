@@ -29,6 +29,8 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import { newId, nowIso } from '@/lib/id'
+import { useProjectStore } from '@/store/useProjectStore'
+import { orgKeyOf } from '@/lib/orgKey'
 /* THE APP'S ONE PLACE FOR SAYING WHAT HAS JUST HAPPENED. It is a
    bus, not a store read: `say` touches no project data, and this
    file is already downstream of `freeze.ts`, which is the single
@@ -45,7 +47,32 @@ import type { AdjustmentKind, QuoteAdjustment, QuoteDef, QuoteLine } from '@/typ
 /* The registry                                               */
 /* ---------------------------------------------------------- */
 
-const STORE_KEY = 'helmlogic.quotes.v1'
+/* ============================================================
+   ONE BUSINESS'S DOCUMENTS, UNDER ONE KEY — TENANCY §4.3.
+
+   This store was unscoped: every quote in the browser sat under
+   `helmlogic.quotes.v1`, so two organisations opened in the same
+   browser — which `restoreForSignIn` makes an ordinary thing — read
+   each other's documents. Everything else scoped to a business is
+   keyed by `orgKeyOf`; this was one of five stores that were not.
+
+   THE MIGRATION IS THE HARD HALF AND IT RUNS ONCE. Changing a key
+   without moving what is under it does not lose data — it ORPHANS it,
+   which is worse, because the quotes are still on disk and the app
+   says nothing. That is the exact failure the constraint registry
+   already had when the org key changed from the name to the slug
+   (`adoptSlugKey`), so this takes the same shape: read the legacy
+   key, write it under the scoped one, remove the legacy. Idempotent
+   by construction — the second run finds nothing to move.
+
+   AND IT DOES NOT GUESS WHOSE THEY ARE. A legacy store belongs to
+   whoever is signed in the first time this runs, because there was
+   only ever one set. Nothing else would be a guess about somebody's
+   documents.
+   ============================================================ */
+const LEGACY_KEY = 'helmlogic.quotes.v1'
+
+const storeKey = (): string => `${LEGACY_KEY}:${orgKeyOf(useProjectStore.getState().meta)}`
 
 const registry = new Map<string, QuoteDef>()
 let list: QuoteDef[] = []
@@ -94,7 +121,7 @@ let writeTimer: ReturnType<typeof setTimeout> | undefined
 function writeNow(): void {
   if (typeof localStorage === 'undefined') return
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(list))
+    localStorage.setItem(storeKey(), JSON.stringify(list))
     persistProblem = null
   } catch {
     /* A frozen ImageRef can be a data: URL carrying a whole
@@ -178,8 +205,9 @@ export function loadQuotes(): void {
   loaded = true
   hookTabClose()
   if (typeof localStorage === 'undefined') return
+  adoptLegacyQuotes()
   try {
-    const raw = localStorage.getItem(STORE_KEY)
+    const raw = localStorage.getItem(storeKey())
     if (raw === null) return
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return
@@ -187,6 +215,40 @@ export function loadQuotes(): void {
     republish()
   } catch {
     persistProblem = 'Saved quotes could not be read back, and were left alone.'
+  }
+}
+
+/**
+ * MOVE THE UNSCOPED STORE UNDER THIS BUSINESS, ONCE.
+ *
+ * Returns how many documents were carried across, so a test can say
+ * it happened rather than infer it.
+ *
+ * IT REFUSES TO OVERWRITE. Where this business already has quotes of
+ * its own, the legacy store is left exactly where it is rather than
+ * merged or replaced: two sets of documents under one name is not a
+ * migration, it is a collision, and the safe half of that choice is
+ * the one that loses nothing. The legacy key then stays on disk,
+ * which is the honest outcome — nothing is deleted to make a tidy
+ * story.
+ */
+export function adoptLegacyQuotes(): number {
+  if (typeof localStorage === 'undefined') return 0
+  try {
+    const legacy = localStorage.getItem(LEGACY_KEY)
+    if (legacy === null) return 0
+    const key = storeKey()
+    if (key === LEGACY_KEY) return 0
+    if (localStorage.getItem(key) !== null) return 0
+    const parsed: unknown = JSON.parse(legacy)
+    if (!Array.isArray(parsed)) return 0
+    localStorage.setItem(key, legacy)
+    localStorage.removeItem(LEGACY_KEY)
+    return parsed.length
+  } catch {
+    /* a browser refusing storage leaves the legacy store alone, which
+       is the outcome that loses nothing */
+    return 0
   }
 }
 
