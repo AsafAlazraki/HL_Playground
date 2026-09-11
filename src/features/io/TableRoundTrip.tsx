@@ -204,10 +204,16 @@ export function useTableRoundTrip(src: TableRoundTripSource): TableRoundTrip {
           fileName: file.name,
           refRowLabels: refMapOf,
           refLabelOf,
+          /* AND THE APP'S OWN ANSWER FOR ITS CALCULATED COLUMNS, so
+             the merge can grade the file's against them — the same
+             resolver the export writes the file with, handed to the
+             read so the round trip is checked against itself
+             (CONFIG_FINDINGS adopt 8). */
+          computedFor,
         }),
       )
     },
-    [entity, allRows, refMapOf, refLabelOf, pushToast],
+    [entity, allRows, refMapOf, refLabelOf, computedFor, pushToast],
   )
 
   const doUpload = useCallback(() => {

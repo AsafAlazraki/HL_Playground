@@ -608,3 +608,71 @@ describe('two columns wearing one name', () => {
     expect(plan.changes.some((c) => c.fieldId === 'f_price')).toBe(false)
   })
 })
+
+/* ============================================================
+   THE IMPORTER GRADES ITS OWN HOMEWORK — CONFIG_FINDINGS adopt 8.
+
+   A calculated column is exported so a person can read the total in
+   Excel and is never written back (reason 4). What it can still do is
+   DISAGREE, and a file whose Drive away is four hundred dollars off
+   what this app works out was built from a different figure upstream
+   — which is worth knowing before the prices in it are trusted.
+
+   THE TOLERANCE IS THE POINT. A landed cost re-derived through
+   freight, duty and rebate lands cents from the workbook's own
+   rounding; reporting that would bury the row that is out by four
+   hundred.
+   ============================================================ */
+
+describe('grading the file against what this app works out', () => {
+  const graded = (text: string) =>
+    planTableUpload({
+      entity: boats,
+      rows,
+      text,
+      fileName: 'Highfield Inflatables.csv',
+      computedFor: computedFor as never,
+    })
+
+  it('SAYS NOTHING WHEN THE FILE AGREES, which is a clean round trip', () => {
+    expect(graded(exportIt().text).verified).toEqual([])
+  })
+
+  it('SAYS NOTHING AT ALL WITHOUT THE RESOLVER, rather than grading against a blank', () => {
+    const off = editCell(exportIt().text, 1, 'Drive away', '999999')
+    expect(planFor(off).verified).toEqual([])
+  })
+
+  it('names the row, the column, both figures and the gap', () => {
+    const off = editCell(exportIt().text, 1, 'Drive away', '999999')
+    const miss = graded(off).verified[0]
+    expect(miss?.columnName).toBe('Drive away')
+    expect(miss?.theirs).toBe('999999')
+    expect(miss?.delta).not.toBeNull()
+    expect(Math.abs(miss?.delta ?? 0)).toBeGreaterThan(1)
+  })
+
+  it('LETS A ROUNDING DIFFERENCE PASS, because a dollar is not a disagreement', () => {
+    const text = exportIt().text
+    const grid = fromCsvFile(text)
+    const head = grid[0] ?? []
+    const at = head.indexOf('Drive away')
+    const line = grid[1] ?? []
+    const was = Number(String(line[at] ?? '').replace(/[^0-9.]/g, ''))
+    const nudged = editCell(text, 1, 'Drive away', String(was + 0.4))
+    expect(graded(nudged).verified).toEqual([])
+  })
+
+  it('writes nothing either way — a disagreement is not an edit', () => {
+    const off = editCell(exportIt().text, 1, 'Drive away', '999999')
+    const plan = graded(off)
+    expect(plan.changes.some((c) => c.columnName === 'Drive away')).toBe(false)
+  })
+
+  it('says it out loud, with the figures in the sentence', () => {
+    const off = editCell(exportIt().text, 1, 'Drive away', '999999')
+    const said = graded(off).refusals.find((r) => r.id === 'verify')
+    expect(said?.say).toMatch(/calculated cell disagrees/)
+    expect(said?.say).toMatch(/out by/)
+  })
+})

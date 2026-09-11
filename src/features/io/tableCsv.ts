@@ -263,6 +263,10 @@ export interface TableUploadPlan {
   changes: CellChange[]
   newRows: NewRow[]
   refusals: UploadRefusal[]
+  /** calculated cells where the file and this app disagree by more
+   *  than `VERIFY_TOLERANCE`. Never written — a disagreement is a
+   *  fact about the file's source, not an edit. */
+  verified: VerifyMiss[]
 }
 
 export interface TableUploadInput {
@@ -276,7 +280,40 @@ export interface TableUploadInput {
   /** the same columns the other way, so the preflight prints
    *  "Yamaha F70 → Yamaha F90" and never two row keys */
   refLabelOf?: (f: FieldDef) => ((rowId: string) => string | undefined) | undefined
+  /** THE APP'S OWN ANSWER FOR A CALCULATED COLUMN — the same
+   *  `computedFor` `buildTableCsv` writes the file with. Handed over,
+   *  the merge GRADES the file's calculated columns against it
+   *  (CONFIG_FINDINGS adopt 8); withheld, it says nothing about them,
+   *  because a verification made without the resolver would be a
+   *  comparison against a blank. */
+  computedFor?: (row: RowData) => Record<string, CellValue>
 }
+
+/** One calculated cell where the file and this app disagree.
+ *
+ *  NOT A CHANGE AND NEVER WRITTEN. Reason 4 stands: a calculated
+ *  column is derived, so a file cannot set it. What it CAN do is
+ *  disagree with it, and a disagreement is a fact about the file's
+ *  source worth saying out loud — "an importer that grades its own
+ *  homework". */
+export interface VerifyMiss {
+  rowId: string
+  rowLabel: string
+  columnName: string
+  /** what the file says, as the file wrote it */
+  theirs: string
+  /** what this app works out, in the column's own words */
+  ours: string
+  /** `theirs - ours` where both are numbers, else null */
+  delta: number | null
+}
+
+/** HOW FAR APART TWO NUMBERS MAY BE AND STILL AGREE. CONFIG_FINDINGS
+ *  adopt 8 says "flag deviations over $1", and that is the right
+ *  order: a landed cost re-derived through freight, duty and rebate
+ *  lands cents away from the workbook's own rounding, and reporting
+ *  that would bury the one row that is out by four hundred dollars. */
+export const VERIFY_TOLERANCE = 1
 
 const plural = (n: number, one: string, many: string): string =>
   `${n.toLocaleString()} ${n === 1 ? one : many}`
@@ -355,6 +392,11 @@ export interface MergeLinesInput {
   lines: string[][]
   /** cell index in a line -> the column on this table it writes */
   writable: Map<number, FieldDef>
+  /** cell index -> a CALCULATED column the line can be graded
+   *  against. Never written; see `VerifyMiss`. */
+  checkable?: Map<number, FieldDef>
+  /** this app's own answer for those columns, row by row */
+  computedFor?: (row: RowData) => Record<string, CellValue>
   identity: MergeIdentity
   columns: PlanColumns
   /** what the plan calls where the lines came from */
@@ -376,6 +418,9 @@ export interface MergeLinesInput {
  */
 export function mergeLines(input: MergeLinesInput): TableUploadPlan {
   const { entity, rows, lines, writable, identity, columns, refRowLabels, refLabelOf } = input
+  const checkable = input.checkable ?? new Map<number, FieldDef>()
+  const computedFor = input.computedFor
+  const verified: VerifyMiss[] = []
   const words = input.words ?? FILE_WORDS
 
   const display = displayFieldOf(entity)
@@ -473,6 +518,42 @@ export function mergeLines(input: MergeLinesInput): TableUploadPlan {
     touched.add(target.id)
     matched += 1
 
+    /* ---- the importer grades its own homework ----------------
+       CONFIG_FINDINGS adopt 8. Only where the caller handed over the
+       resolver: without it there is nothing to compare against, and a
+       verification against a blank would report every calculated cell
+       in the file as wrong. */
+    if (computedFor && checkable.size > 0) {
+      const ours = computedFor(target)
+      for (const [i, f] of checkable) {
+        const raw = cellAt(line, i).trim()
+        if (raw === '') continue
+        const mine = ours[f.id] ?? null
+        const mineSaid = say(mine, f)
+        /* THE SAME WORD BACK IS AGREEMENT, whatever the types. This is
+           the test the writable path already uses for "no edit", and
+           using the same one means a file round-tripped untouched
+           reports nothing here either. */
+        if (sameAsExported(raw, mineSaid)) continue
+        const theirs = Number(raw.replace(/[^0-9.-]/g, ''))
+        const mineNum = typeof mine === 'number' ? mine : Number.NaN
+        const delta =
+          Number.isFinite(theirs) && Number.isFinite(mineNum) ? theirs - mineNum : null
+        /* WITHIN A DOLLAR IS AGREEMENT. A landed cost re-derived
+           through freight, duty and rebate lands cents away from the
+           workbook's own rounding. */
+        if (delta !== null && Math.abs(delta) <= VERIFY_TOLERANCE) continue
+        verified.push({
+          rowId: target.id,
+          rowLabel: rowLabel(entity, target),
+          columnName: f.name,
+          theirs: raw,
+          ours: mineSaid,
+          delta,
+        })
+      }
+    }
+
     let changedHere = 0
     for (const r of read) {
       const current = target.values[r.field.id] ?? null
@@ -553,6 +634,19 @@ export function mergeLines(input: MergeLinesInput): TableUploadPlan {
       say: `${columns.readOnly.join(', ')} ${columns.readOnly.length === 1 ? 'is' : 'are'} calculated or holds pictures. ${words.it === FILE_WORDS.it ? 'The file carries' : 'The block carries'} ${columns.readOnly.length === 1 ? 'it' : 'them'} so you can read ${columns.readOnly.length === 1 ? 'it' : 'them'} in Excel; nothing is written back.`,
     })
   }
+  if (verified.length > 0) {
+    const first = verified.slice(0, 3).map((v) => {
+      const gap =
+        v.delta === null
+          ? `${v.ours} here, ${v.theirs} in ${words.it}`
+          : `${v.ours} here, ${v.theirs} in ${words.it} — out by ${Math.abs(v.delta).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+      return `${v.rowLabel} · ${v.columnName}: ${gap}`
+    })
+    refusals.push({
+      id: 'verify',
+      say: `${plural(verified.length, 'calculated cell disagrees', 'calculated cells disagree')} with what this app works out — ${first.join('; ')}${verified.length > first.length ? ' …' : ''}. Nothing is written either way; a calculated column is derived here. A gap this size usually means the file was built from a different figure upstream, and that is worth knowing before the prices in it are trusted.`,
+    })
+  }
   if (columns.unknown.length > 0) {
     refusals.push({
       id: 'unknown-column',
@@ -606,13 +700,14 @@ export function mergeLines(input: MergeLinesInput): TableUploadPlan {
     changes,
     newRows,
     refusals,
+    verified,
   }
 }
 
 /** Read a file against a table and say exactly what putting it back
  *  would do. Writes nothing, reads nothing but its arguments. */
 export function planTableUpload(input: TableUploadInput): TableUploadPlan {
-  const { entity, rows, text, fileName, refRowLabels, refLabelOf } = input
+  const { entity, rows, text, fileName, refRowLabels, refLabelOf, computedFor } = input
 
   const base: TableUploadPlan = {
     tableId: entity.id,
@@ -634,6 +729,7 @@ export function planTableUpload(input: TableUploadInput): TableUploadPlan {
     changes: [],
     newRows: [],
     refusals: [],
+    verified: [],
   }
 
   const grid = fromCsvFile(text)
@@ -693,6 +789,8 @@ export function planTableUpload(input: TableUploadInput): TableUploadPlan {
 
   /** file column index -> the column on this table it writes */
   const writable = new Map<number, FieldDef>()
+  /** file column index -> a calculated column it can be graded against */
+  const checkable = new Map<number, FieldDef>()
   const matchedNames: string[] = []
   const unknown: string[] = []
   const readOnly: string[] = []
@@ -723,6 +821,11 @@ export function planTableUpload(input: TableUploadInput): TableUploadPlan {
     matchedNames.push(f.name)
     if (isReadOnlyColumn(f)) {
       readOnly.push(f.name)
+      /* A FORMULA COLUMN IS STILL COMPARABLE. It is not written back
+         — that is reason 4 and it does not move — but the file's
+         answer and ours can be put side by side. A picture cannot:
+         there is nothing to subtract. */
+      if (f.type === 'formula') checkable.set(i, f)
       return
     }
     writable.set(i, f)
@@ -791,6 +894,8 @@ export function planTableUpload(input: TableUploadInput): TableUploadPlan {
       readOnly,
       missing,
     },
+    checkable,
+    ...(computedFor ? { computedFor } : {}),
     fileName,
     fileColumns: header.length,
     ...(refRowLabels ? { refRowLabels } : {}),
