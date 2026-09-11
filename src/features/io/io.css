@@ -1943,3 +1943,89 @@
     transform: none;
   }
 }
+
+/* ============================================================
+   THE MERGE LOG — what a file did, read back afterwards.
+
+   It draws the same `.io-diff` list the preflight does, because it
+   IS that list: `PlanChanges` takes the changes either way. What
+   this adds is only what the preflight has no need of — who, when,
+   which file, and how much of a big merge was kept.
+
+   THE RECORDS ARE SEPARATED BY A RULE AND NOT BY A CARD. Four cards
+   inside a confirm sheet is three borders deep, and the thing being
+   read is a list of facts rather than a set of objects to choose
+   between.
+   ============================================================ */
+.io-log {
+  margin: var(--s-2) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.io-log-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding-bottom: var(--s-4);
+  border-bottom: 1px solid var(--line-subtle);
+}
+.io-log-item:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+/* THE FILE'S NAME LEADS, because that is what a person searches
+   their mail for. When and who follow it, quieter, on the same
+   line — and they wrap under it rather than squeezing the name. */
+.io-log-head {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2);
+}
+
+.io-log-source {
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  font-weight: var(--t-label-weight);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+/* A DATE AND A PERSON ARE VALUES, NOT LABELS (rule 3), so neither
+   is uppercased — they are simply set quieter than the file. */
+.io-log-when,
+.io-log-who {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.io-log-said {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  line-height: 1.55;
+  color: var(--fg-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* WHERE THE LOG IS SHORT, and it reads as a fact rather than as a
+   warning: nothing went wrong, the drawer is finite and the record
+   says so. Same ink as the notes beside it for that reason. */
+.io-log-short {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  line-height: 1.55;
+  color: var(--fg-secondary);
+  font-variant-numeric: tabular-nums;
+}

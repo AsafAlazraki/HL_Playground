@@ -48,7 +48,12 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { JSX, ReactNode } from 'react'
-import { ClipboardText, DownloadSimple, UploadSimple } from '@phosphor-icons/react'
+import {
+  ClipboardText,
+  ClockCounterClockwise,
+  DownloadSimple,
+  UploadSimple,
+} from '@phosphor-icons/react'
 import type { CellValue, FieldDef, RowData } from '@/types/model'
 import type { ActionItem } from '@/lib/actions'
 import { useProjectStore } from '@/store/useProjectStore'
@@ -65,6 +70,8 @@ import {
   type TableUploadPlan,
 } from './tableCsv'
 import { PasteRows } from './PasteRows'
+import { recordMerge, useMerges } from './evidence'
+import { MergeLog } from './MergeLog'
 import type { PastePlan, PasteResult } from './pasteBlock'
 import { PlanChanges, PlanNotes } from './PlanEvidence'
 import './io.css'
@@ -128,7 +135,11 @@ export function useTableRoundTrip(src: TableRoundTripSource): TableRoundTrip {
   const fileRef = useRef<HTMLInputElement>(null)
   const [plan, setPlan] = useState<TableUploadPlan | null>(null)
   const [pasting, setPasting] = useState(false)
+  const [reading, setReading] = useState(false)
   const addField = useProjectStore((s) => s.addField)
+  /* what has already landed here, so the fourth control knows
+     whether it has anything to open */
+  const merges = useMerges(entityId)
 
   /* -- out ---------------------------------------------------- */
 
@@ -200,6 +211,21 @@ export function useTableRoundTrip(src: TableRoundTripSource): TableRoundTrip {
     const result = applyTableUpload(plan, { updateCell, addRow })
     setPlan(null)
 
+    /* THE APPLY LOG, WRITTEN FROM THE PLAN THE PERSON APPROVED —
+       CONFIG_FINDINGS adopt 7. What the preflight drew is exactly
+       what is kept: re-deriving it here would be a second reading of
+       the same event, free to disagree with the one they said yes to.
+       `evidence.ts` carries the rest of the argument. */
+    recordMerge({
+      tableId: plan.tableId,
+      tableName: plan.tableName,
+      source: plan.fileName,
+      matchedOn: plan.matchedOn,
+      changes: plan.changes,
+      added: plan.newRows.map((r) => r.label),
+      rowsChanged: result.rowsChanged,
+    })
+
     const said: string[] = []
     if (result.cellsWritten > 0) {
       said.push(
@@ -230,8 +256,34 @@ export function useTableRoundTrip(src: TableRoundTripSource): TableRoundTrip {
   )
 
   const pasted = useCallback(
-    (done: { columnsAdded: number; cellsWritten: number; rowsChanged: number; rowsAdded: number; columnsRefused: string[] }) => {
+    (from: PastePlan, done: PasteResult) => {
       setPasting(false)
+
+      /* THE PASTE DOOR GOES ON THE RECORD TOO, and it is the door a
+         dealer actually uses (UX_PASS §9 item 8). Two ways in and one
+         log: a person asking what moved the Highfield prices should
+         not have to know whether the values arrived as a file or as a
+         block of cells out of Excel.
+
+         MINUS THE COLUMNS THE STORE WOULD NOT MAKE. Their cells were
+         planned and never written — `applyPaste` drops a change whose
+         column failed to be created — so recording them would put
+         writes in the log that never happened, which is the one lie an
+         apply log cannot afford. */
+      const refused = new Set(done.columnsRefused)
+      const changes = (from.plan?.changes ?? []).filter((c) => !refused.has(c.columnName))
+      if (entity) {
+        recordMerge({
+          tableId: entity.id,
+          tableName: entity.name,
+          source: 'Pasted rows',
+          matchedOn: from.plan?.matchedOn ?? 'name',
+          changes,
+          added: (from.plan?.newRows ?? []).map((r) => r.label),
+          rowsChanged: done.rowsChanged,
+        })
+      }
+
       const said: string[] = []
       if (done.columnsAdded > 0) {
         said.push(`${plural(done.columnsAdded, 'column', 'columns')} added`)
@@ -308,8 +360,27 @@ export function useTableRoundTrip(src: TableRoundTripSource): TableRoundTrip {
           : undefined,
         onPick: () => setPasting(true),
       },
+      /* THE FOURTH, AND IT IS THE ONLY ONE THAT READS. CONFIG_FINDINGS
+         adopt 7 asks for before/after evidence logs on every mutation,
+         and evidence nobody can open is not evidence. It stands in
+         this group because it is about exactly what the three beside
+         it did — and its refusal is the honest one: a register nothing
+         has been merged into has no log, which is a different fact
+         from a log that is empty. */
+      {
+        kind: 'button',
+        id: 'tb-merges',
+        label: 'Merge log',
+        say: entity ? `What has been merged into ${entity.name}` : 'What has been merged in',
+        icon: ClockCounterClockwise,
+        refusal:
+          merges.length === 0
+            ? `Nothing has been merged into ${entity?.name ?? 'this table'} yet. A file or a pasted block that changes something is recorded here, with the value each cell held before it.`
+            : undefined,
+        onPick: () => setReading(true),
+      },
     ]
-  }, [entity, shownRows.length, doExport, doUpload])
+  }, [entity, shownRows.length, merges.length, doExport, doUpload])
 
   /* -- the surface -------------------------------------------- */
 
@@ -341,7 +412,14 @@ export function useTableRoundTrip(src: TableRoundTripSource): TableRoundTrip {
           refLabelOf={refLabelOf}
           write={write}
           onClose={() => setPasting(false)}
-          onDone={(_plan: PastePlan, result: PasteResult) => pasted(result)}
+          onDone={pasted}
+        />
+      ) : null}
+      {reading && entity ? (
+        <MergeLog
+          tableName={entity.name}
+          merges={merges}
+          onClose={() => setReading(false)}
         />
       ) : null}
     </>
@@ -433,7 +511,7 @@ function UploadPreflight({
           copies of "here is what would change" is two places for the
           sentence a dealer checks against their supplier's email to
           drift out of agreement with itself. */}
-      <PlanChanges plan={plan} />
+      <PlanChanges changes={plan.changes} />
 
       {plan.newRows.length > 0 ? (
         <ConfirmSamples

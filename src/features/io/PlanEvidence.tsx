@@ -27,7 +27,7 @@
    ============================================================ */
 
 import type { JSX } from 'react'
-import type { TableUploadPlan, UploadRefusal } from './tableCsv'
+import type { CellChange, UploadRefusal } from './tableCsv'
 
 /** how many changed cells a preflight lists before it starts counting */
 export const CHANGES_SHOWN = 8
@@ -39,10 +39,19 @@ export const CHANGES_SHOWN = 8
  * `Highfield - RU230KA…` twice, over two different prices, and
  * everything that told them apart was in the part the ellipsis ate.
  */
-export function PlanChanges({ plan }: { plan: TableUploadPlan }): JSX.Element | null {
-  const shown = plan.changes.slice(0, CHANGES_SHOWN)
+/* IT TAKES THE CHANGES, NOT THE PLAN, because the merge LOG draws
+   this same list off a record kept after the fact and there is no
+   plan left by then. The alternative was a second component drawing
+   before-and-after a second way — which is the exact drift this file
+   was extracted to stop, one surface later. */
+export function PlanChanges({
+  changes,
+}: {
+  changes: readonly CellChange[]
+}): JSX.Element | null {
+  const shown = changes.slice(0, CHANGES_SHOWN)
   if (shown.length === 0) return null
-  const more = plan.changes.length - shown.length
+  const more = changes.length - shown.length
 
   return (
     <ul className="io-diff">

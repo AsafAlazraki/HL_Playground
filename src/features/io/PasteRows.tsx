@@ -448,7 +448,7 @@ export function PasteRows({
                 ) : null}
 
                 <PreviewRows rows={plan.preview} />
-                <PlanChanges plan={plan.plan} />
+                <PlanChanges changes={plan.plan.changes} />
                 <PlanNotes notes={plan.plan.refusals} />
               </>
             ) : null}
