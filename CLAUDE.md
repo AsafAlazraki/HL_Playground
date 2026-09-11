@@ -46,6 +46,17 @@ you may not add a 20th. Clear one and run `node tools/check-styles.mjs
 It also prints the dead rules — 177 at `530597d`, 110 today — which it does
 not fail on, which is why that number drifts.
 
+**And it fails on a literal colour.** DESIGN_PRINCIPLES rule 1 is the first on
+the list and was the last without a guard. REDESIGN_ROLLOUT put the count at
+nine; swept properly it was 24 in shipped feature CSS, and the nineteen that
+mattered were `rgba(255, 255, 255, 0.0x)` washes over the navy chrome — a
+literal white does not follow a theme, and every one of them sat on a ground
+that is redefined in dark mode. Four exemptions, each earned: `src/styles/` (a
+literal on the right of a token declaration IS the mechanism), `src/design/`
+(the gallery), `@media print` (paper has no theme — quote.css argues it), and
+`mask-image` (a mask reads the alpha channel; `#000` there means "hide"). One
+stated exception costs a sentence in `COLOUR_ALLOW`.
+
 **And it fails on a `var()` nothing declares.** An undefined custom property
 does not warn — it voids the whole declaration that reads it. That has now bitten
 this project three times: `--chrome` and its twelve ink tiers (shell.css records

@@ -64,6 +64,13 @@
    All three are hairlines at 4-7% and read as texture rather than
    as drawing. Each is one repeating-gradient, so there is no
    asset to load and no SVG to maintain.
+
+   AND THEY ARE THE CHROME'S OWN WASH TOKENS, not literal whites.
+   They were `rgba(255, 255, 255, 0.04–0.07)`, which is the right
+   colour only while the chrome is navy: the token is a `color-mix`
+   of `--chrome-fg`, so it follows the theme the ground follows. The
+   `#000` in the mask below stays a literal and is not a colour — a
+   mask reads the ALPHA channel, and there black means "hide".
    ------------------------------------------------------------ */
 .bn-motif {
   position: absolute;
@@ -79,12 +86,12 @@
   background-image:
     repeating-linear-gradient(
       100deg,
-      rgba(255, 255, 255, 0.06) 0 1px,
+      var(--chrome-wash) 0 1px,
       transparent 1px 46px
     ),
     repeating-linear-gradient(
       100deg,
-      rgba(255, 255, 255, 0.04) 0 1px,
+      var(--chrome-line-soft) 0 1px,
       transparent 1px 13px
     );
   /* the field fades out before the words start, so nothing is
@@ -97,7 +104,7 @@
 .bn-motif--plate {
   background-image: repeating-linear-gradient(
     118deg,
-    rgba(255, 255, 255, 0.07) 0 1px,
+    var(--chrome-wash) 0 1px,
     transparent 1px 34px
   );
   -webkit-mask-image: linear-gradient(96deg, #000 0%, transparent 78%);
@@ -108,8 +115,8 @@
    water: rules, admin, settings. */
 .bn-motif--grid {
   background-image:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 40px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 40px);
+    repeating-linear-gradient(0deg, var(--chrome-wash) 0 1px, transparent 1px 40px),
+    repeating-linear-gradient(90deg, var(--chrome-wash) 0 1px, transparent 1px 40px);
   -webkit-mask-image: linear-gradient(96deg, #000 0%, transparent 70%);
   mask-image: linear-gradient(96deg, #000 0%, transparent 70%);
 }

@@ -1273,7 +1273,16 @@
 
 /* A QUOTE IS PAPER. It is the only thing in this product that a
    customer ever sees, and it prints - so it gets document
-   proportions, not form proportions. */
+   proportions, not form proportions.
+
+   AND THE PAPER IS WHITE IN BOTH THEMES, which is why this is a
+   literal rather than `--surface-1` — the one deliberate exception on
+   this surface besides the print block below. A dark-mode quote is
+   still a sheet handed to a customer: the same document, read on a
+   screen at night and printed in the morning, and a document that
+   changed colour with the reader's UI preference would be two
+   documents. Rule 1 is about a colour DECISION being made twice;
+   this is one decision, made once, and stated. */
 .qt-doc {
   background: #fff;
   border-radius: var(--radius);

@@ -239,12 +239,12 @@
   transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
 }
 .who-chip:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--chrome-wash);
   color: var(--chrome-fg);
 }
 /* a row darkens rather than scaling (rule 8) */
 .who-chip:active {
-  background: rgba(255, 255, 255, 0.13);
+  background: var(--chrome-wash-press);
   transition-duration: var(--d-press);
 }
 .who-chip:focus-visible {
@@ -252,7 +252,7 @@
   outline-offset: -2px;
 }
 .who-chip.is-open {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--chrome-wash-on);
   color: var(--chrome-fg);
 }
 
@@ -266,7 +266,7 @@
   height: 28px;
   flex: none;
   border-radius: var(--r-full);
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--chrome-wash-on);
   color: var(--chrome-fg);
   font-family: var(--font-sans);
   font-size: var(--t-caption-size);

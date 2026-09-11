@@ -132,8 +132,8 @@
    file reaches outside the feature.
    ============================================================ */
 .sn-foot .io-trigger[aria-expanded='true'] {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.24);
+  background: var(--chrome-wash-press);
+  border-color: var(--chrome-line-strong);
   color: var(--chrome-fg);
 }
 .sn-foot .io-trigger:focus-visible {

@@ -108,6 +108,9 @@ const files = walk(SRC)
 const tsx = files.filter((f) => f.endsWith('.tsx'))
 const css = files.filter((f) => f.endsWith('.css'))
 
+const COMMENT_BLOCK = /\/\*[\s\S]*?\*\//g
+const COMMENT_LINE = /^\s*\/\/.*$/gm
+
 /* ---------- what CSS declares ---------- */
 const declared = new Map() // class -> Set(file)
 for (const f of css) {
@@ -123,8 +126,23 @@ for (const f of css) {
 const written = new Map() // class -> Set(file)
 const rawTsx = new Map()
 for (const f of tsx) {
-  const text = readFileSync(f, 'utf8')
-  rawTsx.set(f, text)
+  /* COMMENTS STRIPPED, LIKE THE CSS SIDE ALREADY DOES. This read the
+     raw file, so a comment DESCRIBING markup counted as markup:
+     `QuoteStage.tsx` explains an old bar by quoting
+     `className="shell-view-back"` in prose, and the sweep reported
+     that class as written. It was masked for as long as something
+     declared it — a dead rule inside the window chrome — and surfaced
+     the moment that block was deleted, which is a guard reporting a
+     fault in itself.
+
+     THE RAW TEXT IS KEPT UNSTRIPPED for the dead-rule pass below,
+     deliberately: that one asks "does this class name appear anywhere
+     in the components", and a name a comment still discusses is a
+     name somebody is still reasoning about. Reporting it as dead
+     would invite deleting a rule the next commit needs. */
+  const raw = readFileSync(f, 'utf8')
+  const text = raw.replace(COMMENT_BLOCK, '').replace(COMMENT_LINE, '')
+  rawTsx.set(f, raw)
   /* className="..." | className={'...'} | className={`... ${x} ...`}
      Only the literal segments are read. */
   for (const m of text.matchAll(/className\s*=\s*(?:"([^"]*)"|\{([\s\S]*?)\})/g)) {
@@ -183,6 +201,94 @@ if (process.argv.includes('--update-baseline')) {
   writeFileSync(BASELINE, JSON.stringify(next, null, 2) + '\n')
   console.log(`\nBaseline written: ${next.orphans.length} known orphans.\n`)
   process.exit(0)
+}
+
+/* ---------- literal colours: rule 1 ----------
+
+   DESIGN_PRINCIPLES rule 1 is the first one in the list — "never
+   write a literal colour, use a token" — and it was the last one
+   without a guard. REDESIGN_ROLLOUT §3 step 2 put the count at nine
+   and priced it at under an hour; swept properly it was 24 in
+   shipped feature CSS, and the nineteen that mattered most were
+   `rgba(255, 255, 255, 0.0x)` washes over the navy chrome in
+   auth.css, io.css, onboarding.css and banner.css.
+
+   THOSE WERE NOT A TIDINESS PROBLEM. `--chrome-wash` and its seven
+   siblings are `color-mix(in srgb, var(--chrome-fg) N%, transparent)`,
+   so they follow the theme the ground follows; a literal white does
+   not. Every one of them sat on a surface whose ground is redefined
+   in dark mode.
+
+   FOUR EXEMPTIONS, EACH EARNED BY A CASE IN THIS REPO:
+
+     · `src/styles/` — the token files. A literal on the right of a
+       token declaration IS the mechanism, not a breach of it.
+     · `src/design/` — the gallery, exempt here for the reason it is
+       exempt from the type floor: it draws miniatures of screens.
+     · `@media print` — quote.css argues it and is right: "print has
+       no theme, so this stays a literal — it is the one place that
+       is correct." Navy ink on paper would be the bug.
+     · `mask-image` / `-webkit-mask-image` — a mask reads the ALPHA
+       channel. `#000` there means "hide", not black, and the banner,
+       the catalogue strip and the quote build all use it that way.
+
+   AND ONE STATED EXCEPTION IN THE CODE ITSELF, which this cannot
+   see and does not need to: `.qt-doc` is `#fff` in both themes
+   because a quote is a sheet handed to a customer, and a document
+   that changed colour with the reader's UI preference would be two
+   documents. It sits inside the print-adjacent block and is argued
+   where it is written.
+
+   HEX, rgb(), rgba(), hsl(), hsla(). Named colours are not swept:
+   `transparent` and `currentColor` are the two that appear here and
+   both are correct. */
+const NEWLINE = /\r?\n/
+const COLOUR = /#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/
+const MASK = /mask-image\s*:/
+const DECLARES_TOKEN = /^\s*--[A-Za-z0-9_-]+\s*:/
+const PRINT_AT = /@media\s+print/
+
+/* THE ONE STATED EXCEPTION, and it costs a sentence — the shape the
+   DORMANT list in check-reachability uses for the same reason. */
+const COLOUR_ALLOW = [
+  [
+    'src/features/quote/quote.css',
+    'background: #fff',
+    'A quote is paper in BOTH themes: the same sheet is read on a screen at ' +
+      'night and printed in the morning, and a document that changed colour ' +
+      "with the reader's UI preference would be two documents. Argued where " +
+      'it is written.',
+  ],
+]
+
+const literals = []
+for (const f of css) {
+  const rel = f.replace(SRC, 'src').split(sep).join('/')
+  if (rel.startsWith('src/styles/') || rel.startsWith('src/design/')) continue
+  const text = readFileSync(f, 'utf8').replace(COMMENT_BLOCK, '')
+  let inPrint = 0
+  /* A MASK SPANS LINES. 'mask-image: linear-gradient(' opens on one
+     line and its #000 stops are on the next three; a line-wise test
+     saw the stops and not the property. So the suppression runs to
+     the end of the DECLARATION, which is the semicolon. */
+  let inMask = false
+  text.split(NEWLINE).forEach((line, i) => {
+    if (PRINT_AT.test(line)) inPrint = 1
+    else if (inPrint > 0) {
+      inPrint += (line.match(/\{/g) ?? []).length
+      inPrint -= (line.match(/\}/g) ?? []).length
+      if (inPrint < 0) inPrint = 0
+    }
+    if (MASK.test(line)) inMask = true
+    const masked = inMask
+    if (inMask && line.includes(';')) inMask = false
+    if (inPrint > 0 || masked) return
+    if (!COLOUR.test(line)) return
+    if (DECLARES_TOKEN.test(line)) return
+    const trimmed = line.trim()
+    if (COLOUR_ALLOW.some(([file, frag]) => rel === file && trimmed.includes(frag))) return
+    literals.push({ at: rel + ':~' + (i + 1), src: trimmed.slice(0, 72) })
+  })
 }
 
 /* ---------- the type floor: rule 2 ----------
@@ -296,6 +402,12 @@ if (cleared.length) {
   console.log('')
 }
 
+if (literals.length) {
+  console.log(`LITERAL COLOURS — rule 1 says use a token (${literals.length}):`)
+  for (const l of literals) console.log(`  ${pad(l.at, 34)} ${l.src}`)
+  console.log('')
+}
+
 if (undeclared.length) {
   console.log(`READ BUT NEVER DECLARED — an undefined var voids its whole declaration (${undeclared.length}):`)
   for (const u of undeclared) console.log(`  ${pad(u.name, 34)} ${u.at}`)
@@ -315,11 +427,11 @@ if (dead.length) {
   console.log('')
 }
 
-const bad = fresh.length + small.length + undeclared.length
+const bad = fresh.length + small.length + undeclared.length + literals.length
 console.log(
   bad
-    ? `FAIL — ${fresh.length} new orphan(s), ${small.length} under the type floor, ${undeclared.length} undeclared var(s). ${known.size} known, ${dead.length} dead rules.\n`
-    : `OK — no new orphans, nothing under ${FLOOR}px, every var declared. ${known.size} known (baselined), ${dead.length} dead rules.\n`,
+    ? `FAIL — ${fresh.length} new orphan(s), ${small.length} under the type floor, ${undeclared.length} undeclared var(s), ${literals.length} literal colour(s). ${known.size} known, ${dead.length} dead rules.\n`
+    : `OK — no new orphans, nothing under ${FLOOR}px, every var declared, no literal colours. ${known.size} known (baselined), ${dead.length} dead rules.\n`,
 )
 
 process.exit(bad ? 1 : 0)

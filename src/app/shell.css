@@ -1786,176 +1786,6 @@
 }
 
 
-/* ============================================================
-   THE DESKTOP, AND THE WINDOWS ON IT
-
-   NOT MOUNTED, like the dock. `Win.tsx` is imported by `Shell.tsx`
-   and never rendered — one surface at a time replaced the window
-   stack, and what was kept from it is the stack itself, as history
-   for Cmd-Tab. The rules are kept for the same reason the dock's
-   are, and the FLUIDITY block below — which added the entrance,
-   the minimise travel and the press on the traffic lights — used
-   to re-open four of these selectors from four hundred rules away.
-   Each is written once now, at the value that rendered.
-   ============================================================ */
-
-.win {
-  position: fixed;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  border-radius: 11px;
-  overflow: hidden;
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  /* an UNFOCUSED window sits back: shallower shadow, no ring. The
-     focused one is unmistakably the one you are working in. */
-  box-shadow: var(--e2);
-  transition: box-shadow var(--t-med) var(--ease-draft);
-  /* IT MATERIALISES. A window that appears with no motion at all is
-     the single thing that reads as "not a desktop" — scale, offset
-     and opacity together, on the critically damped curve, because
-     overshoot is reserved for motion a GESTURE caused and a window
-     opening was not thrown by anybody. */
-  animation: win-in 260ms var(--ease-settle);
-  /* the compositor is told what is about to move */
-  will-change: transform, opacity;
-}
-.win.is-focused {
-  box-shadow: var(--e4);
-}
-.win.is-zoomed {
-  border-radius: 11px;
-}
-
-/* ---------- the titlebar ------------------------------------ */
-
-.win-bar {
-  flex: none;
-  display: grid;
-  /* centre track shrinkable — see the note on `.shell-view-bar` */
-  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
-  align-items: center;
-  height: 38px;
-  padding: 0 12px;
-  cursor: default;
-  user-select: none;
-  background: color-mix(in srgb, var(--paper-sunken) 76%, transparent);
-  backdrop-filter: blur(20px) saturate(1.8);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
-  border-bottom: 1px solid color-mix(in srgb, var(--hairline) 70%, transparent);
-}
-.win-lights {
-  grid-column: 1;
-  justify-self: start;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.win-light {
-  width: 12px;
-  height: 12px;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  /* GREY UNTIL THE POINTER IS OVER THE WINDOW, like a Mac. An
-     unfocused window should not be shouting three colours. */
-  background: #d3d5da;
-  cursor: pointer;
-  /* the press is on `transform` and it is the reason this rule was
-     re-opened once already — three of the most-clicked controls in
-     the app had no press at all */
-  transition:
-    background var(--t-fast) var(--ease-draft),
-    transform 90ms var(--ease-settle);
-}
-.win:hover .win-light--close,
-.win.is-focused .win-light--close {
-  background: #ff5f57;
-}
-.win:hover .win-light--min,
-.win.is-focused .win-light--min {
-  background: #febc2e;
-}
-.win:hover .win-light--zoom,
-.win.is-focused .win-light--zoom {
-  background: #28c840;
-}
-.win-light:active {
-  filter: brightness(0.86);
-  transform: scale(0.86);
-}
-
-/* THE TITLE CARRIES THE SUBJECT, so it is allowed the room to say
-   it — it is the only place the name appears while a stage is in a
-   window. `100%` of its own track, not `60%` of an auto track it is
-   itself sizing: the latter is the cycle that truncated the home
-   header to "NORT… · 21…". */
-.win-title {
-  grid-column: 2;
-  justify-self: center;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-width: 0;
-  max-width: 100%;
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.006em;
-  color: var(--ink-soft);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.win.is-focused .win-title {
-  color: var(--ink);
-}
-.win-bar-end {
-  grid-column: 3;
-}
-
-/* ---------- the body ----------------------------------------
-   A stage was written to be the only thing on screen — absolutely
-   inset, with its own frame and shadow. Inside a window it is
-   simply the content, so its frame is handed back to the window
-   that now owns it. */
-.win-body {
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: var(--paper-high);
-}
-.win-body > .shell-viewstage {
-  position: static;
-  inset: auto;
-  flex: 1;
-  min-height: 0;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  background: transparent;
-}
-/* the window owns the titlebar, so the stage's own bar is a toolbar
-   under it rather than a second title: with identity gone it is
-   controls only, and it stops pretending to be a titlebar. It was
-   `height: 44px` here and re-opened two hundred rules down for the
-   other five properties AND a different height; 46 is the one that
-   rendered. */
-.win-body .shell-view-bar {
-  grid-template-columns: 1fr auto;
-  height: 46px;
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border-bottom: 1px solid var(--hairline);
-}
-
-
 /* ---------- the app switcher (Cmd/Ctrl + Tab) --------------- */
 
 .sw-scrim {
@@ -2074,83 +1904,20 @@
     transform: none;
   }
 }
-/* the animation itself is declared with `.win`, above */
-
-/* leaves the way it came (§7) */
-/* `.win.is-closing` and `.win.is-minimising` STOOD HERE and are gone:
-   nothing writes either state, and a rule declared for a state no
-   component can enter is a dead rule the guard counted. Win.tsx
-   itself is kept unmounted, as the contract asks. */
+/* `.win*` STOOD ALL THROUGH THIS FILE AND IS GONE — 239 lines of
+   window chrome for a component nothing rendered. `Win.tsx` was
+   deleted when the reachability guard caught it; these rules went
+   with it, because CSS for a deleted component is the half of a
+   deletion that gets left behind. Git holds both. `winKit.tsx` is
+   the live windowing. */
 
 
 /* ---------- §14 · and none of it against the user's wishes --- */
 
-@media (prefers-reduced-motion: reduce) {
-  .win {
-    animation: none;
-  }
-  /* reduced motion is a GENTLER equivalent, not none at all — the
-     window still fades so its arrival and departure are legible.
-     Stated in one rule per selector rather than as a group that
-     cancels the motion and a second group that gives the fade
-     back. */
-  .win.is-closing,
-  .win.is-minimising {
-    animation: none;
-    opacity: 0;
-    transition: opacity 140ms linear;
-  }
-}
-
-
-/* ============================================================
-   ONE TOOLBAR PER WINDOW.
-
-   A stage was written to be the whole screen, so it carries its
-   own bar with its own title and its own way back. Inside a
-   window that is a SECOND titlebar under the first: the window
-   said "Home", and the stage said "Northside Marine · 50 tables"
-   directly beneath it - and being squeezed between a back button
-   and a search field, the stage's title had 101px to say it in
-   and rendered as "NORT... · 21...".
-
-   A Mac window has one unified toolbar. The WINDOW owns identity
-   - title and traffic lights - and the stage's bar keeps only its
-   CONTROLS. So inside a window the stage's title is hidden and
-   its back button goes with it: the red light is the way out, it
-   is where a Mac user already looks for it, and two ways out of
-   one window is one too many.
-   ============================================================ */
-
-/* SPECIFICITY: the centring rule above is
-   `.shell-viewstage .shell-view-bar .shell-view-what` (0,3,0), so a
-   two-class hide loses to it and the duplicate title stayed on
-   screen. Matched depth for depth rather than reached for
-   !important, which would only move the argument. */
-/* the window chrome is gone, so nothing above the stage carries
-   its title or its way out any more — both come back */
-.win-body .shell-viewstage .shell-view-bar .shell-view-what,
-.win-body .shell-viewstage .shell-view-bar .shell-view-back {
-  display: flex;
-}
-
-/* the toolbar's own shape is declared with `.win-body` above */
-.win-body .shell-view-bar > *:last-child {
-  grid-column: 2;
-  justify-self: end;
-}
-/* `.win-body .hm-bar-left` STOOD HERE AND IS GONE with the class it
-   qualified — the second of Home's two rules for a track of a bar the
-   masthead replaced. It could not match anything even if the window
-   came back, because no component writes the class any more. */
-
-/* `.win-title`'s room to say the subject is declared with the title
-   itself, above — this was its second rule */
-
-/* a bar with nothing left in it should not leave a 46px band */
-.win-body .shell-view-bar:empty {
-  display: none;
-}
+/* THE REDUCED-MOTION BLOCK FOR `.win` WENT WITH THE REST. It said
+   the right thing — "reduced motion is a GENTLER equivalent, not none
+   at all" — about a window this app does not draw. If the desktop
+   comes back, that sentence is in git beside the rules it governed. */
 
 
 /* ============================================================
