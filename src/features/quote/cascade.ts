@@ -176,6 +176,28 @@ export type PriceOf = (partnerTableId: string, rowId: string) => number | null
  * `asked` is the subject the person just put on the quote — a hull,
  * typically — and the cascade is what that choice does to the
  * partners already on it.
+ *
+ * ── AND THAT EVENT DOES NOT EXIST IN THIS APP YET ────────────
+ *
+ * Written down 2026-09-11 rather than left for the next reader to
+ * rediscover from an uncalled export. A quote's subject is frozen at
+ * creation: `rootRowId` is written in exactly one place
+ * (`freeze.ts:501`) and nothing changes it afterwards. So "what this
+ * subject does to the partners already on the quote" cannot fire — at
+ * the only moment a subject is chosen there are no partner lines for
+ * it to cascade over.
+ *
+ * THE FUNCTION IS KEPT, NOT DELETED, and it is not dead by accident.
+ * It encodes a flow this app does not have yet — changing the boat on
+ * a standing quote — and deleting it is the one-way door the canvas
+ * argument warns about: the reading it needs (`selectPartners`) runs
+ * over the dealer's real file today, and every sentence it would say
+ * is already tested. What is missing is the act, not the answer.
+ *
+ * IF A SUBJECT-CHANGE FLOW IS EVER BUILT, this is its sheet and it
+ * needs no new grammar. If one is decided against, this goes with
+ * that decision — but it goes for the stated reason, and not because
+ * somebody found an export nothing calls.
  */
 export function fitmentCascade(
   fit: FitmentResult,
