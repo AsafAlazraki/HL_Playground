@@ -948,7 +948,11 @@ export function TableSheet({
           }}
         />
       ) : noRows ? (
-        <NoRowsPlate entityName={entity.name} onAddRow={groups.addRow} />
+        <NoRowsPlate
+          entityName={entity.name}
+          onAddRow={groups.addRow}
+          onPaste={roundTrip.openPaste}
+        />
       ) : rowCount === 0 && viewActive ? (
         /* Only NARROWING earns this plate. A table whose every drawer
            is folded also has no leaf rows, and putting a plate over it

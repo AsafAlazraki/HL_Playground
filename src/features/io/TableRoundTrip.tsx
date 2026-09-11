@@ -104,6 +104,20 @@ export interface TableRoundTrip {
   items: ActionItem[]
   /** the file input and the preflight — rendered by the host */
   surface: ReactNode
+  /**
+   * OPEN THE PASTE DOOR FROM SOMEWHERE THAT IS NOT THE BAR.
+   *
+   * The empty-register plate is why this exists. It has been telling
+   * people they may "paste a block straight from Excel to fill the
+   * whole table at once" for as long as it has existed, under a
+   * single button that adds ONE empty row — naming a door it did not
+   * draw, on the one screen where that door is worth the most. A
+   * sentence about an act is not the act.
+   *
+   * It is the same door the bar's `tb-paste` opens, handed over
+   * rather than copied: one paste surface, two ways in.
+   */
+  openPaste: () => void
 }
 
 /**
@@ -425,7 +439,7 @@ export function useTableRoundTrip(src: TableRoundTripSource): TableRoundTrip {
     </>
   )
 
-  return { items, surface }
+  return { items, surface, openPaste: () => setPasting(true) }
 }
 
 /* ------------------------------------------------------------ */

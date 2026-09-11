@@ -78,19 +78,50 @@ export function NoFieldsPlate({
   )
 }
 
+/**
+ * THE PLATE THAT NAMED A DOOR AND DID NOT DRAW IT.
+ *
+ * This sentence has offered to let somebody "paste a block straight
+ * from Excel to fill the whole table at once" for as long as it has
+ * existed, under one button that adds a single empty row. An empty
+ * register is the screen where pasting is worth the most — it is how
+ * a price file arrives — and it was the screen that mentioned the act
+ * and then sent a person off to find it on a bar.
+ *
+ * TWO ACTS NOW, AND THE ORDER IS THE ARGUMENT. A block out of Excel
+ * fills the table; adding a row by hand starts it. The first is
+ * primary because it is what somebody standing on an empty price
+ * register almost always means.
+ *
+ * `onPaste` IS OPTIONAL, AND THE SENTENCE FOLLOWS IT. Where a host
+ * has no paste door the clause goes with the button, rather than the
+ * screen keeping a promise nothing on it can answer — rule 10, read
+ * the other way round.
+ */
 export function NoRowsPlate({
   entityName,
   onAddRow,
+  onPaste,
 }: {
   entityName: string
   onAddRow: () => void
+  onPaste?: () => void
 }): JSX.Element {
   return (
     <Plate
       title="Nothing logged yet"
-      body={`The columns are ready. Add the first ${entityName.toLowerCase()} row — or paste a block straight from Excel to fill the whole table at once.`}
+      body={
+        onPaste
+          ? `The columns are ready. Paste a block straight from Excel to fill the whole table at once, or add the first ${entityName.toLowerCase()} row by hand.`
+          : `The columns are ready. Add the first ${entityName.toLowerCase()} row.`
+      }
     >
-      <Button tone="primary" glyph="+" onClick={onAddRow}>
+      {onPaste ? (
+        <Button tone="primary" onClick={onPaste}>
+          Paste rows
+        </Button>
+      ) : null}
+      <Button tone={onPaste ? 'neutral' : 'primary'} glyph="+" onClick={onAddRow}>
         Add first row
       </Button>
     </Plate>
