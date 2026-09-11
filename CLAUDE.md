@@ -104,6 +104,31 @@ class is renamed and passes when the screen is broken.
 - **158 non-test `.tsx` files, and 4 suites.** A foothold, not coverage.
 - **Whether a screen makes sense is a person's job**, still.
 
+**A performance number taken against `npm run dev` is not a number about
+this product.** Measure against the build:
+
+```bash
+npm run build && npx vite preview --port 5092
+HL_ORIGIN=http://localhost:5092 node tools/teardown/drive.mjs tools/teardown/selecttrace.mjs out
+```
+
+Measured 2026-09-11, selecting a table on the sheet with the Northside set
+loaded (zoom 0.846, seven legible cards, seven grids, 3,292 elements,
+1280x800): **64–100ms under `npm run dev`, 31–59ms against the built app.**
+The Chrome trace says where it went — `EventDispatch` 49.3ms → 11.1ms, while
+paint, style and layout barely move — and the CPU profile names it:
+`jsxDEV`, `jsx`, `jsxDEVImpl`, `jsxs` and `ReactElement` account for about
+103ms of self time, which is React's **development** JSX runtime and does not
+exist in `dist/`. Backlog row 44 spent four correct, carefully measured
+hypotheses on that number before anyone measured the product instead.
+
+Not everything is dev overhead, which is why the rule is "measure", not
+"assume it is fine": the same gesture harness puts the wheel-zoom at p50
+20.7–51.4 against dev's 24–54, essentially unchanged. `selecttrace.mjs` and
+`zoomtrace.mjs` take a real Chrome trace and a CPU profile, cut to the
+gesture by `performance.mark`, and print it bucketed as scripting / style /
+layout / paint with the hot functions by self time.
+
 **Contrast is automated**, on five screens — home, modules, data, quotes,
 customers (`tools/check-contrast.mjs:140-145`):
 

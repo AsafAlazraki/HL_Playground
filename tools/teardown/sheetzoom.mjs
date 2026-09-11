@@ -73,7 +73,9 @@ const IDLE = `
 
 export default async function (page, k) {
   await page.setViewportSize({ width: 1280, height: 800 })
-  await k.go('http://localhost:5090/', 6000)
+  const ORIGIN = process.env.HL_ORIGIN || 'http://localhost:5090'
+  console.log('ORIGIN ' + ORIGIN)
+  await k.go(ORIGIN + '/', 6000)
   const demo = page.getByRole('button', { name: /demo account/i })
   if (await demo.count()) {
     await demo.first().click()
