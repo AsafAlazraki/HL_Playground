@@ -117,7 +117,15 @@ import { newId, nowIso } from '@/lib/id'
 /* TYPE-ONLY, so the validator still depends on the model and nothing
    else at runtime. The quote shapes live in the quote feature because
    `@/types/model` is orchestrator-owned — see `ProjectFile` below. */
-import type { AdjustmentKind, FrozenLevel, QuoteAdjustment, QuoteDef, QuoteLine, QuoteSection } from '@/types/model'
+import type {
+  AdjustmentKind,
+  FrozenLevel,
+  PriceLevel,
+  QuoteAdjustment,
+  QuoteDef,
+  QuoteLine,
+  QuoteSection,
+} from '@/types/model'
 
 export type Validated =
   | { ok: true; data: ProjectFile }
@@ -1398,6 +1406,34 @@ export function validateEnvelope(raw: unknown): Validated {
       ...(sections.length ? { sections } : {}),
       fields,
       ...(isSafeId(e.displayFieldId) ? { displayFieldId: e.displayFieldId } : {}),
+      /* A DECLARED PRICE LADDER TRAVELS, and it has to: a dealer who
+         says "our selling column is called Retail", exports and
+         re-imports would otherwise find their table silently
+         unpriced again, back on the name-matching fallback. Same
+         failure the envelope already learned about quotes — "Save a
+         copy → Everything" carried tables, rows, modules, pages and
+         rules and no quotes, under a title that says Everything.
+
+         READ BACK ONE ROW AT A TIME AND DROPPED WHERE IT IS
+         MALFORMED, like every other list here: a rung pointing at
+         nothing, or carrying a scope this app does not have, is not a
+         rung. `priceLevelsFor` refuses a cost column on top of this,
+         so a hand-edited file cannot smuggle one onto a quote. */
+      ...(() => {
+        const declared = Array.isArray(e.priceLevels) ? e.priceLevels : []
+        const rungs = declared.flatMap((r: unknown) => {
+          const v = r as Record<string, unknown>
+          const fieldId = str(v?.fieldId)
+          const key = str(v?.key)
+          const label = str(v?.label)
+          const scope = v?.scope
+          if (!isSafeId(fieldId) || !key || !label) return []
+          if (scope !== 'quote' && scope !== 'line') return []
+          const rung: PriceLevel = { key, label, fieldId, scope }
+          return [rung]
+        })
+        return rungs.length > 0 ? { priceLevels: rungs } : {}
+      })(),
       position: {
         x: num(pos.x, 120 + (i % 4) * 340),
         y: num(pos.y, 120 + Math.floor(i / 4) * 300),

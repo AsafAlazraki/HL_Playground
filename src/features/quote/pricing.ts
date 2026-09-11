@@ -271,12 +271,11 @@ const NAMED_LEVELS: Partial<Record<TableKind, NamedLevel[]>> = {
      than guessed at */
 }
 
-/** A table carrying its own declaration. Read through a narrow type
- *  rather than a cast to `any`, so the day `priceLevels` lands on
- *  EntityDef this file needs no edit at all. */
-interface MaybeLevelled {
-  priceLevels?: PriceLevel[]
-}
+/* THE SHIM IS GONE, AND ITS PROMISE HELD. It read `priceLevels`
+   through a narrow type rather than a cast, "so the day `priceLevels`
+   lands on EntityDef this file needs no edit at all". That day is
+   2026-09-11 and the edit is a deletion: the field is on the type now
+   and the read below is ordinary. */
 
 /**
  * The columns a quote may read a price from, for THIS table.
@@ -291,7 +290,7 @@ export function priceLevelsFor(entity: EntityDef | undefined): PriceLevel[] {
   if (!entity) return []
 
   /* 1. the table's own declaration, when it has one */
-  const declared = (entity as EntityDef & MaybeLevelled).priceLevels
+  const declared = entity.priceLevels
   if (declared && declared.length > 0) {
     return declared.filter((l) => {
       const f = entity.fields.find((x) => x.id === l.fieldId)

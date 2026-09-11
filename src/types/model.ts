@@ -568,6 +568,32 @@ export interface EntityDef {
   /** field used to label rows elsewhere (reference pickers, node badge);
    *  defaults to the first non-formula field when unset */
   displayFieldId?: string
+  /**
+   * THE PRICE LADDER THIS TABLE DECLARES — MODULE_SYSTEM §2 defect 3.
+   *
+   * Without it, `priceLevelsFor` could only fall back to `NAMED_LEVELS`:
+   * an exact-name allow-list per `TableKind`, so a dealer whose column
+   * is called `Retail` rather than `Cash` has a table the quote cannot
+   * price, and nothing on any screen says why. The list is a good
+   * LAST RESORT — it is how the seeded file works today and it stays
+   * — but it was the only resort, which made a column NAME part of
+   * the contract.
+   *
+   * DECLARED WINS, and `priceLevelsFor` has always read this first;
+   * the field simply did not exist on the type, so nothing could
+   * write one. `pricing.ts` carried a `MaybeLevelled` shim to read it
+   * anyway, with a note saying it would need no edit on the day this
+   * landed. This is that day.
+   *
+   * A DECLARATION POINTING AT A COST COLUMN IS STILL REFUSED, by
+   * `priceLevelsFor` and not by good manners: the exclusion of cost
+   * and margin from every quote surface is by construction, and a
+   * table declaring its own ladder does not get to opt out of it.
+   *
+   * Absent means "fall back to the names", which is every table on
+   * the seeded file and must stay cheap.
+   */
+  priceLevels?: PriceLevel[]
   position: XY
   /** set when the entity sits inside a group frame on the whiteboard */
   groupId?: string
