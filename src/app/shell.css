@@ -550,8 +550,28 @@
    height. So: while results are up this column takes half the stage,
    and it does NOT scroll — the table inside it does, on both axes,
    with its scrollbars where a hand can reach them. */
+/* AND THE CAP WAS 660, WHICH MEANT IT NEVER FITTED ANYWHERE.
+   CLUELESS_USER_TESTS O6 closed on a guess — "worth re-checking at
+   1920, where it should all fit" — and it does not. Measured on the
+   seeded motor rule, an answer up:
+
+     1280   drawing 273  ·  rail 591  ·  table 887 in a 590 scroller
+     1920   drawing 844  ·  rail 660  ·  table 891 in a 659 scroller
+
+   At 1920 there were 1,075 pixels available to the rail and the cap
+   handed back 660, so 232 pixels of the answer stayed behind a
+   horizontal scroll on a screen with room for all of it. Every pixel
+   above the cap went to the DRAWING, which is not what a person
+   reading an answer wants more of.
+
+   920 IS READ OFF THE ANSWER, not chosen. The widest table the seeded
+   rules produce is 891px of eight columns; 920 clears it with the
+   scroller's own gutter and leaves 925 for the canvas at 1920. Below
+   about 1,640 the 56% share is still the binding term, so 1280 is
+   unchanged — 591 and a scroll, which is the honest answer at that
+   width and is what O6 measured in the first place. */
 .shell-flow-side.is-results {
-  flex: 0 1 clamp(320px, 56%, 660px);
+  flex: 0 1 clamp(320px, 56%, 920px);
   width: auto;
   overflow: hidden;
 }

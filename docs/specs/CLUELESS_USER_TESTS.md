@@ -405,6 +405,27 @@ screen. The canvas is 257px wide meanwhile. Both are the honest consequence of
 1,020px of stage minus a 192px index. Worth re-checking at 1920, where it
 should all fit.
 
+> **RE-CHECKED 2026-09-11, AND THE GUESS WAS WRONG.** Measured on the seeded
+> motor rule with an answer up, at both widths:
+>
+> | | drawing | results rail | the table inside it |
+> |---|---|---|---|
+> | 1280 | 273px | 591px | 887px in a 590px scroller |
+> | 1920 | 844px | **660px** | 891px in a 659px scroller |
+>
+> At 1920 there were 1,075 pixels available to the rail and `clamp(320px, 56%,
+> 660px)` handed back 660 — so 232 pixels of the answer stayed behind a
+> horizontal scroll on a screen with room for all of it, and every pixel above
+> the cap went to the DRAWING, which is not what a person reading an answer
+> wants more of.
+>
+> The cap is 920px now, read off the answer rather than chosen: the widest
+> table the seeded rules produce is 891px of eight columns. Re-measured at
+> 1920 — rail 920, table 895, `scrollWidth` 919 against `clientWidth` 919, so
+> nothing is behind a scroll and the canvas still has 584px. Below about
+> 1,640 the 56% share is still the binding term, so **1280 is unchanged** at
+> 591/273 with the scroll, which is the honest answer at that width.
+
 **O7 · Nothing dragged is verified.** Drag a chip from the palette onto the
 paper, drag a plate to move it, and drag from one plate's handle to another's
 were all exercised only through synthetic pointer events, which fall through to

@@ -73,7 +73,7 @@
    door in the panel and the stage agree about what is open.
    ============================================================ */
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import type { OrgProfile } from '@/types/model'
 import {
@@ -93,7 +93,6 @@ import { ConfigurationsPanel } from '@/features/tenancy'
 import { SideNav } from './SideNav'
 import { ActionBar } from './ActionBar'
 import { useHasPageActions } from '@/lib/actions'
-import { Win } from './Win'
 import { useWindowKeys } from './useWindowKeys'
 import {
   bestFrame,
@@ -103,14 +102,7 @@ import {
   type Stage,
   type Win as WinState,
 } from './winKit'
-import { TableStage } from './TableStage'
 import { EmptyState } from './EmptyState'
-import { ViewStage } from './ViewStage'
-import { RulesStage } from './RulesStage'
-import { DesignStage } from './DesignStage'
-import { FlowStage } from './FlowStage'
-import { QuoteStage } from './QuoteStage'
-import { ModuleStage } from './ModuleStage'
 import { useQuotes } from '@/features/quote'
 /* THE PICKER "New quote" OPENS, by its own path rather than through
    the feature's barrel. `modules/read.ts` imports the quote barrel —
@@ -294,7 +286,6 @@ export function Shell({ user, onSignOut }: ShellProps) {
   const [wins, setWins] = useState<WinState[]>(openingStack)
   const seq = useRef(1)
 
-  const focusedId = wins.length ? wins[wins.length - 1].id : null
   const focused = wins.length ? wins[wins.length - 1] : null
 
   /* WHERE THIS IS, AS AN ADDRESS. Both strings are derived during
@@ -376,10 +367,6 @@ export function Shell({ user, onSignOut }: ShellProps) {
       if (!w) return prev
       return [...prev.filter((x) => x.id !== id), { ...w, mini: false }]
     })
-  }, [])
-
-  const patchWin = useCallback((id: string, patch: Partial<WinState>) => {
-    setWins((prev) => prev.map((w) => (w.id === id ? { ...w, ...patch } : w)))
   }, [])
 
   /* THE DESKTOP SHORTCUTS. Every one is modifier-gated, because
