@@ -2029,3 +2029,16 @@
   color: var(--fg-secondary);
   font-variant-numeric: tabular-nums;
 }
+
+/* THE SENTENCE THAT SAYS A MAPPING CAME BACK. One line under the map
+   step's caption, in the note ink the refusals beside it use — this
+   is not a warning, it is the app telling somebody what it did with
+   their own earlier decision. `mapMemory.ts` carries the argument for
+   why it is never silent. */
+.io-paste-recalled {
+  margin: 0 0 var(--s-2);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  line-height: 1.55;
+  color: var(--fg-secondary);
+}

@@ -62,6 +62,7 @@ import {
   type PasteResult,
   type PasteWriter,
 } from './pasteBlock'
+import { applyTo, normHeader, recall, remember } from './mapMemory'
 import { PlanChanges, PlanNotes } from './PlanEvidence'
 import './io.css'
 
@@ -129,7 +130,44 @@ export function PasteRows({
     () => proposeMapping(cols, offers, headerRow),
     [cols, offers, headerRow],
   )
-  const settled = choices && choices.length === cols.length ? choices : proposed.map((p) => p.choice)
+
+  /* ============================================================
+     WHAT THIS SUPPLIER'S BLOCK DID LAST TIME — adopt 11.
+
+     A REMEMBERED CHOICE OUTRANKS A PROPOSAL, and only a proposal: a
+     column the person has touched on THIS paste is theirs and is kept
+     untouched, which is the same rule `settled` already keeps for the
+     header answer. What is replaced is the app's guess, by the same
+     person's own earlier decision — which is strictly better evidence.
+
+     AND IT IS SAID, never applied in silence. `recalledNote` is drawn
+     under the map step: a mapping that reappears with no sentence is
+     indistinguishable from the app having guessed, which is the one
+     thing adopt 10 says not to do.
+     ============================================================ */
+  const remembered = useMemo(
+    () => (headerRow ? recall(entity.id, cols.map((c) => c.header)) : null),
+    [headerRow, entity.id, cols],
+  )
+  const recalled = useMemo(
+    () => (remembered ? applyTo(remembered, entity) : null),
+    [remembered, entity],
+  )
+  const fromMemory = useMemo(() => {
+    if (!recalled) return null
+    const out = proposed.map((p, i) => {
+      const name = normHeader(cols[i]?.header ?? '')
+      const was = recalled.columns[name]
+      return was ?? p.choice
+    })
+    /* nothing of ours in it means there is nothing to announce */
+    return out.some((c, i) => c !== proposed[i]?.choice) ? out : null
+  }, [recalled, proposed, cols])
+
+  const settled =
+    choices && choices.length === cols.length
+      ? choices
+      : (fromMemory ?? proposed.map((p) => p.choice))
 
   const refusals = useMemo(
     () => (block.ok ? mappingRefusals(cols, settled, entity) : new Map<number, string>()),
@@ -185,8 +223,13 @@ export function PasteRows({
   const commit = useCallback(() => {
     if (!plan?.ok) return
     const result = applyPaste(plan, entity.id, write)
+    /* KEPT AT THE MOMENT OF THE DECISION, not while it is being made.
+       A mapping half-answered is not a choice, and remembering one
+       would hand the next paste somebody's abandoned draft. Only a
+       committed paste is evidence of where these columns go. */
+    if (headerRow) remember(entity.id, cols.map((c) => c.header), settled)
     onDone(plan, result)
-  }, [plan, entity.id, write, onDone])
+  }, [plan, entity.id, write, onDone, headerRow, cols, settled])
 
   /* -- what the footer offers --------------------------------- */
 
@@ -346,6 +389,24 @@ export function PasteRows({
         {block.ok ? (
           <section className="io-paste-step">
             <span className="mono-label io-paste-cap">Where each column goes</span>
+            {/* SAID, NEVER SILENT. A mapping that reappears with no
+                sentence is indistinguishable from the app having
+                guessed — and a guess dressed as an answer is the one
+                thing adopt 10 says not to do. The lost headings are
+                named for the same reason: a column that has gone from
+                this table since must not read as a deliberate skip. */}
+            {fromMemory ? (
+              <p className="io-paste-recalled">
+                Mapped the way you did last time.
+                {recalled && recalled.lost.length > 0
+                  ? ` ${recalled.lost.join(', ')} went to ${
+                      recalled.lost.length === 1 ? 'a column' : 'columns'
+                    } this table no longer has, so ${
+                      recalled.lost.length === 1 ? 'it is' : 'they are'
+                    } unanswered.`
+                  : ''}
+              </p>
+            ) : null}
             <ul className="io-paste-cols">
               {cols.map((col, i) => (
                 <MapRow
