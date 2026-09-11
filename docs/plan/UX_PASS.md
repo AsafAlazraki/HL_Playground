@@ -473,6 +473,23 @@ explains the list — *"Worked out by Motor fitment: HP between Min HP and Max
 HP"*. Design-time and run-time stay the same screen, which is the promise
 `ViewPage` already makes and keeps. Most people never open a rules list at all.
 
+> **CORRECTION, 2026-09-11.** "A fitment flow **is** the Related block" is not
+> true of the model and never was. `ViewBlock.rule` is a `ClauseGroup` stored
+> on the block; a fitment flow is a `RuleDef` of nodes and edges. Two
+> mechanisms, two editors — `RuleOffer` for a block, the fit sentence for a
+> flow — for one idea.
+>
+> The PROMISE this paragraph makes is nonetheless kept, by the other
+> mechanism: the Related block's RULE button is labelled with
+> `summariseRule(block.rule, …)` — "HP between Min HP and Max HP", the example
+> above — and opens that rule for editing on the same screen as the list it
+> governs. Design-time and run-time are the same screen and nobody has to open
+> a rules list.
+>
+> What is left is a consolidation rather than a door, and it is week+ work
+> reaching the pairs engine, the view page, the seed and the export envelope.
+> BACKLOG row 90 carries it.
+
 ### What happens to the 5,236 lines
 
 **Keep the engine, demote the canvas.** The execution engine is pure TS, is
