@@ -704,6 +704,13 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
               distinctFor={distinctFor}
               layout={layout}
               levelNames={levelNames}
+              /* THE CARD DOES NOT OFFER WHAT THE REGISTER OWNS. On a
+                 card a column heading is a name; ordering, narrowing,
+                 renaming and resizing live on the register this card's
+                 own Expand opens, one press away. `Grid.tsx` carries
+                 the argument — including the measurement that says the
+                 DOM this saves is NOT what the canvas is slow at. */
+              plainHeadings
               noun={noun}
               search=""
               sort={sort}

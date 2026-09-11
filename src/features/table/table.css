@@ -5363,3 +5363,34 @@ body.tb-resizing {
      · a CHECKBOX / SELECT / TEXTAREA FIELD. `.tb-dv-in`, `.tb-dv-pick`,
        `.tb-dv-tick`, `.tb-area` — Field is a text input.
    ============================================================ */
+
+/* ============================================================
+   A HEADING ON A CARD — a name, and nothing that can be pressed.
+
+   `Grid`'s `plainHeadings` says why this exists: 138 of a legible
+   card's 493 elements were heading chrome, on a surface where the
+   whole table is 200px wide and the register that owns sorting,
+   narrowing, renaming and resizing is one press away on the card's
+   own frame.
+
+   IT TAKES `.tb-th-main`'s BOX AND DROPS ITS BEHAVIOUR. Same flex
+   column, same padding, same optical centre — so a card and a
+   register set their column names on the same line, and nothing
+   about the grid's measurements changes when a card stops offering
+   the acts. What goes is the pointer, the hover, the focus ring:
+   there is nothing here to press.
+
+   NO RIGHT-HAND CLEARANCE, because `.tb-th-top` reserves 18px for a
+   filter button that is not drawn here — which is 18px of every
+   column's width given back to the name on the narrowest surface in
+   the app.
+   ============================================================ */
+.tb-th-plain {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  height: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+}

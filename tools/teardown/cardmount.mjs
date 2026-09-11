@@ -67,6 +67,8 @@ export default async function (page, k) {
           rowsMounted: rows.length,
           rowsInBox: visible,
           cells: n.querySelectorAll('[role="gridcell"], .gr-cell').length,
+          heads: n.querySelectorAll('[role="columnheader"]').length,
+          cellsPerRow: Math.round(n.querySelectorAll('[role="gridcell"], .gr-cell').length / Math.max(1, rows.length)),
         }
       })
       .filter((r) => r.onScreen),

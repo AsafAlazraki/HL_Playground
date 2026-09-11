@@ -210,6 +210,37 @@ export interface GridProps {
   levelIds?: string[]
   /** what the rows are called, for the group counts */
   noun: LeafNoun
+  /* ============================================================
+     A HEADING IS A CONTROL IN THE REGISTER AND A LABEL ON A CARD.
+
+     EACH HEADING WAS THREE AFFORDANCES: a sort button carrying a
+     wedge, a menu button carrying a glyph, and a resize grip — on a
+     surface where the whole table is about 200px wide and the
+     register that owns those acts is one press away on the card's own
+     frame. The card is for reading the shape of a business; ordering,
+     narrowing, renaming, retyping and resizing a column are what the
+     register is for, and every one of them is still there, in the
+     place a person goes when they mean to change something. The
+     heading keeps its name and its title says where the rest went,
+     which is rule 10 — nothing vanishes without a sentence.
+
+     AND THE PERFORMANCE ARGUMENT THIS WAS ASKED FOR DID NOT SURVIVE
+     ITS OWN MEASUREMENT, which is recorded here rather than quietly
+     dropped. A legible card carried 493 elements to draw thirty
+     cells, 138 of them heading chrome, and the theory was that this
+     DOM is what a traversing wheel-zoom and a selection press pay for
+     (BACKLOG 43, 44). Removing it takes seven cards from 3,297
+     elements to 3,017 — and BOTH NUMBERS ARE UNCHANGED: the selection
+     press is 221ms against 220 before, the wheel-zoom p50 31-52
+     against 24-54. Whatever those cost, it is not the size of this
+     subtree. What stands is the first paragraph, which is a judgement
+     about what a card is for, made by the person whose app it is.
+
+     THE 18px ON THE RIGHT GOES WITH IT. `.tb-th-top` reserves that
+     for a filter button which is not drawn here, and it is the
+     narrowest surface in the app to be spending it on.
+     ============================================================ */
+  plainHeadings?: boolean
 
   search: string
   sort: SortState | null
@@ -341,6 +372,7 @@ function GridImpl(props: GridProps): JSX.Element {
     levelNames,
     levelIds,
     noun,
+    plainHeadings = false,
     search,
     sort,
     filters,
@@ -1483,7 +1515,30 @@ function GridImpl(props: GridProps): JSX.Element {
                         : {}),
                     }}
                   >
-                    {renaming !== null && renaming.fieldId === f.id ? (
+                    {plainHeadings ? (
+                      /* THE WHOLE HEADING, ON A CARD: a name, and the
+                         sentence that says where the acts live. No
+                         sort button, no menu, no grip — see the note
+                         on `plainHeadings`. */
+                      <span
+                        className="tb-th-plain"
+                        title={`${f.name} — open this register to order, narrow, rename or resize it.`}
+                      >
+                        {system && (
+                          <span className="tb-th-lock" aria-hidden="true">
+                            <LockGlyph />
+                          </span>
+                        )}
+                        <span className="tb-th-name">
+                          {f.name}
+                          {f.required === true && !system && (
+                            <span className="tb-th-req" title="Required">
+                              *
+                            </span>
+                          )}
+                        </span>
+                      </span>
+                    ) : renaming !== null && renaming.fieldId === f.id ? (
                       <input
                         className="tb-th-edit tb-inline"
                         value={renaming.draft}
@@ -1551,6 +1606,8 @@ function GridImpl(props: GridProps): JSX.Element {
                         </span>
                       </button>
                     )}
+                    {plainHeadings ? null : (
+                      <>
                     <button
                       type="button"
                       className={
@@ -1583,6 +1640,8 @@ function GridImpl(props: GridProps): JSX.Element {
                         onResize(f.id, 0)
                       }}
                     />
+                      </>
+                    )}
                   </div>
                 )
               })}
