@@ -30,6 +30,7 @@
 
 import {
   displayFieldOf,
+  isRetired,
   MODULE_CAPABILITIES,
   type EntityDef,
   type FieldDef,
@@ -42,6 +43,10 @@ import {
 import { defaultColumns } from '@/features/views/columns'
 import { registerViewDef } from '@/features/views'
 import { buildConcepts } from '@/features/constraints/columns'
+/* THE TWO READINGS THIS FILE BORROWS RATHER THAN REPEATS — see the
+   note beside them in `capabilityStates`. */
+import { relatedTables } from './read'
+import { renameFieldOf } from './writeCaps'
 import { nowIso } from '@/lib/id'
 import { imageFieldOf, priceReadOf, type PriceRead } from './read'
 
@@ -154,6 +159,28 @@ export interface CapabilityState {
 export function capabilityStates(
   module: ModuleDef,
   tables: EntityDef[],
+  /**
+   * THE WHOLE SHEET, and it is required for exactly one refusal.
+   *
+   * `relate` asks "is anything related to these tables", and the
+   * answer is about tables this module does NOT hold — so it cannot
+   * be read off `tables`. The first draft passed the module's own
+   * tables to `relatedTables`, which skips any relation whose far
+   * end is not in the map it was given: every far end resolved to
+   * undefined, the count came back 0, and the refusal fired on every
+   * module in the app. It looked right on Labour Rates, where the
+   * answer really is nothing, and was wrong on Boats, where seven
+   * brands are the source of every fitment join in the price file.
+   *
+   * The seeded demo's own invariant caught it — "switches on no verb
+   * the module itself would refuse" — which is what that test is for.
+   *
+   * OPTIONAL, AND THE REFUSAL IS SILENT WITHOUT IT. A caller that
+   * cannot supply the sheet gets every other refusal and no claim
+   * about relationships, which is better than a claim made from a
+   * map that cannot answer.
+   */
+  sheet?: Record<string, EntityDef>,
 ): CapabilityState[] {
   const gone = tables.length === 0
   const priced = tables.some((e) => priceReadOf(e) !== undefined)
@@ -167,6 +194,23 @@ export function capabilityStates(
   const ruleable = gone
     ? []
     : buildConcepts(Object.fromEntries(tables.map((e) => [e.id, e])))
+
+  /* ── THE REFUSALS §5 ASKS FOR, AND WHERE EACH READING COMES FROM ──
+     "A capability that cannot be turned on says what is missing."
+     Three did. Four more could be switched on and do nothing at all,
+     which is the same safety lie `writeCaps.ts` was written to end,
+     pointed at the designer instead of the catalogue.
+
+     EVERY READING BELOW ALREADY EXISTED. Nothing new decides anything
+     here: `renameFieldOf` is the catalogue's own test for a column a
+     rename may type into, `relatedTables` is what the module's links
+     panel counts, and the register count is the one `travelCaps`
+     refuses a file on. Asking the same question in two places with
+     two answers is how a switch and a surface come to disagree. */
+  const live = tables.filter((e) => !isRetired(e))
+  const nameable = live.some((e) => renameFieldOf(e) !== undefined)
+  const relatable = gone || sheet === undefined ? null : relatedTables(module, sheet).length
+  const registers = live.length
 
   return DESIGNER_CAPABILITIES.map((key) => {
     const meta = MODULE_CAPABILITIES[key]
@@ -182,6 +226,25 @@ export function capabilityStates(
          unavailable" would send an admin looking for a setting on the
          module, and there is none: a price is a column on a table. */
       refused = `Nothing on ${tables[0].name} is marked as a price, so there is no figure to quote. Give the table a price column on the sheet and this switches on.`
+    } else if (key === 'edit' && !nameable) {
+      /* THE SAME SENTENCE THE CATALOGUE PRINTS, one surface earlier.
+         `readWrites` refuses editing where no table names its rows in
+         a column that can be typed into, and said so only AFTER an
+         admin had switched the verb on — so the switch moved, nothing
+         changed, and the reason turned up on a different screen. */
+      refused = `No table here names its rows in a column that can be typed into — a formula, a figure or a picked-from-a-list value is changed on the sheet, where it has the right editor. Give ${live[0]?.name ?? 'a table'} a text column that names a row and this switches on.`
+    } else if (key === 'relate' && relatable === 0) {
+      /* `relate` is "pin and unpin rows inside related blocks". With
+         nothing related to these tables there is no block to pin in,
+         and the fix is a relationship on the sheet rather than a
+         setting here. */
+      refused = `Nothing on the sheet is related to ${live[0]?.name ?? 'this table'} yet, so there are no related rows to pin. Draw a relationship on the data model and this switches on.`
+    } else if ((key === 'export' || key === 'import') && registers > 1) {
+      /* A FILE IS ONE REGISTER — `travelCaps`'s refusal, said at the
+         switch as well as at the bar. A module drawing seven of them
+         cannot honour either verb, and switching it on would promise
+         a control that refuses the moment it is pressed. */
+      refused = `${module.name} draws ${registers} registers and a file is one of them. Each has its own copy on the sheet, under its own name.`
     } else if (key === 'configure' && ruleable.length === 0) {
       /* SAME SHAPE AS THE QUOTE REFUSAL, AND THE SAME REASON. A rule
          reads words, numbers, yes/no, dates and lists; a table of

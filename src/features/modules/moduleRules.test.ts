@@ -381,3 +381,87 @@ describe('the tenth verb, now that the contract carries it', () => {
     expect(state?.refused).toBeUndefined()
   })
 })
+
+/* ---------------------------------------------------------- */
+/* The refusal list — MODULE_SYSTEM §5                         */
+/* ---------------------------------------------------------- */
+
+describe('a capability that cannot be turned on says what is missing', () => {
+  /* §5's rule, and three of the seven verbs that can fail it were
+     silent: an admin could switch them on, watch the switch move, and
+     change nothing — the same safety lie `writeCaps.ts` was written to
+     end, pointed at the designer instead of the catalogue.
+
+     EVERY READING IS BORROWED, NOT INVENTED. `renameFieldOf` is the
+     catalogue's own test for a column a rename may type into,
+     `relatedTables` is what the module's links panel counts, and the
+     register count is the one `travelCaps` refuses a file on. Asking
+     one question in two places with two answers is how a switch and a
+     surface come to disagree. */
+
+  const refusal = (
+    m: ModuleDef,
+    tables: EntityDef[],
+    key: string,
+    sheet?: Record<string, EntityDef>,
+  ): string | undefined => capabilityStates(m, tables, sheet).find((s) => s.key === key)?.refused
+
+  it('REFUSES EDIT where no table names its rows in a typeable column', () => {
+    /* Reference Plates is a picture and a formula. A rename would be
+       writing a free string into a select or a calculated total. */
+    const plates = mod('m_plates', ['plates'])
+    const said = refusal(plates, [PLATES], 'edit')
+    expect(said).toContain('names its rows in a column that can be typed into')
+    expect(said).toContain('Reference Plates')
+  })
+
+  it('allows edit where a table does name its rows', () => {
+    expect(refusal(BOATS, [HIGHFIELD, STACER], 'edit')).toBeUndefined()
+  })
+
+  it('REFUSES RELATE where nothing on the sheet is related to these tables', () => {
+    /* `relate` is "pin and unpin rows inside related blocks". With no
+       relationship there is no block to pin in, and the fix is on the
+       data model rather than on this panel. */
+    const said = refusal(BOATS, [HIGHFIELD, STACER], 'relate', entities)
+    expect(said).toContain('is related to')
+    expect(said).toContain('data model')
+  })
+
+  it('ASKS NOTHING ABOUT RELATIONSHIPS WITHOUT THE SHEET, rather than guessing', () => {
+    /* The question is about tables this module does NOT hold, so a
+       caller who cannot supply the sheet gets every other refusal and
+       no claim about this one. The first draft answered it from the
+       module's own tables, which made the count 0 for every module in
+       the app — right on Labour Rates by accident, wrong on Boats,
+       where seven brands are the source of every fitment join. */
+    expect(refusal(BOATS, [HIGHFIELD, STACER], 'relate')).toBeUndefined()
+  })
+
+  it('REFUSES A FILE WHERE THE PLACE DRAWS MORE THAN ONE REGISTER', () => {
+    /* `travelCaps`'s own refusal, said at the switch as well as at the
+       bar: switching it on would promise a control that refuses the
+       moment it is pressed. */
+    for (const key of ['export', 'import']) {
+      const said = refusal(BOATS, [HIGHFIELD, STACER], key)
+      expect(said, key).toContain('2 registers')
+      expect(said, key).toContain('a file is one of them')
+    }
+  })
+
+  it('allows a file where the place draws one', () => {
+    for (const key of ['export', 'import']) {
+      expect(refusal(MOTORS, [YAMAHA], key), key).toBeUndefined()
+    }
+  })
+
+  it('STILL REFUSES EVERY VERB WHEN THE TABLES ARE GONE, and says that instead', () => {
+    /* The whole-module refusal outranks the per-verb ones: a person
+       whose tables left the sheet does not need to be told which
+       column a rename would type into. */
+    const gone = mod('m_gone', ['struck'])
+    for (const state of capabilityStates(gone, [])) {
+      expect(state.refused, state.key).toContain('no longer on the sheet')
+    }
+  })
+})

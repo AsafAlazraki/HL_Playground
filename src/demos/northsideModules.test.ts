@@ -300,7 +300,10 @@ describe('the Northside demo seeds its own modules', () => {
     loadNorthsideProject()
     const { entities } = useProjectStore.getState()
     for (const m of ordered()) {
-      const states = capabilityStates(m, moduleTables(m, entities))
+      /* THE SHEET IS HANDED OVER, because one refusal is about tables
+         this module does NOT hold — see `capabilityStates`. Without it
+         the `relate` question cannot be answered and is not asked. */
+      const states = capabilityStates(m, moduleTables(m, entities), entities)
       const wrong = states.filter((s) => s.on && s.refused)
       expect(
         wrong.map((s) => `${m.name}: ${s.label} — ${s.refused}`),

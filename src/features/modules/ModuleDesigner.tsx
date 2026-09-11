@@ -143,7 +143,7 @@ export function ModuleDesigner({ module }: ModuleDesignerProps): ReactElement {
      and a branch in the setter. `ruleCapability.ts` wrote its own
      deletion down; this is it. */
   const configures = module.capabilities.includes('configure')
-  const caps = capabilityStates(module, tables)
+  const caps = capabilityStates(module, tables, entities)
 
   const setCapability = (key: DesignerCapability, on: boolean): void => {
     updateModule(module.id, {
