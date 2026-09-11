@@ -255,7 +255,7 @@ function EntityTableNodeImpl(props: NodeProps): JSX.Element {
   const nameW = useNameColumnWidth(entity, rows, cardW, data.refLabelOf)
   const fit = useFitWidths(entityId)
   const colWidths = useMemo(
-    () => ({ ...nameW, ...ownWidths, ...(fit ?? {}) }),
+    () => ({ ...nameW, ...ownWidths, ...fit }),
     [nameW, fit, ownWidths],
   )
 

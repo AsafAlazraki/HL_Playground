@@ -841,7 +841,7 @@ function MyModules({ acts, who }: { acts: DashboardActs; who: TileWho }): JSX.El
    itself and the reason there is no stock photography anywhere in
    this application. */
 
-function WhatWeSell({ acts }: { acts: DashboardActs }): JSX.Element {
+export function WhatWeSell({ acts }: { acts: DashboardActs }): JSX.Element {
   const modules = useProjectStore((s) => s.modules)
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)

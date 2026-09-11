@@ -206,11 +206,7 @@ export interface Arrangement {
  *  the default — it says so in a sentence and offers the act
  *  that would give it something, which is more use to a new
  *  person than an absence they cannot see. */
-export const DEFAULT_CARDS: readonly CardId[] = [
-  'my-quotes',
-  'what-we-sell',
-  'my-modules',
-]
+export const DEFAULT_CARDS: readonly CardId[] = ['my-quotes', 'recently-opened']
 
 /** FIXED IDS, DELIBERATELY. The default is rebuilt from scratch
  *  on every read that finds nothing stored, so minted ids would

@@ -204,10 +204,15 @@ describe('moving one thing', () => {
   })
 
   it('marks the arrangement as touched', () => {
+    /* THE MOVE IS WITHIN THE DEFAULT SET, whatever that set is
+       today — it was three cards and is two, and a test that
+       hard-codes index 2 is a test about the composition wearing
+       the name of one about `touched`. */
     const a = defaultArrangement()
-    const b = withCardsMoved(a, 0, 2)
+    const last = a.cards.length - 1
+    const b = withCardsMoved(a, 0, last)
     expect(b.touched).toBe(true)
-    expect(b.cards[2]).toBe(a.cards[0])
+    expect(b.cards[last]).toBe(a.cards[0])
     /* and leaves the one it was given alone */
     expect(a.touched).toBe(false)
   })

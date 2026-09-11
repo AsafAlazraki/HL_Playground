@@ -83,6 +83,9 @@ import { censusLine, sheetCensus } from './census'
 import { linkOffers, resolveLinks } from './links'
 import { Button, Card, SectionHead } from '@/ui'
 import { QuickLinks } from './QuickLinks'
+/* THE DOORS BAND — the screen's subject, drawn above the arrangement
+   rather than inside it. See the note at its mount. */
+import { WhatWeSell } from './CardBody'
 import { CardBody } from './CardBody'
 import { Tray, type TrayKind } from './Tray'
 import { useReorder } from './reorder'
@@ -500,6 +503,41 @@ export function Dashboard({ user, ...acts }: DashboardProps): JSX.Element {
             onClose={() => setTray(null)}
           />
         ) : null}
+
+        {/* ============================================================
+            WHAT YOU SELL IS THE SCREEN, NOT A CARD ON IT.
+
+            THE MEASUREMENT THAT MOVED IT. At 1600x1000 the front
+            door was two halves that did not belong to one product:
+            on the left, four photographs with the kind's name at
+            display size; on the right, twenty-five rows of 13px
+            text in three columns, names wrapping four deep —
+            "Haines Signature Factory Packages" was a paragraph. A
+            directory listing bolted onto a showroom, and no focal
+            point: the eye lands on the boat and falls into the text.
+
+            The doors were the best thing on the screen and had the
+            least of it. They were a CARD, so the arrangement grid
+            gave them one column of a two-column flow and a
+            `fit-content(45%)` row — and a photograph of a boat
+            became a letterbox.
+
+            SO THEY COME OUT OF THE GRID. A band of their own, full
+            width, above everything the arrangement governs. The
+            arrangement still owns the cards beneath — what a person
+            adds, names and orders — and this is not one of them,
+            for the same reason the greeting is not: it is what the
+            screen IS.
+
+            AND THE MODULE DIRECTORY IS NOT ON IT BY DEFAULT.
+            Twenty-five places is navigation, and navigation is the
+            rail, which already says "Modules 25" with the count. It
+            is still an arrangeable card for anybody who wants it
+            back — taken out of the default, not out of the app.
+            ============================================================ */}
+        <div className="dsh-sell">
+          <WhatWeSell acts={acts} />
+        </div>
 
         <div className="dsh-grid" ref={reorder.containerRef}>
           {reorder.order.map((original, slot) => {

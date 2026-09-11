@@ -361,7 +361,7 @@ export function TableSheet({
   const nameW = useNameColumnWidth(entity, rows, sheetW, data.refLabelOf)
   const fit = useFitWidths(entityId)
   const widths = useMemo(
-    () => ({ ...nameW, ...colWidths, ...(fit ?? {}) }),
+    () => ({ ...nameW, ...colWidths, ...fit }),
     [nameW, fit, colWidths],
   )
 

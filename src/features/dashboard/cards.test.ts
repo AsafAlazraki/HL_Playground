@@ -196,14 +196,32 @@ describe('the catalogue', () => {
      beside them over both rows. Asserted because changing the
      array silently changes the composition.
 
-     'activity' CAME OFF THIS SET and 'what-we-sell' took its
-     place, measured: at 1280x800 on the real seed the activity
-     card was 176.8px of nothing in a 264.9px body — 66.7% — and
-     the doors are the one route into the catalogue by kind that
-     this dashboard never had. The argument is in full at
-     `DEFAULT_CARDS`. */
-  it('the default set is three cards, in the order the grid lays out', () => {
-    expect(DEFAULT_CARDS).toEqual(['my-quotes', 'what-we-sell', 'my-modules'])
+     'what-we-sell' CAME OFF THIS SET BY BEING PROMOTED, 2026-09-11,
+     and that is the opposite of being dropped: the doors are the
+     BAND above the grid now, full width, because as a card the
+     arrangement gave them one column of a two-column flow and a
+     photograph of a boat came out a letterbox.
+
+     'my-modules' came off because twenty-five places is navigation
+     and navigation is the rail, which already carries the count.
+     Measured at 1600x1000 on the real seed: the card was three
+     columns of 13px text with names wrapping four lines deep, half
+     the screen, beside four photographs. It is still an arrangeable
+     card for anybody who wants it back.
+
+     'recently-opened' took the second slot because it is the one
+     reading that answers "where was I" — the question a person
+     opening this app most often has. */
+  it('the default set is what a person starts with, in grid order', () => {
+    expect(DEFAULT_CARDS).toEqual(['my-quotes', 'recently-opened'])
+  })
+
+  it('does NOT start with the doors or the module list', () => {
+    /* The doors are the screen's own band and the modules are the
+       rail's job — both still available in the tray, neither in the
+       set a person is handed. */
+    expect(DEFAULT_CARDS).not.toContain('what-we-sell')
+    expect(DEFAULT_CARDS).not.toContain('my-modules')
   })
 
   /* AND NOTHING WAS DELETED TO MAKE ROOM. A card coming off the

@@ -222,6 +222,66 @@
    column to itself and two half-height cards stack beside it.
    ============================================================ */
 
+/* ============================================================
+   THE SELLING BAND — what this business sells, at the size that
+   makes it the subject.
+
+   IT WAS A CARD IN THE GRID and the grid gave it a column: four
+   photographs sharing half a screen with a twenty-five-row text
+   directory, in a row capped at `fit-content(45%)`. A boat became
+   a letterbox. Out here it takes the width, and the doors take a
+   real photograph's proportion.
+
+   AUTO-FIT RATHER THAN A COLUMN COUNT, so four doors are four
+   across on a wide screen, two on a laptop and one on a phone,
+   without this file naming a single breakpoint. `minmax(0, 1fr)`
+   because a door's picture must be allowed to shrink.
+
+   IT DOES NOT SCROLL AND IT DOES NOT GROW. The band is the top of
+   the page and the cards beneath it take the rest; a dealer with
+   seven kinds gets seven doors at the height four would have had,
+   because the row is sized by its content rather than by the
+   viewport. The page still does not scroll — the GRID beneath
+   does, as it always has.
+   ============================================================ */
+/* THE BAND TAKES WHAT THE PAGE HAS LEFT. `flex: 1 1 auto` against
+   the cards below, which are sized by their content — so a screen
+   with two empty cards on it spends the rest of its height on the
+   photographs rather than on air, and a screen with four full ones
+   gives the band its floor and no more. The page still does not
+   scroll; the card grid beneath it does. */
+.dsh-sell {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 260px;
+  margin-bottom: var(--s-5);
+  display: flex;
+  flex-direction: column;
+}
+
+.dsh-sell .dsh-doors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: var(--s-4);
+  flex: 1 1 auto;
+  min-height: 0;
+  /* AND NOT PAST WHAT A PHOTOGRAPH IS WORTH. Above this the picture
+     stops being the subject and starts being a poster: 520 is two
+     rows of the 4:3 the seeded images were shot at (640x480,
+     measured) plus the caption under it. */
+  max-height: 520px;
+}
+
+/* THE PICTURE FILLS THE DOOR, and the caption keeps its own height.
+   Inside a card the plate was a fixed strip and the photograph was
+   a letterbox; here the card is a column and the plate is the part
+   that grows. */
+.dsh-sell .dsh-door-plate {
+  flex: 1 1 auto;
+  min-height: 140px;
+  height: auto;
+}
+
 .dsh-grid {
   display: grid;
   gap: var(--s-5);
@@ -229,7 +289,13 @@
   min-height: 0;
   /* narrow: one column and the GRID scrolls, never the page */
   grid-template-columns: minmax(0, 1fr);
-  grid-auto-rows: minmax(200px, auto);
+  /* A CARD IS AS TALL AS WHAT IS IN IT. This was
+     `minmax(200px, auto)`, a 200px FLOOR — so a card with nothing in
+     it yet was a 200px rectangle saying "no quotes yet", and the two
+     empty ones took five hundred vertical pixels between them to say
+     nothing twice. An empty card earns a line, not a panel. */
+  grid-auto-rows: auto;
+  align-content: start;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
@@ -262,14 +328,25 @@
        205/417 and the doors' photographs stopped being a
        letterbox. `minmax(0, 1fr)` on the second so a card taller
        than its share shrinks and scrolls inside itself. */
-    grid-template-rows: fit-content(45%) minmax(0, 1fr);
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(300px, 1fr);
+    /* THE CARDS FLOW, THEY DO NOT FILL. The old rule was two fixed
+       rows in COLUMN flow — built when the doors were a card in here
+       and the grid had to give them half the screen. The doors are
+       the band above now, so what is left is a set of readings a
+       person chose, and the honest layout for those is: as many
+       columns as fit, each card as tall as its content, the whole
+       thing packed to the top.
+
+       WHAT THIS STOPS. A card stretched to a share of the viewport
+       is a card whose height is an accident of how many siblings it
+       has — two empty ones filled a screen, and four full ones each
+       got a letterbox. */
+    grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+    grid-template-rows: none;
+    grid-auto-flow: row;
     grid-auto-rows: auto;
-    overflow-y: hidden;
-    /* a sixth card starts a third column; the default set cannot
-       reach this */
-    overflow-x: auto;
+    align-content: start;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .dsh-card[data-tall] {
