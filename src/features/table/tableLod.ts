@@ -172,3 +172,57 @@ export function useSheetPlate(): boolean {
 
   return plate
 }
+
+/* ============================================================
+   IS THE CAMERA STILL?
+
+   The same question `useSheetPlate` above answers for a card's
+   register, asked for anything else that costs a frame to draw. It
+   shares the ONE imperative subscription that file already keeps, so
+   a second watcher is not added to the store.
+
+   WHY IT EXISTS. Measured on the built app (row 43,
+   `tools/teardown/zoomframes.mjs`, frames kept in order rather than
+   sorted into percentiles): a wheel zoom that crosses 0.70 — where
+   `sheetZoom` puts the link names on — spends 53.3ms on the single
+   frame where 37 labels arrive, the worst frame in the gesture. And
+   every frame above 0.70 carries those 26-37 SVG text chips, each of
+   which the browser must re-rasterise at the new scale, because a
+   scale transform cannot be composited the way a pan can. That is
+   why pan sits at this machine's floor and zoom does not.
+
+   So the names wait for the camera, exactly as the registers do.
+   Nothing is lost: a label is there to be READ, and nobody reads one
+   while the sheet is still moving under them.
+
+   NO HYSTERESIS AND NO TIMER PER CALLER. One timestamp, one timer,
+   one re-render each way.
+   ============================================================ */
+export function useCameraStill(): boolean {
+  const store = useStoreApi() as unknown as FlowStoreApi
+  const [still, setStill] = useState(() => performance.now() - motion.at >= SETTLE_MS)
+
+  useEffect(() => {
+    watchCamera(store)
+    let timer = 0
+    const rearm = (): void => {
+      setStill(false)
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => setStill(true), SETTLE_MS)
+    }
+    waiting.add(rearm)
+    /* MOUNTED MID-GESTURE, the initial state is false and no further
+       camera move is guaranteed — a reader who stops zooming the
+       instant a card appears would otherwise wait for ever. So the
+       settle is armed once here rather than set synchronously: a
+       setState inside an effect body starts a second render for a
+       value this one can simply wait for. */
+    timer = window.setTimeout(() => setStill(true), SETTLE_MS)
+    return () => {
+      waiting.delete(rearm)
+      window.clearTimeout(timer)
+    }
+  }, [store])
+
+  return still
+}

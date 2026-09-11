@@ -90,6 +90,7 @@ import { sayUndoable } from '@/store/notes'
 import {
   DEFAULT_TABLE_NODE_SIZE,
   tableNodeTypes,
+  useCameraStill,
   useEntityTableNodes,
   useExpandedTableNodes,
 } from '@/features/table'
@@ -309,7 +310,15 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
      but an invisible SVG label is still laid out, and React Flow reads
      `getBBox()` on every one of them. Measured at 14-16ms of a wheel
      zoom (row 43). See `useRelationshipEdges`. */
-  const derivedEdges = useRelationshipEdges(distance === 'near')
+  /* AND THEY WAIT FOR THE CAMERA, the way a card's register does.
+     Measured frame by frame (`tools/teardown/zoomframes.mjs`): the
+     single worst frame of a wheel zoom, 53.3ms, is the one where 37
+     labels arrive at 0.70 — and every frame above it carries those
+     chips for the browser to re-rasterise at a new scale. A label is
+     there to be READ, and nobody reads one while the sheet is still
+     moving under them. */
+  const still = useCameraStill()
+  const derivedEdges = useRelationshipEdges(distance === 'near' && still)
 
   const [nodes, setNodes] = useState<CanvasNode[]>(tableNodes)
 

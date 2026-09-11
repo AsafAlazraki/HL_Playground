@@ -122,3 +122,8 @@ export { forgetFitState } from './tableFitState'
 export { forgetRowReveal, requestRowReveal } from './rowRevealState'
 
 export { coverPhoto, type CoverPhoto } from './coverPhoto'
+
+/* The sheet asks the same question the cards do — is the camera
+   still? — before it draws the names on the lines. One subscription,
+   shared; see `tableLod.ts`. */
+export { useCameraStill } from './tableLod'
