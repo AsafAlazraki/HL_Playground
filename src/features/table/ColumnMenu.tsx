@@ -36,14 +36,78 @@
    ============================================================ */
 import { useMemo, useState } from 'react'
 import type { JSX } from 'react'
-import { isSystemFieldId, type FieldDef } from '@/types/model'
+import { isSystemFieldId, type FieldDef, type PriceLevel } from '@/types/model'
 import { useProjectStore } from '@/store/useProjectStore'
 import { Button, Row } from '@/ui'
 import { columnFacts } from '@/features/designer/columnFacts'
 import { formulaReaders, nameList, ruleBreakage } from '@/features/designer/dependents'
 import type { SortDir } from '@/features/table/core'
 import { Popover } from './Popover'
+/* DEEP, not through the quote barrel: `isCostColumn` and `normName`
+   are two pure readings, and `@/features/quote` would pull the whole
+   document surface into a column menu. */
+import { isCostColumn, normName } from '@/features/quote/pricing'
 import { columnKindOf } from './columnKinds'
+
+
+/* ============================================================
+   WHAT THIS COLUMN MAY SAY ABOUT PRICE — MODULE_SYSTEM §2 defect 3.
+
+   `priceLevelsFor` prefers a table's own declaration and falls back to
+   an exact-name list per kind, so a dealer whose selling column is
+   called `Retail` rather than `Cash` had a table the quote could not
+   price and no screen that said why. This answers whether THIS column
+   can be one, whether it already is, and how to say so either way.
+
+   IT READS THE STORE IMPERATIVELY, deliberately: the column menu must
+   not re-render because somebody is typing in the register behind it,
+   which is the same reason `blast` is read this way.
+   ============================================================ */
+function rungFor(
+  entityId: string,
+  field: FieldDef,
+  system: boolean,
+): {
+  can: boolean
+  declared: boolean
+  set: (scope: 'quote' | 'line') => void
+  clear: () => void
+} {
+  const entity = useProjectStore.getState().entities[entityId]
+  const holdsNumbers = field.type === 'number' || field.type === 'formula'
+  const declared = (entity?.priceLevels ?? []).some((l) => l.fieldId === field.id)
+  const can =
+    !system &&
+    holdsNumbers &&
+    entity !== undefined &&
+    /* THE ONE REFUSAL THAT IS NOT OURS TO SOFTEN. Cost and margin are
+       excluded from every quote surface by construction, and
+       `priceLevelsFor` drops a declaration pointing at one — so
+       offering it here would be a control that appears to work and
+       silently does not. */
+    !isCostColumn(entity, field)
+
+  const rest = (entity?.priceLevels ?? []).filter((l) => l.fieldId !== field.id)
+  const write = (levels: PriceLevel[] | undefined): void => {
+    useProjectStore.getState().updateEntity(entityId, { priceLevels: levels })
+  }
+
+  return {
+    can,
+    declared,
+    /* THE KEY IS THE COLUMN'S OWN NAME, normalised — the same form the
+       fallback list matches on, so a table that later loses its
+       declaration lands back on the same rung rather than a different
+       one. */
+    set: (scope) => {
+      write([
+        ...rest,
+        { key: normName(field.name), label: field.name, fieldId: field.id, scope },
+      ])
+    },
+    clear: () => write(rest.length > 0 ? rest : undefined),
+  }
+}
 
 export function ColumnMenu({
   field,
@@ -78,12 +142,23 @@ export function ColumnMenu({
 }): JSX.Element {
   const [editing, setEditing] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  /* asking which kind of rung this is — see `PriceAsk` below */
+  const [pricing, setPricing] = useState(false)
   const [optionText, setOptionText] = useState(() =>
     (field.options ?? []).join('\n'),
   )
 
   const system = isSystemFieldId(field.id)
   const kind = columnKindOf(field.type)
+
+  /* ---- what this column may say about price -------------------
+     COMPUTED BY A PLAIN FUNCTION BELOW, not inline: reading the store
+     imperatively inside a component body is what `blast` does two
+     lines down and it is right — a column menu must not re-render
+     because somebody is typing in the register behind it — but doing
+     it twice in one component reads as a hook being passed around.
+     One helper, called from a memo, says the same thing once. */
+  const rung = useMemo(() => rungFor(entityId, field, system), [entityId, field, system])
 
   /* WORKED OUT ONLY WHILE THE SHEET IS UP. `ruleBreakage` validates
      every rule twice, and doing that on every hover of a column menu
@@ -167,6 +242,51 @@ export function ColumnMenu({
             </Button>
           </footer>
         </>
+      ) : pricing ? (
+        /* ============================================================
+           WHICH KIND OF RUNG THIS IS — asked, never defaulted.
+
+           `PriceLevel.scope` decides what moving to this column does.
+           A QUOTE rung re-prices the whole document at once, which is
+           what Cash and Trade are; a LINE rung is one a single line
+           can be switched to, which is what `fitted` on a part and
+           `warranty` on a hull are. Guessing between them would be
+           the app writing a pricing policy on a dealer's behalf, and
+           the two are not recoverable from each other by inspection.
+
+           SO IT IS TWO ROWS AND NOT A TOGGLE. Each one says what
+           happens in the sentence a person would use to describe it,
+           and neither is primary — the app has no recommendation to
+           make about how a business prices.
+           ============================================================ */
+        <>
+          <div className="tb-menu-body">
+            <p className="tb-confirm-title">Price from “{field.name}”</p>
+            <p className="tb-menu-note">
+              What does this column price? A quote is set to one rung at a time; a
+              line can be switched to its own.
+            </p>
+          </div>
+          <div className="tb-acts">
+            <Row
+              dense
+              onActivate={act(() => rung.set('quote'))}
+              name="The whole quote"
+              meta={<span className="tb-menu-note">Every line moves together</span>}
+            />
+            <Row
+              dense
+              onActivate={act(() => rung.set('line'))}
+              name="One line at a time"
+              meta={<span className="tb-menu-note">A single line can be switched to it</span>}
+            />
+          </div>
+          <footer className="tb-menu-foot">
+            <Button tone="ghost" size="sm" onClick={() => setPricing(false)}>
+              Back
+            </Button>
+          </footer>
+        </>
       ) : confirming ? (
         <>
           <div className="tb-menu-body">
@@ -239,6 +359,37 @@ export function ColumnMenu({
             onActivate={act(onFilter)}
             name={filtered ? 'Change what shows…' : 'Show only some…'}
           />
+
+          {/* ============================================================
+              DECLARING THIS COLUMN A PRICE — MODULE_SYSTEM §2 defect 3.
+
+              `priceLevelsFor` prefers a table's own declaration and
+              falls back to an exact-name list per kind, so a dealer
+              whose selling column is called `Retail` rather than
+              `Cash` had a table the quote could not price and no
+              screen that said why. This is where they say so.
+
+              ONLY ON A COLUMN THAT COULD HOLD ONE. A text column is
+              not a price, and a COST column is refused outright:
+              `priceLevelsFor` drops a rung pointing at one by
+              construction, so offering it here would be a control
+              that appears to work and silently does not.
+              ============================================================ */}
+          {rung.can && (
+            <>
+              <span className="tb-act-rule" aria-hidden="true" />
+              {rung.declared ? (
+                <Row
+                  dense
+                  current
+                  onActivate={act(rung.clear)}
+                  name="Stop pricing from this"
+                />
+              ) : (
+                <Row dense onActivate={() => setPricing(true)} name="Price from this column…" />
+              )}
+            </>
+          )}
 
           {!system && (
             <>
