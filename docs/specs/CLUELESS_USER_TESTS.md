@@ -463,9 +463,16 @@ because the hit test runs before the pointer arrives.
 
 **O10 · Not an app fault, but it will waste your afternoon.** While other
 workflows are editing `src/features/views` or `src/features/table`, their saves
-hot-update the tree and reset the shell's `stage`, so an open stage closes by
-itself mid-test. Seen four times during this pass, with zero console errors each
-time. Re-open and carry on; do not go looking for the bug in the stage.
+hot-update the tree and the open page closes by itself mid-test. Seen four times
+during this pass, with zero console errors each time. Re-open and carry on; do
+not go looking for the bug in the page.
+
+> **VOCABULARY CORRECTED 2026-09-11.** This said "reset the shell's `stage`".
+> There is no `stage` state any more: `Shell.tsx` keeps a WINDOW LIST, and a
+> hot update remounts it, which empties the stack. The condition is unchanged
+> and so is the advice — it is a note for whoever drives this app, not a defect
+> and not a thing to build, which is why BACKLOG row 50 is closed rather than
+> carried as work.
 
 **O11 · The column-setup door is still below the fold for 16 of the 17 tables
 that have one, and it has got worse.** Measured again at 1280×800 with the left

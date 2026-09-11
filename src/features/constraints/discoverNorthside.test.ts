@@ -520,8 +520,43 @@ describe('the invariants hold over all 400-odd candidates', () => {
     const say = (c: Candidate): string =>
       `${c.shape}|${c.statement}|${c.hits}/${c.tested}|${c.verdict}|${c.admitted}`
 
-    expect(b.proposals.map(say)).toEqual(report.proposals.map(say))
-    expect(b.notProposed.map(say)).toEqual(report.notProposed.map(say))
+    /* COMPARED THROUGH A REPORTER, BECAUSE THE BARE `toEqual` BELOW
+       WAS UNDIAGNOSABLE WHEN IT WENT RED.
+
+       Measured 2026-09-11: this assertion failed once inside a full
+       185-file run and could not be reproduced — the file alone
+       passed 36 of 36, six consecutive loads compared in one process
+       agreed exactly, and the next full run was green (2,858 passed).
+       So the fault, if it is one, is rarer than the sightings the
+       `inOrder` note above records and is NOT the same one.
+
+       What made that hour worthless is that the failure printed
+       nothing usable: `toEqual` over two several-thousand-element
+       string arrays elides its own diff, so the one red run said only
+       that the lists differed. `disagreement` answers the two
+       questions a diagnosis needs — did a finding APPEAR or VANISH
+       (a set difference, which is an engine fault) or did the same
+       set come back in a different ORDER (a `rank` fault) — and names
+       the first offending statement either way. A flake that can only
+       be caught in one run in N must be fully diagnosable in that
+       run. */
+    const disagreement = (left: Candidate[], right: Candidate[]): string | null => {
+      const a = left.map(say)
+      const z = right.map(say)
+      const inZ = new Set(z)
+      const inA = new Set(a)
+      const appeared = a.filter((s) => !inZ.has(s))
+      const vanished = z.filter((s) => !inA.has(s))
+      if (appeared.length > 0 || vanished.length > 0) {
+        return `SET differs — ${appeared.length} appeared, ${vanished.length} vanished. First appeared: ${appeared[0] ?? '—'}. First vanished: ${vanished[0] ?? '—'}`
+      }
+      const at = a.findIndex((s, i) => s !== z[i])
+      if (at === -1) return null
+      return `ORDER differs at ${at} of ${a.length} — rank is not total.\n  second load: ${a[at]}\n  first load:  ${z[at]}`
+    }
+
+    expect(disagreement(b.proposals, report.proposals)).toBeNull()
+    expect(disagreement(b.notProposed, report.notProposed)).toBeNull()
 
     /* and the candidate that actually flaked is in both */
     const sizeIn = (r: DiscoveryReport): boolean =>
