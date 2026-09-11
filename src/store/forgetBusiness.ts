@@ -25,11 +25,19 @@
    those modules expose a `forget…()` that drops an in-memory cache
    for tests and leaves the stored copy where it is — which is
    exactly the half of the job that does not fix this. Removing the
-   KEY is the half that does, and it has a second virtue: every one
-   of these is org-scoped with the slug appended (TENANCY §4.1), so a
-   prefix sweep also takes the rows of an organisation that is not
-   the one open, which is what "wipe" means to the person pressing
-   it.
+   KEY is the half that does, and it has a second virtue: it takes
+   EVERY organisation’s rows and not only the open one, which is
+   what "wipe" means to the person pressing it.
+
+   THE SCOPING IS NOT ALL IN THE KEY, AND THE PREFIX SWEEP IS RIGHT
+   EITHER WAY. Most of these carry the org slug appended to the key
+   (TENANCY §4.1), so one key exists per business. Three do not:
+   `helmlogic.discovered.v1`, `helmlogic.constraints.seeded.v1` and
+   `helmlogic.moduleRules.v1` each hold ONE key whose payload is a
+   `Record<orgKey, …>`, with the tenancy one level in — read through
+   `getDecisions(orgKey)` and `readLedger()[orgKey]`. That is a
+   legitimate shape and it is still per-tenant; it only means the
+   sweep takes the whole map at once, which is the intent.
 
    THE IN-MEMORY COPIES ARE DROPPED TOO, through `import()` rather
    than a static import. Half of these modules read the project store
@@ -75,8 +83,6 @@ export const BUSINESS_KEYS: readonly string[] = [
   'hl.pipeline.owner.v1',
   'hl.pipeline.links.v1',
   'hl.pipeline.card.v1',
-  /* the customer register's letters */
-  'hl.crm.letters.v1',
   /* where somebody has been — ids into tables that are about to stop
      existing, so keeping it would leave a palette full of dead doors */
   'helmlogic.finder.recent.v1',
@@ -109,6 +115,13 @@ export const KEPT_KEYS: readonly string[] = [
   'hl.tb.expanded-frames',
   'hl.quotes.view',
   'hl.wb.arranged-rules',
+  /* WHETHER THE CUSTOMER LIST DRAWS ITS A–Z STRIP. Filed under the
+     business at first and that was wrong: the value is the string
+     'on' or 'off', it names no customer and no organisation, and a
+     person who turned the strip off did not mean "until somebody
+     wipes the sheet". It is a view preference and it sits with the
+     other view preferences. */
+  'hl.crm.letters.v1',
 ]
 
 /** Is this key one the business owns? Prefix, so the org slug that
@@ -176,5 +189,6 @@ export async function forgetBusiness(): Promise<void> {
     drop(() => import('@/features/pipeline/dealLinks'), 'forgetDealLinks'),
     drop(() => import('@/features/pipeline/cardFields'), 'forgetCardFields'),
     drop(() => import('@/features/modules/openPlace'), 'forgetPlaces'),
+    drop(() => import('@/app/moduleRecent'), 'forgetModuleRecent'),
   ])
 }

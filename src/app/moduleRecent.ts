@@ -43,6 +43,7 @@
    ============================================================ */
 
 import { useSyncExternalStore } from 'react'
+import { currentOrgKey } from '@/lib/orgKey'
 
 /** How many are kept. Four, because the rail's whole argument is
  *  that it is four doors tall — a fifth remembered module would
@@ -53,6 +54,28 @@ export const MODULE_RECENT_LIMIT = 4
  *  what it is. Never a bare word another script could plausibly
  *  own. */
 const KEY = 'helmlogic.rail.modules.v1'
+
+/* ============================================================
+   SCOPED TO THE BUSINESS — TENANCY §6, and the same defect the
+   palette's recents had.
+
+   This held a flat list of MODULE IDS under one key. Two
+   organisations opened in the same browser — which
+   `restoreForSignIn` makes an ordinary thing — and the second one's
+   rail offered the first one's modules: doors to places that do not
+   exist here, or, where two sheets mint the same id, to the WRONG
+   place, which is worth more than the convenience it costs.
+
+   `features/search/recent.ts` had this exact shape and was scoped
+   earlier; this is the same fix and the same argument, including
+   the one about migration. NO MIGRATION, DELIBERATELY: what sits
+   under the old key is a convenience and not a record, so losing it
+   costs one gesture and nothing anybody typed. The old key is left
+   where it is rather than deleted — removing somebody's data to
+   tidy a key name is the worse trade — and `forgetBusiness` takes
+   it on a wipe either way, because it sweeps by prefix.
+   ============================================================ */
+const keyFor = (): string => `${KEY}:${currentOrgKey()}`
 
 const store = (): Storage | null => {
   try {
@@ -88,7 +111,7 @@ function parse(raw: string | null): string[] {
    render; a fresh array out of `JSON.parse` every time is an
    infinite render loop, not a bug you find later. The cache is
    replaced only when the value really changed. */
-let held: string[] = parse(store()?.getItem(KEY) ?? null)
+let held: string[] = parse(store()?.getItem(keyFor()) ?? null)
 const listeners = new Set<() => void>()
 
 const same = (a: readonly string[], b: readonly string[]): boolean =>
@@ -109,7 +132,7 @@ export function rememberModule(moduleId: string): void {
   if (same(next, held)) return
   held = next
   try {
-    store()?.setItem(KEY, JSON.stringify(next))
+    store()?.setItem(keyFor(), JSON.stringify(next))
   } catch {
     /* a full quota or a private window costs the memory of where
        you were, and nothing else on screen */
@@ -126,4 +149,13 @@ function subscribe(fn: () => void): () => void {
 
 export function useModuleRecent(): string[] {
   return useSyncExternalStore(subscribe, readModuleRecent, readModuleRecent)
+}
+
+/** Drop the in-memory list. Called by `forgetBusiness` on a wipe —
+ *  the stored key has gone by then, and a module-level array that
+ *  outlived it would keep drawing doors into a sheet that no longer
+ *  exists until the tab was reloaded. */
+export function forgetModuleRecent(): void {
+  held = []
+  for (const l of listeners) l()
 }
