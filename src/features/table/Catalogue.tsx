@@ -57,7 +57,7 @@
    ============================================================ */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, FocusEvent, JSX } from 'react'
-import { ArrowRight, Rows, SquaresFour } from '@phosphor-icons/react'
+import { ArrowRight, ListChecks, Rows, SquaresFour } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import {
   isDiscontinued,
@@ -83,13 +83,20 @@ import { PageHead } from '@/features/page'
 import { Button, Card, Field, SectionHead } from '@/ui'
 import type { ColumnFilter, SortState } from '@/features/table/core'
 import { TableSheet, SEARCH_ID } from './TableSheet'
+import { JobsPanel } from './JobsPanel'
+import { jobsFor, tableSay } from './jobs'
 import { NoMatchPlate } from './EmptyPlates'
 import { FacetRail } from './FacetRail'
 import { readFacets, type Facet } from './facets'
 import { useTableData } from './useTableData'
 import { branchNoun, countLabel, leafNoun } from './grouping'
 import { requestRowReveal } from './rowRevealState'
-import { LENS_LABEL, setCatalogueLens, useCatalogueLens } from './catalogueLens'
+import {
+  LENS_LABEL,
+  setCatalogueLens,
+  useCatalogueLens,
+  type CatalogueLens,
+} from './catalogueLens'
 import { handoverFor } from './handover'
 /* DEEP, NOT THROUGH THE BARREL, for the cycle `winKit.tsx` records
    against `@/features/quote` — and `@/features/views` reaches this
@@ -642,9 +649,20 @@ export function Catalogue({
              where every other page's does — and it is said ONCE
              rather than once per card, which is fault 1 of this
              same plan ("one fact, said four times"). */
-          {...(handover.why !== '' ? { line: handover.why } : {})}
+          /* THE PAGE'S ONE SENTENCE, and on the jobs lens it is the
+             jobs panel's — "588 variants. Pictures on 534 of them,
+             prices are set." A refusal outranks it: a handover that
+             cannot happen is the more urgent thing to say. */
+          {...(handover.why !== ''
+            ? { line: handover.why }
+            : lens === 'jobs'
+              ? { line: tableSay({ entity, rows, noun, sheet: entities, countLed: false }) }
+              : {})}
           acts={<Lens entityId={entityId} lens={lens} />}
-          tools={tools}
+          /* A SEARCH BOX AND TEN COLUMN FILTERS OVER A LIST OF FIVE
+             JOBS is chrome narrowing nothing — the jobs lens has no
+             rows on screen to narrow. They come back with the rows. */
+          {...(lens === 'jobs' ? {} : { tools })}
         />
       ) : (
         <>
@@ -655,18 +673,47 @@ export function Catalogue({
           {/* the same sentence, in a host that has already spent the
               page's name — `.ph-line` is the shared class, so it is
               the one appearance a refusal has in this app */}
-          {handover.why !== '' ? <p className="ph-line cat-why">{handover.why}</p> : null}
+          {handover.why !== '' ? (
+            <p className="ph-line cat-why">{handover.why}</p>
+          ) : lens === 'jobs' ? (
+            <p className="ph-line cat-why">
+              {tableSay({ entity, rows, noun, sheet: entities, countLed: false })}
+            </p>
+          ) : null}
           {/* THE SAME ROW PAGEHEAD DRAWS, drawn by hand because the
               host has already spent the name. `.ph-tools` is the
               shared class and taking it is the point: the filters of
               a hosted catalogue sit on the host's gutter, at the
               host's tools height, rather than on a second one. */}
-          <div className="ph-tools is-tight">{tools}</div>
+          {lens === 'jobs' ? null : <div className="ph-tools is-tight">{tools}</div>}
         </>
       )}
 
       <div className="cat-body">
-        {lens === 'gallery' && rows.length > 0 ? (
+        {lens === 'jobs' ? (
+          /* WHAT A TABLE OPENS ON — UX_PASS §12. `jobs.ts` decides
+             what there is to do and `JobsPanel` draws it; this host
+             supplies the two facts only it has — the sheet, so
+             "what goes with these" can be counted, and where each
+             job goes. */
+          <JobsPanel
+            jobs={jobsFor({ entity, rows, noun, sheet: entities })}
+            onPick={(id) => {
+              if (id === 'sheet' || id === 'prices' || id === 'missing') {
+                setCatalogueLens(entityId, 'list')
+                return
+              }
+              if (id === 'pictures') {
+                setCatalogueLens(entityId, 'gallery')
+                return
+              }
+              /* `add` and `related` are the host's, and where a host
+                 has not given us one the row is drawn still rather
+                 than pressed into a dead end. */
+              setCatalogueLens(entityId, 'list')
+            }}
+          />
+        ) : lens === 'gallery' && rows.length > 0 ? (
           <Gallery
             entity={entity}
             data={data}
@@ -710,12 +757,12 @@ function Lens({
   lens,
 }: {
   entityId: string
-  lens: 'gallery' | 'list'
+  lens: CatalogueLens
 }): JSX.Element {
   return (
     <div className="cat-lens" role="group" aria-label="How to show this">
-      {(['gallery', 'list'] as const).map((l) => {
-        const Mark = l === 'gallery' ? SquaresFour : Rows
+      {(['jobs', 'gallery', 'list'] as const).map((l) => {
+        const Mark = l === 'jobs' ? ListChecks : l === 'gallery' ? SquaresFour : Rows
         return (
           <button
             key={l}

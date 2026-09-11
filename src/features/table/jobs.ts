@@ -264,8 +264,17 @@ export function jobsFor(input: JobsInput): Job[] {
  * that lists what is absent reads as a complaint rather than a
  * description.
  */
-export function tableSay(input: JobsInput & { seriesCount?: number }): string {
-  const { entity, rows, noun, seriesCount } = input
+export function tableSay(
+  input: JobsInput & {
+    seriesCount?: number
+    /** false where the HOST has already printed the count — a page
+     *  head saying "588 variants · 7 series" over a line saying "588
+     *  variants. Pictures on 534 of them" is the same figure twice on
+     *  one screen, which is the fault §12 opens with. */
+    countLed?: boolean
+  },
+): string {
+  const { entity, rows, noun, seriesCount, countLed = true } = input
   const live = rows.filter((r) => !isDiscontinued(r))
   const parts: string[] = [plural(live.length, noun.one, noun.many)]
   if (seriesCount !== undefined && seriesCount > 1) {
@@ -285,6 +294,9 @@ export function tableSay(input: JobsInput & { seriesCount?: number }): string {
   }
   if (priceReadOf(entity)) said.push('prices are set')
 
+  if (!countLed) {
+    return said.length === 0 ? '' : `${said.join(', ').replace(/^./, (c) => c.toUpperCase())}.`
+  }
   return said.length === 0
     ? `${parts[0]}.`
     : `${parts[0]}. ${said.join(', ').replace(/^./, (c) => c.toUpperCase())}.`

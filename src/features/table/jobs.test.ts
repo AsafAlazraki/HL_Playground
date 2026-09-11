@@ -190,3 +190,19 @@ describe('the nouns are the dealership own words', () => {
     expect(said).toBe('1 boat.')
   })
 })
+
+describe('the count is said once on a screen', () => {
+  it('DROPS ITS OWN LEADING COUNT where the host has already printed one', () => {
+    const priced = table([NAME, CASH, PIC])
+    const rows = [row('r1', { 'f-name': 'A', 'f-pic': 'p.jpg' }), row('r2', { 'f-name': 'B' })]
+    expect(tableSay({ entity: priced, rows, noun: NOUN, countLed: false })).toBe(
+      'Pictures on 1 of them, prices are set.',
+    )
+  })
+
+  it('says nothing at all rather than a bare full stop', () => {
+    expect(
+      tableSay({ entity: table([NAME]), rows: [row('r1', {})], noun: NOUN, countLed: false }),
+    ).toBe('')
+  })
+})

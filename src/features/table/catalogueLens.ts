@@ -23,14 +23,32 @@
    ============================================================ */
 import { useSyncExternalStore } from 'react'
 
-export type CatalogueLens = 'gallery' | 'list'
+export type CatalogueLens = 'jobs' | 'gallery' | 'list'
 
 export const LENS_LABEL: Record<CatalogueLens, string> = {
+  jobs: 'Jobs',
   gallery: 'Gallery',
   list: 'List',
 }
 
-const DEFAULT: CatalogueLens = 'gallery'
+/* ============================================================
+   THE DEFAULT IS THE JOBS PANEL NOW, AND THE PARAGRAPH ABOVE IS
+   AMENDED RATHER THAN LEFT TO DISAGREE WITH IT.
+
+   What that paragraph argued for is untouched: the REGISTER is not
+   the front door. UX_PASS §12 is the later and narrower statement
+   about what a table opens on, and it measured the reason — 56
+   columns, 11 truncated band labels, 8 chrome verbs and a first
+   column reading `kb2JYb4GLH`: 42 things to read before acting. Its
+   answer is that a table opens on what you can DO with it, in
+   outcomes, with the spreadsheet last and plainly labelled.
+
+   The gallery loses nothing but the arrival. It is one press away, it
+   keeps its own remembered state per table, and a person who works in
+   it all day still lands there — because the choice is remembered,
+   which is what this file was written for.
+   ============================================================ */
+const DEFAULT: CatalogueLens = 'jobs'
 
 let state: Record<string, CatalogueLens> = {}
 

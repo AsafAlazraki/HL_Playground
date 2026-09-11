@@ -1,0 +1,86 @@
+/* ============================================================
+   THE JOBS PANEL — UX_PASS §12's front door for a table.
+
+   ALMOST NOTHING IS DECLARED HERE, and that is the point. A job is a
+   `Row` from `src/ui`, so its height, its hover, its press and its
+   focus ring are the system's and are not decided again. What this
+   file owns is the panel's air, the heading pair, and the position of
+   the figure at the end of a line.
+
+   THE MEASURE IS CAPPED. §12's whole complaint is 42 things to read
+   before acting; a list of six jobs stretched across 1,400px of stage
+   would be six things to read and a long way to move the eye between
+   the name and its count. `--jb-measure` holds it at a reading width
+   and centres it, the same posture the review stage takes.
+   ============================================================ */
+
+.jb {
+  --jb-measure: 640px;
+  width: 100%;
+  max-width: var(--jb-measure);
+  margin-inline: auto;
+  padding-block: var(--s-4) var(--s-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.jb-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+/* the name wears the display step ds.css cut for a stage title; the
+   class carries no size of its own (rule 6) */
+.jb-name {
+  margin: 0;
+  color: var(--fg);
+}
+
+.jb-say {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  line-height: 1.55;
+  color: var(--fg-secondary);
+}
+
+.jb-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+/* THE FIGURE SITS ON THE ROW, NOT AFTER IT. The row fills the line,
+   so the count is positioned over its trailing end — `Row`'s own
+   `trail` slot is refused to a pressable row, correctly, because a
+   button inside a button is invalid HTML. */
+.jb-item {
+  position: relative;
+  display: grid;
+}
+
+.jb-count {
+  position: absolute;
+  right: var(--s-3);
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* the line under a job — its subject, or its reason when it has one.
+   One ink either way: a refusal drawn in the danger colour would make
+   "no column is set as the photograph yet" read as a fault rather
+   than as a thing to go and do. */
+.jb-say-line {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  line-height: 1.45;
+  color: var(--fg-secondary);
+}
