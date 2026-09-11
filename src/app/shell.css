@@ -3022,6 +3022,51 @@
   :root {
     --rail: 64px;
   }
+
+  /* ============================================================
+     THE WAY BACK AND THE PAGE'S NAME WERE DRAWN ON TOP OF EACH
+     OTHER — measured at 390x844, on every stage that uses this bar.
+
+     THE CAUSE IS THE MIDDLE TRACK WINNING. The bar is three columns,
+     `minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr)`, with the name
+     centred in the middle one. `auto` takes what its content asks
+     for, so on a register called Labour Rates the name and its count
+     claimed 226px of a 286px line, the two `1fr` tracks were left
+     nothing, and the Back button — which has no business shrinking to
+     a sliver — overflowed its own zero-width track to the right.
+     Measured: Back occupied x 84 to 154 and the name began at 126.
+     Twenty-eight pixels of a control underneath a title.
+
+     TWO ROWS, NOT A TRUNCATION. A stage's name is the answer to
+     "where am I", which is the wayfinding question this app fails
+     worst; clipping it to fit beside a control it is already
+     overlapping would trade a collision for an ellipsis. So on a
+     phone the bar gives its first row to the controls — the way back,
+     and whatever acts a stage stands on the right — and the whole
+     second row to the name, left-aligned, because centring a title
+     over 300px is a decoration nobody asked for.
+
+     IT IS THE BAR THAT IS FIXED, not the register: Admin, Customer,
+     Module and Quote all stand in this same grid, and the collision
+     was every one of them.
+     ============================================================ */
+  .shell-view-bar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+    row-gap: var(--s-1);
+  }
+  .shell-view-lead {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .shell-quote-acts {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .shell-view-what {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: start;
+  }
 }
 
 

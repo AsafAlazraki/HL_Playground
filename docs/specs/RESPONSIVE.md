@@ -137,8 +137,20 @@ toolbar-inside-a-card gets it wrong by default.
 
 Stated so nobody assumes coverage.
 
-- **Nothing below 620px has been re-measured** since the fluid layer landed. The
-  phone rules that existed are still the phone rules that exist.
+- ~~**Nothing below 620px has been re-measured** since the fluid layer landed.~~
+  **RE-MEASURED 2026-09-11 at 390x844**, on the prepared file, across Home,
+  Modules, Quotes, Data, Customers, Admin and a register. The document scrolls
+  sideways on NONE of them. One real defect, now fixed: `.shell-view-bar` is
+  three columns with the stage's name centred in an `auto` track, so on a
+  narrow window the name took what it asked for, the two `1fr` tracks were left
+  nothing, and the WAY BACK overflowed its own zero-width track — Back at x
+  84-154 under a name beginning at 126. Below 600px the bar is two rows now:
+  controls, then the name. Every stage shares that bar, so it was every stage.
+  One thing measured and NOT fixed: the pipeline board draws 1.8 of its
+  168px columns at 390px and the second is clipped at the window edge. The
+  board scrolls inside itself and the page does not, which is the legitimate
+  pattern — what a phone should do with a kanban is a design question, and it
+  is left as one.
 - **No visual regression tooling**, still. Contrast is still measured by hand,
   and a sweep must composite the full ancestor chain or it reports false
   catastrophes.
