@@ -230,7 +230,36 @@ export const tableInk = (t: EntityDef | undefined): string =>
    Node ids are entity ids on both drawings, so an edge attaches to a
    table exactly as it attached to a card.
    ============================================================ */
-export function useRelationshipEdges(): Edge[] {
+/* ============================================================
+   AND THE NAME ON A LINE IS WITHHELD, NOT FADED, WHEN IT CANNOT BE
+   READ.
+
+   `sheetZoom.ts` already decided that a link label is only worth
+   drawing at NEAR — 16px authored, which clears the 11px floor at
+   zoom 0.70 — and below that "a label is texture: ~64 chips of 6px
+   mush lying across the drawing". That decision was enforced in CSS,
+   with `opacity: 0` on the wrapper.
+
+   OPACITY HIDES A THING THAT IS STILL THERE, and this one is
+   expensive. React Flow's `EdgeText` lays out an SVG `<text>` and a
+   `<rect>` for every labelled edge and then reads `getBBox()` in an
+   effect to size the chip — a forced synchronous SVG layout, once per
+   mount, and `onlyRenderVisibleElements` mounts and unmounts edges
+   continuously as the window sweeps over them during a gesture.
+
+   MEASURED (row 43, `tools/teardown/zoomtrace.mjs`, production
+   build): `getBBox` is 14-16ms of self time in a sustained wheel
+   zoom, identical in the dev and built bundles — so it is neither
+   ours nor React's development mode — and the canvas's edges are the
+   only SVG on the screen. Every millisecond of it was spent
+   measuring text painted at `opacity: 0`.
+
+   So the label is not SET below NEAR. `EdgeText` returns null with no
+   label at all, and there is no text, no chip and no `getBBox`. The
+   CSS opacity rule stays: it still owns the fade at the boundary and
+   the dimming of an unlit line.
+   ============================================================ */
+export function useRelationshipEdges(labelled = true): Edge[] {
   const entities = useProjectStore((s) => s.entities)
   const edgeCache = useRef(new Map<string, Edge>())
 
@@ -249,7 +278,7 @@ export function useRelationshipEdges(): Edge[] {
            could get their capitalisation back. DESIGN_PRINCIPLES rule
            3: uppercase is a label style, never a name. The chip's type
            lives in `.wb-canvas .react-flow__edge-text`. */
-        const label = f.name
+        const label = labelled ? f.name : undefined
         const ink = tableInk(target)
         /* the whole sentence, for a reader who cannot see the line at
            all — "Rigging Kits · Boat points at Highfield Inflatables" */
@@ -306,7 +335,7 @@ export function useRelationshipEdges(): Edge[] {
     }
     edgeCache.current = next
     return out
-  }, [entities])
+  }, [entities, labelled])
 }
 
 /**

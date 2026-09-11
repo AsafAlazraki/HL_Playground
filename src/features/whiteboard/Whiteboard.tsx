@@ -299,12 +299,19 @@ function WhiteboardCanvas({ onDropTableKind }: CanvasProps): JSX.Element {
      position, commits through `moveEntity` on drag-stop, and every
      relationship line stays attached without a word of translation. */
   const tableNodes = useEntityTableNodes()
-  const derivedEdges = useRelationshipEdges()
-
-  const [nodes, setNodes] = useState<CanvasNode[]>(tableNodes)
 
   /* how far the reader is standing back — see `sheetZoom.ts` */
   const distance = useSheetDistance()
+
+  /* THE NAMES ON THE LINES ARE WITHHELD RATHER THAN FADED when the
+     reader is too far back to read them. `sheetZoom.ts` already made
+     that decision and the CSS already acted on it with `opacity: 0` —
+     but an invisible SVG label is still laid out, and React Flow reads
+     `getBBox()` on every one of them. Measured at 14-16ms of a wheel
+     zoom (row 43). See `useRelationshipEdges`. */
+  const derivedEdges = useRelationshipEdges(distance === 'near')
+
+  const [nodes, setNodes] = useState<CanvasNode[]>(tableNodes)
 
   const rf = useReactFlow<CanvasNode, Edge>()
   const nodesInitialized = useNodesInitialized()
