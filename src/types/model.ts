@@ -482,6 +482,29 @@ export interface OrgProfile {
    *  case, and the registry rewrites the old key under the slug the
    *  first time it sees both. */
   slug?: string
+  /**
+   * THE SENTENCE THIS DEALERSHIP PUTS ON EVERY QUOTE — its validity
+   * terms, typed once.
+   *
+   * CONFIG_FINDINGS adopt 10 asks for three-layer content overrides,
+   * org default → brand → per-quote. This is the first layer and the
+   * third. There is no brand layer: nothing in this app holds content
+   * at a brand, and inventing one would be a place for a dealer to
+   * maintain something they have not asked for.
+   *
+   * AND IT IS COPIED, NOT RESOLVED. Adopt 10's stated virtue is that
+   * it is "a delta rather than a document copy" — and for a QUOTE
+   * that is exactly wrong here. A quote is a photograph: `freeze.ts`
+   * copies every price onto it so a number handed to a customer on
+   * Monday cannot move on Friday, and a validity sentence resolved at
+   * read time would rewrite documents that have already gone out. So
+   * this is a STARTING VALUE, written onto the document when it is
+   * made and editable there afterwards like every other frozen word.
+   *
+   * Absent means the document prints no note, which is what every
+   * quote did before this existed.
+   */
+  quoteTerms?: string
 }
 
 /** A name, as a key: lowercase, alphanumerics and single hyphens.

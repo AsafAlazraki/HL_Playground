@@ -229,6 +229,11 @@ interface ProjectStore {
    *  that never had one is stamped. See the implementation. */
   setOrganisation: (name: string, industry: IndustryKey, createdAt?: string) => void
 
+  /** The sentence every new quote starts with. Empty clears it, and
+   *  a cleared one is a real answer — a dealership that prints no
+   *  terms is not a dealership that forgot to type them. */
+  setQuoteTerms: (terms: string) => void
+
   /** Create a table from a kind + structure preset: builds the hierarchy
    *  columns, then the kind's detail columns, resolving `linkTo` columns
    *  against tables that already exist (omitted when none does). */
@@ -867,9 +872,39 @@ export const useProjectStore = create<ProjectStore>()((set, get) => {
                re-deriving it on a rename would be the bug it exists
                to fix. */
             slug: s.meta.org?.slug ?? orgSlug(name.trim() || s.meta.name),
+            /* AND THE THIRD FIELD TO FALL INTO THE SAME TRAP. This
+               function REBUILDS `org` from its arguments, so anything
+               it does not carry forward is erased by the next rename
+               or project swap — which is exactly how `createdAt` came
+               to be re-dated and how the slug would have been
+               re-derived. A dealership's standing quote terms are not
+               part of its name. */
+            ...(s.meta.org?.quoteTerms === undefined
+              ? {}
+              : { quoteTerms: s.meta.org.quoteTerms }),
           },
         },
       }))
+    },
+
+    /* IT WRITES ONLY THE TERMS, and does not go through
+       `setOrganisation`: that function rebuilds the whole profile
+       from a name and an industry, and routing a terms edit through
+       it would make every save of a sentence also a re-assertion of
+       the business's name. An empty string CLEARS the field rather
+       than storing one, because a document with no note and a
+       document with an empty note print the same thing and only one
+       of them survives a round trip honestly. */
+    setQuoteTerms: (terms) => {
+      mutate((s) => {
+        const org = s.meta.org
+        if (!org) return {}
+        const kept = terms.trim()
+        const next = { ...org }
+        if (kept === '') delete next.quoteTerms
+        else next.quoteTerms = kept
+        return { meta: { ...s.meta, org: next } }
+      })
     },
 
     createTable: ({ kind, structureId, name, position }) => {

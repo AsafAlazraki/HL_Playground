@@ -512,6 +512,17 @@ export function mintQuoteFromView(args: MintQuoteArgs): QuoteDef | null {
     customer: { name: '' },
     ...(args.preparedBy ? { preparedBy: args.preparedBy } : {}),
     organisation: useProjectStore.getState().meta.org?.name,
+    /* THE DEALERSHIP'S STANDING TERMS, COPIED ON — adopt 10's first
+       layer meeting its third. It is a starting value and not a
+       resolved one: a document is a photograph, and a validity
+       sentence read back through the organisation would rewrite the
+       terms on a quote that has already been handed over. Typed once
+       in Admin, editable on the document, absent where a dealership
+       prints none. */
+    ...(() => {
+      const terms = useProjectStore.getState().meta.org?.quoteTerms?.trim()
+      return terms ? { note: terms } : {}
+    })(),
     createdAt: now,
     updatedAt: now,
   }
