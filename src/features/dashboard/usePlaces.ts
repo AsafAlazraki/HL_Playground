@@ -30,6 +30,10 @@
 import { useMemo } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { placesOf, type Place } from '@/features/modules/places'
+/* DEEP, not through the barrel: the barrel pulls the whole module
+   feature — the workspace, the designer, the access screen — into a
+   dashboard hook that wants one filter. */
+import { useBrowsableModules } from '@/features/modules/reach'
 
 let asked: readonly [unknown, unknown, unknown] | null = null
 let answer: Place[] = []
@@ -64,7 +68,14 @@ function placesFor(
 /** Every door on the modules grid, for this project as it stands.
  *  The same array for every card that asks during one paint. */
 export function usePlaces(): Place[] {
-  const modules = useProjectStore((s) => s.modules)
+  /* A PLACE THIS JOB MAY NOT BROWSE IS NOT A DOOR ON THE FRONT PAGE.
+     Filtered here rather than in each of the three cards, for the
+     same reason `withinReach` filters the project and not the answer
+     — one rule, asked once, and every reading downstream (the tiles,
+     the doors, the empty card's third line) inherits it with nothing
+     to keep in step. The map comes back unchanged when nothing is
+     shut, so the holding below still bails out on identity. */
+  const modules = useBrowsableModules()
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
   return useMemo(

@@ -91,6 +91,7 @@ import {
 import { useProjectStore } from '@/store/useProjectStore'
 import { TableKindSymbol } from '@/features/tablekit'
 import { placeCount } from '@/features/modules'
+import { useBrowsableModules } from '@/features/modules/reach'
 /* THE SHORTCUT THIS ROW ADVERTISES IS THE ONE THE FIELD BINDS. One
    fact, one place: the field reads the platform, this reads the field. */
 import { SHORTCUT_HINT } from '@/features/search'
@@ -227,7 +228,10 @@ export function SideNav({
   quoteCount,
   customerCount,
 }: SideNavProps): JSX.Element {
-  const modules = useProjectStore((s) => s.modules)
+  /* AND THE FIGURE BESIDE "Modules" COUNTS WHAT THIS JOB CAN OPEN.
+     A rail that says 25 over a screen that lists 19 is the app
+     arguing with itself about what exists. */
+  const modules = useBrowsableModules()
   const org = useProjectStore((s) => s.meta.org)
 
   const [collapsed, setCollapsed] = useState(() => readFlag(RAIL_KEY, false))

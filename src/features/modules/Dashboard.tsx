@@ -71,6 +71,7 @@ import type {
 import { useCallback, useMemo, useState } from 'react'
 import { DotsSixVertical, Lock, Plus, ShieldCheck } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
+import { useBrowsableModules } from './reach'
 import {
   canBeModuleMaster,
   isRetired,
@@ -149,7 +150,10 @@ export function Dashboard({ onOpen, onNew, onSettings }: DashboardProps): ReactE
   const projectName = useProjectStore((s) => s.meta.name)
   const entities = useProjectStore((s) => s.entities)
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
-  const modules = useProjectStore((s) => s.modules)
+  /* THE SAME RULE THE FRONT DOOR AND THE PALETTE KEEP: a place this
+     job may not browse is not listed here either. `reach.ts` carries
+     the argument. */
+  const modules = useBrowsableModules()
   const updateModule = useProjectStore((s) => s.updateModule)
 
   /* THE BUSINESS'S NAME WHERE WE HAVE IT, AND THE SHEET'S OTHERWISE —
