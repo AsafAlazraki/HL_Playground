@@ -323,6 +323,56 @@ for (const f of css) {
   }
 }
 
+/* ---------- the type ramp: a ratchet, not a budget ----------
+
+   REDESIGN_ROLLOUT §3 step 4 and RESPONSIVE both ask for the same
+   thing — type that goes through the scale instead of being typed
+   into a stylesheet — and both have been tracked by a number written
+   into a document, which is how the number rotted. RESPONSIVE says
+   "878 literal font-size declarations … the ramp reaches the 21%
+   that go through tokens". Backlog row 88 then measured 722 and 59%.
+   Measured again on 2026-09-11: 1,624 declarations, 1,012 through
+   tokens, and 518 literal px BY THIS SWEEP — which is the number to
+   trust, because it excludes two things a grep counts and should not.
+   `src/design` is exempt for the reason the floor above is exempt,
+   and a `clamp(12.5px, 0.701rem + 0.089vw, 13.5px)` is not a literal
+   at all: it IS the responsive ramp, which is the thing being asked
+   for. A bare grep for px puts the figure at 584 and is wrong by
+   those 66.
+
+   Three different figures for one property, none of them wrong when
+   written, is the argument for counting it here rather than in prose.
+
+   IT IS THE SAME INSTRUMENT THE LINT CEILING USES, and for the same
+   reason: "the lint ceiling is a ratchet, not a budget … clear
+   warnings and lower the number in the same commit. The 401st warning
+   is a failure, not a new baseline." A literal px is not a defect —
+   a hairline caption that must not scale is a legitimate one — so
+   this does not forbid them. It forbids the count GOING UP, which is
+   the only thing a week of mechanical conversion was ever protecting.
+
+   WHY A CEILING AND NOT A CONVERSION. Converting 584 declarations
+   across forty stylesheets is a week of mechanical edits, each one a
+   judgement about which step of the scale that text belongs to, and
+   half-done it leaves a screen in two vocabularies. The ratchet lets
+   it happen where somebody is already working, screen by screen, with
+   `npm run check:shots` to photograph what moved — which is the
+   pairing REDESIGN_ROLLOUT asked for and did not have.
+
+   src/design is exempt, exactly as the floor above is exempt: the
+   gallery draws miniatures of screens, and that type is a picture of
+   type rather than type a person reads. */
+const LITERAL_PX_CEILING = 518
+const literalPx = []
+for (const f of css) {
+  if (f.includes(`${sep}design${sep}`)) continue
+  const src = readFileSync(f, 'utf8')
+  for (const m of src.matchAll(/font-size:\s*[0-9]*\.?[0-9]+px/g)) {
+    const line = src.slice(0, m.index).split('\n').length
+    literalPx.push(`${f.replace(SRC, 'src').split(sep).join('/')}:${line}`)
+  }
+}
+
 /* ---------- custom properties that nothing declares ----------
 
    AN UNDEFINED CUSTOM PROPERTY DOES NOT WARN; IT VOIDS THE WHOLE
@@ -427,11 +477,28 @@ if (dead.length) {
   console.log('')
 }
 
-const bad = fresh.length + small.length + undeclared.length + literals.length
+/* OVER THE CEILING IS A FAILURE; UNDER IT IS A NUMBER TO LOWER.
+   Reported either way, so the count is on screen on every run rather
+   than in a document that goes stale — which is the whole reason this
+   ratchet exists. */
+const overRamp = Math.max(0, literalPx.length - LITERAL_PX_CEILING)
+if (overRamp > 0) {
+  console.log(
+    `> LITERAL px FONT-SIZES OVER THE CEILING (${literalPx.length} against ${LITERAL_PX_CEILING}):`,
+  )
+  for (const at of literalPx.slice(-overRamp)) console.log(`    ${at}`)
+  console.log(
+    '\n  The type ramp is a RATCHET, not a budget: clear some and lower' +
+      ' LITERAL_PX_CEILING\n  in the same commit. It may never go up.\n',
+  )
+}
+
+const bad =
+  fresh.length + small.length + undeclared.length + literals.length + overRamp
 console.log(
   bad
-    ? `FAIL — ${fresh.length} new orphan(s), ${small.length} under the type floor, ${undeclared.length} undeclared var(s), ${literals.length} literal colour(s). ${known.size} known, ${dead.length} dead rules.\n`
-    : `OK — no new orphans, nothing under ${FLOOR}px, every var declared, no literal colours. ${known.size} known (baselined), ${dead.length} dead rules.\n`,
+    ? `FAIL — ${fresh.length} new orphan(s), ${small.length} under the type floor, ${undeclared.length} undeclared var(s), ${literals.length} literal colour(s), ${overRamp} over the type-ramp ceiling. ${known.size} known, ${dead.length} dead rules.\n`
+    : `OK — no new orphans, nothing under ${FLOOR}px, every var declared, no literal colours, ${literalPx.length}/${LITERAL_PX_CEILING} literal px. ${known.size} known (baselined), ${dead.length} dead rules.\n`,
 )
 
 process.exit(bad ? 1 : 0)

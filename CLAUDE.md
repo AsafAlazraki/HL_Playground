@@ -46,6 +46,17 @@ you may not add a 20th. Clear one and run `node tools/check-styles.mjs
 It also prints the dead rules — 177 at `530597d`, 110 today — which it does
 not fail on, which is why that number drifts.
 
+**And it holds a ratchet on the type ramp.** REDESIGN_ROLLOUT step 4 and
+RESPONSIVE both track "how much type goes through the scale", and both tracked
+it as a number in prose, which rotted three times: 878 literal / 21% tokens in
+the doc, 722 / 59% on a later sweep, 1,624 declarations with 1,012 through
+tokens and **518 literal px** measured 2026-09-11. `check-styles` counts it on
+every run, prints it in the OK line, and fails if it RISES. A literal px is not
+a defect — a caption that must not scale is a legitimate one — so nothing is
+forbidden except the count going up. Clear some and lower `LITERAL_PX_CEILING`
+in the same commit; it may never go up. `src/design` is exempt, and a `clamp()`
+is not a literal: it is the ramp itself.
+
 **And it fails on a literal colour.** DESIGN_PRINCIPLES rule 1 is the first on
 the list and was the last without a guard. REDESIGN_ROLLOUT put the count at
 nine; swept properly it was 24 in shipped feature CSS, and the nineteen that

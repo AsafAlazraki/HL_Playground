@@ -156,5 +156,16 @@ Stated so nobody assumes coverage.
   catastrophes.
 - **`@container` is used in almost nothing.** Six lines of the app know what a
   container query is. Rule 4 above is aspiration for most surfaces.
-- The 878 literal `font-size` declarations are **not** converted. The ramp
-  reaches the 21% that go through tokens.
+- **The literal `font-size` tail is now COUNTED, not described.** This line used
+  to read "the 878 literal declarations are not converted; the ramp reaches the
+  21% that go through tokens", and that figure went stale twice before anybody
+  noticed — a later sweep put it at 722 and 59%, and the truth on 2026-09-11 was
+  1,624 declarations with 1,012 through tokens. A number tracked in prose rots.
+  `tools/check-styles.mjs` counts it on every run, prints it in the OK line, and
+  **fails if it rises** — a ratchet, the same instrument as the lint ceiling. The
+  figure is whatever the guard last printed; do not copy it back into this file.
+
+  Two things a grep counts and the guard rightly does not: `src/design`, which
+  draws miniatures of whole screens, and `clamp(12.5px, 0.701rem + 0.089vw,
+  13.5px)`, which is not a literal at all — it IS the ramp this page is asking
+  for.
