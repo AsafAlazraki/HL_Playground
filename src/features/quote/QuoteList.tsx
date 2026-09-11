@@ -12,8 +12,10 @@
    start to exist.
    ============================================================ */
 
-import type { ReactElement } from 'react'
+import { useMemo, useState, type ReactElement } from 'react'
+import { Field } from '@/ui'
 import { HELD_AS_LINK, useImageDisplay } from '@/lib/imageSources'
+import { FIND_FIELD_AT, NOTHING_FOUND, matches } from './find'
 import { localDay } from './day'
 import { money } from './pricing'
 import { quoteTotals } from './totals'
@@ -44,6 +46,31 @@ export interface QuoteListProps {
 
 export function QuoteList({ onOpen, openId, tableCount }: QuoteListProps): ReactElement {
   const quotes = useQuotes()
+
+  /* ============================================================
+     NARROWING THE DIARY — MODULE_SYSTEM §6.2's index.
+
+     THE BOARD BESIDE THIS LIST HAS HAD A SEARCH BOX SINCE IT WAS
+     WRITTEN and this view had none, so one of the two views of one
+     screen could be asked "which of these did I write for
+     Hargreaves" and the other could only be scrolled. The matcher
+     is `matches`, the board's own, moved rather than copied — see
+     `find.ts` — because two search boxes on one stage disagreeing
+     about whether a query hits is the worse fault by far.
+
+     DRAWN ONLY WHEN THE LIST HIDES SOMETHING. `FIND_FIELD_AT` is a
+     measured number, not a round one: seven rows fit on screen at
+     1440x900, so eight is the first count at which finding is a
+     problem the scrollbar cannot solve. Under that there is no
+     field, because a filter over a list you can already see whole
+     is the clutter this pass exists to remove.
+     ============================================================ */
+  const [query, setQuery] = useState('')
+  const finding = quotes.length >= FIND_FIELD_AT
+  const shown = useMemo(
+    () => (finding && query.trim() !== '' ? quotes.filter((q) => matches(q, query)) : quotes),
+    [finding, query, quotes],
+  )
 
   /* ============================================================
      THE FIRST MONDAY SCREEN, and it has to be right, because the
@@ -146,8 +173,47 @@ export function QuoteList({ onOpen, openId, tableCount }: QuoteListProps): React
     /* nothing in a list of quotes is sticky, so it keeps the trailing
        air on the scrollport — see `.qt-root--doc` in quote.css */
     <div className="qt-root qt-root--doc">
+      {/* THE VIEW'S OWN TOOLBAR, in the row every other page puts
+          under its title — the same anatomy the board next door
+          uses, and the same labelled `Field` rather than a glyph
+          standing in for a label. */}
+      {finding ? (
+        <div className="qt-tools">
+          <div className="qt-find">
+            <Field
+              type="search"
+              label="Find a quote"
+              /* MEASURED, AND SHORTENED BECAUSE OF IT. The board's
+                 own placeholder — "Reference, customer or what is
+                 being sold" — clipped to "…what is being s" in a
+                 280px box, so the last word a person needed was the
+                 one the box ate. Three nouns fit, and they are the
+                 same three the refusal below names. */
+              placeholder="Reference, customer or boat"
+              value={query}
+              onChange={setQuery}
+            />
+          </div>
+          {/* WHAT THE FILTER IS DOING, SAID WHERE IT IS DOING IT. A
+              list that silently went from forty rows to three is a
+              list a person cannot trust; the count says which of the
+              two numbers they are looking at. */}
+          {query.trim() === '' ? null : (
+            <p className="qt-found ds-small">
+              {shown.length} of {quotes.length}
+            </p>
+          )}
+        </div>
+      ) : null}
+
+      {/* RULE 10 — a find that holds nothing says so, in the place it
+          holds nothing, and quotes the string back so a typo is
+          visible without looking up at the field. */}
+      {shown.length === 0 ? (
+        <p className="qt-none-found">{NOTHING_FOUND(query)}</p>
+      ) : (
       <ul className="qt-list">
-        {quotes.map((q, i) => {
+        {shown.map((q, i) => {
           const totals = quoteTotals(q)
           return (
             <li
@@ -206,6 +272,7 @@ export function QuoteList({ onOpen, openId, tableCount }: QuoteListProps): React
           )
         })}
       </ul>
+      )}
     </div>
   )
 }

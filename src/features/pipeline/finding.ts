@@ -62,19 +62,14 @@ export function typeChips(
    SEARCH
    ------------------------------------------------------------ */
 
-/** WORD BY WORD, over every word a person might remember: the
- *  reference, the customer, what is being sold, and who prepared
- *  it. Every word of the query must hit something — typing more
- *  narrows, which is the only behaviour a search box can have that
- *  never surprises anybody. */
-export function matches(q: QuoteDef, query: string): boolean {
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
-  if (words.length === 0) return true
-  const hay = [q.reference, q.customer.name, q.subjectLabel, q.preparedBy ?? '']
-    .join(' ')
-    .toLowerCase()
-  return words.every((w) => hay.includes(w))
-}
+/* MOVED, AND RE-EXPORTED SO NOTHING HAD TO. `matches` is
+   `features/quote/find.ts` now: the quotes LIST asks the same
+   question this board does, and two matchers on one stage is two
+   search boxes quietly disagreeing about whether a query hits. It
+   could not be imported the other way round — this file reads
+   `quoteTotals` out of the quote feature, so the import had to go
+   that way or close a cycle. See that file's header. */
+export { matches } from '@/features/quote/find'
 
 /* ------------------------------------------------------------
    ORDER
