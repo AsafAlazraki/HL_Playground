@@ -483,7 +483,7 @@ export function createEngine(ctx: RuleRunContext): RuleEngine {
 
   const valuesOf = (ref: RowRef | undefined): Record<string, CellValue> => {
     if (!ref || !ref.row) return {}
-    const key = `${ref.entityId} ${ref.row.id}`
+    const key = `${ref.entityId}\u0000${ref.row.id}`
     let values = valuesCache.get(key)
     if (!values) {
       const e = entity(ref.entityId)

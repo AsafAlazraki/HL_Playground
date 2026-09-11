@@ -334,7 +334,7 @@ export function rowsInScope(
         const v = readCell(r, fieldId)
         return v === null || v === undefined ? '' : String(v).trim().toLowerCase()
       })
-      .join(' ')
+      .join('\u0000')
   const mine = key(row)
   const ids = rows.filter((r) => key(r) === mine).map((r) => r.id)
   return ids.length > 0 ? ids : [row.id]

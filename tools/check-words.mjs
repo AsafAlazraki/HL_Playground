@@ -76,15 +76,65 @@ const JARGON = [
   ['cardinality', 'how many'],
 ]
 
+/* ============================================================
+   AND A RAW CONTROL BYTE IN A SOURCE FILE, which is here because it
+   is the same class of fault as the one above: something that makes a
+   sweep quietly stop sweeping.
+
+   `helpers.ts` carried one NUL — a deliberate separator in
+   `markKey`, written as a raw byte instead of the `\u0000` escape.
+   One such byte makes the whole file BINARY: `grep -rn` over `src/`
+   skipped it in silence, and so did `git grep`. Every sweep this repo
+   runs had a hole in it exactly the size of that file, and this
+   codebase's first working rule is "grep the tree, not the row" —
+   written down after a module was duplicated for want of one grep.
+
+   TAB, NEWLINE AND CARRIAGE RETURN ARE NOT CONTROL BYTES FOR THIS
+   PURPOSE. They are whitespace and every file has them. What is
+   refused is the rest of C0 plus DEL, none of which any editor puts
+   in a TypeScript file on purpose — and each of which has an escape
+   that reads the same to the compiler and leaves the file legible.
+   ============================================================ */
+/* The one place in this repo where matching a control character is
+   the whole point, so the rule that forbids it is turned off for
+   THIS EXPRESSION and nowhere else — a file-wide disable would let
+   the next one through in silence, which is the fault this guard was
+   written to catch. */
+// eslint-disable-next-line no-control-regex
+const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/
+
+function controlBytes(file) {
+  const raw = readFileSync(file, 'utf8')
+  const hits = []
+  raw.split('\n').forEach((line, i) => {
+    const at = line.search(CONTROL)
+    if (at === -1) return
+    const code = line.charCodeAt(at)
+    hits.push({
+      at: `${file.replace(SRC, 'src').split('\\').join('/')}:${i + 1}`,
+      code: `U+${code.toString(16).toUpperCase().padStart(4, '0')}`,
+    })
+  })
+  return hits
+}
+
 const files = sources(SRC)
 const findings = []
+const controls = files.flatMap(controlBytes)
 
 for (const file of files) {
   const src = readFileSync(file, 'utf8')
   for (const m of src.matchAll(READER_FACING)) {
     const rendered = m[2].replace(/\$\{[^}]*\}/g, ' ')
     for (const [word, instead] of JARGON) {
-      if (!new RegExp(`\b${word}\b`, 'i').test(rendered)) continue
+      /* `\\b`, NOT `\b`. Inside a template literal `\b` is the
+         BACKSPACE character (U+0008), so this pattern was
+         <BS>entity<BS> — which matches nothing a person can type, and
+         the sweep had been reporting "OK — no jargon" vacuously since
+         it was written. CLAUDE.md's own warning, in this repo's own
+         guard: a guard that silently measures the wrong thing reports
+         clean and means nothing. */
+      if (!new RegExp(`\\b${word}\\b`, 'i').test(rendered)) continue
       const line = src.slice(0, m.index).split('\n').length
       findings.push({
         at: `${file.replace(SRC, 'src').split('\\').join('/')}:${line}`,
@@ -105,8 +155,18 @@ if (files.length < 120) {
   process.exit(1)
 }
 
+if (controls.length > 0) {
+  console.log(`> A RAW CONTROL BYTE IN SOURCE (${controls.length}):`)
+  for (const c of controls) console.log(`    ${c.at}  ${c.code}`)
+  console.log(
+    '\nFAIL — one of these makes the whole file binary to grep.\n' +
+      '       Write it as an escape (\\u0000, \\t, …); the compiler reads the same byte.',
+  )
+  process.exit(1)
+}
+
 if (findings.length === 0) {
-  console.log('OK — no jargon in a string a person can read.')
+  console.log('OK — no jargon in a string a person can read, and no raw control bytes.')
   process.exit(0)
 }
 

@@ -554,9 +554,24 @@ export function valueFaceOf(field: FieldDef): 'text' | 'num' | 'date' {
   return 'text'
 }
 
-/** Marks (red-pencil corner ticks) are keyed per cell, not per index. */
+/** Marks (red-pencil corner ticks) are keyed per cell, not per index.
+ *
+ *  THE SEPARATOR IS WRITTEN AS AN ESCAPE, AND HAS TO BE. NUL is the
+ *  right separator — it is the one character that cannot appear in a
+ *  nanoid, so no two (row, field) pairs can collide on it — but it
+ *  used to sit here as a RAW control byte inside the template
+ *  literal. One such byte makes the WHOLE FILE binary: `grep -rn`
+ *  over `src/` skipped helpers.ts in silence and `git grep` did too,
+ *  so every sweep this repo runs had a hole in it exactly the size of
+ *  this file. In a codebase whose first rule is "grep the tree, not
+ *  the row" — written down after a module was duplicated for want of
+ *  one grep — a file the greps cannot see is where the next duplicate
+ *  gets written. The escape below is the same byte at runtime.
+ *
+ *  `tools/check-words.mjs` fails on a raw control byte in `src/` now,
+ *  so this cannot come back by accident. */
 export const markKey = (rowId: string, fieldId: string): string =>
-  `${rowId} ${fieldId}`
+  `${rowId}\u0000${fieldId}`
 
 /* ---------------------------------------------------------- */
 /* misc                                                       */

@@ -492,7 +492,7 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
     useMemo(
       () =>
         groups
-          .flatMap((g) => g.items.map((e) => `${e.name}${peeks[e.id] ?? ''}`))
+          .flatMap((g) => g.items.map((e) => `${e.name}\u0001${peeks[e.id] ?? ''}`))
           .join('|'),
       [groups, peeks],
     ),
