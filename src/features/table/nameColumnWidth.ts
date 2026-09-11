@@ -216,7 +216,65 @@ const CLIP_CACHE_MAX = 20000
 const VALUE_FACES = { text: '.tb-val', num: '.tb-num', date: '.tb-date' } as const
 export type ValueFace = keyof typeof VALUE_FACES
 
+/* ============================================================
+   READ ONCE PER FACE CHANGE, NOT ONCE PER RENDER.
+
+   `getComputedStyle` is a forced synchronous style read: asking for
+   `fontSize` makes the browser resolve style for the element there
+   and then, before it will answer. Three of them, plus three
+   `querySelector`s, ran on EVERY render of EVERY grid, because the
+   effect below carries no dependency array — and it cannot carry a
+   useful one, since the whole point of running late is that there
+   is no painted `.tb-val` to read until after the first paint.
+
+   MEASURED, ON THE BUILT APP (row 43's trace,
+   tools/teardown/zoomtrace.mjs): a sustained wheel-zoom across the
+   sheet with seven legible cards up spends 12.5ms of self time in
+   `paintedFont` and 27.2ms in `UpdateLayoutTree`, with seven grids
+   re-rendering repeatedly through the gesture. Seven grids asking
+   the browser the same three questions on the same frame is seven
+   copies of one answer.
+
+   SO THE ANSWER IS KEPT, AND THE INVALIDATION IS NAMED RATHER THAN
+   GUESSED AT. Exactly two things change these faces:
+
+     A RESIZE, because the faces are viewport-scaled and not fixed —
+     `.tb-val` is `clamp(12.5px, 0.701rem + 0.089vw, 13.5px)` and
+     `--data-size` is `clamp(12px, 0.670rem + 0.089vw, 13px)`
+     (table.css:5250, response.css:126). A cache that ignored width
+     would measure a 1920px window's text against a 1280px face.
+
+     THE WEBFONT ARRIVING, because Inter is wider than the fallback
+     every measurement before it was taken in — which `usePaintedWidth`
+     already knew and already handles for its own string cache.
+
+   A FAILED READ IS NEVER CACHED. Before the first cell is painted
+   there is nothing to read the face off, and storing that null would
+   freeze the fallback estimate in place forever.
+   ============================================================ */
+let faceCache: Record<ValueFace, string> | null = null
+let faceEpoch = 0
+let faceCacheAt = -1
+let watchingFaces = false
+
+/** Installed once and never removed, which is deliberate: this module
+ *  lives as long as the document does, and a listener taken off when
+ *  the last grid unmounts would have to be put back by the next one —
+ *  more machinery than the one listener it saves. */
+function watchFaces(): void {
+  if (watchingFaces || typeof window === 'undefined') return
+  watchingFaces = true
+  window.addEventListener('resize', () => {
+    faceEpoch += 1
+  })
+  void document.fonts?.ready.then(() => {
+    faceEpoch += 1
+  })
+}
+
 function faceFonts(): Record<ValueFace, string> | null {
+  watchFaces()
+  if (faceCache !== null && faceCacheAt === faceEpoch) return faceCache
   const base = paintedFont()
   if (base === null) return null
   const out = { text: base, num: base, date: base }
@@ -227,7 +285,15 @@ function faceFonts(): Record<ValueFace, string> | null {
     if (cs.fontSize === '') continue
     out[face] = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`
   }
+  faceCache = out
+  faceCacheAt = faceEpoch
   return out
+}
+
+/** Test-time reset: the cache and its epoch outlive a cleared DOM. */
+export function forgetPaintedFaces(): void {
+  faceCache = null
+  faceCacheAt = -1
 }
 
 /** Painted width of a string in the face its cell draws it in, cached
