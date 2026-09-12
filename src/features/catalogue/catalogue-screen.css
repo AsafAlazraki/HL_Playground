@@ -1,0 +1,346 @@
+/* ============================================================
+   A CATALOGUE (ct-) — SHOWROOM.
+
+   `ct-` was checked against every stylesheet in `src` before use.
+
+   The skeleton is the picker's and the place screen's, because it
+   is the same register doing the same thing one step along: a port
+   that scrolls, a column on a measure, a marque, bands, and a grid
+   of equal photographic cards. Four screens with one skeleton is
+   the point of having a register at all.
+   ============================================================ */
+
+.ct {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* `.shell-stage` is `overflow: hidden` and hands every stage a box
+   of exactly the window's height. A screen that does not scroll
+   inside itself is not short — it is CUT. */
+.ct-port {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.ct-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+  width: var(--measure);
+  margin: 0 auto;
+  padding: var(--section-gap) var(--gutter) var(--s-16);
+  container-type: inline-size;
+}
+
+/* -- the marque ------------------------------------------------ */
+
+.ct-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.ct-head-say {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+.ct-marque {
+  margin: 0;
+  color: var(--fg);
+}
+
+.ct-sub {
+  margin: 0;
+  color: var(--fg-tertiary);
+}
+
+.ct-head-do {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.ct-head-do > :first-child {
+  flex: 0 1 42ch;
+  min-width: 0;
+}
+
+/* THE SPREADSHEET IS LAST AND PLAINLY LABELLED, which is UX_PASS
+   §12's own requirement and the reason it is a quiet control beside
+   the search rather than a card in the middle of the page. */
+.ct-sheet {
+  flex: 0 0 auto;
+  height: var(--input-h);
+  padding: 0 var(--s-4);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font: inherit;
+  font-size: var(--t-small-size);
+  cursor: pointer;
+  transition:
+    background var(--d-press) var(--ease-out),
+    border-color var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ct-sheet:hover {
+    background: var(--surface-3);
+    border-color: var(--line-strong);
+    color: var(--fg);
+  }
+}
+
+.ct-sheet:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ct-none {
+  margin: 0;
+  padding: var(--s-6) var(--gutter);
+  color: var(--fg-secondary);
+}
+
+/* -- a band ---------------------------------------------------- */
+
+.ct-band {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.ct-band-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  margin: 0;
+  padding-bottom: var(--s-2);
+  border-bottom: var(--border) solid var(--line-subtle);
+}
+
+.ct-band-name {
+  color: var(--fg-tertiary);
+}
+
+/* --fg-tertiary, not --fg-quaternary: the ink table in system.css
+   measures quaternary at 3.21:1 and says it is never a word that
+   matters. A count is. */
+.ct-band-count {
+  color: var(--fg-tertiary);
+}
+
+/* -- the grid -------------------------------------------------- */
+
+.ct-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+  gap: var(--s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* NOT `grid-auto-rows: 1fr` HERE, and that is the one difference
+     from the other three grids. A card in this one can open its
+     finishes underneath itself, and an equal-row rule would stretch
+     every sibling in that row to match the open one — a grid that
+     jumps a hundred pixels because somebody pressed one card. The
+     card's own budget is what makes the closed ones equal; the open
+     one is deliberately taller, because it is showing more. */
+  align-items: start;
+}
+
+.ct-cell {
+  display: flex;
+  min-width: 0;
+}
+
+.ct-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  overflow: hidden;
+  box-shadow: var(--e-card);
+  transition:
+    box-shadow var(--d-press) var(--ease-out),
+    border-color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ct-card:hover {
+    box-shadow: var(--e-card-hover);
+    border-color: var(--line-strong);
+  }
+}
+
+.ct-face {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ct-face:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* -- the picture ----------------------------------------------- */
+
+.ct-well {
+  --mat: linear-gradient(180deg, var(--surface-3) 0%, var(--bg-sunken) 100%);
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  flex: 0 0 auto;
+  background: var(--mat);
+  border-bottom: var(--border) solid var(--line-subtle);
+  overflow: hidden;
+}
+
+.ct-plate {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--kind, transparent) 10%, var(--surface-2));
+}
+
+.ct-mono {
+  color: var(--fg-secondary);
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+}
+
+.ct-img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--mat);
+  /* CONTAIN. A cropped hull is a hull with its bow cut off. */
+  object-fit: contain;
+}
+
+.ct-rail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border: 0;
+  background: var(--kind, var(--line));
+}
+
+/* -- the words ------------------------------------------------- */
+
+.ct-say {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-3) var(--s-4);
+  min-width: 0;
+}
+
+.ct-name {
+  color: var(--fg);
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  min-height: 2lh;
+  max-height: 2lh;
+  overflow: hidden;
+}
+
+/* A FIGURE IS NEVER A HUE, and it is always mono and tabular. */
+.ct-price {
+  color: var(--fg-secondary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  min-height: 1lh;
+  max-height: 1lh;
+  overflow: hidden;
+}
+
+.ct-count {
+  color: var(--fg-tertiary);
+  min-height: 1lh;
+  max-height: 1lh;
+  overflow: hidden;
+}
+
+/* -- the finishes ---------------------------------------------- */
+
+.ct-ways {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: var(--border) solid var(--line-subtle);
+}
+
+.ct-way {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-2) var(--s-4);
+  border: 0;
+  border-bottom: var(--border) solid var(--line-subtle);
+  background: none;
+  color: var(--fg-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-press) var(--ease-out);
+}
+
+.ct-ways > :last-child .ct-way {
+  border-bottom: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ct-way:hover {
+    background: var(--surface-2);
+    color: var(--fg);
+  }
+}
+
+.ct-way:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: -2px;
+}
+
+.ct-way-say {
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.ct-way-n {
+  flex: 0 0 auto;
+  color: var(--fg-tertiary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

@@ -84,6 +84,8 @@ import { Button, Card, Field, SectionHead } from '@/ui'
 import type { ColumnFilter, SortState } from '@/features/table/core'
 import { TableSheet, SEARCH_ID } from './TableSheet'
 import { JobsPanel } from './JobsPanel'
+import { CatalogueScreen } from '@/features/catalogue/CatalogueScreen'
+import { rebuiltPicker } from '@/features/quote/rebuilt'
 import { jobsFor, tableSay } from './jobs'
 import { NoMatchPlate } from './EmptyPlates'
 import { FacetRail } from './FacetRail'
@@ -258,6 +260,7 @@ export function Catalogue({
 }: CatalogueProps): JSX.Element {
   const entity = useProjectStore((s) => s.entities[entityId]) as EntityDef | undefined
   const lens = useCatalogueLens(entityId)
+  const rebuilt = rebuiltPicker()
 
   /* THE NARROWING LIVES HERE, not in the register — see the note on
      SheetViewState in TableSheet.tsx. */
@@ -622,6 +625,33 @@ export function Catalogue({
      nothing would be a second, worse empty state over the top of a
      working one. */
   if (!entity) return <div className="cat-root" />
+
+  /* ============================================================
+     THE REBUILT CATALOGUE, behind the same switch as the rest —
+     `features/quote/rebuilt.ts`. It is mounted HERE, after every
+     hook above it has run, because an early return before a hook is
+     a different number of hooks between two renders.
+
+     `CatalogueScreen` carries what was measured on the arrival it
+     replaces: five text links in an empty page at 2.45x, and a
+     gallery drawing four cards of one boat. It keeps the sheet one
+     press away, which is UX_PASS §12's own requirement — pressing
+     it sets the lens to `list` and this branch stands aside, so the
+     shipped register and its own lens switcher are exactly where
+     they were.
+     ============================================================ */
+  if (rebuilt && entity && lens !== 'list') {
+    return (
+      <CatalogueScreen
+        entityId={entityId}
+        onOpenRow={(rowId) => {
+          if (onOpenRow) onOpenRow(rowId)
+          else setCatalogueLens(entityId, 'list')
+        }}
+        onOpenSheet={() => setCatalogueLens(entityId, 'list')}
+      />
+    )
+  }
 
   return (
     <section
