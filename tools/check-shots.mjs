@@ -91,12 +91,22 @@ const door = (p, name) => p.locator('nav.sn').getByRole('button', { name }).firs
 const SCREENS = [
   { name: 'home', at: '', open: async (p) => door(p, /^Home/) },
   { name: 'modules', at: 'modules', open: async (p) => door(p, /^Modules/) },
+  /* AND IT WENT UNREACHED THE MOMENT THE GRID OF PLACES WAS
+     REBUILT, because `Open … — ` is the shipped tile's accessible
+     name and the rebuilt tile's is the place. Third time a path in
+     this file has gone stale under the rebuild, and every one of
+     them was the guard reporting correctly — which is the argument
+     for running it after each screen rather than at the end. */
   {
     name: 'module',
     at: 'module',
     open: async (p) => {
       await door(p, /^Modules/)
-      await p.getByRole('button', { name: /^Open .+ — / }).first().click()
+      await p.waitForTimeout(1400)
+      const rebuilt = await p.locator('.mo-face').count()
+      if (rebuilt > 0) await p.locator('.mo-face').first().click()
+      else await p.getByRole('button', { name: /^Open .+ — / }).first().click()
+      await p.waitForTimeout(1200)
       await p.getByRole('tab', { name: 'Dashboard' }).first().click()
     },
   },
