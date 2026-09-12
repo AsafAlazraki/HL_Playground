@@ -49,6 +49,13 @@ filter. Read it before you re-derive any of them and re-block the work. It is
 there because those clauses, not laziness, are what rejected every visual idea
 this project brought for months.
 
+**The rebuilt screens are what the app opens on.** Home, the quote
+picker, a place, a catalogue, the configurator and Data are rebuilt and
+measured —  is the scoreboard.
+ in the URL returns every shipped screen and the answer is
+remembered;  comes back.  is
+the one switch and carries why it is a hash and not a search param.
+
 The design system is `src/styles/system.css`. Every surface is drawn at
 `/design.html` (`npm run dev`, then open it) — check your screen against it.
 

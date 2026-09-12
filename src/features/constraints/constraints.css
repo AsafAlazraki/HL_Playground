@@ -5237,14 +5237,21 @@
 }
 
 /* how many of this kind the business has written, counted on this
-   render — a figure, so mono and tabular */
+   render — a figure, so mono and tabular.
+
+   --ink-soft AND NOT --ink-faint, and the difference was measured:
+   driven in Chrome on the rules screen, the "0" on a door card came
+   back at 4.43:1 against the ground it is actually drawn on. Rule 4
+   is 4.5:1 and the tint counts. --ink-faint is --fg-tertiary through
+   the bridge and clears on the page ground; this card is not the
+   page ground. A count of rules is a figure somebody reads. */
 .cn-door-n {
   margin-left: auto;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-size: var(--ui-s-size);
   font-weight: 500;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 .cn-door-makes {

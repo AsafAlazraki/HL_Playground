@@ -41,6 +41,8 @@ import { ICON_SIZE } from '@/lib/icons'
 import { Field } from '@/ui'
 import { isRetired } from '@/types/model'
 import type { EntityDef } from '@/types/model'
+import { useLintFindings } from '@/features/review'
+import { reviewSay } from './ReviewStage'
 import { stageKeys, useStageEscape } from './stageKeys'
 import { useStageEntry } from './stageEntry'
 import './data-screen.css'
@@ -86,6 +88,7 @@ export function DataScreen({
   const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
   const modules = useProjectStore((s) => s.modules)
   const constraints = useConstraints()
+  const findings = useLintFindings()
   const [query, setQuery] = useState('')
   const [by, setBy] = useState<SortBy>('rows')
 
@@ -139,6 +142,14 @@ export function DataScreen({
   const stock = sheets.filter((s) => !s.join && !s.retired)
   const allRows = sheets.reduce((n, s) => n + s.rows, 0)
   const rules = WORKBOOK_RULES.length + constraints.length
+  /* WHAT IS BEHIND THE REVIEW DOOR, ON THE DOOR. `reviewDoor.test`
+     holds this: "the press is never into an empty room unannounced".
+     The first draft of this screen turned six billboard cards into
+     five controls and dropped the fact off this one on the way — a
+     button reading "Review" promises nothing, and the test was right
+     to fail it. Same `reviewSay` the shipped door used, so the two
+     can never word it differently. */
+  const blockers = findings.reduce((n, f) => n + (f.severity === 'blocker' ? 1 : 0), 0)
 
   return (
     <div className="dt" data-register="cockpit" role="region" {...stage} onKeyDown={stageKeys}>
@@ -176,6 +187,7 @@ export function DataScreen({
             onPick={onOpenReview}
           >
             Review
+            <span className="dt-way-n">{reviewSay(blockers, findings.length - blockers)}</span>
           </Way>
         </nav>
       </header>

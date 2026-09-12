@@ -19,6 +19,25 @@
    navigation that drops the hash does not silently throw somebody
    back to the old screen mid-comparison.
 
+   ============================================================
+   THE REBUILT SCREENS ARE THE DEFAULT NOW, AND THAT IS WHAT THE
+   SWITCH WAS BUILT TO MAKE SAFE.
+
+   Six screens are rebuilt, driven end to end from an empty profile,
+   and measured — `docs/research/visual-qa-rebuild.md` is the
+   scoreboard. Home, the picker, a place and a catalogue run 6.86x
+   scale contrast against the 3.09/3.68/3.09/2.45x they replaced;
+   Data runs 2.82x with eighteen rows in view against six cards in
+   800px. 720 text leaves composited against the ground they are
+   actually drawn on, none under 4.5:1. No mid-word cut anywhere,
+   measured with a ruler that was itself fixed twice.
+
+   A flag nobody can find is a flag nobody tests. `#build=old` still
+   returns every shipped screen, in one press, and the answer is
+   remembered — which is the whole reason this is a URL and not a
+   build-time constant.
+   ============================================================
+
    BOTH DIRECTIONS ARE REACHABLE BY URL, which is the rule that
    matters for a kill switch: whoever is looking at a broken screen
    must be able to leave it without knowing where a setting lives.
@@ -41,12 +60,14 @@ export function rebuiltBuild(): boolean {
       localStorage.setItem(PREF, asked)
       return asked === 'new'
     }
-    return localStorage.getItem(PREF) === 'new'
+    /* NEVER ASKED BEFORE MEANS THE REBUILT ONES. Only an explicit
+       `#build=old` opts out, and it is remembered once given. */
+    return localStorage.getItem(PREF) !== 'old'
   } catch {
     /* No `window`, no URL, or storage refused is not a reason to
-       fail to draw a quote — it is a reason to draw the one that
-       has shipped. */
-    return false
+       fail to draw a quote — it is a reason to draw the screens
+       that have been measured. */
+    return true
   }
 }
 
