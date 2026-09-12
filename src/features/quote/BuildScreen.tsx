@@ -45,19 +45,19 @@
 
 import { useMemo, useState } from 'react'
 import type { ReactElement } from 'react'
-import { PriceBar, ProductStage, Stepper } from '@/ui'
+import { Field, PriceBar, ProductStage, Stepper } from '@/ui'
 import type { Step } from '@/ui'
 import { money } from '@/lib/money'
 import { QUOTE_LEVEL_ORDER, LEVEL_TITLE } from '@/types/model'
 import type { QuoteDef, QuoteLine } from '@/types/model'
-import { sectionKinds, stepOffer } from './freeze'
+import { customerBook, freezeCustomer, hasCustomerRegister, sectionKinds, stepOffer } from './freeze'
 import type { Candidate } from './freeze'
-import { addLine, removeLine, setLevel } from './quotes'
+import { addLine, linkCustomer, patchQuote, removeLine, setLevel } from './quotes'
 import { orderBands } from './bands'
 import { marqueOf } from './marque'
 import { FrozenPhoto } from './photo'
 import type { Band } from './bands'
-import { buildSteps } from './steps'
+import { buildSteps, HANDOVER_STEP } from './steps'
 import type { BuildStep } from './steps'
 import { issueBlockers, quoteTotals } from './totals'
 import './build-screen.css'
@@ -108,10 +108,20 @@ export function BuildScreen({ quote }: BuildScreenProps): ReactElement {
   return (
     <div className="bs" data-register="showroom">
       <header className="bs-rail">
+        {/* THE LAST STOP IS NOT A BAND. `steps.ts` declares
+            `HANDOVER_STEP` beside the subject for exactly this
+            reason: "who is it for" is the one question no table can
+            carry, and `CONFIGURATOR.md` calls its absence from the
+            build screen "the single biggest fault in the flow" —
+            it sends a person to the document to do something the
+            build should own. */}
         <Stepper
-          steps={bands.map((b) => railStop(b, refusals))}
-          currentId={open?.id ?? ''}
-          doneIds={bands.filter((b) => b.amount !== null).map((b) => b.id)}
+          steps={[...bands.map((b) => railStop(b, refusals)), handoverStop(quote)]}
+          currentId={openId}
+          doneIds={[
+            ...bands.filter((b) => b.amount !== null).map((b) => b.id),
+            ...(quote.customer?.name ? [HANDOVER_STEP] : []),
+          ]}
           onGo={setOpenId}
           label="Build steps"
         />
@@ -159,8 +169,12 @@ export function BuildScreen({ quote }: BuildScreenProps): ReactElement {
           ) : null}
         </section>
 
-        <section className="bs-step" aria-label={open?.name ?? 'This step'}>
-          {open ? <BandPane quote={quote} band={open} /> : null}
+        <section className="bs-step" aria-label={openId === HANDOVER_STEP ? 'Who it is for' : (open?.name ?? 'This step')}>
+          {openId === HANDOVER_STEP ? (
+            <Handover quote={quote} refusals={refusals} />
+          ) : open ? (
+            <BandPane quote={quote} band={open} />
+          ) : null}
         </section>
       </div>
 
@@ -216,6 +230,17 @@ function railStop(b: Band, refusals: readonly string[]): Step {
   }
 }
 
+/** The handover, as a rail stop. It is never refused: a quote can
+ *  always be addressed, and the blockers that stop it being ISSUED
+ *  are said on the bar, beside the action they block. */
+function handoverStop(quote: QuoteDef): Step {
+  return {
+    id: HANDOVER_STEP,
+    name: 'Who it is for',
+    chose: quote.customer?.name || undefined,
+  }
+}
+
 /** The subject's picture, as the stage wants it. One for now — a
  *  frozen quote holds a single `subjectImage`, and the colourway
  *  gallery is the picker's job rather than the document's. */
@@ -230,6 +255,133 @@ function subjectPictures(quote: QuoteDef) {
       alt: img.alt ?? quote.subjectLabel,
     },
   ]
+}
+
+/* ---- who it is for ----------------------------------------- */
+
+/* ============================================================
+   THE HANDOVER — the one question no table can carry.
+
+   `CONFIGURATOR.md` §3: "If a quote cannot be addressed on the
+   screen where it is built, that is the single biggest fault in
+   the flow — it sends a person to the document to do something the
+   build should own." The old screen's footer said "Type the
+   customer name at the top" and there was no field at the top.
+
+   A NAME IS ENOUGH. A walk-in who gave a name and no details is a
+   real quote, and so is a quote to somebody since taken out of the
+   register — `unlinkCustomer` says as much in its own words. So
+   the register is an OFFER here, never a gate: type a name and the
+   quote is addressed.
+
+   THE NAME IS FROZEN ONTO THE DOCUMENT, and `customerRef` is a
+   pointer that nothing prints. `QUOTE_SPEC.md`'s acceptance test
+   is that deleting the customer from the register leaves the
+   printed quote unchanged, and that only holds because the name
+   travelled by value.
+   ============================================================ */
+function Handover({
+  quote,
+  refusals,
+}: {
+  quote: QuoteDef
+  refusals: readonly string[]
+}): ReactElement {
+  /* The draft is local so a store write does not land per keystroke
+     — `Field`'s own note makes the same argument: a value that
+     writes on every character is a history entry per character, and
+     undo then walks somebody backwards through their own typing one
+     letter at a time. */
+  const [typed, setTyped] = useState(quote.customer?.name ?? '')
+  const book = useMemo(() => (hasCustomerRegister() ? customerBook() : []), [])
+
+  const commit = (name: string): void => {
+    const clean = name.trim()
+    patchQuote(quote.id, {
+      customer: clean ? { name: clean } : undefined,
+      /* Typing over a linked customer breaks the link: the name on
+         the document is no longer the name in the register, and a
+         pointer that disagrees with what is printed is worse than
+         no pointer. */
+      customerRef: undefined,
+    })
+  }
+
+  return (
+    <div className="bs-pane">
+      <div className="bs-pane-head">
+        <p className="t-label bs-pane-num">Who it is for</p>
+        <p className="t-small bs-pane-why">
+          A name is enough. Everything else on the document is already decided.
+        </p>
+      </div>
+
+      <div className="bs-hand">
+        <Field
+          label="Customer"
+          value={typed}
+          onChange={setTyped}
+          onBlur={() => commit(typed)}
+          placeholder="Their name, as it should read on the quote"
+          autoComplete="off"
+        />
+
+        {book.length > 0 ? (
+          <div className="bs-book">
+            <p className="t-label bs-book-cap">Or somebody you have quoted before</p>
+            <ul className="bs-book-list">
+              {book.slice(0, 8).map((c) => (
+                <li key={c.rowId}>
+                  <button
+                    type="button"
+                    className="bs-book-one"
+                    data-on={quote.customerRef?.rowId === c.rowId || undefined}
+                    onClick={() => {
+                      const frozen = freezeCustomer(c.rowId)
+                      if (!frozen) return
+                      linkCustomer(quote.id, frozen)
+                      setTyped(frozen.customer?.name ?? '')
+                    }}
+                  >
+                    <span className="t-body bs-book-name">{c.name}</span>
+                    {c.contact.length > 0 ? (
+                      <span className="t-caption bs-book-meta">{c.contact[0]}</span>
+                    ) : null}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {/* WHAT IS STILL IN THE WAY, in the engine's own words. A
+            refusal is a sentence with a reason, in the place the
+            thing is refused — and the action it refuses is on the
+            bar below, which is why this is a list and not a repeat
+            of the bar's one-liner. */}
+        {refusals.length > 0 ? (
+          <div className="bs-stops">
+            <p className="t-label bs-stops-cap">
+              {refusals.length === 1
+                ? 'One thing is in the way'
+                : `${refusals.length} things are in the way`}
+            </p>
+            <ul className="bs-stops-list">
+              {refusals.map((r) => (
+                <li className="t-small bs-stop" key={r}>
+                  {r}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="t-small bs-ready">
+            Nothing is in the way. This quote can go to the customer.
+          </p>
+        )}
+      </div>
+    </div>
+  )
 }
 
 /* ---- one stop ---------------------------------------------- */
