@@ -147,6 +147,17 @@
    not `--font-ui`: tokens.css:124 defines `--font-ui` as Archivo and
    bridge.css:140 overrides it to the sans, and a face that depends
    on import order is the trap §2 already cost an hour on. */
+/* THE ONE PAGE WHOSE NAME IS ITS OWN SUBJECT takes the display
+   step — see `lead` in PageHead.tsx for the measurement and for why
+   it is a claim rather than a size. The whole set moves together;
+   nothing is restated by hand (rule 6). */
+.ph.is-lead .ph-name {
+  font-size: var(--t-display-size);
+  font-weight: var(--t-display-weight);
+  line-height: var(--t-display-lead);
+  letter-spacing: var(--t-display-track);
+}
+
 .ph-name {
   margin: 0;
   min-width: 0;

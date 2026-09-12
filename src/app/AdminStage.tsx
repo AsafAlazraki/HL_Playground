@@ -141,7 +141,7 @@ function Door({
         <span className="ad-door-mark" aria-hidden="true">
           <Glyph size={MARK} weight={MARK_WEIGHT} />
         </span>
-        <span className="ds-display-xl ad-door-name">{name}</span>
+        <span className="ad-door-name">{name}</span>
         {/* THE ONE FACT. Mono, tabular, because most of them are
             figures and a column of facts that do not line up on the
             decimal is a column somebody has to read twice. */}
@@ -247,6 +247,7 @@ export function AdminStage({
   return (
     <div
       className="shell-viewstage ad"
+      data-register="cockpit"
       role="region"
       {...stage}
       /* Delete and Backspace stop at this root, the same line every
@@ -321,6 +322,7 @@ export function AdminStage({
               whose business this is on every screen, and a person
               who pressed Admin wants to know they are in Admin. */}
           <PageHead
+            lead
             eyebrow={org?.name ?? 'Your business'}
             name="Admin"
             /* THE RUNG IS SAID, because what is on this screen
@@ -373,7 +375,7 @@ export function AdminStage({
                   <span className="ad-door-mark" aria-hidden="true">
                     <ArrowsLeftRight size={MARK} weight={MARK_WEIGHT} />
                   </span>
-                  <span className="ds-display-xl ad-door-name">Import / export</span>
+                  <span className="ad-door-name">Import / export</span>
                   <span className="ad-door-fact">
                     <ImportExportMenu align="left" />
                   </span>
@@ -438,7 +440,7 @@ function QuoteTermsCell(): ReactElement {
         <span className="ad-door-mark" aria-hidden="true">
           <Quotes size={MARK} weight={MARK_WEIGHT} />
         </span>
-        <span className="ds-display-xl ad-door-name">Quote terms</span>
+        <span className="ad-door-name">Quote terms</span>
         <span className="ad-door-fact">
           <Field
             label="The sentence every new quote starts with"

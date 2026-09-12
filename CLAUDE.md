@@ -183,6 +183,18 @@ a seventh, the catalogue, was UNREACHED because its default lens had moved
 and the harness still looked for `.cat-gallery`. An unreached screen is a
 picture nobody is taking; the guard says so on its own line.
 
+**AND A MEASUREMENT TAKEN AGAINST A LONG-LIVED DEV SERVER MAY NOT BE
+ABOUT YOUR CODE.** Vite's HMR serves partial transforms after a
+structural edit — a new `const` or `import` used but not declared, a
+new class on an element that never gets it. It bit three times in one
+session: a screen rendered blank and measured as zero text leaves; a
+`data-register` never appeared; an `is-lead` class was absent from the
+DOM while present in the file. Every one looked like a code defect and
+none was. **Restart `npm run dev` (and `rm -rf node_modules/.vite`)
+before measuring anything you have just restructured**, and have every
+driver print `pageerror` on its own line — that is what caught all
+three.
+
 **A performance number taken against `npm run dev` is not a number about
 this product.** Measure against the build:
 

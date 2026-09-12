@@ -3146,6 +3146,22 @@
    space below that, never mid-word. Data's six cells (the drawing's
    door is worth two) divide into three full rows of two; Admin's
    three leave one trailing, which every grid has. */
+/* ============================================================
+   TWO COLUMNS, AND ONE COLUMN WAS TRIED AND MEASURED WORSE.
+
+   The billboard fault on this screen was never the grid — it was
+   that each door's NAME was 34px, the largest thing on Admin,
+   louder than every value under it. With the names at the subtitle
+   step the two-column grid is four compact cards.
+
+   Drawn as one column they became four FULL-WIDTH cards of 127px
+   each, holding one short line apiece: 990px of row to say "0
+   roles". Measured, the band ran past the fold at 808px against
+   543px for two columns. A settings page cannot manufacture
+   density — there really are only four settings, and §2's ">=18
+   rows" is about a screen of DATA — but it can decline to make the
+   four it has any bigger than they are.
+   ============================================================ */
 .ad-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3175,13 +3191,30 @@
   color: var(--accent);
   line-height: 0;
 }
-/* THE NAME WEARS `.ds-display-xl` — one of several, and the point of
-   the screen, so the largest thing on it; the page title above stays
-   at the title step. Nothing here restates the step (rule 6). */
+/* ============================================================
+   THE NAME IS A NAV LABEL, AND IT WORE `.ds-display-xl`.
+
+   "The point of the screen, so the largest thing on it" is the
+   argument that was here, and it is the inversion `page.css` spent
+   forty lines fixing one screen over: at 34px these four words were
+   the biggest thing on Admin, louder than every value under them —
+   "the application talking about itself, louder than the business's
+   own data". A door to Access & roles is a nav label. The roles are
+   the subject.
+
+   `--t-subtitle-*`, the whole set, nothing restated by hand
+   (rule 6). Measured after: 19px against the page title's 24, so
+   the head ranks above its own doors, which is the order a person
+   reads them in.
+   ============================================================ */
 .ad-door-name {
   display: block;
-  margin-top: var(--s-3);
+  margin-top: var(--s-1);
   min-width: 0;
+  font-size: var(--t-subtitle-size);
+  font-weight: var(--t-subtitle-weight);
+  line-height: var(--t-subtitle-lead);
+  letter-spacing: var(--t-subtitle-track);
 }
 /* THE ONE FACT. Mono and tabular, because most of them are
    figures and a column of facts that does not line up is a column

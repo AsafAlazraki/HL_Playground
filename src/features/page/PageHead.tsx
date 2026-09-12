@@ -55,6 +55,26 @@ export interface PageHeadProps {
   /** a quieter, shorter header for a page that is mostly content —
    *  the catalogue, a table. Same anatomy, less air. */
   tight?: boolean
+  /* ============================================================
+     THE PAGE WHOSE NAME IS THE ONLY HEADLINE ON IT.
+
+     page.css argues at length why this head takes the TITLE step
+     and not a display one, and it is right about the screens it
+     measured: on Modules, `.ph-name` at 30.72px outranked the
+     twenty-five brand names at 26.88 — "the application talking
+     about itself, louder than the business's own data".
+
+     ADMIN HAS NO SUCH SUBJECT. It is four settings; its largest
+     value is a sentence in a text field. With the head at the title
+     step the whole screen measured 2.18x scale contrast, under
+     Cockpit's 2.5-3.2x band, because nothing on it was allowed to
+     be large — chrome least of all.
+
+     So this is opt-in and it is NOT a size: it is the claim that
+     this page has no subject that should outrank its name. Never
+     set it on a page that lists the business's own things.
+     ============================================================ */
+  lead?: boolean
 }
 
 export function PageHead({
@@ -65,10 +85,11 @@ export function PageHead({
   acts,
   tools,
   tight = false,
+  lead = false,
 }: PageHeadProps): JSX.Element {
   return (
     <>
-      <header className={`ph${tight ? ' is-tight' : ''}`}>
+      <header className={`ph${tight ? ' is-tight' : ''}${lead ? ' is-lead' : ''}`}>
         <div className="ph-say">
           {/* THE EYEBROW IS THE SYSTEM'S ONE UPPERCASE STYLE, drawn by the
               primitive that owns it. It is `level="none"`: the `h1` two
