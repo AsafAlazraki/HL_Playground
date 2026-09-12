@@ -44,6 +44,7 @@
    ============================================================ */
 
 import { useMemo, useState } from 'react'
+import { AnimatePresence } from 'motion/react'
 import type { ReactElement } from 'react'
 import { Field, PriceBar, ProductStage, Stepper } from '@/ui'
 import type { Step } from '@/ui'
@@ -54,12 +55,17 @@ import { customerBook, freezeCustomer, hasCustomerRegister, sectionKinds, stepOf
 import type { Candidate } from './freeze'
 import { addLine, linkCustomer, patchQuote, removeLine, setLevel } from './quotes'
 import { orderBands } from './bands'
+import { CascadeSheet } from './CascadeSheet'
+import { cascadeOfConflict } from './cascade'
+import { levelConflict } from './conflict'
+import type { Conflict } from './conflict'
 import { marqueOf } from './marque'
 import { FrozenPhoto } from './photo'
 import type { Band } from './bands'
 import { buildSteps, HANDOVER_STEP } from './steps'
 import type { BuildStep } from './steps'
 import { issueBlockers, quoteTotals } from './totals'
+import { useStillness } from '@/features/views/stillness'
 import './build-screen.css'
 
 export interface BuildScreenProps {
@@ -104,6 +110,17 @@ export function BuildScreen({ quote }: BuildScreenProps): ReactElement {
   )
 
   const open = bands.find((b) => b.id === openId) ?? bands[0]
+
+  /* THE PROPOSAL IS A QUESTION, NOT A WRITE. Nothing has changed on
+     the quote while this is set: the committed total stays exactly
+     where it was until Accept, which is the half of the Porsche
+     sheet that makes it readable. */
+  const [proposal, setProposal] = useState<{
+    conflict: Conflict
+    levelKey: string
+    levelLabel: string
+  } | null>(null)
+  const { still } = useStillness()
 
   return (
     <div className="bs" data-register="showroom">
@@ -193,7 +210,25 @@ export function BuildScreen({ quote }: BuildScreenProps): ReactElement {
             label: LEVEL_TITLE[k] ?? k,
           }))}
           levelKey={quote.levelKey}
-          onLevel={(k) => setLevel(quote.id, k)}
+          /* CHANGING THE RUNG IS THE ONE CHOICE THAT MOVES EVERY LINE
+             ALREADY MADE, so it asks first. The rebuilt screen called
+             `setLevel` straight through, which silently repriced the
+             whole quote — "nobody announces a cascade" is the closed
+             negative `configurator-teardowns-2026.md` found across
+             eight shipping configurators, and I had shipped it.
+
+             `levelConflict` returns null when nothing actually moves,
+             and then the change simply happens: a sheet that opens to
+             report no change is furniture. */
+          onLevel={(k) => {
+            const label = LEVEL_TITLE[k] ?? k
+            const conflict = levelConflict(quote, k, label)
+            if (conflict === null) {
+              setLevel(quote.id, k)
+              return
+            }
+            setProposal({ conflict, levelKey: k, levelLabel: label })
+          }}
           action={
             <button type="button" className="bs-give" disabled={refusals.length > 0}>
               Give it to the customer
@@ -205,6 +240,29 @@ export function BuildScreen({ quote }: BuildScreenProps): ReactElement {
           actionNote={refusals[0]}
         />
       </footer>
+
+      {/* THE SHEET, OVER A STAGE THAT IS STILL THERE AND FROZEN. The
+          Porsche teardown found the blur is load-bearing: it says
+          the configurator has not been replaced, only suspended.
+          `AnimatePresence` so it leaves as well as arrives — exit
+          faster than enter, which the sheet's own transition holds. */}
+      <AnimatePresence>
+        {proposal ? (
+          <CascadeSheet
+            key={proposal.conflict.id}
+            cascade={cascadeOfConflict(proposal.conflict, {
+              label: proposal.levelLabel,
+              amount: null,
+            })}
+            still={still}
+            onAccept={() => {
+              setLevel(quote.id, proposal.levelKey)
+              setProposal(null)
+            }}
+            onCancel={() => setProposal(null)}
+          />
+        ) : null}
+      </AnimatePresence>
     </div>
   )
 }
