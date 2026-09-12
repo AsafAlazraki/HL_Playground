@@ -76,7 +76,7 @@ export function QuotePage({
      `.qt-root` in quote.css. */
   if (!quote) {
     return (
-      <div className="qt-root qt-root--doc">
+      <div className="qt-root qt-root--doc" data-register="showroom">
         <p className="qt-void">That quote is no longer here.</p>
       </div>
     )
@@ -93,7 +93,7 @@ export function QuotePage({
   }
 
   return (
-    <div className="qt-root qt-root--doc">
+    <div className="qt-root qt-root--doc" data-register="showroom">
       {/* the controls are OUTSIDE the document, and print hides
           everything that is not the document itself */}
       <div className="qt-issued-head">

@@ -984,16 +984,58 @@
   border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
 }
-/* the <h1> of the document a customer is handed. 1.05 leading was
-   the 38px step's number used at 28px, which sets a wrapped name
-   almost solid; 1.12 is what 26px asks for (apple-design §15,
-   leading tracks size inversely). */
+/* ============================================================
+   THE <h1> OF THE DOCUMENT A CUSTOMER IS HANDED.
+
+   It printed one string — "Highfield - RU230KAM (PVC) WH" — at the
+   26px step, wrapping onto two lines. It is three facts and it is
+   now set as three: the maker as a label above, the MODEL at the
+   marque step, and the material and colourway under it, read out
+   of the map rather than left as a code.
+
+   THE MODEL IS THE MARQUE, which is the whole of the scale fix on
+   this page: SHOWROOM asks for >=6x contrast and the document
+   measured 2.91x with a 32px letterhead as its largest type. The
+   boat a person is buying should not be smaller than the name of
+   the yard selling it.
+
+   THE PRINT BLOCK IS NOT TOUCHED BY THIS. @page rules further down
+   this file set their own sizes for paper; this is the screen.
+   ============================================================ */
 .qt-doc-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  min-width: 0;
+}
+
+.qt-doc-marque-maker {
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: var(--t-label-track);
+  line-height: var(--t-label-lead);
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+}
+
+.qt-doc-marque-model {
   font-family: var(--font-display);
-  font-size: var(--display-m-size);
-  font-weight: var(--display-weight);
-  line-height: var(--display-m-lead);
-  letter-spacing: var(--display-m-track);
+  font-size: var(--t-marque-size);
+  font-weight: var(--t-marque-weight);
+  line-height: var(--t-marque-lead);
+  letter-spacing: var(--t-marque-track);
+  color: var(--fg);
+  /* Nothing truncates mid-word: a model code is one unbroken token
+     and a cut in it cannot be read through. */
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.qt-doc-marque-trim {
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-secondary);
 }
 .qt-doc-specs {
   display: flex;
@@ -1225,6 +1267,32 @@
     /* the ≥22px floor holds, in points */
     font-size: 22pt;
   }
+
+  /* ============================================================
+     AND THE LOCKUP TAKES POINTS ON PAPER.
+
+     `.qt-doc-name` is the flex COLUMN now, not the type — the
+     model, the maker and the trim each set their own step — so a
+     print rule that sizes only the container sizes nothing a person
+     reads. Left alone, the model printed at `--t-marque-size`,
+     which is 75px of screen type on an A4 page.
+
+     22pt is the floor this file already held the document's name
+     to, kept.
+     ============================================================ */
+  .qt-doc-marque-maker {
+    font-size: 9pt;
+  }
+
+  .qt-doc-marque-model {
+    font-size: 22pt;
+    line-height: 1.1;
+  }
+
+  .qt-doc-marque-trim {
+    font-size: 10pt;
+  }
+
   .qt-doc-specs,
   .qt-plate-val,
   .qt-doc-detail,
@@ -2552,6 +2620,32 @@
     font-size: 22pt;
     line-height: 1.1;
   }
+
+  /* ============================================================
+     AND THE LOCKUP TAKES POINTS ON PAPER.
+
+     `.qt-doc-name` is the flex COLUMN now, not the type — the
+     model, the maker and the trim each set their own step — so a
+     print rule that sizes only the container sizes nothing a person
+     reads. Left alone, the model printed at `--t-marque-size`,
+     which is 75px of screen type on an A4 page.
+
+     22pt is the floor this file already held the document's name
+     to, kept.
+     ============================================================ */
+  .qt-doc-marque-maker {
+    font-size: 9pt;
+  }
+
+  .qt-doc-marque-model {
+    font-size: 22pt;
+    line-height: 1.1;
+  }
+
+  .qt-doc-marque-trim {
+    font-size: 10pt;
+  }
+
 
   .qt-doc-head {
     padding-bottom: 4mm;

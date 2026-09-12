@@ -44,10 +44,34 @@ import type { ReactElement } from 'react'
 import { money } from './pricing'
 import { lineAmount, linesOf, looseLines, quoteTotals } from './totals'
 import { FrozenPhoto } from './photo'
+import { marqueOf } from './marque'
+import { colourwayOf, splitVariant } from './colourway'
 import type { QuoteDef, QuoteLine } from '@/types/model'
 
 export interface QuoteDocumentProps {
   quote: QuoteDef
+}
+
+/* ============================================================
+   THE TRIM, READ RATHER THAN PRINTED AS A CODE.
+
+   `(PVC) WH` is a material and a colourway. The brackets are the
+   sheet's punctuation, not the dealer's, and `colourway.ts` reads
+   the code out of the map the original HelmLogic has shipped since
+   it was seeded — so `B-G-B` prints as "Black / Grey / Black".
+
+   A CODE NOBODY CAN READ PRINTS AS ITSELF. 121 of Highfield's 604
+   rows carry a token no production map has (`I`, `O`, `R`, `WH`),
+   and half a translation reads as one that worked. Those print
+   exactly what the price file carries.
+   ============================================================ */
+function readTrim(trim: string): string {
+  const { material, code } = splitVariant(trim)
+  const clean = material.replace(/[()]/g, ' ').replace(/s+/g, ' ').trim()
+  const read = colourwayOf(code)
+  const say = read.read ? read.say : code
+  if (clean === '') return say
+  return say === '' ? clean : `${clean} · ${say}`
 }
 
 export function QuoteDocument({ quote }: QuoteDocumentProps): ReactElement {
@@ -91,6 +115,10 @@ export function QuoteDocument({ quote }: QuoteDocumentProps): ReactElement {
      at mint time; that is a change in quotes.ts and is reported, not
      papered over here. */
   const kind = quote.supersedesId === undefined ? 'Quotation' : 'Revised quotation'
+
+  /* The frozen label, taken apart for the headline — see the note
+     on the <h1> below. Every character of it still prints. */
+  const lockup = marqueOf(quote.subjectLabel)
 
   return (
     <article className="qt-doc" aria-label={`${kind} ${quote.reference}`}>
@@ -147,7 +175,38 @@ export function QuoteDocument({ quote }: QuoteDocumentProps): ReactElement {
           h={225}
         />
         <div className="qt-doc-subject-id">
-          <h1 className="qt-doc-name">{quote.subjectLabel}</h1>
+          {/* ============================================================
+              THE ONE PAGE A CUSTOMER READS, AND IT PRINTED AN SKU.
+
+              "Highfield - RU230KAM (PVC) WH" is four facts welded
+              together — a maker, a model, a hull material and a
+              colourway — and it was the headline of the document, set
+              at 26px and wrapping onto two lines. A person being sold
+              a boat reads the model's name; the string with the
+              brackets in it is what gets ordered.
+
+              NOTHING IS DROPPED AND NOTHING IS RESOLVED LATE. `marqueOf`
+              takes the FROZEN label apart and every character of it
+              comes back out in maker, model and trim — the same
+              function and the same lockup the configurator draws, so
+              the screen a dealer built on and the page a customer is
+              handed name the boat identically. It reads the quote's
+              own frozen string and no live data, which is the whole
+              of `freeze.ts`'s contract.
+
+              AND THE SKU IS STILL CITED, on the line below in the rig
+              table, exactly as the price file writes it. The headline
+              is the name; the line is the order.
+              ============================================================ */}
+          <h1 className="qt-doc-name">
+            {lockup.maker === '' ? null : (
+              <span className="qt-doc-marque-maker">{lockup.maker}</span>
+            )}
+            <span className="qt-doc-marque-model">{lockup.model}</span>
+            {lockup.trim === '' ? null : (
+              <span className="qt-doc-marque-trim">{readTrim(lockup.trim)}</span>
+            )}
+          </h1>
           {quote.subjectSpecs.length > 0 ? (
             <dl className="qt-doc-specs">
               {quote.subjectSpecs.map((s) => (
