@@ -3994,9 +3994,25 @@
   letter-spacing: var(--t-label-track);
   color: var(--fg-secondary);
 }
+/* ============================================================
+   THE ACCENT ON ITS OWN WASH, WHICH system.css NAMES BY SELECTOR.
+
+   Its palette note reads: "WHERE IT IS NOT LEGAL AS TEXT, measured:
+   the accent on its own wash ... `.cn-src-verdict` in
+   constraints.css is doing the first of those and measures 4.14:1
+   in the app." It was right, it named the file and the class, and
+   the rule went on doing it — a known defect with nothing failing
+   on it. A two-theme sweep found thirteen of them on this screen.
+
+   THE WASH KEEPS THE IDENTITY AND THE INK GOES TO `--fg`. A badge
+   reading ASSERTED is a label, not a selected state, so solidifying
+   it into the accent — the fix the finish chips and the kind chips
+   took — would make a quiet fact shout. The tint says which kind of
+   verdict it is; the word is just read.
+   ============================================================ */
 .cn-src-verdict.is-asserted {
   background: var(--accent-wash);
-  color: var(--accent);
+  color: var(--fg);
 }
 
 /* the workbook the rule came out of — a dealer's own file name, so

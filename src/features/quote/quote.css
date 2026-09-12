@@ -1010,13 +1010,30 @@
   min-width: 0;
 }
 
+/* ============================================================
+   THE PAPER'S OWN INK, NOT THE THEME'S — and these three used
+   `--fg`, `--fg-secondary` and `--fg-tertiary` for one commit.
+
+   `.qt-doc` carries its own ramp, scoped to the sheet, and the note
+   on it says exactly why: "a `var()` would follow the theme again
+   and that is the entire fault being fixed". The paper is #fff in
+   both themes because a document that changed colour with the
+   reader's preference would be two documents — so a theme ink on it
+   is light type on white.
+
+   MEASURED IN DARK BEFORE THE FIX, on the page a customer is
+   handed: the model 1.14:1, the maker 2.52:1, the trim 1.95:1. The
+   headline of the quotation was very nearly invisible, and it took
+   a two-theme sweep to see it because nothing had ever measured
+   this screen in dark.
+   ============================================================ */
 .qt-doc-marque-maker {
   font-size: var(--t-label-size);
   font-weight: var(--t-label-weight);
   letter-spacing: var(--t-label-track);
   line-height: var(--t-label-lead);
   text-transform: uppercase;
-  color: var(--fg-tertiary);
+  color: var(--ink-faint);
 }
 
 .qt-doc-marque-model {
@@ -1025,7 +1042,7 @@
   font-weight: var(--t-marque-weight);
   line-height: var(--t-marque-lead);
   letter-spacing: var(--t-marque-track);
-  color: var(--fg);
+  color: var(--ink);
   /* Nothing truncates mid-word: a model code is one unbroken token
      and a cut in it cannot be read through. */
   overflow-wrap: normal;
@@ -1035,7 +1052,7 @@
 .qt-doc-marque-trim {
   font-size: var(--t-small-size);
   line-height: var(--t-small-lead);
-  color: var(--fg-secondary);
+  color: var(--ink-soft);
 }
 .qt-doc-specs {
   display: flex;

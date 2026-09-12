@@ -404,7 +404,14 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
                     the one component that draws it; `none` because it
                     is not a heading — the line under it is */}
                 <SectionHead level="none">No customer register yet</SectionHead>
-                <h2 className="ds-hero cx-empty-title">Everybody you sell to, in one book.</h2>
+                {/* `t-display`, for the reason the other empty state
+                    on this screen takes it: an empty state drawn at
+                    the size of a full one is the fault the front door
+                    and the quotes board both had, and BOTH of this
+                    screen's are cards in the middle of a register.
+                    The hero step put the screen at 3.68x against
+                    Cockpit's 2.5-3.2x band. */}
+                <h2 className="t-display cx-empty-title">Everybody you sell to, in one book.</h2>
                 {/* AN EMPTY STATE KEEPS ITS SENTENCE AND ITS ACT — one
                     sentence. This was three: what a customer is, where
                     the register lives, and what it saves you. The first
