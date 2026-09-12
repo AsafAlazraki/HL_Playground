@@ -66,8 +66,8 @@ run a bare `tsc`; the project config is
 `npx tsc --noEmit -p tsconfig.app.json`.
 
 **The lint ceiling is a ratchet, not a budget.** `oxlint src tools
---max-warnings 355`. It landed at 411 (`31d1265`, the first time a linter had
-ever run here) and has come down to 355. Clear warnings and lower the number in
+--max-warnings 354`. It landed at 411 (`31d1265`, the first time a linter had
+ever run here) and has come down to 354. Clear warnings and lower the number in
 the same commit. The 356th warning is a failure, not a new baseline.
 
 **`check-styles`** fails if a class is written in TSX that no stylesheet

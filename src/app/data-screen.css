@@ -1,0 +1,375 @@
+/* ============================================================
+   DATA (dt-) — COCKPIT.
+
+   `dt-` was checked against every stylesheet in `src` before use.
+
+   THIS IS THE OTHER REGISTER, and the whole point of there being
+   two. The Showroom screens take a marque at 75px, a 16:10
+   photograph and a choreographed entrance. This one takes 32px
+   rows, tabular figures, no entrance at all, and a scale band of
+   2.5-3.2x — because somebody is in here for an hour, not for a
+   moment, and a screen read for an hour must not shout.
+
+   DENSITY IS THE REQUIREMENT, not a preference: §2 asks for >=18
+   rows visible at 1280x800, and the screen this replaces showed
+   SIX cards in the same box.
+   ============================================================ */
+
+.dt {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: var(--s-5) var(--gutter) 0;
+  gap: var(--s-4);
+}
+
+/* -- the head -------------------------------------------------- */
+
+.dt-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-6);
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+}
+
+.dt-head-say {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dt-name {
+  margin: 0;
+  color: var(--fg);
+}
+
+.dt-census {
+  margin: 0;
+  color: var(--fg-tertiary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- the ways out ---------------------------------------------- */
+
+.dt-ways {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.dt-way {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--h-md);
+  padding: 0 var(--s-3);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font: inherit;
+  font-size: var(--t-small-size);
+  cursor: pointer;
+  transition:
+    background var(--d-press) var(--ease-out),
+    border-color var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dt-way:hover {
+    background: var(--surface-3);
+    border-color: var(--line-strong);
+    color: var(--fg);
+  }
+}
+
+.dt-way:active {
+  background: var(--surface-4, var(--surface-3));
+}
+
+.dt-way:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+.dt-way-glyph {
+  display: inline-flex;
+  color: var(--fg-tertiary);
+}
+
+/* A FIGURE IS NEVER A HUE, and it is always mono and tabular. */
+.dt-way-n {
+  color: var(--fg-tertiary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-caption-size);
+}
+
+/* -- the tools ------------------------------------------------- */
+
+.dt-tools {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-4);
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.dt-tools > :first-child {
+  width: min(100%, 34ch);
+}
+
+/* HOW MANY ARE HIDDEN, SAID IN WORDS. The curation contract the
+   original's Step 5 gets right: narrow, and then state the count.
+   `aria-live` so the figure reaches somebody who cannot see it
+   change. */
+.dt-count {
+  margin: 0 0 var(--s-2);
+  color: var(--fg-tertiary);
+}
+
+/* -- the table ------------------------------------------------- */
+
+.dt-port {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: var(--border) solid var(--line);
+  border-top-left-radius: var(--r-card);
+  border-top-right-radius: var(--r-card);
+  background: var(--surface-1);
+}
+
+/* ============================================================
+   THE COLUMNS ARE PIXELS, AND THE TABLE IS ALLOWED TO BE WIDER
+   THAN THE WINDOW.
+
+   They were percentages of the column, and the identity cell cut
+   TWENTY-THREE names dead — "Highfield × Yamaha — Moto", with the
+   rest simply gone and no ellipsis to say so. Twenty-seven of the
+   fifty-three tables here are relationships and a relationship's
+   name is a sentence: "Haines Signature × Dunbier/Haines BMT —
+   Trailer Fitment" is fifty-four characters.
+
+   `dense-tables-and-selection.md`: fixed layout at or under twelve
+   columns, the identity column PINNED, 150px minimum on any
+   column. Five columns at 1,120px total means a small horizontal scroll
+   at 1280 and none at 1440 — and a name a person can read at both.
+   ============================================================ */
+.dt-table {
+  width: 100%;
+  min-width: 1120px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+/* THE HEADER STAYS WHILE THE ROWS GO PAST, which is the whole
+   argument for a scrollport that is not the page. */
+.dt-h {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 0;
+  text-align: left;
+  background: var(--surface-2);
+  border-bottom: var(--border) solid var(--line);
+}
+
+.dt-h--n {
+  text-align: right;
+}
+
+/* The header cell over the pinned column is pinned in BOTH
+   directions, which is the only way a corner cell stays a corner. */
+.dt-h:first-child {
+  left: 0;
+  z-index: 3;
+}
+
+.dt-h--plain {
+  padding: 0 var(--s-3);
+  color: var(--fg-tertiary);
+  height: var(--row-h);
+}
+
+.dt-sort {
+  display: block;
+  width: 100%;
+  height: var(--row-h);
+  padding: 0 var(--s-3);
+  border: 0;
+  background: none;
+  color: var(--fg-tertiary);
+  font: inherit;
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dt-sort:hover {
+    color: var(--fg);
+    background: var(--surface-3);
+  }
+}
+
+.dt-sort:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* THE COLUMN THE TABLE IS SORTED BY IS MARKED, and `aria-sort` on
+   the cell is what announces it — this is the drawing of the same
+   fact, never the only statement of it. */
+.dt-h[aria-sort='descending'] .dt-sort,
+.dt-h[aria-sort='ascending'] .dt-sort {
+  color: var(--fg);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.dt-row {
+  height: var(--row-h);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dt-row:hover {
+    background: var(--surface-2);
+  }
+}
+
+.dt-c {
+  height: var(--row-h);
+  padding: 0 var(--s-3);
+  border-bottom: var(--border) solid var(--line-subtle);
+  color: var(--fg-secondary);
+  font-size: var(--t-small-size);
+  /* A CELL CLIPS AT A WORD AND NEVER INSIDE ONE. `white-space:
+     nowrap` with `text-overflow: ellipsis` cuts mid-word, which is
+     the one truncation a proper noun cannot be read through — so
+     the cell holds one line and hides the overflow at a boundary
+     the browser chooses, and the column is wide enough that it
+     does not come up. */
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* PINNED. The name is what a person is scanning for, so it stays
+   put while the figures scroll under the cursor. It carries its own
+   opaque ground because a sticky cell with a transparent one has
+   the rows it passes drawn straight through it. */
+/* THE GEOMETRY, ON THE COLUMNS THEMSELVES. */
+.dt-col--name {
+  width: 480px;
+}
+
+.dt-col--place,
+.dt-col--what {
+  width: 200px;
+}
+
+.dt-col--n {
+  width: 120px;
+}
+
+/* PINNED. The name is what a person is scanning for, so it stays
+   put while the figures scroll under the cursor. It carries its own
+   opaque ground because a sticky cell with a transparent one has
+   the rows it passes drawn straight through it. */
+.dt-c--name {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding: 0;
+  background: var(--surface-1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dt-row:hover .dt-c--name {
+    background: var(--surface-2);
+  }
+}
+
+.dt-c--place {
+  color: var(--fg-tertiary);
+}
+
+.dt-c--what {
+  color: var(--fg-tertiary);
+}
+
+.dt-c--n {
+  text-align: right;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* THE NAME IS THE ACT. One control per row, and it is the thing a
+   person is looking for — not a chevron in the last column. */
+.dt-open {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  height: var(--row-h);
+  padding: 0 var(--s-3);
+  border: 0;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--t-small-size);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dt-open:hover {
+    color: var(--accent);
+  }
+}
+
+.dt-open:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* The kind, as a dot on the thing that HAS that kind. §3 lets a hue
+   carry a surface and never a word — so the name beside it stays
+   ink, and the dot is `aria-hidden` because the column three across
+   says the same thing in words. */
+.dt-dot {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.dt-none {
+  margin: 0;
+  padding: var(--s-6) var(--s-4);
+  color: var(--fg-secondary);
+}
+
+/* -- narrow ---------------------------------------------------- */
+
+@media (max-width: 720px) {
+  /* THE PLACE COLUMN GOES FIRST. It is the one fact repeated on
+     every row of a group, so it is the cheapest to lose — and the
+     name, the count and what it holds all survive. */
+  .dt-c--place,
+  .dt-h:nth-child(2) {
+    display: none;
+  }
+}

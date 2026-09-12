@@ -184,6 +184,25 @@
   }
 }
 
+/* ============================================================
+   AND THE META STEPS UP ON THE ROW THAT IS CURRENT.
+
+   The note above measures --fg-tertiary at 4.80:1 over
+   --accent-wash, which clears 4.5 and is true. It is not the whole
+   ground this ink lands on: the SAME row takes --accent-wash-strong
+   on hover, and driven in Chrome the count beside the current rail
+   item — "53" next to Data, on every screen, because something is
+   always current — measured **4.37:1** there.
+
+   A pair that clears only while the pointer is somewhere else does
+   not clear. --fg-secondary is 8.55:1 on white and keeps its
+   headroom on both washes, and on the row a person is standing in,
+   the figure beside the name is not a detail.
+   ============================================================ */
+.ui-row[aria-current] .ui-row-meta {
+  color: var(--fg-secondary);
+}
+
 /* Nothing in this file moves — the press rule above says
    `transform: none` outright — so reduced motion has nothing to
    remove here. The colour feedback is already what §4 asks to

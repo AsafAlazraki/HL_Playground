@@ -22,7 +22,6 @@ import {
   type RuleNodeConfigMap,
   type RuleNodeKind,
   type ViewDef,
-  type ViewBlock,
   type ModuleDef,
   type RoleDef,
   canBeModuleMaster,

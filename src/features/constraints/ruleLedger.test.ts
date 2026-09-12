@@ -35,7 +35,7 @@ describe('the rule ledger', () => {
   it('covers every workbook rule exactly once', () => {
     const refs = RULE_LEDGER.map((e) => e.ref)
     expect(new Set(refs).size).toBe(refs.length)
-    expect([...refs].sort()).toEqual([...WORKBOOK_RULES.map((s) => s.ref)].sort())
+    expect([...refs].sort()).toEqual(WORKBOOK_RULES.map((s) => s.ref).sort())
   })
 
   it('puts every rule in a group that exists', () => {

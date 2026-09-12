@@ -14,7 +14,7 @@
     "check:types": "tsc --noEmit -p tsconfig.app.json",
     "check:contrast": "node tools/check-contrast.mjs",
     "check:shots": "node tools/check-shots.mjs",
-    "lint": "oxlint src tools --max-warnings 355",
+    "lint": "oxlint src tools --max-warnings 354",
     "lint:fix": "oxlint src tools --fix",
     "check:words": "node tools/check-words.mjs",
     "check:stores": "node tools/check-stores.mjs"

@@ -30,6 +30,7 @@ import { QuoteStage } from './QuoteStage'
    cycle, and Vite resolves it to `undefined` at run time rather
    than failing to build. */
 import { QuoteStart, type QuoteStartProps } from '@/features/quote/QuoteStart'
+import { DataScreen } from './DataScreen'
 import { HomeScreen } from '@/features/dashboard/HomeScreen'
 import { PickerScreen } from '@/features/quote/PickerScreen'
 import { PlaceScreen } from '@/features/quote/PlaceScreen'
@@ -521,6 +522,20 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
       )
     case 'data':
       return (
+        rebuiltPicker() ? (
+        /* THE REBUILT DATA SCREEN — the first COCKPIT screen, behind
+           the same switch as the Showroom ones. `DataScreen` carries
+           what was measured on the six-card menu it replaces. */
+        <DataScreen
+          onOpenTable={(id) => h.openWin({ kind: 'table', entityId: id })}
+          onOpenDrawing={h.openSheet}
+          onOpenLevels={() => h.openWin({ kind: 'levels', entityId: null })}
+          onOpenRules={() => h.openWin({ kind: 'rules' })}
+          onOpenFitment={() => h.openWin({ kind: 'flow' })}
+          onOpenReview={() => h.openWin({ kind: 'review' })}
+          onClose={h.close}
+        />
+      ) : (
         <DataStage
           onOpenDrawing={h.openSheet}
           onOpenTables={() => h.openWin({ kind: 'gallery' })}
@@ -530,6 +545,7 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
           onOpenReview={() => h.openWin({ kind: 'review' })}
           onClose={h.close}
         />
+      )
       )
     case 'admin':
       return (

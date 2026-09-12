@@ -55,6 +55,41 @@ export async function signInAndSeed(page) {
 export async function midWord(page) {
   return await page.evaluate(() => {
     const bad = []
+
+    /* ============================================================
+       THE CLIP SWEEP RUNS OVER EVERY ELEMENT THAT HOLDS TEXT, not
+       only over childless ones — the second hole this had.
+
+       The rebuilt Data screen's identity cell is a button holding a
+       kind dot AND a name, so `children.length === 0` was false and
+       the element that actually does the clipping was never looked
+       at. It drew "Highfield × Yamaha — Moto" with the rest of the
+       name gone and this reported the screen clean.
+
+       An element qualifies when it carries a text node of its own,
+       so a card with `overflow: hidden` around a picture is not
+       reported as a truncated string.
+       ============================================================ */
+    const holdsText = (el) =>
+      [...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? '').trim().length > 1)
+
+    for (const el of document.querySelectorAll('*')) {
+      if (!holdsText(el)) continue
+      const cs = getComputedStyle(el)
+      if (cs.display === 'none' || cs.visibility === 'hidden') continue
+      const oneLine = cs.whiteSpace === 'nowrap' || cs.whiteSpace === 'pre'
+      const shut = cs.overflowX === 'hidden' || cs.overflowX === 'clip'
+      if (oneLine && shut && el.scrollWidth > el.clientWidth + 1) {
+        bad.push({
+          /* A HARD CLIP IS THE WORSE OF THE TWO: an ellipsis at
+             least says a string was cut. */
+          kind: cs.textOverflow === 'ellipsis' ? 'ellipsis' : 'hard-clip',
+          text: (el.textContent ?? '').trim().slice(0, 44),
+          where: el.className,
+        })
+      }
+    }
+
     const leaves = [...document.querySelectorAll('*')].filter(
       (el) => el.children.length === 0 && (el.textContent ?? '').trim().length > 1,
     )
@@ -64,12 +99,6 @@ export async function midWord(page) {
       const node = el.firstChild
       if (!node || node.nodeType !== 3) continue
       const text = node.textContent ?? ''
-
-      /* A clipped single line: does the ellipsis land inside a word? */
-      if (cs.textOverflow === 'ellipsis' && el.scrollWidth > el.clientWidth + 1) {
-        bad.push({ kind: 'clip', text: text.trim().slice(0, 44), where: el.className })
-        continue
-      }
 
       let prevTop = null
       for (let i = 0; i < text.length; i++) {
