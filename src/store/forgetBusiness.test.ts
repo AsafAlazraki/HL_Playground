@@ -33,12 +33,11 @@
    ============================================================ */
 
 import { describe, expect, it } from 'vitest'
-import { BUSINESS_KEYS, KEPT_KEYS, isBusinessKey } from './forgetBusiness'
+import { BUSINESS_KEYS, KEPT_KEYS, isBusinessKey, isKeptKey } from './forgetBusiness'
 
 describe('what a wipe takes', () => {
-  it('takes the documents, the rules and the decisions about them', () => {
+  it('takes the rules and the decisions about them', () => {
     for (const key of [
-      'helmlogic.quotes.v1',
       'helmlogic.constraints.v1',
       'helmlogic.constraints.seeded.v1',
       'helmlogic.discovered.v1',
@@ -51,7 +50,7 @@ describe('what a wipe takes', () => {
     /* Every one of these is org-scoped with the slug appended
        (TENANCY §4.1). A wipe that only took the current org's rows
        would leave a second business's data in the browser. */
-    expect(isBusinessKey('helmlogic.quotes.v1:northside-marine')).toBe(true)
+    expect(isBusinessKey('helmlogic.constraints.v1:northside-marine')).toBe(true)
     expect(isBusinessKey('hl.pipeline.notes.v1:some-other-yard')).toBe(true)
   })
 
@@ -64,6 +63,27 @@ describe('what a wipe takes', () => {
 })
 
 describe('what a wipe must NOT take', () => {
+  /* THE ONE THE APP PROMISES IN WRITING, and took anyway until
+     2026-09-12. `sheetNow.ts:71-89` decides it and the clear-sheet
+     confirm prints it, counted: "Your 3 quotes stay ... you can still
+     open and print every one." `helmlogic.quotes.v1` was nonetheless
+     the first BUSINESS_KEY, and the assertion that it was correct
+     lived in this file, three describes up.
+
+     A quote is a photograph: every field on every line is a frozen
+     value and nothing on it reads the sheet. Clearing the sheet to
+     restore a backup must not destroy every document a dealer has
+     handed a customer. */
+  it('LEAVES THE QUOTES ALONE, which is what the confirm promises', () => {
+    expect(isBusinessKey('helmlogic.quotes.v1')).toBe(false)
+    expect(isKeptKey('helmlogic.quotes.v1')).toBe(true)
+  })
+
+  it('leaves them alone under any organisation', () => {
+    expect(isBusinessKey('helmlogic.quotes.v1:northside-marine')).toBe(false)
+    expect(isKeptKey('helmlogic.quotes.v1:northside-marine')).toBe(true)
+  })
+
   /* Emptying the sheet is not signing out. */
   it('leaves the session alone', () => {
     expect(isBusinessKey('hl.session.user')).toBe(false)

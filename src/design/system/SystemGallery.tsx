@@ -185,10 +185,13 @@ function TypeSection({ register }: { register: Register }) {
       setSizes(next)
     }
     read()
+    /* The observer is the whole dependency list. Type steps are not
+       register-scoped, so a register change cannot move a size — only
+       the window can, and that is what this watches. */
     const ro = new ResizeObserver(read)
     ro.observe(document.documentElement)
     return () => ro.disconnect()
-  }, [register])
+  }, [])
 
   const reachable = TYPE_STEPS.filter((s) => (s.in as readonly string[]).includes(register))
   const values = reachable.map((s) => sizes[s.name]).filter(Boolean)
@@ -535,13 +538,28 @@ function MotionSection() {
    against `document.documentElement` returns empty — which is the
    same class of mistake as a reference page that imports a
    different stylesheet than the app. */
-function Computed({ token, from }: { token: string; from?: React.RefObject<HTMLElement | null> }) {
+function Computed({ token }: { token: string }) {
   const [value, setValue] = useState('')
-  useLayoutEffect(() => {
-    const el = from?.current ?? document.documentElement
-    setValue(getComputedStyle(el).getPropertyValue(token).trim())
-  }, [token, from])
-  return <>{value || '—'}</>
+  /* IT READS ITS OWN COMPUTED STYLE, and that is the whole trick.
+     Custom properties inherit, so a span sitting inside
+     `[data-register="cockpit"]` resolves `--row-h` to the Cockpit
+     value without being handed a ref to the pane — and the same
+     component inside the durations table resolves `--d-med` off the
+     root. The first draft took a `RefObject` and reached for
+     `.current` inside a `useCallback`, which React Compiler cannot
+     preserve; the cascade already knew the answer.
+
+     A callback ref rather than an effect: a layout effect that sets
+     state synchronously is a cascading render. */
+  return (
+    <span
+      ref={(node) => {
+        if (node) setValue(getComputedStyle(node).getPropertyValue(token).trim())
+      }}
+    >
+      {value || '—'}
+    </span>
+  )
 }
 
 /* ---- DENSITY ----------------------------------------------- */
@@ -584,10 +602,20 @@ function DensityPane({ register }: { register: Register }) {
     if (!el) return
     const row = el.querySelector('.gal-row')
     if (!row) return
-    const h = row.getBoundingClientRect().height
-    const stage = 800 - 44 - 40 - 56 /* masthead, foot, table head */
-    setFits(h ? Math.floor(stage / h) : null)
-  }, [register])
+    /* Observed rather than re-run on `register`, because the thing
+       that actually moves is the row's height — and observing it
+       catches a token change, a font swap and a window resize alike,
+       where a dependency on `register` catches only the first. */
+    const read = () => {
+      const h = row.getBoundingClientRect().height
+      const stage = 800 - 44 - 40 - 56 /* masthead, foot, table head */
+      setFits(h ? Math.floor(stage / h) : null)
+    }
+    read()
+    const ro = new ResizeObserver(read)
+    ro.observe(row)
+    return () => ro.disconnect()
+  }, [])
 
   const short = register === 'cockpit' && fits !== null && fits < 18
 
@@ -596,7 +624,7 @@ function DensityPane({ register }: { register: Register }) {
       <div className="t-label gal-dim gal-cap">{register}</div>
       <div className="gal-rows">
         {ROWS.map(([n, name, code, len, price]) => (
-          <div className="gal-row" key={n} data-press="row" tabIndex={0}>
+          <div className="gal-row" key={n} data-press="row">
             <span className="t-mono-sm gal-dim">{n}</span>
             <span className="t-body gal-row-name">{name}</span>
             <span className="t-mono-sm gal-dim">{code}</span>
@@ -606,7 +634,7 @@ function DensityPane({ register }: { register: Register }) {
         ))}
       </div>
       <p className="t-caption gal-dim">
-        row-h <Computed token="--row-h" from={pane} /> ·{' '}
+        row-h <Computed token="--row-h" /> ·{' '}
         <span className="gal-fits" data-short={short || undefined}>
           {fits ?? '—'} rows in a 1280&times;800 stage
           {register === 'cockpit' ? ' (needs 18)' : ''}

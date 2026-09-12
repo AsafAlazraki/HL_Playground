@@ -56,8 +56,8 @@
 /** Every stored thing that belongs to the BUSINESS and dies with it.
  *  A prefix, because each is org-scoped with the slug appended. */
 export const BUSINESS_KEYS: readonly string[] = [
-  /* the documents, and where one was started from */
-  'helmlogic.quotes.v1',
+  /* where a build was started from. The DOCUMENTS themselves are in
+     KEPT_KEYS — see the note there. */
   'helmlogic.build.place.v1',
   /* the rules: written, seeded from the workbook, and the decisions
      taken about the ones discovery proposed */
@@ -97,6 +97,32 @@ export const BUSINESS_KEYS: readonly string[] = [
  *  that is neither here nor above is unclassified, and
  *  `forgetBusiness.test.ts` fails until somebody decides which it is. */
 export const KEPT_KEYS: readonly string[] = [
+  /* THE QUOTES, and this was a live data-loss bug until 2026-09-12.
+
+     `sheetNow.ts:71-89` decides it, out loud and at length: "THEY
+     SURVIVE ... a dealer who clears the sheet to restore a backup
+     would destroy every document they have given a customer". The
+     clear-sheet confirm PRINTS that promise, computed and counted —
+     "Your 3 quotes stay. A quote is a photograph of what was offered
+     on the day ... you can still open and print every one."
+
+     And then it took them. `ImportExportMenu.tsx:366` calls
+     `resetProject()`, which calls `forgetBusiness()`, whose first
+     BUSINESS_KEY was `helmlogic.quotes.v1` — and
+     `forgetBusiness.test.ts` asserted that destruction was correct,
+     so the guard was green on the way out.
+
+     The tell that it was a slip and not a decision: `hl.quotes.view`,
+     the PREFERENCE for which view of the quotes a person likes, was
+     already three lines below in this same list. The preference was
+     classified as the person's; the documents were classified as the
+     business's and destroyed.
+
+     There is exactly one production caller of `resetProject()` — the
+     clear-sheet button — and no org-switch path through here, so
+     nothing legitimate wanted them gone. If a tenancy wipe ever does,
+     it gets its own list and its own sentence. */
+  'helmlogic.quotes.v1',
   /* WHO IS SIGNED IN. Emptying the sheet is not signing out, and a
      person thrown back to a login screen by pressing "start again"
      would reasonably think they had destroyed their account. */
@@ -129,7 +155,12 @@ export const KEPT_KEYS: readonly string[] = [
 export const isBusinessKey = (key: string): boolean =>
   BUSINESS_KEYS.some((p) => key === p || key.startsWith(`${p}:`))
 
-const isKeptKey = (key: string): boolean =>
+/** Is this key one the PERSON owns, and a wipe must leave standing?
+ *  Exported so a test can assert the positive. Asserting only that a
+ *  key is not a business key passes for a key nobody has classified
+ *  at all, which is how the quotes were lost: the negative was never
+ *  the question. */
+export const isKeptKey = (key: string): boolean =>
   KEPT_KEYS.some((p) => key === p || key.startsWith(`${p}:`))
 
 /** For the guard: a key this app writes that nobody has classified. */

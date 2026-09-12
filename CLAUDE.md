@@ -58,16 +58,17 @@ The design system is `src/styles/system.css`. Every surface is drawn at
 npm test
 ```
 
-**Five** guards, in this order: `check:types` → `lint` → `vitest run` →
-`check:reachable` → `check:styles`. It ran three of those until 2026-09-08 —
+**Seven** guards, in this order: `check:types` → `lint` → `vitest run` →
+`check:reachable` → `check:styles` → `check:words` → `check:stores`. It ran
+three of those until 2026-09-08 —
 a typecheck-clean tree and a lint-clean tree were assumed, not checked. Never
 run a bare `tsc`; the project config is
 `npx tsc --noEmit -p tsconfig.app.json`.
 
 **The lint ceiling is a ratchet, not a budget.** `oxlint src tools
---max-warnings 400`. It landed at 411 (`31d1265`, the first time a linter had
-ever run here) and came down to 400 (`f853666`). Clear warnings and lower the
-number in the same commit. The 401st warning is a failure, not a new baseline.
+--max-warnings 355`. It landed at 411 (`31d1265`, the first time a linter had
+ever run here) and has come down to 355. Clear warnings and lower the number in
+the same commit. The 356th warning is a failure, not a new baseline.
 
 **`check-styles`** fails if a class is written in TSX that no stylesheet
 declares. 19 pre-existing orphans are baselined in `tools/style-baseline.json`;
