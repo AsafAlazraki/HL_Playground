@@ -112,7 +112,7 @@ describe('foldModels', () => {
   })
 
   it('takes the first picture any of the finishes carries', () => {
-    const shot = { src: 'https://example.test/adv7.jpg' }
+    const shot = { id: 'img-adv7', src: 'https://example.test/adv7.jpg' }
     const withPic = adv7.map((e, i) => (i === 3 ? { ...e, img: shot } : e))
     expect(foldModels(withPic, adv7Leaves, finishes)[0]?.img).toBe(shot)
   })
