@@ -55,16 +55,21 @@ import type { ReactElement } from 'react'
 import { ArrowLeft } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import { markOf } from '@/lib/mark'
-import { readCell } from '@/types/model'
-import type { EntityDef, ImageRef, RowData } from '@/types/model'
 import { buildEntries } from '@/features/modules/read'
-import type { IndexEntry } from '@/features/modules/read'
+import {
+  finishLevels,
+  foldModels,
+  leafValues,
+  materialOf,
+  priceOf,
+} from '@/features/catalogue/fold'
+import type { Model, Offer } from '@/features/catalogue/fold'
 import { createViewFor } from '@/features/views/viewDefs'
 import { useProjectStore } from '@/store/useProjectStore'
 import { Button, Field } from '@/ui'
 import type { QuoteDoor } from './start'
 import { marqueOf } from './marque'
-import { colourwayOf, isColourway, splitVariant } from './colourway'
+import { colourwayOf, splitVariant } from './colourway'
 import { FrozenPhoto } from './photo'
 import { unsellableSubject } from './freeze'
 import { createQuoteFromView, unaddressedDraftFor } from './quotes'
@@ -76,153 +81,6 @@ export interface PlaceScreenProps {
   onBack: () => void
   /** a quote was minted, and the shell opens it */
   onStarted: (quoteId: string) => void
-}
-
-/* ---------------------------------------------------------- */
-/* What a card is                                              */
-/* ---------------------------------------------------------- */
-
-/** One row, with the cell that distinguishes it from its siblings.
- *  The code is READ OFF THE ROW, never parsed back out of the
- *  rendered label: a model whose name ends in a hyphenated token
- *  would defeat any parse, and the cell is right there. */
-interface Offer {
-  entry: IndexEntry
-  /** the row's own hierarchy level — "HYP B-G-B" */
-  leaf: string
-}
-
-interface Model {
-  key: string
-  /** the series this model sits under — "Adventure", "Sport". '' on
-   *  a table that groups by nothing. */
-  series: string
-  /** what the card is called — the model code on a three-level
-   *  table, the row's own label everywhere else. */
-  name: string
-  /** one row, or every finish of one model */
-  offers: Offer[]
-  img?: ImageRef
-  /** every offer's price, for the range under the name */
-  amounts: number[]
-  /** the distinct materials across the offers — one on most models,
-   *  two where the same hull comes in Hypalon and PVC */
-  materials: string[]
-  hay: string
-}
-
-/** The row's OWN level of the hierarchy — the one `trailOf` drops
- *  because the label already says it. Read here rather than parsed
- *  off the label: a proper noun with a hyphen in it would defeat any
- *  parse, and the cell is right there. */
-function leafValues(
-  tables: readonly EntityDef[],
-  rowsByEntity: Record<string, RowData[]>,
-): Map<string, string> {
-  const out = new Map<string, string>()
-  for (const entity of tables) {
-    const levels = entity.hierarchy ?? []
-    const last = levels.at(-1)
-    if (levels.length < 2 || last === undefined) continue
-    for (const row of rowsByEntity[entity.id] ?? []) {
-      const v = readCell(row, last)
-      if (v === null || v === undefined) continue
-      out.set(`${entity.id}:${row.id}`, String(v).trim())
-    }
-  }
-  return out
-}
-
-/* ============================================================
-   WHETHER A TABLE'S LAST LEVEL IS A FINISH — asked ONCE PER TABLE.
-
-   The first draft asked it per ROW, and that was wrong in a way
-   only the measurement showed: 604 Highfield rows came back as 171
-   cards rather than 85, because the 121 rows whose code is `I`, `O`,
-   `R` or `WH` — tokens no production map carries — did not read as
-   colourways and so fell OUT of their own model's card and sat
-   beside it as singles. The same boat, drawn twice, once as a model
-   and once as a row.
-
-   WHAT THE LEVEL MEANS IS A FACT ABOUT THE COLUMN, not about the
-   cell. If most of a table's rows put a colourway there then the
-   level IS the finish, and a row whose code nobody can read is a
-   finish with an unreadable name — which is what it is. Half is the
-   line: Highfield reads 80%, and a motor's shaft codes and a
-   trailer's plug codes read 0%.
-   ============================================================ */
-export function finishLevels(
-  tables: readonly EntityDef[],
-  leaves: ReadonlyMap<string, string>,
-): Set<string> {
-  const seen = new Map<string, { read: number; all: number }>()
-  for (const [key, leaf] of leaves) {
-    const tableId = key.slice(0, key.lastIndexOf(':'))
-    const tally = seen.get(tableId) ?? { read: 0, all: 0 }
-    tally.all += 1
-    if (isColourway(leaf)) tally.read += 1
-    seen.set(tableId, tally)
-  }
-  const out = new Set<string>()
-  for (const entity of tables) {
-    const tally = seen.get(entity.id)
-    if (tally && tally.all > 0 && tally.read * 2 >= tally.all) out.add(entity.id)
-  }
-  return out
-}
-
-/** The material half of a variant cell, with the brackets the sheet
- *  writes around some of them taken off: "(PVC)" is PVC, "HYP" is
- *  HYP. The code is left as the code — the sheet's own word for it —
- *  because "HYP" is what a dealer reads on an order. */
-function materialOf(leaf: string): string {
-  return splitVariant(leaf).material.replace(/[()]/g, ' ').replace(/s+/g, ' ').trim()
-}
-
-/** The last segment of a trail — "Adventure ▸ ADV7" is ADV7. */
-function modelOf(trail: string): string {
-  const at = trail.lastIndexOf('▸')
-  return at < 0 ? trail.trim() : trail.slice(at + 1).trim()
-}
-
-/** Fold the catalogue into the things a person is choosing between.
- *
- *  A GROUP ONLY FORMS WHERE THE TABLE'S LAST LEVEL IS A FINISH.
- *  Everywhere else each row is its own model, so a list of 209
- *  motors stays a list of 209 motors and is not silently collapsed
- *  into nine cards by a hierarchy that means something different. */
-export function foldModels(
-  entries: readonly IndexEntry[],
-  leaves: ReadonlyMap<string, string>,
-  finishes: ReadonlySet<string>,
-): Model[] {
-  const by = new Map<string, Model>()
-  for (const e of entries) {
-    const leaf = leaves.get(`${e.tableId}:${e.rowId}`) ?? ''
-    const grouped = e.trail !== '' && finishes.has(e.tableId)
-    const key = grouped ? `${e.tableId}|${e.trail}` : `${e.tableId}|${e.rowId}`
-    const found = by.get(key)
-    if (found) {
-      found.offers.push({ entry: e, leaf })
-      if (!found.img && e.img) found.img = e.img
-      if (e.amount !== undefined) found.amounts.push(e.amount)
-      const mat = materialOf(leaf)
-      if (mat !== '' && !found.materials.includes(mat)) found.materials.push(mat)
-      found.hay = `${found.hay} ${e.hay}`
-      continue
-    }
-    by.set(key, {
-      key,
-      series: e.branch,
-      name: grouped ? modelOf(e.trail) : e.label,
-      offers: [{ entry: e, leaf }],
-      ...(e.img ? { img: e.img } : {}),
-      amounts: e.amount === undefined ? [] : [e.amount],
-      materials: materialOf(leaf) === '' ? [] : [materialOf(leaf)],
-      hay: `${e.hay} ${e.trail.toLowerCase()}`,
-    })
-  }
-  return [...by.values()]
 }
 
 /* ---------------------------------------------------------- */
@@ -428,18 +286,10 @@ function ModelCard({
   onChoose: (offer: Offer) => void
 }): ReactElement {
   const first = model.offers[0]
-
   /* ONE FIGURE WHEN THE FINISHES COST THE SAME, which on Highfield
-     they do — all seven ADV7 colourways are $105,930. A range is
-     only printed when there is one, and neither figure is computed:
-     both come off `buildEntries`, already formatted by the price
-     column the table itself nominates. */
-  const cheapest = model.amounts.length ? Math.min(...model.amounts) : undefined
-  const dearest = model.amounts.length ? Math.max(...model.amounts) : undefined
-  const spread = cheapest !== undefined && dearest !== undefined && cheapest !== dearest
-  const priced = spread
-    ? (model.offers.find((o) => o.entry.amount === cheapest)?.entry.price ?? '')
-    : (first?.entry.price ?? '')
+     they do — all seven ADV7 colourways are $105,930. `priceOf`
+     carries the rule and the reason neither figure is computed. */
+  const { say: priced, spread } = priceOf(model)
 
   return (
     <li className="pl-cell">
