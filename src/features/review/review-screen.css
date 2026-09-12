@@ -1,0 +1,341 @@
+/* ============================================================
+   REVIEW (rw-) — COCKPIT.
+
+   `rw-` was checked against every stylesheet in `src` before use.
+
+   TWO COLUMNS, AND THAT IS THE WHOLE FIX. The marks were drawn in a
+   440px rail centred in a 1056px stage with ~300px of empty page
+   down each side, so every sentence the lint engine writes wrapped
+   three or four times. `ReviewPanel` is right to be that width —
+   it is a margin note beside the sheet — and this is the PAGE.
+
+   The ledger is a Cockpit list at `--row-h`; the marks take the
+   rest. Neither is a card floating in white.
+   ============================================================ */
+
+.rw {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: var(--s-5) var(--gutter) 0;
+  gap: var(--s-4);
+}
+
+/* -- the head -------------------------------------------------- */
+
+.rw-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-6);
+  flex: 0 0 auto;
+}
+
+.rw-head-say {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rw-name {
+  margin: 0;
+  color: var(--fg);
+}
+
+/* A FIGURE IS NEVER A HUE, and it is always mono and tabular. */
+.rw-census {
+  margin: 0;
+  color: var(--fg-tertiary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.rw-none {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--fg-secondary);
+}
+
+/* -- the two columns ------------------------------------------- */
+
+.rw-body {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: var(--s-6);
+  flex: 1;
+  min-height: 0;
+}
+
+/* IT SIZES TO ITS RULES. Stretched to the full column it drew seven
+   rows and 380px of empty panel under them, which reads as a list
+   that failed to load the rest of itself. */
+.rw-ledger {
+  align-self: start;
+  max-height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+}
+
+.rw-rules {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rw-rules > :last-child .rw-rule {
+  border-bottom: 0;
+}
+
+.rw-rule {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  min-height: var(--row-h);
+  padding: var(--s-2) var(--s-3) var(--s-2) var(--s-4);
+  border: 0;
+  border-bottom: var(--border) solid var(--line-subtle);
+  background: none;
+  color: var(--fg-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rw-rule:hover {
+    background: var(--surface-2);
+    color: var(--fg);
+  }
+}
+
+.rw-rule:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: -2px;
+}
+
+.rw-rule.is-on {
+  background: var(--accent-wash);
+  color: var(--fg);
+}
+
+/* THE SEVERITY IS A RAIL, never the word's own colour — §3 puts a
+   hue on a thing that HAS that kind, and the rule row IS the thing.
+   The word beside it says the same in words, so the state is never
+   colour alone. */
+.rw-rule-rail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--line);
+}
+
+.rw-rule[data-severity='blocker'] .rw-rule-rail {
+  background: var(--danger);
+}
+
+.rw-rule[data-severity='advisory'] .rw-rule-rail {
+  background: var(--warning);
+}
+
+.rw-rule-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.rw-rule-where,
+.rw-rule-n {
+  flex: 0 0 auto;
+  color: var(--fg-tertiary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.rw-rule-n {
+  min-width: 3ch;
+  text-align: right;
+  color: var(--fg-secondary);
+}
+
+/* -- the marks ------------------------------------------------- */
+
+.rw-marks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: var(--s-10);
+}
+
+.rw-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.rw-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin: 0;
+  padding-bottom: var(--s-2);
+  border-bottom: var(--border) solid var(--line-subtle);
+}
+
+.rw-group-name {
+  color: var(--fg);
+  min-width: 0;
+}
+
+.rw-group-door {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rw-group-door:hover {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+}
+
+.rw-group-door:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-control);
+}
+
+.rw-group-n {
+  flex: 0 0 auto;
+  color: var(--fg-tertiary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.rw-rolls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rw-roll {
+  position: relative;
+  padding: var(--s-3) var(--s-4) var(--s-3) var(--s-5);
+  border: var(--border) solid var(--line-subtle);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+}
+
+.rw-roll::before {
+  content: '';
+  position: absolute;
+  inset: var(--s-3) auto var(--s-3) 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--line);
+}
+
+.rw-roll[data-severity='blocker']::before {
+  background: var(--danger);
+}
+
+.rw-roll[data-severity='advisory']::before {
+  background: var(--warning);
+}
+
+.rw-roll-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  margin: 0 0 var(--s-1);
+}
+
+.rw-roll-name {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.rw-roll-sev {
+  color: var(--fg-tertiary);
+}
+
+/* THE SENTENCE GETS A READABLE MEASURE, which is the entire point of
+   the two columns. At 440px it was ~58 characters and wrapped four
+   times; the rule of thumb it is set to here is 66–78. */
+.rw-why {
+  margin: 0 0 var(--s-2);
+  max-width: 78ch;
+  color: var(--fg-secondary);
+}
+
+.rw-each {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rw-mark {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* WHICH COLUMNS, in the sheet's own words and set as a code,
+   because that is what they are. */
+.rw-mark-at {
+  color: var(--fg-tertiary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.rw-mark-why {
+  max-width: 78ch;
+  color: var(--fg-secondary);
+}
+
+/* -- narrow ---------------------------------------------------- */
+
+@media (max-width: 900px) {
+  /* THE LEDGER GOES OVER THE MARKS rather than beside them. A 300px
+     rail against a 600px page is the straw this screen was rebuilt
+     out of, one size down. */
+  .rw-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .rw-ledger {
+    max-height: 40vh;
+  }
+}

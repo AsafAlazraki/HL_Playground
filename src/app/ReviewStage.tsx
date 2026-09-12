@@ -33,6 +33,8 @@
    ============================================================ */
 
 import type { ReactElement } from 'react'
+import { ReviewScreen } from '@/features/review/ReviewScreen'
+import { rebuiltPicker } from '@/features/quote/rebuilt'
 import { ArrowLeft } from '@phosphor-icons/react'
 import { ReviewPanel, useLintFindings } from '@/features/review'
 import { ICON_SIZE } from '@/lib/icons'
@@ -74,7 +76,12 @@ export function ReviewStage({ onClose }: ReviewStageProps): ReactElement {
             Back
           </Button>
         </div>
-        <p className="shell-view-what">
+        {/* THE BAR KEEPS THE WAY BACK AND GIVES UP THE TITLE, because
+            the rebuilt page draws its own — and two titles reading
+            "Review" four inches apart is the fault `QuoteStage`
+            argued itself out of once already. The shipped panel has
+            no head of its own, so it still needs this one. */}
+        <p className="shell-view-what" hidden={rebuiltPicker()}>
           <span className="ds-display-lg shell-view-what-name">Review</span>
           <span className="shell-view-what-sep" aria-hidden="true">
             ·
@@ -92,9 +99,20 @@ export function ReviewStage({ onClose }: ReviewStageProps): ReactElement {
             so its own close and the bar's Back would be one act drawn
             twice, four inches apart. `onClose` still reaches it,
             because Escape inside the panel means the same thing. */}
-        <div className="shell-review-well">
-          <ReviewPanel onClose={onClose} />
-        </div>
+        {rebuiltPicker() ? (
+          /* THE REBUILT REVIEW PAGE, behind the same switch as the
+             rest. `ReviewPanel` keeps its job — it is the RAIL beside
+             the sheet, and review.css argues its 340-440px clamp
+             correctly for that. This is the PAGE, and the note below
+             is what it answers: on a stage there is nowhere else to
+             be, so the rail was drawn as the whole screen and 142
+             marks went into a straw. */
+          <ReviewScreen />
+        ) : (
+          <div className="shell-review-well">
+            <ReviewPanel onClose={onClose} />
+          </div>
+        )}
       </div>
     </div>
   )
