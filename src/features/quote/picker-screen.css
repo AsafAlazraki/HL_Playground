@@ -150,8 +150,12 @@
   color: var(--fg-tertiary);
 }
 
+/* --fg-tertiary AND NOT --fg-quaternary, which this was, and it
+   measured 2.44:1 in the app. system.css says it outright at the
+   ink table: quaternary "does NOT clear 4.5 ... never a word that
+   matters". A count of places is a word that matters. */
 .qp-group-count {
-  color: var(--fg-quaternary);
+  color: var(--fg-tertiary);
 }
 
 /* -- the grid -------------------------------------------------- */
@@ -394,7 +398,8 @@
 
 .qp-off-count {
   flex: 0 0 auto;
-  color: var(--fg-quaternary);
+  /* 2.58:1 on --fg-quaternary over this row's own surface. */
+  color: var(--fg-tertiary);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }

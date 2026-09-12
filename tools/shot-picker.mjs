@@ -30,7 +30,16 @@
 import { chromium } from 'playwright-core'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { ORIGIN, wait, signInAndSeed, midWord, sayMidWord, ramp } from './drive.mjs'
+import {
+  ORIGIN,
+  wait,
+  signInAndSeed,
+  midWord,
+  sayMidWord,
+  ramp,
+  contrast,
+  sayContrast,
+} from './drive.mjs'
 
 const argv = process.argv.slice(2)
 const arg = (name, fallback) => {
@@ -83,6 +92,9 @@ try {
   }
 
   if (!sayMidWord(await midWord(page))) process.exitCode = 1
+  if (!sayContrast(await contrast(page, read.rebuilt ? '.qp' : 'body'), 'the picker')) {
+    process.exitCode = 1
+  }
 
   mkdirSync(OUT, { recursive: true })
   const file = join(OUT, `picker-${BUILD}-${w}x${h}.png`)
@@ -152,6 +164,7 @@ try {
       process.exitCode = 1
     }
     if (!sayMidWord(await midWord(page))) process.exitCode = 1
+    if (!sayContrast(await contrast(page, '.pl'), 'the place')) process.exitCode = 1
 
     const shot = join(OUT, `place-${w}x${h}.png`)
     await page.screenshot({ path: shot })

@@ -143,3 +143,142 @@ export async function ramp(page) {
     }
   })
 }
+
+/* ============================================================
+   EVERY TEXT LEAF AGAINST THE GROUND IT IS ACTUALLY DRAWN ON.
+
+   `check-contrast.mjs` does this for five shipped screens and is
+   the authority on the method; this is the same measurement, aimed
+   at a screen being built. It carries the three mistakes that made
+   the earlier sweeps lie, and they are not optional:
+
+     1. parse `color(srgb ...)` as well as `rgb()` — a parser that
+        guesses returns a number about the wrong colour;
+     2. composite the FULL ancestor chain, not the nearest
+        background — most surfaces here are translucent;
+     3. composite translucent INK over that ground before measuring.
+
+   `aria-hidden` is skipped, which is not a loophole: a plate's
+   monogram under a photograph, or a rail, is not text anybody
+   reads, and nine correct nodes went red the first time this ran
+   without it.
+
+   4.5:1 is the bar, 3:1 where the type is 24px or larger, which is
+   WCAG's own large-text line.
+   ============================================================ */
+export async function contrast(page, root = 'body') {
+  return await page.evaluate((rootSel) => {
+    const clamp = (n) => Math.max(0, Math.min(255, n))
+    const alpha = (raw) => {
+      if (raw === undefined || raw === null || raw === '') return 1
+      return String(raw).endsWith('%') ? Number(String(raw).slice(0, -1)) / 100 : Number(raw)
+    }
+    const parse = (text) => {
+      const t = String(text ?? '').trim()
+      if (t === '' || t === 'transparent') return { r: 0, g: 0, b: 0, a: 0 }
+      const srgb = t.match(
+        /^color\(\s*srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+%?))?\s*\)$/i,
+      )
+      if (srgb) {
+        return {
+          r: clamp(Number(srgb[1]) * 255),
+          g: clamp(Number(srgb[2]) * 255),
+          b: clamp(Number(srgb[3]) * 255),
+          a: alpha(srgb[4]),
+        }
+      }
+      const rgb = t.match(
+        /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:[\s,/]+([\d.]+%?))?\s*\)$/i,
+      )
+      if (rgb) {
+        return {
+          r: clamp(Number(rgb[1])),
+          g: clamp(Number(rgb[2])),
+          b: clamp(Number(rgb[3])),
+          a: alpha(rgb[4]),
+        }
+      }
+      /* NULL RATHER THAN A GUESS. A leaf whose colour cannot be read
+         is reported as unread, never measured against an invented
+         value — that is how a sweep reports clean and means nothing. */
+      return null
+    }
+    const over = (top, under) => {
+      const a = top.a + under.a * (1 - top.a)
+      if (a === 0) return { r: 0, g: 0, b: 0, a: 0 }
+      const mix = (t, u) => (t * top.a + u * under.a * (1 - top.a)) / a
+      return { r: mix(top.r, under.r), g: mix(top.g, under.g), b: mix(top.b, under.b), a }
+    }
+    const ground = (el) => {
+      const chain = []
+      let n = el
+      while (n) {
+        const bg = parse(getComputedStyle(n).backgroundColor)
+        if (bg && bg.a > 0) chain.push(bg)
+        if (bg && bg.a >= 1) break
+        n = n.parentElement
+      }
+      const paper = parse(getComputedStyle(document.documentElement).backgroundColor)
+      chain.push(paper && paper.a >= 1 ? paper : { r: 255, g: 255, b: 255, a: 1 })
+      return chain.reduceRight((u, t) => over(t, u))
+    }
+    const chan = (c) => {
+      const v = c / 255
+      return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
+    }
+    const lum = (c) => 0.2126 * chan(c.r) + 0.7152 * chan(c.g) + 0.0722 * chan(c.b)
+    const ratio = (f, b) => {
+      const [hi, lo] = lum(f) > lum(b) ? [lum(f), lum(b)] : [lum(b), lum(f)]
+      return (hi + 0.05) / (lo + 0.05)
+    }
+
+    const stage = document.querySelector(rootSel) ?? document.body
+    const leaves = [...stage.querySelectorAll('*')].filter((el) => {
+      if (el.children.length !== 0) return false
+      if ((el.textContent ?? '').trim().length === 0) return false
+      if (el.closest('[aria-hidden="true"]')) return false
+      const cs = getComputedStyle(el)
+      if (cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0') return false
+      const b = el.getBoundingClientRect()
+      return b.width >= 2 && b.height >= 2
+    })
+
+    const thin = []
+    let unread = 0
+    for (const el of leaves) {
+      const cs = getComputedStyle(el)
+      const ink = parse(cs.color)
+      if (!ink) {
+        unread += 1
+        continue
+      }
+      const bg = ground(el)
+      const r = ratio(over(ink, bg), bg)
+      const px = parseFloat(cs.fontSize)
+      const floor = px >= 24 ? 3 : 4.5
+      if (r < floor) {
+        thin.push({
+          r: Number(r.toFixed(2)),
+          need: floor,
+          px: Math.round(px),
+          text: (el.textContent ?? '').trim().slice(0, 38),
+          where: el.className || el.tagName,
+        })
+      }
+    }
+    return { checked: leaves.length, unread, thin }
+  }, root)
+}
+
+/** Print a contrast result and say whether it passed. */
+export function sayContrast(found, where) {
+  if (found.thin.length) {
+    console.log(`\nTHIN INK on ${where} (${found.thin.length} of ${found.checked}):`)
+    for (const t of found.thin) {
+      console.log(`  ${t.r}:1 (needs ${t.need}) ${t.px}px "${t.text}" · ${t.where}`)
+    }
+    return false
+  }
+  console.log(`every leaf clears 4.5:1 on ${where} · ${found.checked} checked, ${found.unread} unread`)
+  return true
+}

@@ -128,8 +128,10 @@
   color: var(--fg-tertiary);
 }
 
+/* --fg-tertiary, for the reason picker-screen.css records on its
+   own group count: quaternary measured 2.44:1 here. */
 .pl-series-count {
-  color: var(--fg-quaternary);
+  color: var(--fg-tertiary);
 }
 
 /* -- the grid -------------------------------------------------- */
