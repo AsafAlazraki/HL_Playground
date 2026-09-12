@@ -73,10 +73,22 @@ export async function midWord(page) {
     const holdsText = (el) =>
       [...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? '').trim().length > 1)
 
+    /* VISUALLY-HIDDEN TEXT IS A DELIBERATE CLIP, NOT A TRUNCATION.
+       The sr-only pattern is a 1px box with `clip-path: inset(50%)`
+       and `white-space: nowrap` — every one of the conditions this
+       sweep looks for, on purpose, because the string is FOR a
+       screen reader and is never drawn. Reported as a finding it is
+       noise that trains a reader to skip the output. */
+    const srOnly = (el, cs) => {
+      const box = el.getBoundingClientRect()
+      return box.width <= 2 && box.height <= 2 && cs.position === 'absolute'
+    }
+
     for (const el of document.querySelectorAll('*')) {
       if (!holdsText(el)) continue
       const cs = getComputedStyle(el)
       if (cs.display === 'none' || cs.visibility === 'hidden') continue
+      if (srOnly(el, cs)) continue
       const oneLine = cs.whiteSpace === 'nowrap' || cs.whiteSpace === 'pre'
       const shut = cs.overflowX === 'hidden' || cs.overflowX === 'clip'
       if (oneLine && shut && el.scrollWidth > el.clientWidth + 1) {

@@ -138,7 +138,7 @@
 
 .pl-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(236px, 100%), 1fr));
   grid-auto-rows: 1fr;
   gap: var(--s-4);
   margin: 0;
@@ -413,5 +413,22 @@
 @container (max-width: 640px) {
   .pl-head-do {
     width: 100%;
+  }
+}
+
+
+/* ============================================================
+   THE LINE BUDGET IS OFF WHEN THE GRID IS ONE COLUMN.
+
+   Two reserved lines of name is what makes a ROW of cards equal,
+   and a row of one is already equal. Below the width where
+   `.pl-grid` folds to a single track, the reservation is just a
+   blank line under every name — which on a phone is the scarcest
+   space there is.
+   ============================================================ */
+@container (max-width: 520px) {
+  .pl-name {
+    min-height: 0;
+    max-height: none;
   }
 }

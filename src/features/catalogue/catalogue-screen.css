@@ -144,7 +144,7 @@
 
 .ct-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(236px, 100%), 1fr));
   gap: var(--s-4);
   margin: 0;
   padding: 0;
@@ -343,4 +343,21 @@
   color: var(--fg-tertiary);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+}
+
+
+/* ============================================================
+   THE LINE BUDGET IS OFF WHEN THE GRID IS ONE COLUMN.
+
+   Two reserved lines of name is what makes a ROW of cards equal,
+   and a row of one is already equal. Below the width where
+   `.ct-grid` folds to a single track, the reservation is just a
+   blank line under every name — which on a phone is the scarcest
+   space there is.
+   ============================================================ */
+@container (max-width: 520px) {
+  .ct-name {
+    min-height: 0;
+    max-height: none;
+  }
 }

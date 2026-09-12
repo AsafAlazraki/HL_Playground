@@ -127,7 +127,7 @@
    column this measure leaves. */
 .fd-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(212px, 100%), 1fr));
   grid-auto-rows: 1fr;
   gap: var(--s-4);
   margin: 0;
@@ -253,9 +253,21 @@
 
 /* -- the two panels -------------------------------------------- */
 
+/* ============================================================
+   `min(300px, 100%)` AND NOT `300px`, WHICH IS THE WHOLE BUG.
+
+   A bare `minmax(300px, 1fr)` sets a floor the track cannot go under, so
+   on a 294px column the grid was 300px wide and the page scrolled
+   sideways — measured at 390x844, the width of the phone a dealer
+   actually holds. `auto-fit` cannot save it: there is no count of
+   tracks that makes a 300px minimum fit in 294.
+
+   The `min()` says "300, or all of it, whichever is smaller",
+   which is what every one of these grids meant.
+   ============================================================ */
 .fd-panes {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
   gap: var(--s-6);
   align-items: start;
 }
@@ -343,7 +355,7 @@
 
 .fd-brands {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(168px, 100%), 1fr));
   grid-auto-rows: 1fr;
   gap: var(--s-4);
   margin: 0;

@@ -499,7 +499,22 @@
      whole reason that readout exists. The configurator's 7.53x
      collapsing to 3.17x at 1024 is the same defect one width
      down, and it shipped. */
-  --t-marque-size: clamp(4.125rem, 2rem + 3.4vw, 5.5rem);  /* 66 -> 88 */
+  /* ============================================================
+     THE FLOOR IS 36px AND WAS 66px, WHICH NO PHONE CAN HOLD.
+
+     66px was chosen against 1024 and above, where it is never
+     reached — at 1024 the fluid term is already 66.8px, so nothing
+     from a tablet up moves by a pixel. Below that the floor was
+     the whole value, and "RU230KAM" at 66px is 346px of glyph in
+     a 294px column: measured at 390 it overflowed its own lockup
+     and took the screen sideways with it.
+
+     RESPONSIVE.md is the eleventh rule, and §2's >=6x is measured
+     at 1280 and 1024 — the widths a dealer works at. A phone is
+     where they stand on a pontoon, and there the marque is still
+     the largest thing on the screen without being wider than it.
+     ============================================================ */
+  --t-marque-size: clamp(2.25rem, 2rem + 3.4vw, 5.5rem);  /* 66 -> 88 */
   --t-marque-weight: 700;
   --t-marque-lead: 0.94;
   --t-marque-track: -0.035em;

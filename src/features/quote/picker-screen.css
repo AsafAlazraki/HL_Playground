@@ -162,7 +162,7 @@
 
 .qp-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(248px, 100%), 1fr));
   /* EQUAL HEIGHT, and this is the line that does it. */
   grid-auto-rows: 1fr;
   gap: var(--s-4);
@@ -413,5 +413,22 @@
     flex-direction: column;
     align-items: stretch;
     gap: var(--s-2);
+  }
+}
+
+
+/* ============================================================
+   THE LINE BUDGET IS OFF WHEN THE GRID IS ONE COLUMN.
+
+   Two reserved lines of name is what makes a ROW of cards equal,
+   and a row of one is already equal. Below the width where
+   `.qp-grid` folds to a single track, the reservation is just a
+   blank line under every name — which on a phone is the scarcest
+   space there is.
+   ============================================================ */
+@container (max-width: 520px) {
+  .qp-name {
+    min-height: 0;
+    max-height: none;
   }
 }
