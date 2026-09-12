@@ -55,16 +55,26 @@ export function RulesStage({ onClose }: RulesStageProps): ReactElement {
             Back
           </Button>
         </div>
-        <p className="shell-view-what">
-          <span className="ds-display-lg shell-view-what-name">Business rules</span>
-          <span className="shell-view-what-sep" aria-hidden="true">
-            ·
-          </span>
-          {/* the same aside the door in the panel carries — see
-              LeftPanel: "what has to be true" was indistinguishable
-              from the door beside it, which opens the flow builder */}
-          <span className="shell-view-what-say">limits every row must keep</span>
-        </p>
+        {/* ============================================================
+            THE BAR KEEPS THE WAY BACK AND GIVES UP THE TITLE.
+
+            It read "Business rules · limits every row must keep" 90
+            pixels above a page head reading "BUSINESS RULES / What
+            this price file asserts / Limits every row must keep." —
+            the same two facts, twice, in one screenful. `QuoteStage`
+            argued itself out of exactly this once: "two titles, and
+            the centred one won the eye because it was first".
+
+            `RulesPane` draws the head that survives, because it is
+            the one with the eyebrow, the title and the distinction
+            this stage is actually spending its one line on.
+            AND IT IS REMOVED RATHER THAN `hidden`, which was the
+            first attempt and did nothing: `.shell-view-what` is
+            `display: flex` in shell.css, and an author declaration
+            beats the user agent's `[hidden] { display: none }`. The
+            screenshot after that change was identical to the one
+            before it, which is the only reason it was caught.
+            ============================================================ */}
       </div>
 
       <div className="shell-view-page">

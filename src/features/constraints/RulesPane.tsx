@@ -368,7 +368,7 @@ export function RulesPane(): ReactElement {
   }
 
   return (
-    <section className="cn-root">
+    <section className="cn-root" data-register="cockpit">
       {/* THE ATMOSPHERE, AND IT CARRIES NOTHING. Two drifting washes
           under 6 % alpha behind the sheet, so a page whose subject is
           one white column has a ground rather than a void. Both go

@@ -4753,10 +4753,26 @@
    exact failure.
    ============================================================ */
 
+/* ============================================================
+   AND THE ARGUMENT ABOVE IS THE COCKPIT REGISTER, MADE BEFORE THE
+   REGISTER EXISTED.
+
+   "A dashboard is not a marketing page", and "established practice
+   caps a page title on a data screen around 28px", is §2's Cockpit
+   band in other words — and it is right. It was simply set one step
+   below where that band starts: 26px over the 11px floor is 2.36x
+   against a band of 2.5-3.2x.
+
+   `--t-display-size` is 31px at 1280, which is 2.82x — exactly
+   where Data, Quotes and Review sit. The whole step moves together
+   because reaching in for one of size, weight, leading and tracking
+   is rule 6's exact failure, which the note above already says.
+   ============================================================ */
 .cn-title {
-  font-size: var(--display-m-size);
-  line-height: var(--display-m-lead);
-  letter-spacing: var(--display-m-track);
+  font-size: var(--t-display-size);
+  font-weight: var(--t-display-weight);
+  line-height: var(--t-display-lead);
+  letter-spacing: var(--t-display-track);
   /* free, and it fixes the ragged second line in a 317px rail */
   text-wrap: balance;
 }
