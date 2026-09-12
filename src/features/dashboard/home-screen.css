@@ -1,0 +1,327 @@
+/* ============================================================
+   THE FRONT DOOR (fd-) — SHOWROOM.
+
+   `fd-` was checked against every stylesheet in `src` before it was
+   used. `hs-` — the obvious choice — is already taken, and `.pk`
+   turning out to have belonged to the app's dropdown is what made
+   that check a habit: a prefix collision does not announce itself,
+   it just draws wrong.
+
+   The column is the same shape as the picker's and the place
+   screen's, because they are the same register: a port that
+   scrolls, a column on a measure, a marque, and a grid of equal
+   cards. Three screens with one skeleton is the point.
+   ============================================================ */
+
+.fd {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* `.shell-stage` is `overflow: hidden` and hands every stage a box
+   of exactly the window's height. A screen that does not scroll
+   inside itself is not short — it is CUT. */
+.fd-port {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.fd-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+  width: var(--measure);
+  margin: 0 auto;
+  padding: var(--section-gap) var(--gutter) var(--s-16);
+  container-type: inline-size;
+}
+
+/* -- the greeting ---------------------------------------------- */
+
+.fd-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+.fd-hello {
+  margin: 0;
+  color: var(--fg);
+}
+
+.fd-day {
+  margin: 0;
+  color: var(--fg-tertiary);
+}
+
+/* -- what to do ------------------------------------------------ */
+
+/* THE THREE ACTS, AND ONE OF THEM IS PRIMARY. Rule 5 is one primary
+   action per screen and this is it: everything else on a front door
+   is a way of looking at what is already there. */
+.fd-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+
+/* -- a band ---------------------------------------------------- */
+
+.fd-band {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-width: 0;
+}
+
+.fd-band-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin: 0;
+  padding-bottom: var(--s-2);
+  border-bottom: var(--border) solid var(--line-subtle);
+}
+
+.fd-band-name {
+  color: var(--fg-tertiary);
+}
+
+/* --fg-tertiary and not --fg-quaternary: the ink table in
+   system.css measures quaternary at 3.21:1 and says in as many
+   words that it is never a word that matters. A count is. */
+.fd-band-count {
+  color: var(--fg-tertiary);
+}
+
+.fd-more {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--t-caption-size);
+  cursor: pointer;
+}
+
+.fd-more:hover {
+  text-decoration: underline;
+}
+
+.fd-more:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-control);
+}
+
+/* -- the doors ------------------------------------------------- */
+
+/* FOUR ACROSS AT 1280, so the fourth kind is not orphaned on a row
+   of its own under three — which is what the shipped grid did with
+   Accessories. `auto-fill` at 236px gives four tracks in the 993px
+   column this measure leaves. */
+.fd-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
+  grid-auto-rows: 1fr;
+  gap: var(--s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fd-cell {
+  display: flex;
+  min-width: 0;
+}
+
+.fd-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  padding: 0;
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  /* A TILE IS A SURFACE, NOT A WASH OF ITS KIND. The shipped cards
+     were tinted blue, cream, cream and green across their whole
+     face — §3's "decoration keyed to a category". The hue is on the
+     rail, which sits on a photograph of stock that HAS that kind. */
+  background: var(--surface-1);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: var(--e-card);
+  transition:
+    box-shadow var(--d-press) var(--ease-out),
+    border-color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .fd-tile:hover {
+    box-shadow: var(--e-card-hover);
+    border-color: var(--line-strong);
+  }
+}
+
+.fd-tile:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+.fd-well {
+  --mat: linear-gradient(180deg, var(--surface-3) 0%, var(--bg-sunken) 100%);
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  flex: 0 0 auto;
+  background: var(--mat);
+  border-bottom: var(--border) solid var(--line-subtle);
+  overflow: hidden;
+}
+
+.fd-plate {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--kind, transparent) 10%, var(--surface-2));
+}
+
+.fd-mono {
+  color: var(--fg-secondary);
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+}
+
+.fd-img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--mat);
+  object-fit: contain;
+}
+
+.fd-rail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border: 0;
+  background: var(--kind, var(--line));
+}
+
+.fd-say {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-3) var(--s-4);
+  min-width: 0;
+}
+
+/* A fixed line budget, for the reason the other two Showroom grids
+   carry one: rows equalise within ONE grid, and a card sized by its
+   own string gives a screen as many heights as it has bands. */
+.fd-name {
+  color: var(--fg);
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  min-height: 1lh;
+  max-height: 1lh;
+  overflow: hidden;
+}
+
+/* A FIGURE IS NEVER A HUE, and it is always mono and tabular. */
+.fd-count {
+  color: var(--fg-secondary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  min-height: 1lh;
+  max-height: 1lh;
+  overflow: hidden;
+}
+
+/* -- the two panels -------------------------------------------- */
+
+.fd-panes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--s-6);
+  align-items: start;
+}
+
+.fd-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+/* AN EMPTY PANEL IS A SENTENCE, not a panel drawn at the size of a
+   full one with "NOTHING YET" in the middle of it. The shipped pair
+   took a third of the screen to say nothing twice. */
+.fd-empty {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--fg-secondary);
+}
+
+.fd-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fd-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  border: var(--border) solid transparent;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--d-press) var(--ease-out),
+    border-color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .fd-row:hover {
+    background: var(--surface-2);
+    border-color: var(--line-subtle);
+  }
+}
+
+.fd-row:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+.fd-row-name {
+  color: var(--fg);
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.fd-row-say {
+  color: var(--fg-tertiary);
+}

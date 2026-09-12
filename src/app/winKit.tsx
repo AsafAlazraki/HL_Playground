@@ -30,6 +30,7 @@ import { QuoteStage } from './QuoteStage'
    cycle, and Vite resolves it to `undefined` at run time rather
    than failing to build. */
 import { QuoteStart, type QuoteStartProps } from '@/features/quote/QuoteStart'
+import { HomeScreen } from '@/features/dashboard/HomeScreen'
 import { PickerScreen } from '@/features/quote/PickerScreen'
 import { PlaceScreen } from '@/features/quote/PlaceScreen'
 import { quoteDoors } from '@/features/quote/start'
@@ -368,6 +369,26 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
             />
           }
         >
+          {/* THE REBUILT FRONT DOOR, behind the same switch as the
+              rest — `features/quote/rebuilt.ts`. Same acts, same
+              engine: `doorsOf`, `rollQuotes`, `resolveRecent` and
+              `fileTally` are untouched. HomeScreen's own header
+              carries what was measured on the one it replaces. */}
+          {rebuiltPicker() ? (
+            <HomeScreen
+              user={h.user as AppUser}
+              onOpenTable={(id) => h.openWin({ kind: 'table', entityId: id })}
+              onOpenModule={(id) => h.openWin({ kind: 'module', moduleId: id })}
+              onOpenModules={() => h.openWin({ kind: 'module', moduleId: null })}
+              onOpenQuote={(id) => h.openWin({ kind: 'quote', quoteId: id })}
+              onOpenQuotes={() => h.openWin({ kind: 'quote', quoteId: null })}
+              onOpenCustomers={() => h.openWin({ kind: 'customer', customerId: null })}
+              onOpenRules={() => h.openWin({ kind: 'rules' })}
+              onOpenDataModel={() => h.openWin({ kind: 'gallery' })}
+              onNewQuote={h.newQuote}
+              onFind={h.find}
+            />
+          ) : (
           <Dashboard
             user={h.user as AppUser}
             onOpenTable={(id) => h.openWin({ kind: 'table', entityId: id })}
@@ -381,6 +402,7 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
             onNewQuote={h.newQuote}
             onFind={h.find}
           />
+          )}
         </HomeOrDay>
       )
     case 'history':

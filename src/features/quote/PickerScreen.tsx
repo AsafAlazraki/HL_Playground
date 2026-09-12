@@ -28,38 +28,36 @@
    hue only ever appears on something that HAS that kind.
    ============================================================ */
 
-import { useMemo, useState } from "react";
-import type { ReactElement } from "react";
-import { Field } from "@/ui";
-import { useProjectStore } from "@/store/useProjectStore";
-import { buildEntries } from "@/features/modules/read";
-import type { IndexEntry } from "@/features/modules/read";
-import { quoteDoors } from "./start";
-import type { QuoteDoor } from "./start";
-import { marqueOf } from "./marque";
-import { FrozenPhoto } from "./photo";
-import "./picker-screen.css";
+import { useMemo, useState } from 'react'
+import type { ReactElement } from 'react'
+import { Field } from '@/ui'
+import { markOf } from '@/lib/mark'
+import { useProjectStore } from '@/store/useProjectStore'
+import { buildEntries } from '@/features/modules/read'
+import type { IndexEntry } from '@/features/modules/read'
+import { quoteDoors } from './start'
+import type { QuoteDoor } from './start'
+import { marqueOf } from './marque'
+import { FrozenPhoto } from './photo'
+import './picker-screen.css'
 
 export interface PickerScreenProps {
   /** open a place — the second screen, which already draws rows
    *  with their own photographs. */
-  onOpen: (door: QuoteDoor) => void;
-  onClose?: () => void;
+  onOpen: (door: QuoteDoor) => void
+  onClose?: () => void
 }
 
-export function PickerScreen({
-  onOpen,
-  onClose,
-}: PickerScreenProps): ReactElement {
-  const entities = useProjectStore((s) => s.entities);
-  const rowsByEntity = useProjectStore((s) => s.rowsByEntity);
-  const modules = useProjectStore((s) => s.modules);
-  const [query, setQuery] = useState("");
+export function PickerScreen({ onOpen, onClose }: PickerScreenProps): ReactElement {
+  const entities = useProjectStore((s) => s.entities)
+  const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
+  const modules = useProjectStore((s) => s.modules)
+  const [query, setQuery] = useState('')
 
   const doors = useMemo(
     () => quoteDoors(modules, entities, rowsByEntity),
     [modules, entities, rowsByEntity],
-  );
+  )
 
   /* A PLACE HAS NO PICTURE OF ITS OWN, so it borrows the first one
      its own stock carries. That is not a guess about the business —
@@ -70,22 +68,20 @@ export function PickerScreen({
      every row of every table the door stands for, and Highfield
      alone is hundreds. */
   const covers = useMemo(() => {
-    const found = new Map<string, IndexEntry["img"]>();
+    const found = new Map<string, IndexEntry['img']>()
     for (const door of doors) {
-      const entries = buildEntries(door.tables, rowsByEntity, { facts: false });
-      found.set(door.key, entries.find((e) => e.img)?.img);
+      const entries = buildEntries(door.tables, rowsByEntity, { facts: false })
+      found.set(door.key, entries.find((e) => e.img)?.img)
     }
-    return found;
-  }, [doors, rowsByEntity]);
+    return found
+  }, [doors, rowsByEntity])
 
-  const hunting = query.trim().length > 0;
+  const hunting = query.trim().length > 0
   const shown = hunting
     ? doors.filter((d) =>
-        `${d.name} ${d.moduleName} ${d.description}`
-          .toLowerCase()
-          .includes(query.toLowerCase()),
+        `${d.name} ${d.moduleName} ${d.description}`.toLowerCase().includes(query.toLowerCase()),
       )
-    : doors;
+    : doors
 
   /* ============================================================
      A PLACE YOU CANNOT QUOTE FROM IS NOT A CARD.
@@ -108,19 +104,19 @@ export function PickerScreen({
      THE GROUPS ARE THE BUSINESS'S OWN MODULES, in its own order.
      ============================================================ */
   const { groups, closed } = useMemo(() => {
-    const by = new Map<string, QuoteDoor[]>();
-    const shut: QuoteDoor[] = [];
+    const by = new Map<string, QuoteDoor[]>()
+    const shut: QuoteDoor[] = []
     for (const d of shown) {
-      if (d.refusal !== "") {
-        shut.push(d);
-        continue;
+      if (d.refusal !== '') {
+        shut.push(d)
+        continue
       }
-      by.set(d.moduleName, [...(by.get(d.moduleName) ?? []), d]);
+      by.set(d.moduleName, [...(by.get(d.moduleName) ?? []), d])
     }
-    return { groups: [...by.entries()], closed: shut };
-  }, [shown]);
+    return { groups: [...by.entries()], closed: shut }
+  }, [shown])
 
-  const openTotal = doors.filter((d) => d.refusal === "").length;
+  const openTotal = doors.filter((d) => d.refusal === '').length
 
   /* THE SCREEN OWNS ITS OWN SCROLLPORT, and that is not a style
      choice — `.shell-stage` is `overflow: hidden` and hands every
@@ -138,8 +134,7 @@ export function PickerScreen({
           <div className="qp-head-say">
             <h1 className="t-marque qp-ask">What are you quoting?</h1>
             <p className="t-small qp-sub">
-              {openTotal} {openTotal === 1 ? "place" : "places"} you can start
-              from.
+              {openTotal} {openTotal === 1 ? 'place' : 'places'} you can start from.
             </p>
           </div>
           <div className="qp-head-do">
@@ -152,12 +147,7 @@ export function PickerScreen({
               autoComplete="off"
             />
             {onClose ? (
-              <button
-                type="button"
-                className="qp-shut"
-                onClick={onClose}
-                aria-label="Close"
-              >
+              <button type="button" className="qp-shut" onClick={onClose} aria-label="Close">
                 <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                   <path
                     d="M4 4 L12 12 M12 4 L4 12"
@@ -174,8 +164,7 @@ export function PickerScreen({
 
         {groups.length === 0 && closed.length === 0 ? (
           <p className="t-small qp-none">
-            Nothing here matches “{query}”. Clear the search to see all{" "}
-            {doors.length} places.
+            Nothing here matches “{query}”. Clear the search to see all {doors.length} places.
           </p>
         ) : null}
 
@@ -184,7 +173,7 @@ export function PickerScreen({
             <p className="qp-group-head">
               <span className="t-label qp-group-name">{moduleName}</span>
               <span className="t-caption qp-group-count">
-                {inGroup.length} {inGroup.length === 1 ? "place" : "places"}
+                {inGroup.length} {inGroup.length === 1 ? 'place' : 'places'}
               </span>
             </p>
 
@@ -210,7 +199,7 @@ export function PickerScreen({
             <p className="qp-group-head">
               <span className="t-label qp-group-name">Not set up to quote</span>
               <span className="t-caption qp-group-count">
-                {closed.length} {closed.length === 1 ? "place" : "places"}
+                {closed.length} {closed.length === 1 ? 'place' : 'places'}
               </span>
             </p>
 
@@ -230,7 +219,7 @@ export function PickerScreen({
         ) : null}
       </div>
     </div>
-  );
+  )
 }
 
 function DoorCard({
@@ -238,15 +227,15 @@ function DoorCard({
   cover,
   onOpen,
 }: {
-  door: QuoteDoor;
-  cover: IndexEntry["img"];
-  onOpen: () => void;
+  door: QuoteDoor
+  cover: IndexEntry['img']
+  onOpen: () => void
 }): ReactElement {
   /* A brand name is a name, not an identifier, so the lockup mostly
      passes it through — but `Haines Signature Factory Packages` is
      four facts welded together like a subject label, and splitting
      it is what stops a card being three lines of display type. */
-  const lockup = marqueOf(door.name);
+  const lockup = marqueOf(door.name)
 
   return (
     <li className="qp-cell">
@@ -278,7 +267,7 @@ function DoorCard({
               from the reader that would otherwise say it twice.
               ============================================================ */}
           <span className="qp-plate" aria-hidden="true">
-            <span className="t-display qp-mono">{initialsOf(door.name)}</span>
+            <span className="t-display qp-mono">{markOf(door.name)}</span>
           </span>
           <FrozenPhoto
             img={cover}
@@ -312,18 +301,6 @@ function DoorCard({
         </span>
       </button>
     </li>
-  );
+  )
 }
 
-/* THE PLATE'S MARK. First letters, as the name already capitalises
-   them — never `toUpperCase()`, which would make a label out of a
-   name and break rule 3. Two at most: three initials at display
-   size on a 248px card is a logo nobody asked for. */
-function initialsOf(name: string): string {
-  return name
-    .split(/[\s/&-]+/)
-    .map((w) => w[0] ?? "")
-    .filter((c) => /[A-Za-z0-9]/.test(c))
-    .slice(0, 2)
-    .join("");
-}

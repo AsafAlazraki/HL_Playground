@@ -54,6 +54,7 @@ import { useCallback, useMemo, useState } from 'react'
 import type { ReactElement } from 'react'
 import { ArrowLeft } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
+import { markOf } from '@/lib/mark'
 import { readCell } from '@/types/model'
 import type { EntityDef, ImageRef, RowData } from '@/types/model'
 import { buildEntries } from '@/features/modules/read'
@@ -454,9 +455,15 @@ function ModelCard({
       >
         <span className="pl-well">
           <span className="pl-plate" aria-hidden="true">
-            <span className="t-display pl-mono">{model.name.slice(0, 3)}</span>
+            <span className="t-display pl-mono">{markOf(model.name)}</span>
           </span>
-          <FrozenPhoto img={model.img} fallbackAlt={model.name} className="pl-img" w={420} h={264} />
+          <FrozenPhoto
+            img={model.img}
+            fallbackAlt={model.name}
+            className="pl-img"
+            w={420}
+            h={264}
+          />
           <span className="k-rail pl-rail" aria-hidden="true" />
         </span>
 
