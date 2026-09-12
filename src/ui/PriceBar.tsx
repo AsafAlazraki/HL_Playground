@@ -15,13 +15,17 @@
        app to reach for a ticker on, and it is the one place a
        ticker is most damaging.
 
-   2 · IT NEVER INVENTS A FIGURE THE PRICE FILE DOES NOT CARRY.
-       `QUOTE_SPEC.md` §2 is unusually blunt about it — "no 29% BMT
-       markup, no $159 labour rate, NO 10% GST DIVISOR, no 20%
-       deposit". So `tax` is optional and is NEVER defaulted: with
-       no rate, this bar draws ONE figure and says nothing about
-       tax at all, because the alternative is printing a number
-       nobody entered on the document a customer is handed.
+   2 · IT DOES NO ARITHMETIC ON MONEY AT ALL. `QUOTE_SPEC.md` §2 is
+       unusually blunt — "no 29% BMT markup, no $159 labour rate, NO
+       10% GST DIVISOR, no 20% deposit" — and §1 records the worse
+       version of the same fault in production, where FIVE
+       summations of one deal already disagree about rounding. So
+       this bar is handed both figures and divides nothing. `tax`
+       stays optional and is never defaulted: with no tax, one
+       figure and no sentence about tax, because the alternative is
+       printing a number nobody entered on the document a customer
+       is handed. `quoteTotals()` returns `total`, `taxRate` and
+       `totalExcludingTax` together and they cannot drift.
 
    3 · NULL IS A REAL STATE. `QUOTE_SPEC.md` §2: an unpriced line
        has `unitPrice: null`, contributes nothing to the total, and
@@ -43,15 +47,24 @@ export interface PriceLevelChoice {
 }
 
 export interface PriceBarTax {
-  /** 0.1 for ten per cent. Comes from the project's own data — this
-   *  component never supplies one. */
-  rate: number
-  /** The business's word for it: "GST", "VAT", "Sales tax". */
+  /** The business's word for it: "GST", "VAT", "Sales tax". Never
+   *  ours — the row noun comes from the data. */
   label: string
-  /** Does `total` already include it? Both conventions exist in the
-   *  real workbooks, and guessing is how two summations of one deal
-   *  start to disagree. */
-  included: boolean
+  /** The total WITHOUT the tax, as whoever owns the arithmetic
+   *  already computed it.
+   *
+   *  THIS BAR DOES NOT DIVIDE. An earlier draft took a `rate` and a
+   *  `included` flag and worked the second figure out itself, which
+   *  is a SECOND SUMMATION OF ONE DEAL — the exact fault
+   *  `QUOTE_SPEC.md` §1 names in production, where five summations
+   *  of one quote already disagree about rounding. `quoteTotals()`
+   *  returns `total`, `taxRate` and `totalExcludingTax` together
+   *  and they cannot drift; a bar that re-derived one of them could
+   *  differ from the document it sits under.
+   *
+   *  It also removed the floating-point trap for free: there is no
+   *  `total * 1.1` here to turn 100000 into 110000.00000000001. */
+  totalExcluding: number
 }
 
 export interface PriceBarProps {
@@ -108,24 +121,12 @@ export function PriceBar({
   const delta = seen.delta
   const moved = seen.tick > 0 && delta !== 0
 
-  /* Both figures, and neither is guessed. `included` says which way
-     the arithmetic runs; without `tax` there is only one number to
-     draw and nothing to say about it.
-
-     QUANTISED TO CENTS, WHICH IS NOT THE ROUNDING `money.ts`
-     FORBIDS. That file's rule is that a DISPLAY must not round a
-     total — a rounded figure over an unrounded sum is how two
-     summations of one deal start to disagree. This is the other
-     thing: binary floating point cannot hold a tenth, so
-     `100000 * 1.1` is 110000.00000000001, and `money()` correctly
-     reads that as a non-integer and prints "$110,000.00" — cents
-     that do not exist, on the largest figure on the screen.
-     Quantising to the currency's own smallest unit removes the
-     artefact without moving the value: 110000.00000000001 → 110000,
-     and 103731/1.1 → 94300.91 either way. */
-  const cents = (n: number) => Math.round(n * 100) / 100
-  const exTax = tax ? cents(tax.included ? total / (1 + tax.rate) : total) : null
-  const incTax = tax ? cents(tax.included ? total : total * (1 + tax.rate)) : null
+  /* BOTH FIGURES ARE GIVEN, NEITHER IS DERIVED. `total` is what the
+     document sums to; `tax.totalExcluding` is what it sums to
+     without the tax. This file does no arithmetic on money at all,
+     which is the only way to be certain it cannot disagree with the
+     quote it is reporting on. */
+  const exTax = tax ? tax.totalExcluding : null
 
   return (
     <div className="ui-pricebar" data-register="showroom">
@@ -140,7 +141,7 @@ export function PriceBar({
               the fact, and a screen reader that announced only the
               change would report a movement without a destination. */}
           <output className="t-figure-xl ui-pricebar-now" aria-live="polite">
-            {money(incTax ?? total)}
+            {money(total)}
           </output>
 
           {moved ? (

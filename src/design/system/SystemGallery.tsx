@@ -708,7 +708,11 @@ function ShowroomSection() {
         <PriceBar
           total={total}
           caption="Package pricing"
-          tax={{ rate: 0.1, label: 'GST', included: true }}
+          /* The gallery owns this arithmetic because it is standing
+             in for the quote engine. In the app it is
+             `quoteTotals().totalExcludingTax` — computed once,
+             beside the total, so the two cannot drift. */
+          tax={{ label: 'GST', totalExcluding: Math.round((total / 1.1) * 100) / 100 }}
           notPriced={extras > 2 ? 1 : 0}
           levels={LEVELS}
           levelKey={level}

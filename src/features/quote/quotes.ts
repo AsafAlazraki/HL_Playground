@@ -30,6 +30,7 @@
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import { newId, nowIso } from '@/lib/id'
 import { currentOrgKey } from '@/lib/orgKey'
+import { useProjectStore } from '@/store/useProjectStore'
 /* THE APP'S ONE PLACE FOR SAYING WHAT HAS JUST HAPPENED. It is a
    bus, not a store read: `say` touches no project data, and this
    file is already downstream of `freeze.ts`, which is the single
@@ -192,7 +193,34 @@ function hookTabClose(): void {
   })
 }
 
-let loaded = false
+/* WHICH BUSINESS'S DOCUMENTS ARE IN THE REGISTRY — not a boolean,
+   and that distinction is the whole of a bug this carried.
+
+   THE DEFECT. This was `let loaded = false`, set true on the first
+   call and never reconsidered. But `storeKey()` is org-scoped, and
+   the org comes from `useProjectStore.getState().meta`, which is
+   rehydrated from Dexie ASYNCHRONOUSLY on boot. So a cold load
+   straight to a quote's own URL ran `loadQuotes()` before the org
+   existed, read `helmlogic.quotes.v1:` for a business with no
+   slug yet, found nothing, latched, and never looked again.
+
+   Measured in Chrome: with `helmlogic.quotes.v1:northside-marine`
+   sitting in localStorage holding the draft, opening
+   `?at=quote&id=lIl1MKj2iE` in a fresh tab drew "That quote is no
+   longer here." Both configurators, old and new — it is the
+   persistence seam, not a screen. A person who shares the link to
+   a quote they are looking at sends a dead page.
+
+   It is the same shape as the latch `stillness.tsx` records having
+   been bitten by: a flag that says "done" when what it means is
+   "tried once", and nothing looked broken because the failure is
+   an absence.
+
+   THE KEY IS THE FLAG NOW. A different business is a different set
+   of documents, so a changed key clears the registry rather than
+   merging two businesses' quotes into one list — which would be a
+   tenancy leak, and the loudest one available. */
+let loadedFor: string | null = null
 
 /** Read back what was saved. Called by the hooks rather than at
  *  import time, so nothing happens in a module side effect and a
@@ -200,21 +228,45 @@ let loaded = false
  *  SKIPPED, never thrown on: one bad row must not cost a person
  *  every other document they have. */
 export function loadQuotes(): void {
-  if (loaded) return
-  loaded = true
   hookTabClose()
+  /* THE STORAGE CHECK COMES BEFORE THE KEY, and that ordering is
+     load-bearing rather than tidy. `storeKey()` reads the project
+     store for the org, and there are environments with neither —
+     the node test project has no `localStorage` and a suite may
+     mock the store to a shape with no `meta` at all. Computing the
+     key first put a throw in front of every screen that lists
+     quotes; with nothing to read from, there is nothing the key
+     would have been for. */
   if (typeof localStorage === 'undefined') return
+
+  const key = storeKey()
+  if (loadedFor === key) return
+  /* A DIFFERENT BUSINESS IS A DIFFERENT SET OF DOCUMENTS, and the
+     republish below is not optional: a subscriber holding the last
+     business's list has to be told it is empty now, even when the
+     new key holds nothing to replace it with. */
+  const switched = loadedFor !== null
+  if (switched) {
+    registry.clear()
+    list = []
+  }
+  loadedFor = key
   adoptLegacyQuotes()
   try {
-    const raw = localStorage.getItem(storeKey())
-    if (raw === null) return
-    const parsed: unknown = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return
-    for (const q of parsed) if (isQuoteish(q)) registry.set(q.id, q)
-    republish()
+    /* `key`, not `storeKey()` again — one read of the org per call,
+       so the key this decided on and the key it reads cannot
+       differ if the store rehydrates mid-function. */
+    const raw = localStorage.getItem(key)
+    if (raw !== null) {
+      const parsed: unknown = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        for (const q of parsed) if (isQuoteish(q)) registry.set(q.id, q)
+      }
+    }
   } catch {
     persistProblem = 'Saved quotes could not be read back, and were left alone.'
   }
+  if (registry.size > 0 || switched) republish()
 }
 
 /**
@@ -273,12 +325,33 @@ export const persistNote = (): string | null => persistProblem
 /* Reading                                                    */
 /* ---------------------------------------------------------- */
 
+/* ============================================================
+   THE HOOKS WATCH THE BUSINESS, NOT JUST THE REGISTRY.
+
+   `loadQuotes()` re-reads when the org key changes, but SOMETHING
+   HAS TO CALL IT AGAIN once the org arrives. Calling it in the
+   render body alone left that to chance: the org is rehydrated from
+   Dexie asynchronously, and whether a quote screen re-rendered at
+   the moment it landed depended on whether some ancestor happened
+   to. Driven in Chrome it worked twice and then did not — the
+   signature of a race, and a race that resolves as "That quote is
+   no longer here" is one a person reads as lost work.
+
+   So the org slug is a DEPENDENCY of these hooks.
+   `useProjectStore` is a real subscription: when the business
+   lands these re-render, `loadQuotes()` runs against the right
+   key, and the document appears. No timer, no retry loop, no
+   polling — the thing that changed is the thing that is watched.
+   ============================================================ */
+
 export function useQuotes(): QuoteDef[] {
+  useProjectStore((s) => s.meta?.org?.slug)
   loadQuotes()
   return useSyncExternalStore(subscribe, getList, getList)
 }
 
 export function useQuote(id: string | null | undefined): QuoteDef | undefined {
+  useProjectStore((s) => s.meta?.org?.slug)
   loadQuotes()
   const get = useCallback(() => (id ? registry.get(id) : undefined), [id])
   return useSyncExternalStore(subscribe, get, get)
@@ -1234,6 +1307,6 @@ export function forgetQuotes(): void {
   writeTimer = undefined
   registry.clear()
   persistProblem = null
-  loaded = false
+  loadedFor = null
   republish()
 }

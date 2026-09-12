@@ -140,6 +140,11 @@ export const KEPT_KEYS: readonly string[] = [
   'hl.rail.collapsed',
   'hl.tb.expanded-frames',
   'hl.quotes.view',
+  /* WHICH CONFIGURATOR THIS PERSON IS LOOKING AT while the rebuild
+     runs alongside the old screen. A preference about the app, not
+     a fact about the business — and it goes with `QuotePage`'s
+     switch when the old screen does. */
+  'hl.quote.build.v1',
   'hl.wb.arranged-rules',
   /* WHETHER THE CUSTOMER LIST DRAWS ITS A–Z STRIP. Filed under the
      business at first and that was wrong: the value is the string

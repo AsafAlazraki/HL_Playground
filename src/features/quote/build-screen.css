@@ -1,0 +1,416 @@
+/* ============================================================
+   THE CONFIGURATOR — SHOWROOM.
+
+   THREE ROWS THAT NEVER MOVE: the rail, the work, the bar. The
+   only thing that scrolls is the middle, and inside it only the
+   step column — the product stays put, which is the composition
+   `PHASE_TWO` §0 measured on Porsche and the one thing every
+   configurator in that study agreed on.
+
+   The old screen put the total at the foot of a 3,762px scroll in
+   an 805px port, so the figure a person is deciding against was
+   four screens away from the decision. Measured, on a Highfield
+   CL360 at 1600x1000.
+   ============================================================ */
+
+.bs {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
+  background: var(--stage-bg);
+  container-type: inline-size;
+}
+
+/* -- the rail ------------------------------------------------- */
+
+.bs-rail {
+  padding: var(--s-4) var(--gutter);
+  background: var(--surface-1);
+  border-bottom: var(--border) solid var(--line);
+}
+
+/* -- the two columns ------------------------------------------ */
+
+.bs-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s-8);
+  min-height: 0;
+  padding: var(--section-gap) var(--gutter);
+}
+
+/* THE PRODUCT DOES NOT SCROLL. It is what the whole screen is
+   about; scrolling it away to read a list of trailers is the
+   inversion this rebuild exists to end. */
+.bs-product {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+  align-self: start;
+  position: sticky;
+  top: 0;
+}
+
+.bs-eyebrow {
+  margin: 0;
+  color: var(--fg-tertiary);
+}
+
+.bs-marque {
+  margin: 0 0 var(--s-2);
+  color: var(--fg);
+  /* Nothing truncates mid-word. A model code is the one string a
+     cut cannot be read through. */
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+/* -- the specs ------------------------------------------------ */
+
+.bs-specs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--s-2) var(--s-5);
+  margin: var(--s-2) 0 0;
+}
+
+.bs-spec {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding-bottom: var(--s-1);
+  border-bottom: var(--border) solid var(--line-subtle);
+  min-width: 0;
+}
+
+.bs-spec-lab {
+  margin: 0;
+  color: var(--fg-tertiary);
+  min-width: 0;
+}
+
+.bs-spec-val {
+  margin: 0;
+  color: var(--fg);
+  flex: 0 0 auto;
+}
+
+/* -- the step column ------------------------------------------ */
+
+.bs-step {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  /* SCROLL-EDGE FADE, NOT A DIVIDER. DESIGN_SYSTEM §5: where
+     floating chrome overlaps content, fade a mask rather than
+     drawing a 1px line and calling it separation. A mask costs no
+     compositor layer, which a blur over a scrolling list of
+     hundreds of rows would. */
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--s-4),
+    #000 calc(100% - var(--s-5)),
+    transparent 100%
+  );
+}
+
+.bs-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding-bottom: var(--s-8);
+}
+
+.bs-pane-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+
+.bs-pane-why {
+  margin: 0;
+  color: var(--fg-secondary);
+  max-width: 60ch;
+}
+
+/* -- what is already on -------------------------------------- */
+
+.bs-picked {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--surface-1);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+
+.bs-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--row-h);
+  padding: var(--s-2) var(--s-3);
+  border-bottom: var(--border) solid var(--line-subtle);
+}
+
+.bs-line:last-child {
+  border-bottom: 0;
+}
+
+.bs-line-name {
+  color: var(--fg);
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.bs-line-amt {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* NULL IS A REAL STATE, and carmine is how the rest of the app
+   already says it. */
+.bs-line-unpriced {
+  color: var(--danger);
+}
+
+.bs-line-off {
+  height: var(--control-h-sm);
+  padding: 0 var(--control-pad-x-md);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg-secondary);
+  font: inherit;
+  font-size: var(--t-caption-size);
+  cursor: pointer;
+  transition:
+    background var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bs-line-off:hover {
+    background: var(--danger-wash);
+    color: var(--danger);
+  }
+}
+
+.bs-line-off:active {
+  transform: scale(0.97);
+}
+
+.bs-line-off:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* -- what is offered ------------------------------------------ */
+
+.bs-offer-cap {
+  margin: var(--s-2) 0 0;
+  color: var(--fg-tertiary);
+}
+
+.bs-offer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bs-cand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-1);
+  width: 100%;
+  padding: var(--s-3) var(--s-4);
+  background: var(--surface-1);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--e-card);
+  transition:
+    border-color var(--d-press) var(--ease-out),
+    box-shadow var(--d-press) var(--ease-out),
+    background var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bs-cand:hover {
+    box-shadow: var(--e-card-hover);
+  }
+}
+
+/* A CARD PRESSES AT 0.994 AND LOSES ITS LIFT. 0.97 on a 236px card
+   is a 7px shrink and reads as a glitch — the system-wide press
+   rule handles the scale, this drops the shadow with it. */
+.bs-cand:active {
+  box-shadow: var(--e1);
+}
+
+.bs-cand:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* PICKED IS UNMISTAKABLE. The old screen marked it with a tint a
+   person had to look for; the original HelmLogic — which nobody
+   thinks is beautiful — used a full border, a wash and a word, and
+   was right to. */
+.bs-cand[data-on] {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+  box-shadow: var(--glow-sm);
+}
+
+.bs-cand-name {
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.bs-cand-amt {
+  color: var(--fg-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- the bar -------------------------------------------------- */
+
+.bs-bar {
+  container-type: inline-size;
+}
+
+.bs-give {
+  height: var(--control-h-lg);
+  padding: 0 var(--control-pad-x-lg);
+  border: var(--border) solid var(--accent);
+  border-radius: var(--r-control);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font: inherit;
+  font-size: var(--t-small-size);
+  font-weight: 560;
+  cursor: pointer;
+  transition: background var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bs-give:not(:disabled):hover {
+    background: var(--accent-hover);
+  }
+}
+
+.bs-give:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+.bs-give:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+.bs-give:disabled {
+  background: var(--surface-3);
+  border-color: var(--line);
+  color: var(--fg-tertiary);
+  cursor: not-allowed;
+}
+
+/* -- narrow --------------------------------------------------- */
+
+@container (max-width: 1000px) {
+  .bs-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-6);
+  }
+
+  .bs-product {
+    position: static;
+  }
+
+  .bs-step {
+    overflow-y: visible;
+    mask-image: none;
+  }
+}
+
+/* -- a table inside a decision --------------------------------- */
+
+/* SEVEN TRAILER TABLES ARE SEVEN HEADINGS, NOT SEVEN STOPS. The
+   heading is drawn only where the decision really spans more than
+   one table — the treatment `QuoteStart` proved with
+   `.qs-sec-head`. One table needs no heading: its name is the
+   band's name, said twice. */
+.bs-part {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.bs-part-name {
+  margin: 0;
+  color: var(--fg);
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.bs-part-why {
+  margin: 0;
+  color: var(--fg-secondary);
+  max-width: 60ch;
+}
+
+.bs-pane-num {
+  margin: 0;
+  color: var(--fg-tertiary);
+  padding-left: var(--s-3);
+  border-left: 3px solid var(--kind, var(--line));
+}
+
+/* THE LOCKUP — maker, model, trim, in one heading.
+
+   `subjectLabel` is four facts welded together and only the model
+   is a name. All three parts are drawn, in the order they were
+   written, so nothing about the thing being quoted is dropped —
+   they are simply set at the step each one has earned. */
+.bs-lockup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 var(--s-2);
+}
+
+.bs-trim {
+  color: var(--fg-tertiary);
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.bs-offer-count {
+  color: var(--fg-tertiary);
+}
+
+/* The reason is a clause a sentence can sit "because" in front of.
+   It keeps its own case — uppercasing content is lossy, and this is
+   content. */
+.bs-offer-why {
+  color: var(--fg-secondary);
+}

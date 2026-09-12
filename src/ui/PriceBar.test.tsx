@@ -44,26 +44,27 @@ describe('PriceBar', () => {
       expect(screen.queryByText(/incl/i)).toBeNull()
     })
 
-    it('takes the total apart when the rate says it is included', () => {
+    /* IT DRAWS BOTH FIGURES AND DERIVES NEITHER. An earlier draft
+       took a rate and divided, which is a second summation of one
+       deal — QUOTE_SPEC §1's named fault. These are the numbers
+       `quoteTotals()` returns together. */
+    it('draws the figure it was handed, to the cent', () => {
       render(
-        <PriceBar total={103_731} tax={{ rate: 0.1, label: 'GST', included: true }} />,
+        <PriceBar total={103_731} tax={{ label: 'GST', totalExcluding: 94_300.91 }} />,
       )
       expect(screen.getByText('$103,731')).toBeInTheDocument()
-      /* 103,731 / 1.1 = 94,300.909… — not rounded, because a
-         rounded display over an unrounded total is how two
-         summations of one deal start to disagree. */
       expect(screen.getByText('$94,300.91')).toBeInTheDocument()
     })
 
-    /* THE FLOATING-POINT ONE, and it is why this bar quantises to
-       cents. `100000 * 1.1` is 110000.00000000001 in binary
-       floating point; `money()` reads that as a non-integer and
-       prints "$110,000.00" — cents that do not exist, on the
-       largest figure on the screen, where the business writes
-       "$110,000". Caught by this test before it shipped. */
-    it('adds it on without inventing cents that do not exist', () => {
+    /* THE FLOATING-POINT TRAP, GONE BY CONSTRUCTION. `100000 * 1.1`
+       is 110000.00000000001 in binary floating point, and `money()`
+       correctly reads that as a non-integer and prints
+       "$110,000.00" — cents that do not exist, where the business
+       writes "$110,000". A bar that never multiplies cannot
+       produce it. */
+    it('cannot invent cents, because it never does the arithmetic', () => {
       render(
-        <PriceBar total={100_000} tax={{ rate: 0.1, label: 'GST', included: false }} />,
+        <PriceBar total={110_000} tax={{ label: 'GST', totalExcluding: 100_000 }} />,
       )
       expect(screen.getByText('$110,000')).toBeInTheDocument()
       expect(screen.queryByText('$110,000.00')).toBeNull()
@@ -71,7 +72,7 @@ describe('PriceBar', () => {
     })
 
     it('uses the business word for it, not ours', () => {
-      render(<PriceBar total={100} tax={{ rate: 0.2, label: 'VAT', included: true }} />)
+      render(<PriceBar total={120} tax={{ label: 'VAT', totalExcluding: 100 }} />)
       /* Twice, and both are right: the caption says what the total
          includes, the line under it says what the other figure
          excludes. */

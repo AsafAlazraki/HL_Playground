@@ -56,6 +56,32 @@ import './features/pipeline/pipeline.css'
    error to show for it. Any stylesheet added later goes ABOVE this
    line. */
 import './styles/response.css'
+/* ============================================================
+   THE REBUILD'S SYSTEM — last, and that is deliberate.
+
+   The note above says any stylesheet added later goes ABOVE the
+   response layer. This one is the exception, and the exception is
+   the point: `system.css` REPLACES that whole stack, and while the
+   rebuild runs alongside the old screens it has to win the names
+   the two share.
+
+   WHAT IT ACTUALLY CHANGES FOR AN OLD SCREEN. The palette is
+   carried over from `ds.css` verbatim — the same measured ink,
+   the same nine kind hues — so colour does not move. What moves is
+   the middle of the type ramp: title 20 -> 24, heading 15 -> 16,
+   and display becomes a clamp. That is the 56px hole being filled,
+   and it lands on every screen at once rather than only on the
+   rebuilt ones.
+
+   That is a real change to shipped screens, so it is MEASURED
+   rather than assumed: `npm run check:shots` is the guard, its
+   baselines are committed, and the diff is looked at before any of
+   them are re-banked.
+
+   This line goes when the old stack does, and then `system.css`
+   moves to the top where it belongs.
+   ============================================================ */
+import './styles/system.css'
 import App from './App'
 
 createRoot(document.getElementById('root')!).render(

@@ -32,6 +32,7 @@ import type { ReactElement } from 'react'
 import { ArrowUUpLeft, Printer, UserCircle } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import { localDay } from './day'
+import { BuildScreen } from './BuildScreen'
 import { QuoteBuild } from './QuoteBuild'
 import { QuoteDocument } from './QuoteDocument'
 import { QuoteEditor } from './QuoteEditor'
@@ -40,6 +41,51 @@ import type { FlowBy, FlowStop } from './flow'
 import { makeNewVersion, useQuote } from './quotes'
 import type { QuoteDef } from '@/types/model'
 import './quote.css'
+
+/* ============================================================
+   THE SWITCH — old configurator or rebuilt one.
+
+   `docs/plan/REBUILD.md`: build alongside, migrate screen by
+   screen, delete the old layer last. One switch selects, so the
+   branch always runs and a half-finished screen never takes the
+   app down with it.
+
+   IT IS THE HASH, NOT A SEARCH PARAM, AND THAT WAS MEASURED. The
+   first draft read `?build=new` and it never fired once:
+   `src/app/url.ts` OWNS the query string and rewrites it from the
+   stage's own address table on every navigation, so an unknown
+   parameter is stripped before the screen ever reads it. Driven in
+   Chrome: the URL came back as `?at=quote&id=lIl1MKj2iE` with the
+   flag gone, and the old screen rendered.
+
+   The hash survives that rewrite, so `#build=new` turns it on and
+   `#build=old` turns it off — and the answer is remembered, so a
+   reload or a navigation that drops the hash does not silently
+   throw somebody back to the old screen mid-comparison.
+
+   BOTH DIRECTIONS ARE REACHABLE BY URL, which is the rule that
+   matters for a kill switch: whoever is looking at a broken screen
+   must be able to leave it without knowing where a setting lives.
+
+   This whole block goes when the old screen does. */
+const BUILD_PREF = 'hl.quote.build.v1'
+
+const rebuiltBuild = (): boolean => {
+  try {
+    const hash = window.location.hash.replace(/^#/, '')
+    const asked = new URLSearchParams(hash).get('build')
+    if (asked === 'new' || asked === 'old') {
+      localStorage.setItem(BUILD_PREF, asked)
+      return asked === 'new'
+    }
+    return localStorage.getItem(BUILD_PREF) === 'new'
+  } catch {
+    /* No `window`, no URL, or storage refused is not a reason to
+       fail to draw a quote — it is a reason to draw the one that
+       has shipped. */
+    return false
+  }
+}
 
 export interface QuotePageProps {
   quoteId: string
@@ -244,6 +290,8 @@ function QuoteDraft({
     <FlowSurface at={at} by={by} className="qt-root qt-root--edit">
       {at === 'address' ? (
         <QuoteEditor quote={quote} onOpenCustomer={onOpenCustomer} onGo={go} />
+      ) : rebuiltBuild() ? (
+        <BuildScreen quote={quote} />
       ) : (
         <QuoteBuild quote={quote} onGo={go} />
       )}
