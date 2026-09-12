@@ -1,0 +1,1081 @@
+/* ============================================================
+   SHOWROOM & COCKPIT — the design system
+
+   The governing document is `docs/specs/DESIGN_SYSTEM.md`. This
+   file is that document in CSS. If the two disagree, the document
+   wins and this file is the bug.
+
+   THIS REPLACES FIVE STYLESHEETS: ds.css, tokens.css, base.css,
+   bridge.css and response.css. That arrangement had `bridge.css`
+   remapping the ORIGINAL token vocabulary onto the newer one and
+   loading after it, so three type vocabularies resolved at once
+   and `response.css` had to state in a comment which of them the
+   app actually consumed. One file, one vocabulary, no adapter.
+
+   THE APP IS TWO REGISTERS and a screen belongs to exactly one:
+
+     SHOWROOM   somebody is being sold to, and a customer may be
+                looking over the dealer's shoulder. Photography,
+                depth, choreography, a figure that is the subject.
+
+     COCKPIT    somebody is working, all day. Density, tabular
+                figures, keyboard parity, no entrance animation.
+
+   A screen declares itself with `data-register` on its stage root.
+   Tokens that differ between registers are defined under those
+   attributes and NOWHERE ELSE. A component never branches on
+   register in TSX — it takes the tokens it is given.
+
+   WHY THE PREVIOUS SYSTEM WAS REPLACED, in one paragraph, because
+   the next person to read this file will otherwise re-derive it:
+   it was called Quiet Precision and its stated goal was to be
+   "boring in the way good instruments are boring". Applied to
+   every screen that starved the showroom AND never delivered the
+   density either, because restraint was the whole answer. Its §4b
+   capped the expressive layer under 6% alpha and its §5 retired
+   glass, while `bridge.css` set every material blur to 0px — so
+   the system switched its own expressive layer off and then
+   rejected components for being invisible against the surfaces it
+   had flattened. DESIGN_SYSTEM.md §9 has the full record.
+
+   LIGHT IS THE DEFAULT and lives on `:root` as well as
+   `[data-theme='light']`, so a page that never sets the attribute
+   still resolves every name.
+   ============================================================ */
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+
+  --bg-sunken: #e9eff6;
+  --bg: #f6f9fc;
+  --bg-canvas: #f1f6fb;
+  --surface-1: #ffffff;
+
+  /* THE GROUND A BRAND'S MARK IS PRINTED ON, and it does NOT flip
+     with the theme.
+
+     Every logo this app ships is dark ink on transparent —
+     Highfield navy, Jeanneau near-black, Haines a dark script. On
+     the dark theme they were being drawn on `--surface-1` at
+     #101f2f and three of the eight became genuinely unreadable:
+     measured on the dashboard tiles, Highfield's wordmark against
+     its panel came to 1.4:1.
+
+     A LETTERHEAD IS PAPER IN A DARK ROOM TOO. The fix is not to
+     invert or brighten somebody's trademark — that is defacing it,
+     and the same rule that says `contain` rather than `cover`
+     applies. It is to give the mark the ground it was drawn for,
+     in both themes, and let the plate be the light thing on a dark
+     card. Slightly off-white rather than #fff so it reads as
+     paper against a white card rather than as a hole in it. */
+  --mark-paper: #f7f9fb;
+
+  /* AND THE INK THAT GOES ON IT, which shipping the paper alone left
+     out — twice, in two features, in the same way.
+
+     A plate that does not flip has to be written on with an ink that
+     does not flip either, and both surfaces that print on
+     `--mark-paper` reached for a token that does. Measured on dark:
+
+       `.qs-card-name` (quote/picker.css:327) is `var(--fg)`, and a
+       brand with no logo file draws its NAME on the plate. #eaf1f8
+       on the eight tinted plates measures 1.00 to 1.04 : 1. Five of
+       the fifteen cards on "What are you quoting?" were blank.
+
+       `.md-place-mark` (modules/modules.css:422) is `var(--kind)`,
+       and the dark kind ramp is the BRIGHT cut: --kind-indigo
+       #6ea8ff on the plate is 2.29:1, --kind-amber #e2a83e is
+       2.01:1. Formosa's boat glyph and the trailer glyphs on the
+       modules grid are invisible.
+
+     #081b2e is light's own --fg, which is the ink these logos were
+     drawn in and the ink the plate was cut for: 16.49:1 on
+     --mark-paper, and 14.67 to 15.27:1 on the eight kind-tinted
+     plates `.qs-card-mark` mixes. Stated once here so neither site
+     has to write a literal, and so the next surface that prints on
+     paper has somewhere to look. */
+  --mark-ink: #081b2e;
+  --surface-2: #ffffff;
+  --surface-3: #eef3f8;
+  --surface-4: #dfe9f2;
+
+  --line-subtle: rgba(8, 27, 46, 0.07);
+  --line: rgba(8, 27, 46, 0.12);
+  --line-strong: rgba(8, 27, 46, 0.22);
+
+  /* Measured in-browser against --surface-1 (#ffffff), not
+     estimated:  18.9 / 7.7 / 4.7 / 2.8.
+     --fg-tertiary is the floor and clears 4.5. --fg-quaternary
+     does NOT, which is why it is barred from carrying meaning. */
+  --fg: #081b2e;
+  --fg-secondary: #3d5266;
+  --fg-tertiary: #5a6b7c;
+  --fg-quaternary: #93a3b3;
+  --fg-on-accent: #ffffff;
+
+  /* 5.9:1 on white, measured */
+  --accent: #0a5fc2;
+  --accent-hover: #0b6ad9;
+  --accent-press: #084e9e;
+  --accent-fg: #ffffff;
+  --accent-wash: rgba(10, 95, 194, 0.09);
+  --accent-wash-strong: rgba(10, 95, 194, 0.15);
+  --accent-line: rgba(10, 95, 194, 0.32);
+  --accent-glow: rgba(10, 95, 194, 0.2);
+
+  --success: #146c2e;
+  --success-wash: rgba(20, 108, 46, 0.1);
+  --warning: #8a5a00;
+  --warning-wash: rgba(138, 90, 0, 0.1);
+  --danger: #b3261e;
+  --danger-wash: rgba(179, 38, 30, 0.09);
+  --danger-solid: #b3261e;
+
+  /* the same eight hues, darkened to hold 4.5:1 on white */
+  --kind-indigo: #1d4ed8;
+  --kind-cyan: #0e7490;
+  --kind-teal: #0f766e;
+  --kind-green: #15803d;
+  --kind-amber: #a16207;
+  --kind-orange: #b45309;
+  --kind-rose: #be1250;
+  --kind-violet: #7c3aed;
+  --kind-slate: #475569;
+
+  --chip-fg: var(--fg-tertiary);
+  --chip-bg: rgba(8, 27, 46, 0.06);
+  --chip-computed-fg: var(--accent);
+  --chip-computed-bg: var(--accent-wash);
+  --chip-linked-fg: var(--kind-cyan);
+  --chip-linked-bg: rgba(14, 116, 144, 0.09);
+
+  --e1: 0 1px 2px rgba(8, 27, 46, 0.06);
+  --e2:
+    0 1px 2px rgba(8, 27, 46, 0.06),
+    0 6px 16px -6px rgba(8, 27, 46, 0.12);
+  --e3:
+    0 2px 6px rgba(8, 27, 46, 0.08),
+    0 20px 44px -12px rgba(8, 27, 46, 0.18);
+  --e-card: 0 1px 2px rgba(8, 27, 46, 0.05), 0 4px 12px -6px rgba(8, 27, 46, 0.1);
+  --e-card-hover:
+    0 2px 4px rgba(8, 27, 46, 0.07),
+    0 12px 28px -10px rgba(8, 27, 46, 0.16);
+
+  --canvas-dot: rgba(8, 27, 46, 0.08);
+  --canvas-edge: rgba(8, 27, 46, 0.24);
+  --canvas-edge-active: var(--accent);
+
+  /* -- the scrim ---------------------------------------------
+     THE ONE SURFACE A MODAL DIMS ITS PAGE WITH. It had no token,
+     so the two features that needed a dark wash in BOTH themes
+     wrote the literal — `.do-scrim` and `.cfg-scrim`, the only
+     two rgba() colours left in the board's stylesheet. Every
+     other scrim in the app is already built from `--mat-dim-bg`,
+     `--bg-sunken` or a `color-mix` of `--ink`; none of those flips
+     to a DARKER wash on dark, which is what a scrim over an
+     already-dark page has to do. Hence a token of its own, and
+     hence two values rather than one alpha. */
+  --scrim: rgba(8, 27, 46, 0.38);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* -- ground ------------------------------------------------
+     Cool-neutral near-black. The steps are close on purpose: on
+     dark, a small lift reads as "raised" without ever looking
+     like a different colour. Counted per channel rather than
+     asserted, because the floor above is measured against them:
+     sunken->bg +2/+6/+8, bg->canvas +1/+4/+8, canvas->1 +8/+6/+5,
+     1->2 +6/+9/+11, 2->3 +7/+9/+11, 3->4 +8/+11/+13. So the top of
+     the ramp steps roughly twice as hard as the bottom, which is
+     why --surface-3 and --surface-4 are far enough from
+     --surface-1 to need the ink floor re-measured on them. */
+  --bg-sunken: #050f1a;   /* behind the canvas, wells */
+  --bg: #071522;          /* app ground */
+  --bg-canvas: #08192a;   /* the sheet */
+  --surface-1: #101f2f;   /* cards, panels, the resting plane */
+  /* NOT FLIPPED — see the note on these two in the light block.
+     Restated here rather than left to inherit, so a reader of the
+     dark palette can see it was a decision. The ink is restated for
+     the same reason: it is the half that was missing, and the half
+     a dark theme is most likely to be given a flipping token for. */
+  --mark-paper: #f7f9fb;
+  --mark-ink: #081b2e;
+  --surface-2: #16283a;   /* raised: popovers, menus, selected rows */
+  --surface-3: #1d3145;   /* inputs, hover on surface-2 */
+  --surface-4: #253c52;   /* pressed, hover on surface-3 */
+
+  /* -- lines --------------------------------------------------
+     Alpha, not hex, so one border composes correctly over every
+     surface above. */
+  --line-subtle: rgba(255, 255, 255, 0.06);
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.15);
+
+  /* -- text ---------------------------------------------------
+     Re-measured in-browser against the CURRENT --surface-1
+     (#101f2f). The figures that stood here — 15.7 / 7.5 / 4.7 / 2.8
+     "against --surface-1 (#131519)" — named a ground this palette
+     stopped using when it went marine, and not one of the four
+     matched #131519 either. They are replaced by what was read
+     back:
+       --fg            14.64 : 1
+       --fg-secondary   8.55 : 1
+       --fg-tertiary    6.62 : 1   <- the floor. See below.
+       --fg-quaternary  3.21 : 1   <- does NOT clear 4.5, and is
+                                      therefore decoration only:
+                                      rules, ticks, disabled marks.
+                                      Never a word that matters.
+
+     THE FLOOR IS MEASURED ON THE DEEPEST SURFACE IT MAY LAND ON,
+     NOT ONLY ON --surface-1, and that is what moved it. --fg-tertiary
+     was #7d94a9, which clears 4.5 on --surface-1 (5.31) and fails on
+     the two surfaces below it in this same block:
+
+       --surface-3 #1d3145  4.24 : 1   inputs, hover on surface-2
+       --surface-4 #253c52  3.62 : 1   pressed, hover on surface-3
+
+     A floor that holds on one of four declared grounds is not a
+     floor. It was failing in the running app, in dark, at every site
+     a driven sweep reached: `.qb-price-lab` and `.qb-give` in the
+     configurator, `.qs-sec-count` on the quote picker and
+     `.cn-conseq-live` under a business rule all measured 4.24:1, and
+     `search.css` had already noticed and worked around it per-rule
+     (`.hs-foot-say`, `.hs-key`). #8fa6bb is the smallest step along
+     the same blue-grey line that clears 4.5 on all four:
+
+       surface-1 6.62   surface-2 5.96   surface-3 5.29
+       surface-4 4.52   bg 7.32   bg-sunken 7.65   bg-canvas 7.05
+
+     Light is untouched here on purpose. Its floor #5a6b7c measures
+     5.48 on --surface-1, 4.91 on --surface-3 and 4.46 on
+     --surface-4 — so it has the same fault, a tenth of the size,
+     and one unit of darkening (#596a7b) clears it at 4.53. It is
+     left standing because DESIGN_PRINCIPLES §1 publishes this ink's
+     ratios in a table, and moving light's ramp without moving that
+     table is how a doc starts lying. Flagged, not fixed. */
+  --fg: #eaf1f8;
+  --fg-secondary: #a8bccf;
+  --fg-tertiary: #8fa6bb;
+  --fg-quaternary: #5a6f83;
+  --fg-on-accent: #ffffff;
+
+  /* -- accent -------------------------------------------------
+     One hue, roughly four appearances per screen. 6.60:1 on
+     --surface-1 measured, so it is legal as text and not only as
+     paint. (Light's accent measures 5.9:1 on white.)
+
+     THAT FIGURE READ 5.1:1 AND WAS NEVER TRUE OF THIS PALETTE — the
+     --accent-fg note fifteen lines below already quotes 6.60:1 for
+     the same pair, so the file disagreed with itself. 6.60 is what
+     the browser returns for #58a6ff on #101f2f.
+
+     WHERE IT IS NOT LEGAL AS TEXT, measured: the accent on its own
+     wash. 5.18:1 on --accent-wash over --surface-1 — but 4.16:1 on
+     --accent-wash over --surface-3, and 4.41:1 on
+     --accent-wash-strong over --surface-1. A hue on a tint of
+     itself is the pairing rule 4 exists to catch, and these two
+     grounds do not clear it. `.cn-src-verdict` in constraints.css
+     is doing the first of those and measures 4.14:1 in the app. */
+  --accent: #58a6ff;
+  --accent-hover: #6cb2ff;
+  --accent-press: #3d8ef5;
+  /* DARK INK ON A BRIGHT ACCENT, and this was a real defect.
+
+     --accent-fg was #ffffff in BOTH themes. On light that is
+     6.12:1 on --accent and correct. On dark the accent is a
+     BRIGHT blue chosen so it could carry text on a dark ground
+     (6.60:1 on --surface-1) — and white ON it measures 2.53:1,
+     which fails rule 4 outright. Every accent-filled control in
+     the dark theme had an unreadable label.
+
+     A bright accent takes dark ink. #071522 is --bg-sunken, so
+     the pair is already in the ramp: 7.30:1 at rest, 8.29:1 on
+     hover (#6cb2ff), 5.60:1 on press (#3d8ef5). All three clear.
+
+     Found by the dashboard agent measuring its own primary
+     rather than trusting the token name. */
+  --accent-fg: #071522;
+  --accent-wash: rgba(88, 166, 255, 0.14);
+  --accent-wash-strong: rgba(88, 166, 255, 0.22);
+  --accent-line: rgba(88, 166, 255, 0.38);
+  --accent-glow: rgba(88, 166, 255, 0.28);
+
+  /* -- semantic ----------------------------------------------- */
+  --success: #56d364;
+  --success-wash: rgba(86, 211, 100, 0.13);
+  --warning: #e3b341;
+  --warning-wash: rgba(227, 179, 65, 0.13);
+  --danger: #ff7b72;
+  --danger-wash: rgba(255, 123, 114, 0.13);
+  --danger-solid: #d93a31;
+
+  /* -- the kind palette ---------------------------------------
+     Eight hues cut to roughly equal luminance so a sheet of
+     mixed tables reads as ONE drawing. Measured in-browser on
+     --surface-1 they span 5.9:1 to 9.0:1 on dark and 5.3:1 to
+     6.7:1 on light; every one of the sixteen clears 4.5.
+
+     This replaces 22 inks (7 accents + 7 "bright" variants + 8
+     field-type colours). Field types no longer carry hue at all;
+     see --chip-* below. */
+  --kind-indigo: #6ea8ff;
+  --kind-cyan: #4fc3d9;
+  --kind-teal: #3fcba8;
+  --kind-green: #5fd07e;
+  --kind-amber: #e2a83e;
+  --kind-orange: #f08a4b;
+  --kind-rose: #f26d8b;
+  --kind-violet: #b182f5;
+  --kind-slate: #8a93a3;
+
+  /* -- field-type chips ---------------------------------------
+     Eight coloured chips became three roles. A type chip is
+     metadata about a column, not a category of product, and it
+     has no business competing with the kind palette.
+       plain     TXT NUM DAT LST  — grey
+       computed  FX               — accent
+       linked    REF IMG          — a single cool hue */
+  --chip-fg: var(--fg-tertiary);
+  --chip-bg: rgba(255, 255, 255, 0.05);
+  --chip-computed-fg: var(--accent);
+  --chip-computed-bg: var(--accent-wash);
+  --chip-linked-fg: var(--kind-cyan);
+  --chip-linked-bg: rgba(79, 195, 217, 0.14);
+
+  /* -- elevation ----------------------------------------------
+     On dark the shadow alone does almost nothing; the lift comes
+     from the surface step. Shadow is the second half, and it is
+     tinted to the ground rather than pure black so it does not
+     punch a hole. */
+  --e1: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --e2:
+    0 2px 4px rgba(0, 0, 0, 0.32),
+    0 8px 20px -6px rgba(0, 0, 0, 0.5);
+  --e3:
+    0 4px 10px rgba(0, 0, 0, 0.35),
+    0 20px 48px -12px rgba(0, 0, 0, 0.62);
+  --e-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 16px -8px rgba(0, 0, 0, 0.5);
+  --e-card-hover:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 14px 32px -10px rgba(0, 0, 0, 0.6);
+
+  /* -- the canvas ---------------------------------------------
+     The blueprint grid is gone. What is left is a barely-there
+     dot field that tells you the plane is pannable and then
+     shuts up. */
+  --canvas-dot: rgba(255, 255, 255, 0.055);
+  --canvas-edge: rgba(255, 255, 255, 0.18);
+  --canvas-edge-active: var(--accent);
+
+  /* deeper on dark: the page beneath is already near-black, so 38%
+     of it reads as a haze rather than a dimming */
+  --scrim: rgba(2, 8, 14, 0.58);
+}
+
+/* ============================================================
+   WHAT EACH TABLE KIND TAKES — theme-independent, and therefore
+   NOT inside either theme block.
+
+   The mapping (a boat is indigo) is a product decision and never
+   changes; only the ink of "indigo" changes between light and
+   dark. Keeping the mapping here means a theme block that forgets
+   to restate it cannot silently resolve --kind-boat to nothing,
+   which is exactly what happened when light was promoted to the
+   default and every kind rail on the sheet fell back to grey.
+   ============================================================ */
+:root {
+  --kind-boat: var(--kind-indigo);
+  --kind-motor: var(--kind-orange);
+  --kind-trailer: var(--kind-amber);
+  --kind-accessory: var(--kind-teal);
+  --kind-package: var(--kind-violet);
+  --kind-dealer: var(--kind-cyan);
+  --kind-custom: var(--kind-slate);
+  --kind-join: var(--kind-rose);
+}
+
+/* ============================================================
+   ELEVATION — the rungs above the card.
+
+   The palette above declares --e1 --e2 --e3 --e-card
+   --e-card-hover per theme, because a shadow is a colour. These
+   are the rungs a Showroom surface needs and the old system kept
+   in a section it then switched off.
+
+   ON LIGHT the shadow does the lifting. ON DARK the surface step
+   does, and the shadow is second — which is why dark's values are
+   not simply the same numbers at a higher alpha.
+   ============================================================ */
+
+:root,
+[data-theme='light'] {
+  --e4:
+    0 4px 10px rgba(8, 27, 46, 0.09),
+    0 32px 64px -16px rgba(8, 27, 46, 0.22);
+  --e-float:
+    0 6px 14px rgba(8, 27, 46, 0.1),
+    0 44px 88px -20px rgba(8, 27, 46, 0.26);
+  --e-hero:
+    0 10px 24px rgba(8, 27, 46, 0.12),
+    0 64px 120px -28px rgba(8, 27, 46, 0.3);
+
+  --glow-sm: 0 0 0 3px var(--accent-glow);
+  --glow-md: 0 0 18px -2px var(--accent-glow);
+  --glow-lg: 0 0 42px -6px var(--accent-glow);
+}
+
+[data-theme='dark'] {
+  --e4:
+    0 4px 10px rgba(0, 0, 0, 0.4),
+    0 32px 64px -16px rgba(0, 0, 0, 0.55);
+  --e-float:
+    0 6px 14px rgba(0, 0, 0, 0.45),
+    0 44px 88px -20px rgba(0, 0, 0, 0.6);
+  --e-hero:
+    0 10px 24px rgba(0, 0, 0, 0.5),
+    0 64px 120px -28px rgba(0, 0, 0, 0.66);
+
+  --glow-sm: 0 0 0 3px var(--accent-glow);
+  --glow-md: 0 0 20px -2px var(--accent-glow);
+  --glow-lg: 0 0 48px -6px var(--accent-glow);
+}
+
+/* ============================================================
+   TYPE — three faces, ten steps, and the middle carries the work.
+
+   THE DEFECT THIS TABLE EXISTS TO FIX, measured 2026-09-09 over
+   1,450 text leaves on twelve screens
+   (`docs/research/visual-qa-2026-09-09.md`): the old ramp ran
+   26.88px -> 82.86px with NOTHING BETWEEN, a 56px hole. Eleven of
+   twelve screens measured 2.36x to 3.96x largest-over-smallest
+   where the spec asked for about 7x, and the home screen measured
+   2.44x — worse than the 2.97x the display tier had been built to
+   fix. Every screen was a billboard over fine print because there
+   was no step available to carry content in between.
+
+   Four steps are new: marque and hero at the top (Showroom), and
+   TITLE at 24 and SUBTITLE at 19 in the middle, which is the half
+   that was missing.
+
+   TAKE THE WHOLE STEP. Size, weight, leading and tracking travel
+   together; a size borrowed without its tracking is the bug this
+   phrasing exists to prevent.
+
+   TRACKING GOES NEGATIVE AS SIZE GROWS, about 0 at reading size,
+   and positive on exactly one step — the 11px uppercase label.
+
+   ONLY THE TOP THREE STEPS SCALE WITH THE WINDOW. The mid ramp is
+   fixed, because a screen whose body type grows at 2560 is a
+   screen that got less dense on a bigger monitor, which is
+   backwards. Each clamp carries a `rem` term so browser zoom still
+   works, and a clamp is the ramp itself rather than a literal.
+   ============================================================ */
+
+:root {
+  --font-sans:
+    'Inter Variable', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-display: 'Archivo Variable', Archivo, var(--font-sans);
+
+  /* -- the display tier. SHOWROOM ONLY, and Archivo ------------
+     The display face is barred below 26px: every step that
+     reaches it bottoms out above that, so there is no window
+     width at which Archivo renders small. The old system made
+     this promise in prose and then broke it at picker.css:87,
+     which clamped to 22px and rendered at 22 on every width the
+     app is used at. */
+  /* THE FLOOR IS SET BY THE REQUIREMENT, NOT BY TASTE. Showroom
+     must measure >=6x largest-over-smallest, and the smallest is
+     the 11px label, so the marque may never resolve under 66px at
+     any width the app is used at. Measured: 66.8px at 1024
+     (6.07x), 75.5 at 1280 (6.86x), 81 at 1440, capped 88 at 1920.
+
+     The first draft clamped to 44px and measured 5.53x at 1280 —
+     a fail the gallery caught on its own readout, which is the
+     whole reason that readout exists. The configurator's 7.53x
+     collapsing to 3.17x at 1024 is the same defect one width
+     down, and it shipped. */
+  --t-marque-size: clamp(4.125rem, 2rem + 3.4vw, 5.5rem);  /* 66 -> 88 */
+  --t-marque-weight: 700;
+  --t-marque-lead: 0.94;
+  --t-marque-track: -0.035em;
+
+  --t-hero-size: clamp(2.125rem, 1.25rem + 1.6vw, 2.75rem); /* 34 -> 44 */
+  --t-hero-weight: 680;
+  --t-hero-lead: 1.04;
+  --t-hero-track: -0.028em;
+
+  --t-display-size: clamp(1.75rem, 1.5rem + 0.55vw, 2.25rem); /* 28 -> 36 */
+  --t-display-weight: 640;
+  --t-display-lead: 1.14;
+  --t-display-track: -0.022em;
+
+  /* -- the middle. Both registers, and this is the half that was
+     missing. TITLE is a panel header or a Showroom card name;
+     SUBTITLE is the step a section head wants when DISPLAY would
+     shout and HEADING would disappear. */
+  --t-title-size: 24px;
+  --t-title-weight: 620;
+  --t-title-lead: 1.22;
+  --t-title-track: -0.016em;
+
+  --t-subtitle-size: 19px;
+  --t-subtitle-weight: 590;
+  --t-subtitle-lead: 1.3;
+  --t-subtitle-track: -0.011em;
+
+  --t-heading-size: 16px;
+  --t-heading-weight: 570;
+  --t-heading-lead: 1.35;
+  --t-heading-track: -0.007em;
+
+  /* -- reading -------------------------------------------------- */
+  --t-body-size: 14px;
+  --t-body-weight: 400;
+  --t-body-lead: 1.5;
+  --t-body-track: -0.002em;
+
+  --t-small-size: 13px;
+  --t-small-weight: 400;
+  --t-small-lead: 1.45;
+  --t-small-track: 0;
+
+  --t-caption-size: 12px;
+  --t-caption-weight: 500;
+  --t-caption-lead: 1.35;
+  --t-caption-track: 0.002em;
+
+  /* THE ONE UPPERCASE STYLE, and the floor. 11px is enforced by
+     `tools/check-styles.mjs`; nothing in src/ may go under it. */
+  --t-label-size: 11px;
+  --t-label-weight: 600;
+  --t-label-lead: 1.3;
+  --t-label-track: 0.07em;
+
+  /* -- figures. Mono is not decoration: it is what makes a column
+     of money line up on the decimal. Every one of these is
+     tabular by construction in the utility below. */
+  --t-figure-xl-size: clamp(2.25rem, 1.5rem + 1.9vw, 3.5rem);  /* 36 -> 56 */
+  --t-figure-lg-size: 24px;
+  --t-figure-size: 15px;
+  --t-figure-weight: 500;
+  --t-figure-lead: 1.1;
+  --t-figure-track: -0.02em;
+
+  --t-mono-lg-size: 15px;
+  --t-mono-size: 13px;
+  --t-mono-sm-size: 11px;
+  --t-mono-weight: 450;
+  --t-mono-lead: 1.45;
+}
+
+/* ============================================================
+   SPACE, RADII, HEIGHTS — one scale, and component tokens.
+
+   ONE SPACING SCALE. The old arrangement carried two — `--sp-1..6`
+   from the original system and `--s-1..16` from the newer one —
+   and `bridge.css` explicitly refused to map between them on the
+   grounds that "spacing is layout, and layout is the risk". So
+   both shipped, and 518 literal px survived alongside them.
+
+   COMPONENT TOKENS EXIST, and this is new. A survey before the
+   rebuild found 295 distinct button treatments across 39
+   stylesheets — 29 paddings, 10 sizes, 9 letter-spacings — and
+   137 of them missing at least one of hover, press and focus.
+   That is what happens when every feature re-derives a control
+   from raw scale values. Derive once, here.
+   ============================================================ */
+
+:root {
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+  --s-16: 64px;
+
+  --r-chip: 4px;
+  --r-control: 6px;
+  --r-card: 10px;
+  --r-panel: 14px;
+  --r-full: 999px;
+
+  --border: 1px;
+  --border-strong: 2px;
+
+  /* controls */
+  --control-h-sm: 28px;
+  --control-h-md: 32px;
+  --control-h-lg: 40px;
+  --control-pad-x-sm: var(--s-2);
+  --control-pad-x-md: var(--s-3);
+  --control-pad-x-lg: var(--s-4);
+  --control-gap: var(--s-2);
+
+  --input-h: var(--control-h-lg);
+  --input-pad-x: var(--s-3);
+
+  /* the measure and the gutter — how a screen answers the window.
+     The old system found the largest breakpoint in 41,000 lines of
+     CSS was 1180px, which meant that above a laptop the app had no
+     layout opinion at all. */
+  --measure: min(100%, clamp(1180px, 92vw, 2400px));
+  --gutter: clamp(16px, 2.4vw, 56px);
+  --section-gap: clamp(24px, 2vw, 48px);
+
+  /* z, six layers, and nothing writes a literal */
+  --z-canvas: 0;
+  --z-panel: 10;
+  --z-stage: 20;
+  --z-popover: 40;
+  --z-dialog: 60;
+  --z-toast: 80;
+}
+
+/* ============================================================
+   THE TWO REGISTERS.
+
+   Everything that differs between a screen somebody is sold to
+   and a screen somebody works in is declared HERE and nowhere
+   else. A component never branches on register in TSX.
+
+   `docs/specs/DESIGN_SYSTEM.md` §2 carries the requirements each
+   register has to meet; these are the tokens that let it.
+   ============================================================ */
+
+[data-register='cockpit'] {
+  /* DENSITY IS THE REQUIREMENT: at least 18 data rows at
+     1280x800. The build before the rebuild showed twelve. 32px is
+     the default rung of the published band (20-24 spreadsheet /
+     32 default / 48-52 comfortable) and it is what gets us
+     there with a 44px head and a 40px foot. */
+  --row-h: 32px;
+  --row-h-dense: 24px;
+  --row-h-comfortable: 44px;
+
+  --pane-pad: var(--s-4);
+  --stack-gap: var(--s-3);
+  --card-pad: var(--s-4);
+
+  /* COCKPIT TOPS OUT AT DISPLAY. A marque or a hero on a screen
+     full of data is the billboard-over-fine-print failure.
+
+     It was capped at TITLE in the first draft, and the gallery's
+     own readout failed it: title over label is 24/11 = 2.18x,
+     under the 2.5x floor §2 asks for. A requirement the ramp
+     cannot reach is a bug in the requirement. Display gives 2.82x
+     at 1280 and the ramp is continuous now that title 24,
+     subtitle 19 and heading 16 fill the middle — a 31px stage
+     title was never the defect. The defect was that 30.72px was
+     the ONLY large thing and everything else sat at 11-13px. */
+  --t-stage-title: var(--t-display-size);
+  --t-stage-title-weight: var(--t-display-weight);
+  --t-stage-title-lead: var(--t-display-lead);
+  --t-stage-title-track: var(--t-display-track);
+
+  --surface-rest: var(--surface-1);
+  --stage-bg: var(--bg);
+}
+
+[data-register='showroom'] {
+  --row-h: 44px;
+  --row-h-dense: 32px;
+  --row-h-comfortable: 56px;
+
+  --pane-pad: var(--s-6);
+  --stack-gap: var(--s-5);
+  --card-pad: var(--s-6);
+
+  /* Showroom reaches the display tier, and requires >=6x scale
+     contrast on the stage to be considered done. */
+  --t-stage-title: var(--t-hero-size);
+  --t-stage-title-weight: var(--t-hero-weight);
+  --t-stage-title-lead: var(--t-hero-lead);
+  --t-stage-title-track: var(--t-hero-track);
+
+  --surface-rest: var(--surface-1);
+  --stage-bg: var(--bg);
+}
+
+/* ============================================================
+   MATERIAL — back on.
+
+   The old system shipped a full material vocabulary and then
+   `bridge.css:171-183` set every `--mat-*-blur` to 0px, flattening
+   all of it. Components were subsequently rejected for being
+   invisible against surfaces the system itself had flattened
+   (`docs/research/motion-libraries-2026.md`, and its correction).
+
+   FOUR RULES, and they are Apple's:
+
+   1. BIGGER SURFACES READ AS THICKER. A sheet blurs harder than a
+      panel, which blurs harder than a chip. The rungs below are
+      that, and they are the whole reason there is more than one.
+   2. NEVER STACK A TRANSLUCENT SURFACE ON ANOTHER. Legibility
+      collapses. A popover over a sheet takes --surface-2, opaque.
+   3. DIM TO FOCUS, SEPARATE TO KEEP FLOW. A blocking task gets
+      --scrim. A parallel panel gets translucency and offset and
+      NO scrim.
+   4. PUT COLOUR ON A SOLID LAYER, NOT THE TRANSLUCENT FOREGROUND.
+      Over a blurred ground text goes higher-contrast and slightly
+      heavier — never flat grey.
+
+   AND THE CONTRAST RULE IS UNCHANGED. A translucent ground is
+   still a ground: composite it and measure 4.5:1. What is gone is
+   the 6% ceiling that made the measurement moot.
+   ============================================================ */
+
+:root,
+[data-theme='light'] {
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-edge: rgba(255, 255, 255, 0.5);
+  --glass-sat: 180%;
+
+  --grad-surface: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  --edge-light: rgba(255, 255, 255, 0.7);
+  --sheen: linear-gradient(
+    105deg,
+    rgba(255, 255, 255, 0) 35%,
+    rgba(255, 255, 255, 0.42) 50%,
+    rgba(255, 255, 255, 0) 65%
+  );
+}
+
+[data-theme='dark'] {
+  --glass-bg: rgba(16, 31, 47, 0.66);
+  --glass-edge: rgba(255, 255, 255, 0.09);
+  --glass-sat: 150%;
+
+  --grad-surface: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  --edge-light: rgba(255, 255, 255, 0.08);
+  --sheen: linear-gradient(
+    105deg,
+    rgba(255, 255, 255, 0) 35%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0) 65%
+  );
+}
+
+:root {
+  /* the thickness rungs. Rule 1 above is the only reason these
+     are three numbers and not one. */
+  --mat-chip-blur: 8px;
+  --mat-panel-blur: 16px;
+  --mat-sheet-blur: 28px;
+}
+
+/* ============================================================
+   MOTION — the tokens, and they are exact.
+
+   NEVER INVENT A CURVE OR A DURATION. Every value here is from
+   `docs/specs/DESIGN_SYSTEM.md` §6, which takes them from the
+   repo's own motion skills. `cubic-bezier(0.4, 0, 0.2, 1)` looks
+   familiar and is not one of them.
+
+   NEVER `ease-in` ON A UI ELEMENT. It delays the initial movement,
+   which is the exact moment the user is watching most closely — a
+   dropdown with ease-in at 300ms FEELS slower than ease-out at the
+   same 300ms.
+
+   EXIT IS FASTER THAN ENTER.
+
+   THE SPRINGS ARE FOR `motion` v13 and are Apple's shipped values
+   as damping/response. Critically damped (1.0) by default; bounce
+   only when the GESTURE ITSELF carried momentum. Overshoot on a
+   menu that merely opened is wrong.
+   ============================================================ */
+
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --d-press: 120ms;
+  --d-fast: 160ms;
+  --d-med: 200ms;
+  --d-slow: 260ms;
+  --d-sheet: 320ms;
+  --d-scene: 620ms;
+  --d-exit: 140ms;
+
+  /* springs, as bounce/duration pairs for motion v13 */
+  --spring-ui-bounce: 0;
+  --spring-ui-duration: 0.4;
+  --spring-sheet-bounce: 0.06;
+  --spring-sheet-duration: 0.45;
+  --spring-momentum-bounce: 0.2;
+  --spring-momentum-duration: 0.55;
+
+  /* the stagger unit. 30-80ms is the published band; 40 is one
+     frame at 24fps and reads as deliberate rather than laggy. */
+  --stagger: 40ms;
+  --rise: 12px;
+
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+  --focus-inset: inset 0 0 0 2px var(--accent);
+}
+
+/* ============================================================
+   TYPE UTILITIES — apply a whole step, never half of one.
+   ============================================================ */
+
+.t-marque {
+  font-family: var(--font-display);
+  font-size: var(--t-marque-size);
+  font-weight: var(--t-marque-weight);
+  line-height: var(--t-marque-lead);
+  letter-spacing: var(--t-marque-track);
+}
+.t-hero {
+  font-family: var(--font-display);
+  font-size: var(--t-hero-size);
+  font-weight: var(--t-hero-weight);
+  line-height: var(--t-hero-lead);
+  letter-spacing: var(--t-hero-track);
+}
+.t-display {
+  font-size: var(--t-display-size);
+  font-weight: var(--t-display-weight);
+  line-height: var(--t-display-lead);
+  letter-spacing: var(--t-display-track);
+}
+.t-title {
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
+}
+.t-subtitle {
+  font-size: var(--t-subtitle-size);
+  font-weight: var(--t-subtitle-weight);
+  line-height: var(--t-subtitle-lead);
+  letter-spacing: var(--t-subtitle-track);
+}
+.t-heading {
+  font-size: var(--t-heading-size);
+  font-weight: var(--t-heading-weight);
+  line-height: var(--t-heading-lead);
+  letter-spacing: var(--t-heading-track);
+}
+.t-body {
+  font-size: var(--t-body-size);
+  font-weight: var(--t-body-weight);
+  line-height: var(--t-body-lead);
+  letter-spacing: var(--t-body-track);
+}
+.t-small {
+  font-size: var(--t-small-size);
+  font-weight: var(--t-small-weight);
+  line-height: var(--t-small-lead);
+  letter-spacing: var(--t-small-track);
+}
+.t-caption {
+  font-size: var(--t-caption-size);
+  font-weight: var(--t-caption-weight);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+}
+
+/* THE ONE UPPERCASE STYLE. Uppercase is applied in CSS and never
+   in JS, because uppercasing content is lossy — `PVC` uppercased
+   cannot be told from a value the dealer typed as `Pvc`, and those
+   are different facts about their data. */
+.t-label {
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  line-height: var(--t-label-lead);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+}
+
+/* FIGURES. Tabular by construction — a column of money lines up on
+   the decimal or it is wrong. */
+.t-figure-xl,
+.t-figure-lg,
+.t-figure,
+.t-mono,
+.t-mono-lg,
+.t-mono-sm {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+.t-figure-xl {
+  font-size: var(--t-figure-xl-size);
+  font-weight: var(--t-figure-weight);
+  line-height: var(--t-figure-lead);
+  letter-spacing: var(--t-figure-track);
+}
+.t-figure-lg {
+  font-size: var(--t-figure-lg-size);
+  font-weight: var(--t-figure-weight);
+  line-height: var(--t-figure-lead);
+  letter-spacing: var(--t-figure-track);
+}
+.t-figure {
+  font-size: var(--t-figure-size);
+  font-weight: var(--t-figure-weight);
+  line-height: var(--t-mono-lead);
+}
+.t-mono-lg {
+  font-size: var(--t-mono-lg-size);
+  font-weight: var(--t-mono-weight);
+  line-height: var(--t-mono-lead);
+}
+.t-mono {
+  font-size: var(--t-mono-size);
+  font-weight: var(--t-mono-weight);
+  line-height: var(--t-mono-lead);
+}
+.t-mono-sm {
+  font-size: var(--t-mono-sm-size);
+  font-weight: var(--t-mono-weight);
+  line-height: var(--t-mono-lead);
+}
+
+/* ============================================================
+   KIND AS IDENTITY.
+
+   Boat, motor, trailer and rigging kit are the four nouns the
+   business is made of, and a person should know which is in front
+   of them without reading a word.
+
+   A HUE MAY CARRY A SURFACE. It may NOT sit behind reading text,
+   and it is NEVER chrome. A figure is never a hue — a price is not
+   decorative. And a hue only ever appears on something that HAS
+   that kind, which is what stops this becoming colouring-in.
+
+   ONE CUSTOM PROPERTY, not forty tokens. A host sets --kind (or
+   data-kind) and takes the classes below.
+   ============================================================ */
+
+[data-kind='boat'] { --kind: var(--kind-boat); }
+[data-kind='motor'] { --kind: var(--kind-motor); }
+[data-kind='trailer'] { --kind: var(--kind-trailer); }
+[data-kind='accessory'] { --kind: var(--kind-accessory); }
+[data-kind='package'] { --kind: var(--kind-package); }
+[data-kind='dealer'] { --kind: var(--kind-dealer); }
+[data-kind='custom'] { --kind: var(--kind-custom); }
+[data-kind='join'] { --kind: var(--kind-join); }
+
+.k-rail {
+  border-left: 3px solid var(--kind, var(--line));
+}
+.k-wash {
+  background: color-mix(in srgb, var(--kind, transparent) 6%, var(--surface-1));
+}
+.k-band {
+  background: color-mix(in srgb, var(--kind, transparent) 10%, var(--surface-1));
+}
+.k-chip {
+  color: var(--kind, var(--fg-tertiary));
+  background: color-mix(in srgb, var(--kind, transparent) 10%, transparent);
+}
+.k-dot {
+  background: var(--kind, var(--fg-quaternary));
+}
+.k-lift {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--kind, transparent) 26%, transparent);
+}
+
+/* ============================================================
+   PRESS, HOVER, FOCUS — every pressable surface has all three.
+
+   PRESS LANDS ON POINTER-DOWN, not on release. The moment feedback
+   waits for the click, directness falls off a cliff.
+
+   SCALE THE PRESS TO THE SURFACE. 0.97 on a control; 0.994 plus
+   losing the hover lift on a card. 0.97 on a 236px card is a 7px
+   shrink and reads as a glitch. A LIST ROW DARKENS INSTEAD OF
+   SCALING, so its neighbours do not look like they moved.
+   ============================================================ */
+
+:where(button, [role='button'], summary, a[href]) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(button, [role='button'], summary):not(:disabled):active {
+  transform: scale(0.97);
+}
+
+:where([data-press='card']):not(:disabled):active {
+  transform: scale(0.994);
+}
+
+:where([data-press='row']):not(:disabled):active {
+  transform: none;
+  background: var(--surface-3);
+}
+
+:where(button, [role='button'], summary, a[href], input, select, textarea, [tabindex]):focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   ACCESSIBILITY, applied to everything above.
+
+   REDUCED MOTION MEANS GENTLER FEEDBACK, NOT NO FEEDBACK.
+   Movement goes; colour and opacity stay. A press that stops
+   confirming itself is a worse interface, not a gentler one — and
+   the old `base.css:623` set `animation-duration: 0.01ms
+   !important` on `*`, which took the fade with the movement and
+   left no per-file rule able to give it back.
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --d-scene: 1ms;
+    --d-sheet: 1ms;
+    --rise: 0px;
+    --stagger: 0ms;
+  }
+
+  :where(button, [role='button'], summary):not(:disabled):active,
+  :where([data-press='card']):not(:disabled):active {
+    transform: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: var(--d-press) !important;
+    animation-duration: var(--d-press) !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --mat-chip-blur: 0px;
+    --mat-panel-blur: 0px;
+    --mat-sheet-blur: 0px;
+    --glass-bg: var(--surface-1);
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --line-subtle: var(--line-strong);
+    --line: var(--line-strong);
+    --grad-surface: none;
+    --sheen: none;
+  }
+}

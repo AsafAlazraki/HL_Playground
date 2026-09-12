@@ -1,0 +1,554 @@
+/* The gallery's own chrome. It is deliberately COCKPIT: this is a
+   working reference somebody reads all day, not a thing anybody is
+   sold. Every value below comes from system.css — the reference
+   page eats the system it documents. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  -webkit-font-smoothing: antialiased;
+}
+
+.gal {
+  min-height: 100vh;
+}
+
+.gal-dim {
+  color: var(--fg-tertiary);
+}
+
+/* -- masthead. One of exactly two surfaces allowed to blur, because
+   it sits OVER scrolling content and has to say so. ------------- */
+
+.gal-mast {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-panel);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-6);
+  padding: var(--s-3) var(--gutter);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  border-bottom: var(--border) solid var(--line);
+  box-shadow: inset 0 1px 0 var(--edge-light);
+}
+
+.gal-mast-id {
+  display: flex;
+  flex-direction: column;
+}
+
+.gal-mast-controls {
+  display: flex;
+  gap: var(--s-6);
+}
+
+.gal-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.gal-seg {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface-3);
+  border-radius: var(--r-control);
+}
+
+.gal-seg-btn {
+  height: var(--control-h-sm);
+  padding: 0 var(--control-pad-x-md);
+  border: 0;
+  border-radius: var(--r-chip);
+  background: transparent;
+  color: var(--fg-secondary);
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .gal-seg-btn:hover {
+    color: var(--fg);
+  }
+}
+
+.gal-seg-btn[aria-pressed='true'] {
+  background: var(--surface-1);
+  color: var(--fg);
+  box-shadow: var(--e1);
+}
+
+/* -- layout --------------------------------------------------- */
+
+.gal-main {
+  width: var(--measure);
+  margin: 0 auto;
+  padding: var(--section-gap) var(--gutter) var(--s-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+}
+
+.gal-sec {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  padding-top: var(--s-6);
+  border-top: var(--border) solid var(--line-subtle);
+}
+
+.gal-sec-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  max-width: 68ch;
+}
+
+.gal-sec-head h2 {
+  margin: 0;
+}
+
+.gal-sec-head p {
+  margin: 0;
+}
+
+.gal-cap {
+  display: block;
+  margin-bottom: var(--s-3);
+}
+
+.gal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--s-8);
+  align-items: start;
+}
+
+/* -- the ramp readout ----------------------------------------- */
+
+.gal-ratio {
+  display: grid;
+  grid-template-columns: repeat(3, auto) 1fr;
+  gap: var(--s-6);
+  align-items: end;
+  padding: var(--s-5);
+  background: var(--surface-1);
+  border: var(--border) solid var(--line);
+  border-left: 3px solid var(--danger);
+  border-radius: var(--r-card);
+}
+
+.gal-ratio[data-ok] {
+  border-left-color: var(--success);
+}
+
+.gal-ratio-say {
+  margin: 0;
+  max-width: 52ch;
+  justify-self: end;
+}
+
+/* -- type ----------------------------------------------------- */
+
+.gal-type {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.gal-type-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: var(--s-5);
+  align-items: baseline;
+  padding-bottom: var(--s-4);
+  border-bottom: var(--border) solid var(--line-subtle);
+}
+
+.gal-type-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-self: start;
+  padding-top: var(--s-1);
+}
+
+.gal-type-spec {
+  color: var(--fg);
+  min-width: 0;
+}
+
+.gal-type-use {
+  grid-column: 2;
+  margin: 0;
+}
+
+.gal-figs {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--s-8);
+  padding: var(--s-5);
+  background: var(--surface-1);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+}
+
+.gal-figs > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.gal-figs p {
+  margin: 0;
+  max-width: 40ch;
+}
+
+/* -- colour --------------------------------------------------- */
+
+.gal-ink {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.gal-ink-row {
+  display: grid;
+  grid-template-columns: minmax(0, 22em) 9em 5em 1fr;
+  gap: var(--s-4);
+  align-items: center;
+  padding: var(--s-2) var(--s-3);
+  background: var(--surface-1);
+  border: var(--border) solid var(--line-subtle);
+  border-radius: var(--r-control);
+}
+
+.gal-ink-swatch {
+  min-width: 0;
+}
+
+.gal-ratio-chip {
+  padding: 2px var(--s-2);
+  border-radius: var(--r-chip);
+  background: var(--success-wash);
+  color: var(--success);
+  text-align: center;
+}
+
+.gal-ratio-chip[data-fail] {
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+
+.gal-ratio-chip[data-allowed] {
+  background: var(--chip-bg);
+  color: var(--fg-tertiary);
+}
+
+.gal-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+
+.gal-swatch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.gal-swatch-chip {
+  width: 72px;
+  height: 48px;
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-control);
+}
+
+.gal-kinds {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+
+.gal-kind {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border: var(--border) solid var(--line-subtle);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+
+.gal-kind-rail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--kind);
+  border: 0;
+}
+
+.gal-kind-chip {
+  margin-left: auto;
+  padding: 2px var(--s-2);
+  border-radius: var(--r-chip);
+}
+
+/* -- material ------------------------------------------------- */
+
+.gal-elevs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-6);
+  padding: var(--s-6);
+  background: var(--bg-canvas);
+  border-radius: var(--r-panel);
+}
+
+.gal-elev {
+  display: grid;
+  place-items: center;
+  width: 128px;
+  height: 84px;
+  background: var(--surface-1);
+  border-radius: var(--r-card);
+}
+
+.gal-glass-stage {
+  position: relative;
+  display: flex;
+  gap: var(--s-5);
+  padding: var(--s-8) var(--s-6);
+  border-radius: var(--r-panel);
+  overflow: hidden;
+  margin-bottom: var(--s-3);
+}
+
+/* The bed is a busy ground on purpose: a blur over a flat colour
+   proves nothing. */
+.gal-glass-bed {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 30%, var(--kind-indigo) 0%, transparent 42%),
+    radial-gradient(circle at 72% 20%, var(--kind-teal) 0%, transparent 38%),
+    radial-gradient(circle at 46% 82%, var(--kind-orange) 0%, transparent 44%),
+    var(--surface-4);
+  opacity: 0.55;
+}
+
+.gal-glass {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  flex: 1;
+  padding: var(--s-5);
+  background: var(--glass-bg);
+  border: var(--border) solid var(--glass-edge);
+  border-radius: var(--r-card);
+  box-shadow: var(--e3), inset 0 1px 0 var(--edge-light);
+}
+
+/* -- motion --------------------------------------------------- */
+
+.gal-btn {
+  align-self: start;
+  height: var(--control-h-md);
+  padding: 0 var(--control-pad-x-lg);
+  border: var(--border) solid var(--accent);
+  border-radius: var(--r-control);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .gal-btn:hover {
+    background: var(--accent-hover);
+  }
+}
+
+.gal-curves {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.gal-curve {
+  display: grid;
+  grid-template-columns: 1fr 9em 15em 1fr;
+  gap: var(--s-4);
+  align-items: center;
+}
+
+.gal-curve-track {
+  position: relative;
+  height: 32px;
+  background: var(--surface-3);
+  border-radius: var(--r-full);
+}
+
+.gal-curve-dot {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  margin-top: -12px;
+  border-radius: var(--r-full);
+  background: var(--accent);
+  box-shadow: var(--e2);
+  animation: gal-slide var(--d-slow) both;
+}
+
+@keyframes gal-slide {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(100cqw - 32px));
+  }
+}
+
+.gal-curve-track {
+  container-type: inline-size;
+}
+
+.gal-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.gal-table td {
+  padding: var(--s-2) var(--s-3);
+  border-bottom: var(--border) solid var(--line-subtle);
+}
+
+.gal-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.gal-stagger {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-2);
+  height: 96px;
+  padding: var(--s-4);
+  background: var(--surface-1);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  margin-bottom: var(--s-3);
+}
+
+.gal-stagger-bar {
+  flex: 1;
+  height: 100%;
+  border-radius: var(--r-chip);
+  background: var(--accent);
+  transform-origin: bottom;
+  animation: gal-rise var(--d-slow) var(--ease-out) both;
+}
+
+@keyframes gal-rise {
+  from {
+    transform: translateY(var(--rise)) scaleY(0.2);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scaleY(1);
+    opacity: 1;
+  }
+}
+
+/* -- density -------------------------------------------------- */
+
+.gal-dens {
+  display: flex;
+  flex-direction: column;
+}
+
+.gal-dens p {
+  margin: var(--s-2) 0 0;
+}
+
+.gal-rows {
+  background: var(--surface-1);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+
+.gal-row {
+  display: grid;
+  grid-template-columns: 2.5em 1fr 7em 4em 6em;
+  gap: var(--s-3);
+  align-items: center;
+  height: var(--row-h);
+  padding: 0 var(--s-3);
+  border-bottom: var(--border) solid var(--line-subtle);
+  transition: background var(--d-press) var(--ease-out);
+}
+
+.gal-row:last-child {
+  border-bottom: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .gal-row:hover {
+    background: var(--surface-3);
+  }
+}
+
+.gal-row-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gal-fits {
+  color: var(--success);
+}
+
+.gal-fits[data-short] {
+  color: var(--danger);
+}
+
+/* A step the current register may not reach. It stays on the page
+   — the ramp is one ramp — but it reads as out of scope and it is
+   excluded from the ratio above. */
+.gal-type-row[data-out] {
+  opacity: 0.42;
+}
+
+.gal-out {
+  color: var(--warning);
+}

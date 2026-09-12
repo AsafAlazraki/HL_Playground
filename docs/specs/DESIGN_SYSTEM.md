@@ -99,9 +99,13 @@ screen that does not meet them is not done.
    keyboard, and the shortcut is rendered inline where the action is, so it
    teaches itself.
 4. **No entrance animation.** Cockpit screens paint. See §6.
-5. **Scale contrast between 2.5× and 4×.** Cockpit is not supposed to shout; it
-   is supposed to be legible and dense. A billboard heading over a six-item menu
-   is the failure this rebuild exists to remove.
+5. **Scale contrast between 2.5× and 3.2×.** Cockpit tops out at `display`, so
+   31/11 is the ceiling the ramp can physically reach; a band above that would
+   be a requirement nothing can meet. Cockpit is not supposed to shout — it is
+   supposed to be legible and dense. A billboard heading over a six-item menu is
+   the failure this rebuild exists to remove, and the fix for it was never a
+   smaller heading: it was filling the middle of the ramp so the heading has
+   something to sit above.
 
 ---
 
@@ -187,9 +191,9 @@ last admitted the *bridge* names were the ones features actually consumed.
 
 | step | size | use |
 |---|---|---|
-| `--t-marque` | clamp to 82px | Showroom only. The product name on a stage. One per screen |
-| `--t-hero` | clamp to 44px | Showroom stage titles, the price figure |
-| `--t-display` | 32px | section titles on a Showroom screen |
+| `--t-marque` | clamp 66 → 88px | Showroom only. The product name on a stage. One per screen |
+| `--t-hero` | clamp 34 → 44px | Showroom stage titles, the price figure |
+| `--t-display` | clamp 28 → 36px | section titles on a Showroom screen; the stage title in Cockpit |
 | `--t-title` | 24px | panel headers, dialog titles, card names on a Showroom card |
 | `--t-subtitle` | **19px** | the step that did not exist |
 | `--t-heading` | 16px | row heads, card names in Cockpit — the thing you scan for |
