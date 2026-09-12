@@ -55,6 +55,7 @@ import type { Candidate } from './freeze'
 import { addLine, removeLine, setLevel } from './quotes'
 import { orderBands } from './bands'
 import { marqueOf } from './marque'
+import { FrozenPhoto } from './photo'
 import type { Band } from './bands'
 import { buildSteps } from './steps'
 import type { BuildStep } from './steps'
@@ -301,6 +302,11 @@ function TablePart({
               <span className="t-caption bs-offer-why">{offer.reason}</span>
             ) : null}
           </p>
+          {/* The gap between the two is the flex gap on `.bs-offer-cap`,
+              not a space in the markup: splitting the label from the
+              sentence removed the space that used to join them, and
+              "3 OFFEREDonly what somebody picked" is what that looks
+              like. Layout owns spacing; strings do not. */}
           <ul className="bs-offer">
             {offer.candidates.map((c) => (
               <CandidateCard key={c.key} quote={quote} step={step} candidate={c} />
@@ -345,6 +351,20 @@ function PickedLine({
   )
 }
 
+/* AN OPTION CARD CARRIES THE THING, NOT ITS NAME.
+ *
+ * `DESIGN_SYSTEM.md` §2 makes photography a Showroom requirement,
+ * and this is the surface where it earns most: a dealer turning the
+ * screen around to ask "this motor or that one" is asking about two
+ * objects, and two lines of text is the version of that question
+ * that makes a person read part numbers aloud.
+ *
+ * THE PAIR FACTS ARE OUR EDGE, and no shipping configurator in the
+ * teardowns has them. `line.pairFacts` is the five-way association
+ * the price file recorded — which rigging kit, which prop, which
+ * engine hole — frozen onto the candidate before it is picked. The
+ * original prints a motor's name; this prints what comes with it.
+ */
 function CandidateCard({
   quote,
   step,
@@ -355,7 +375,24 @@ function CandidateCard({
   candidate: Candidate
 }): ReactElement {
   const on = Boolean(candidate.alreadyLineId)
-  const price = candidate.line.unitPrice
+  const line = candidate.line
+  const price = line.unitPrice
+  /* AT MOST TWO, AND EACH CLAMPED TO TWO LINES. A card that lists
+     every fact is a specification sheet, and the question this card
+     asks is "this one?".
+
+     Measured on the real seed: three facts on a Yamaha F250 ran to
+     seven lines — "Rigging Kit Option Helm Master L2 - 6X9 Binnacle
+     | Bolt on DES | Straight Helm | EKS | Single" is one of them —
+     which pushed the price below the fold of its own card. The
+     price is the second thing a person looks at and it was the last
+     thing they could see.
+
+     Two adjacent candidates differing by one word inside that
+     string is the real discrimination problem here, and naming the
+     DIFFERENCE rather than reprinting both specifications is a
+     better answer than either. It is not this pass. */
+  const facts = (line.pairFacts ?? []).slice(0, 2)
 
   return (
     <li>
@@ -367,12 +404,64 @@ function CandidateCard({
         aria-pressed={on}
         onClick={() => {
           if (on && candidate.alreadyLineId) removeLine(quote.id, candidate.alreadyLineId)
-          else addLine(quote.id, step.section.blockId, candidate.line)
+          else addLine(quote.id, step.section.blockId, line)
         }}
       >
-        <span className="t-heading bs-cand-name">{candidate.line.label}</span>
-        <span className="t-mono bs-cand-amt">
-          {price === null ? 'not priced' : money(price)}
+        <span className="bs-cand-well">
+          {/* `FrozenPhoto` answers "can these pixels be painted, and
+              from where" — the repository's own copy when it holds
+              one, the maker's address when it does not — while the
+              frozen `src` on the quote stays exactly what it was.
+              It returns null when there is nothing to paint, and the
+              well below it is what shows through. */}
+          <FrozenPhoto
+            img={line.image}
+            fallbackAlt={line.label}
+            className="bs-cand-img"
+            w={320}
+            h={200}
+          />
+          {line.recommended ? (
+            <span className="t-label bs-cand-rec">Recommended</span>
+          ) : null}
+        </span>
+
+        <span className="bs-cand-say">
+          <span className="t-heading bs-cand-name">{line.label}</span>
+
+          {facts.length > 0 ? (
+            <span className="bs-cand-facts">
+              {facts.map((f) => (
+                <span className="t-caption bs-cand-fact" key={f.label}>
+                  <span className="bs-cand-fact-lab">{f.label}</span> {f.value}
+                </span>
+              ))}
+            </span>
+          ) : null}
+
+          <span className="t-mono bs-cand-amt">
+            {/* NULL IS A REAL STATE. Never 0, and never blank — a
+                price the file does not carry is a fact about the
+                file. */}
+            {price === null ? (
+              <span className="bs-cand-unpriced">not priced here</span>
+            ) : (
+              money(price)
+            )}
+          </span>
+        </span>
+
+        {/* PICKED SAYS SO IN A WORD, not only in a tint. The original
+            — which nobody thinks is beautiful — used a border, a
+            wash AND a word, and was right to: a colour alone asks a
+            person to remember which shade means chosen.
+
+            SENTENCE CASE. It was `t-label`, which uppercases, and
+            "ADD" is a verb on a control — rule 3's first named
+            exclusion. Uppercase is a section caption, a group
+            caption or a mono stamp, and this is none of them. */}
+        <span className="t-caption bs-cand-state" aria-hidden="true">
+          {on ? 'On the quote' : 'Add'}
         </span>
       </button>
     </li>

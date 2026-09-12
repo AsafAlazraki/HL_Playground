@@ -189,13 +189,30 @@
    container query below. A name a person cannot read is a broken
    rail; an answer they have to open the step to see is a smaller
    loss than the original, which never showed it at all. */
+/* IT CLAMPS TO TWO LINES; IT DOES NOT ELLIPSISE ONE.
+
+   The first draft was `white-space: nowrap` with `text-overflow:
+   ellipsis`, and a driven mid-word sweep caught what that does to
+   the strings actually in the seed: "chosen: Highfield - ADV7
+   (HYP) B-…" cuts the colourway in half, and a part number cut in
+   half is unreadable rather than merely shortened. Three of 124
+   text leaves, all of them here.
+
+   Two lines at 12px in a rail stop is roughly sixty characters,
+   which holds every `fact` the engine writes for a single chosen
+   line. `DESIGN_SYSTEM.md` §4 sanctions the clamp — "wraps or
+   clamps to two lines with the full text still in the DOM" — and
+   the whole string stays in the DOM either way, so a screen reader
+   and a find-in-page both get all of it. */
 .ui-stepper-chose {
   color: var(--fg-tertiary);
   overflow-wrap: normal;
   word-break: keep-all;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* -- the travelling indicator --------------------------------- */

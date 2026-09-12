@@ -225,7 +225,7 @@
 
 .bs-offer {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
   gap: var(--s-3);
   margin: 0;
   padding: 0;
@@ -413,4 +413,145 @@
    content. */
 .bs-offer-why {
   color: var(--fg-secondary);
+}
+
+/* -- the option card, with the thing on it -------------------- */
+
+.bs-cand {
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* THE WELL IS THE MAT, and it is what shows through when there is
+   no picture. `FrozenPhoto` returns null rather than drawing a
+   broken image, so the ground below has to be a deliberate surface
+   rather than a hole — the same argument the product stage makes,
+   one size down. */
+.bs-cand-well {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: linear-gradient(180deg, var(--surface-3) 0%, var(--bg-sunken) 100%);
+  border-bottom: var(--border) solid var(--line-subtle);
+}
+
+.bs-cand-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* CONTAIN. A cropped outboard is an outboard with its leg cut
+     off, and the leg is how a dealer tells two shaft lengths
+     apart. */
+  object-fit: contain;
+}
+
+/* THE STAR THE PRICE FILE PUT THERE, said in a word. `recommended`
+   is the workbook's own mark, not our guess. */
+.bs-cand-rec {
+  position: absolute;
+  top: var(--s-2);
+  left: var(--s-2);
+  padding: 2px var(--s-2);
+  border-radius: var(--r-chip);
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.bs-cand-say {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  width: 100%;
+}
+
+/* WHAT COMES WITH IT — the five-way association, frozen onto the
+   candidate before it is picked. No configurator in the teardowns
+   carries this; the original prints a motor's name and stops. */
+.bs-cand-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-2);
+}
+
+.bs-cand-fact {
+  color: var(--fg-secondary);
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.bs-cand-fact-lab {
+  color: var(--fg-tertiary);
+}
+
+.bs-cand-unpriced {
+  color: var(--danger);
+}
+
+/* THE WORD, because a tint alone asks a person to remember which
+   shade means chosen. */
+.bs-cand-state {
+  width: 100%;
+  padding: var(--s-2) var(--s-4);
+  border-top: var(--border) solid var(--line-subtle);
+  color: var(--fg-tertiary);
+  text-align: left;
+}
+
+.bs-cand[data-on] .bs-cand-state {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-top-color: var(--accent);
+}
+
+/* THE CAPTION IS TWO THINGS WITH A GAP, not one string. A label and
+   a sentence set at different steps cannot be joined by a space in
+   the markup — layout owns spacing. */
+.bs-offer-cap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2);
+}
+
+/* EQUAL HEIGHT, so a row of options reads as a row of options
+   rather than a ragged shelf. The picture is a fixed aspect and the
+   word sits at the foot, so only the middle stretches. */
+.bs-offer {
+  align-items: stretch;
+}
+
+.bs-offer > li {
+  display: flex;
+}
+
+.bs-cand {
+  justify-content: flex-start;
+}
+
+.bs-cand-say {
+  flex: 1 1 auto;
+}
+
+/* A FACT CLAMPS TO TWO LINES WITH THE WHOLE STRING STILL IN THE
+   DOM — the sanctioned half of "nothing truncates mid-word".
+   Measured before this: three facts on a Yamaha F250 ran to seven
+   lines and pushed the price off its own card. */
+.bs-cand-fact {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+/* The price is the second thing a person looks at, so it sits at
+   the bottom of the middle rather than wherever the facts leave it. */
+.bs-cand-amt {
+  margin-top: auto;
+  padding-top: var(--s-1);
 }
