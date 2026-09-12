@@ -107,47 +107,99 @@ const SCREENS = [
      UNREACHED for exactly that reason, and an unreached screen is a
      picture nobody is taking: the guard said so on the run that
      found it, which is the guard working. */
+  /* ============================================================
+     AND IT WENT UNREACHED A SECOND TIME, for the same class of
+     reason: the rebuilt screens became the default, Data stopped
+     being a page of six cards and became a register of 53 tables,
+     and "All tables" — the card this walked through — is not on it.
+
+     The guard said so, which is the guard working. Four of eleven
+     screens were UNREACHED on that run and a picture nobody is
+     taking is worth less than no guard at all, because it looks
+     like coverage.
+
+     It walks whichever Data is up now, and lands on whichever
+     catalogue is up: `.ct` rebuilt, `.jb-list` shipped.
+     ============================================================ */
   {
     name: 'catalogue',
     at: 'table',
-    sure: '.jb-list',
+    sure: '.ct-grid, .jb-list',
     open: async (p) => {
       await door(p, /^Data/)
-      await p.getByRole('button', { name: /^All tables/ }).first().click()
-      await p.getByRole('button', { name: /^Open .+ — / }).first().click()
+      await p.waitForTimeout(1200)
+      const rebuilt = await p.locator('.dt-open').count()
+      if (rebuilt > 0) {
+        await p.locator('.dt-open').filter({ hasText: 'Highfield Inflatables' }).first().click()
+      } else {
+        await p.getByRole('button', { name: /^All tables/ }).first().click()
+        await p.getByRole('button', { name: /^Open .+ — / }).first().click()
+      }
     },
   },
   /* AND THE GALLERY KEEPS ITS OWN PICTURE. It is still a lens a
      person can choose, and dropping the only photograph of it to
      follow a changed default would have quietly reduced what this
      guard covers at the moment it was being repaired. */
+  /* THE GALLERY KEEPS ITS OWN PICTURE where the shipped catalogue
+     is up. Under the rebuilt one there is no gallery lens — the
+     arrival IS the photographic grid — so this stands aside rather
+     than reporting a screen that does not exist. */
   {
     name: 'gallery',
     at: 'table',
     sure: '.cat-gallery',
+    skipWhen: '.ct-grid',
     open: async (p) => p.getByRole('button', { name: /^Gallery$/ }).first().click(),
   },
+  /* THE SPREADSHEET, reached by whichever control names it — and it
+     follows the catalogue above, so it is HIGHFIELD's register and
+     pinned there by name rather than by whatever sorts first.
+
+     THE BASELINE IT REPLACED WAS FORMOSA'S. The old path walked
+     "All tables" and took the first "Open …" button, so which table
+     this screen photographed was decided by row order; the diff on
+     the run that repointed it was almost entirely two different
+     tables' rows, not a changed screen. Highfield is the right one
+     to pin: 588 variants and 56 columns is the case UX_PASS §12
+     measured the register's density complaint against. */
   {
     name: 'register',
     at: 'table',
     sure: '.tb-scroll',
-    open: async (p) => p.getByRole('button', { name: /^List$/ }).first().click(),
+    open: async (p) => {
+      const sheet = p.getByRole('button', { name: /^Open the sheet$/ })
+      if (await sheet.count()) await sheet.first().click()
+      else await p.getByRole('button', { name: /^List$/ }).first().click()
+    },
   },
   { name: 'quotes', at: 'quotes', open: async (p) => door(p, /^Quotes/) },
   { name: 'customers', at: 'customers', open: async (p) => door(p, /^Customers/) },
   { name: 'new quote', at: 'new-quote', open: async (p) => door(p, /^New quote$/) },
+  /* THE CONFIGURATOR, through whichever picker is up. Pinned to the
+     shipped one's `aria-label`, this failed at the FIRST step the
+     day the rebuilt screens became the default — thirty seconds of
+     timeout with nothing wrong with the configurator. */
   {
     name: 'configurator',
     at: 'quote',
     open: async (p) => {
-      await p
-        .getByRole('list', { name: /places you can quote from/i })
-        .getByRole('button')
-        .first()
-        .click()
-      await p.getByRole('option').first().click()
+      const rebuilt = await p.locator('.qp-card').count()
+      if (rebuilt > 0) {
+        await p.locator('.qp-card').first().click()
+        await p.waitForTimeout(2000)
+        await p.locator('.pl-card').first().click()
+        await p.waitForTimeout(500)
+      } else {
+        await p
+          .getByRole('list', { name: /places you can quote from/i })
+          .getByRole('button')
+          .first()
+          .click()
+        await p.getByRole('option').first().click()
+      }
       await p.getByRole('button', { name: /Start the quote|Back to the quote/ }).first().click()
-      await p.waitForTimeout(1200)
+      await p.waitForTimeout(1800)
     },
   },
 ]
@@ -319,8 +371,23 @@ const run = async () => {
   /* One screen's trouble is one screen's row: a throw in here — a
      control that never appeared, a renderer that died — must not take
      the walk down and leave no verdict on the nine that were fine. */
+  const skipped = []
   for (const s of SCREENS) {
     try {
+      /* ============================================================
+         A LENS THAT IS NOT THERE IS SKIPPED, NOT UNREACHED.
+
+         The gallery is a lens of the SHIPPED catalogue; under the
+         rebuilt one the arrival is itself a photographic grid and
+         there is no such lens to press. Reporting that as unreached
+         would be the guard crying about a screen that does not
+         exist, and an unreached line nobody can act on is how a
+         guard stops being read. Said out loud on its own line, so
+         the skip is never silent. */
+      if (s.skipWhen && (await page.locator(s.skipWhen).count())) {
+        skipped.push(`${s.name} — ${s.skipWhen} is up, so this lens is not on this build`)
+        continue
+      }
       await s.open(page)
       await page.waitForTimeout(700)
       const at = await page.evaluate(
@@ -400,8 +467,13 @@ const run = async () => {
 
   await browser.close()
   console.log('')
+  for (const k of skipped) console.log(`  SKIPPED — ${k}`)
   for (const u of unreached) console.log(`  UNREACHED — ${u}`)
-  const done = `${shots.length} of ${SCREENS.length} screens`
+  /* THE DENOMINATOR DROPS THE SKIPS. "7 of 11" while four screens
+     were unreachable read as a shortfall; "7 of 7" with the skip
+     said on its own line above reads as what it is. */
+  const want = SCREENS.length - skipped.length
+  const done = `${shots.length} of ${want} screens`
   if (unreached.length || failed) {
     console.log(`  FAILED — ${done} captured, ${failed} changed, ${unreached.length} unreached`)
     process.exit(1)
