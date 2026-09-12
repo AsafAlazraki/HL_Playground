@@ -44,14 +44,17 @@ import type { ReactElement } from 'react'
 import { MagnifyingGlass, Plus, Receipt } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import { markOf } from '@/lib/mark'
+import { marqueOf } from '@/features/quote/marque'
 import { useProjectStore } from '@/store/useProjectStore'
-import { Button } from '@/ui'
+import { Button, Marque } from '@/ui'
 import type { AppUser } from '@/features/auth/session'
 import { FrozenPhoto } from '@/features/quote/photo'
 import { useQuotes } from '@/features/quote/quotes'
 import type { DashboardActs } from './acts'
-import { doorsOf } from './doors'
+import { doorPicture, doorsOf } from './doors'
 import type { Door } from './doors'
+import { money } from '@/lib/money'
+import { quoteTotals } from '@/features/quote/totals'
 import { usePlaces } from './usePlaces'
 import { fileTally, greeting, resolveRecent, rollQuotes } from './cards'
 import { useRecentPicks } from './useRecentPicks'
@@ -95,6 +98,41 @@ export function HomeScreen({ user, ...acts }: HomeScreenProps): ReactElement {
     [picks, entities, rowsByEntity],
   )
 
+  /* ============================================================
+     THE BRANDS — PHOTOGRAPHED FIRST, THEN BY SIZE.
+
+     Ranked by row count alone this band came back as Parts &
+     Accessories, Dealer Fit Packages, Rigging Kits and Mackay
+     Trailers: the four biggest tables on the sheet, four monograms
+     in a row, and not one of the names a dealer would say out
+     loud. A front door for a boat business that never shows a boat
+     is ranking by the wrong fact.
+
+     A PHOTOGRAPH IS THE FACT THAT MATTERS HERE. A place whose
+     stock is photographed is a place that can be shown to a
+     customer, which is what this band is for; the rest are one
+     press away on Modules and the count beside the heading says
+     so. Within each half it is still biggest-first, so the order
+     is never arbitrary.
+
+     Six, and not twenty-five: `doorPicture` walks every row of
+     every table behind a place, and this screen is opened forty
+     times a day. */
+  const brands = useMemo(() => {
+    const live = places.filter((p) => !p.retired && p.census.items > 0)
+    const withCover = live.map((place) => {
+      const module = modules[place.moduleId]
+      const ids = place.tableId ? [place.tableId] : (module?.tableIds ?? [])
+      return { place, cover: doorPicture(ids, entities, rowsByEntity) }
+    })
+    return withCover
+      .sort((a, b) => {
+        const pic = Number(Boolean(b.cover)) - Number(Boolean(a.cover))
+        return pic !== 0 ? pic : b.place.census.items - a.place.census.items
+      })
+      .slice(0, 6)
+  }, [places, modules, entities, rowsByEntity])
+
   const name = firstNameOf(user)
   const day = now.toLocaleDateString('en-AU', {
     weekday: 'long',
@@ -107,10 +145,16 @@ export function HomeScreen({ user, ...acts }: HomeScreenProps): ReactElement {
       <div className="fd-port">
         <div className="fd-col">
           <header className="fd-head">
-            <h1 className="t-marque fd-hello">
-              {greeting(now)}
-              {name === '' ? '' : `, ${name}`}
-            </h1>
+            {/* THE GREETING ARRIVES A WORD AT A TIME — §2 asks every
+                Showroom screen for a choreographed entrance and this
+                screen simply painted its heading. `Marque` is
+                reactbits' Split Text ported native; it splits on
+                WORDS, never glyphs, because §4 forbids a cut inside
+                one and a per-letter animation is that cut made
+                visible forty times. */}
+            <Marque as="h1" className="t-marque fd-hello">
+              {`${greeting(now)}${name === '' ? '' : `, ${name}`}`}
+            </Marque>
             {/* THE DAY AND THE FILE, as two facts under the marque
                 rather than three strings sharing one 14px line with
                 the greeting. `fileTally` is the same census the rail
@@ -170,6 +214,78 @@ export function HomeScreen({ user, ...acts }: HomeScreenProps): ReactElement {
             </section>
           ) : null}
 
+          {/* ============================================================
+              THE BRANDS, WITH THEIR OWN STOCK'S PHOTOGRAPHY.
+
+              The four kind doors above are the roll-up; this is what
+              a dealer actually thinks in. Northside sells Highfield,
+              Stabicraft, Stacer, Formosa, Jeanneau, Surtees — and a
+              front door that never names one of them is a front door
+              for a database rather than for a business.
+
+              SIX, BY SIZE, because `doorPicture` walks every row of
+              every table behind a place and twenty-five of those on
+              a screen somebody opens forty times a day is a cost
+              with nothing behind it. The rest are one press away and
+              the band says so.
+              ============================================================ */}
+          {brands.length > 0 ? (
+            <section className="fd-band">
+              <p className="fd-band-head">
+                <span className="t-label fd-band-name">Your brands</span>
+                <button type="button" className="t-caption fd-more" onClick={acts.onOpenModules}>
+                  All {places.length}
+                </button>
+              </p>
+              <ul className="fd-brands">
+                {brands.map((b) => (
+                  <li key={b.place.key} className="fd-brand-cell">
+                    <button
+                      type="button"
+                      className="fd-brand"
+                      data-kind={b.place.kind}
+                      data-press="card"
+                      onClick={() => acts.onOpenModule(b.place.moduleId)}
+                    >
+                      {/* NO MATERIALISE ON A THUMBNAIL. It was here for
+                          one build and it was wrong twice over: §5's
+                          blur-and-scale is for the HERO — the one
+                          picture a screen is about — and six of them
+                          resolving at once is the scattered-effect
+                          failure rather than a choreographed entrance.
+                          It also meant a grid of blurs for the 620ms
+                          before the photographs landed.
+
+                          The plate is under every one, as it is in
+                          every other grid in the app: three of the six
+                          biggest places sell parts and rigging and
+                          carry no photograph at all, and a lit well
+                          with nothing in it is a coloured smear. */}
+                      <span className="fd-brand-well m-lit">
+                        <span className="fd-brand-plate" aria-hidden="true">
+                          <span className="t-title fd-brand-mark">{markOf(b.place.name)}</span>
+                        </span>
+                        <FrozenPhoto
+                          img={b.cover}
+                          fallbackAlt={b.place.name}
+                          className="fd-brand-img"
+                          w={360}
+                          h={225}
+                        />
+                      </span>
+                      <span className="fd-brand-say">
+                        <span className="t-heading fd-brand-name">{b.place.name}</span>
+                        <span className="t-caption fd-brand-n">
+                          {b.place.census.items.toLocaleString('en-AU')} {b.place.census.noun}
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
           <div className="fd-panes">
             {/* ============================================================
                 TWO PANELS, AND EACH SAYS WHAT IT HOLDS OR WHY IT IS
@@ -195,22 +311,55 @@ export function HomeScreen({ user, ...acts }: HomeScreenProps): ReactElement {
                   from.
                 </p>
               ) : (
-                <ul className="fd-rows">
-                  {roll.mine.slice(0, 4).map((q) => (
-                    <li key={q.id}>
-                      <button
-                        type="button"
-                        className="fd-row"
-                        onClick={() => acts.onOpenQuote(q.id)}
-                      >
-                        <span className="t-heading fd-row-name">{q.subjectLabel}</span>
-                        <span className="t-caption fd-row-say">
-                          {q.state === 'issued' ? 'Given to the customer' : 'Draft'}
-                          {q.customer.name.trim() === '' ? '' : ` · ${q.customer.name}`}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
+                /* ============================================================
+                   A QUOTE CARRIES A PHOTOGRAPH OF ITS OWN BOAT, frozen
+                   onto it at `freeze` time, and this list drew none of
+                   them — a row of grey text for a document whose whole
+                   subject is a picture. `subjectImage` is on every
+                   quote and costs nothing to draw.
+
+                   AND THE FIGURE IS THE ONE THE DOCUMENT PRINTS.
+                   `quoteTotals` reads the quote's own frozen lines, so
+                   the card and the page it opens cannot disagree.
+                   ============================================================ */
+                <ul className="fd-quotes">
+                  {roll.mine.slice(0, 3).map((q) => {
+                    const lockup = marqueOf(q.subjectLabel)
+                    const totals = quoteTotals(q)
+                    return (
+                      <li key={q.id}>
+                        <button
+                          type="button"
+                          className="fd-quote"
+                          data-press="card"
+                          onClick={() => acts.onOpenQuote(q.id)}
+                        >
+                          <span className="fd-quote-well m-lit">
+                            <FrozenPhoto
+                              img={q.subjectImage}
+                              fallbackAlt={q.subjectLabel}
+                              className="fd-quote-img"
+                              w={160}
+                              h={100}
+                            />
+                          </span>
+                          <span className="fd-quote-say">
+                            <span className="t-heading fd-quote-name">
+                              {lockup.model || q.subjectLabel}
+                            </span>
+                            <span className="t-caption fd-quote-who">
+                              {q.customer.name.trim() === ''
+                                ? 'nobody yet'
+                                : q.customer.name}
+                              {' · '}
+                              {q.state === 'issued' ? 'given to the customer' : 'draft'}
+                            </span>
+                          </span>
+                          <span className="t-small fd-quote-sum">{money(totals.total)}</span>
+                        </button>
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
             </section>
@@ -264,7 +413,7 @@ function DoorTile({
         data-press="card"
         onClick={() => onOpen(door.moduleId)}
       >
-        <span className="fd-well">
+        <span className="fd-well m-lit m-grain">
           {/* The plate is under every tile and the photograph covers
               it. Accessories carries no picture on this sheet, and an
               empty well on a quarter of the grid reads as a screen

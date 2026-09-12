@@ -60,17 +60,16 @@ import {
   finishLevels,
   foldModels,
   leafValues,
-  materialOf,
   priceOf,
 } from '@/features/catalogue/fold'
 import type { Model, Offer } from '@/features/catalogue/fold'
 import { createViewFor } from '@/features/views/viewDefs'
 import { useProjectStore } from '@/store/useProjectStore'
-import { Button, Field } from '@/ui'
+import { Button, Field, Marque } from '@/ui'
 import type { QuoteDoor } from './start'
 import { marqueOf } from './marque'
-import { colourwayOf, splitVariant } from './colourway'
 import { FrozenPhoto } from './photo'
+import { Colourways } from '@/features/catalogue/Colourways'
 import { unsellableSubject } from './freeze'
 import { createQuoteFromView, unaddressedDraftFor } from './quotes'
 import './place-screen.css'
@@ -146,7 +145,7 @@ export function PlaceScreen({ door, onBack, onStarted }: PlaceScreenProps): Reac
                 <ArrowLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
                 Every place
               </button>
-              <h1 className="t-marque pl-marque">{lockup.model || door.name}</h1>
+              <Marque as="h1" className="t-marque pl-marque">{lockup.model || door.name}</Marque>
               <p className="t-small pl-sub">
                 {models.length} {models.length === 1 ? 'model' : 'models'} · {door.say}
               </p>
@@ -235,26 +234,27 @@ export function PlaceScreen({ door, onBack, onStarted }: PlaceScreenProps): Reac
             about the thing being committed to. One model is picked
             at a time, so there is exactly one row of them.
             ============================================================ */}
+        {/* ============================================================
+            AND THE FINISHES ARE RENDERS. They were text chips —
+            "Light Grey · PVC" — which told a dealer which row they
+            were on and showed them nothing. The seed carries a
+            distinct photograph per variant, so `Colourways` (Chroma
+            Grid, inverted) puts the actual hull in front of them.
+
+            IT IS THE STRIP VARIANT HERE, one row that scrolls rather
+            than a grid that wraps: this bar is fixed, and a bar that
+            grows a second row moves the button a person is reaching
+            for — the one thing a commit surface must never do.
+            ============================================================ */}
         {pick && pick.model.offers.length > 1 ? (
-          <ul className="pl-ways" aria-label="Finishes">
-            {pick.model.offers.map((offer) => (
-              <Colour
-                key={offer.entry.rowId}
-                offer={offer}
-                /* THE MATERIAL IS ON THE CHIP ONLY WHERE IT VARIES.
-                   RU230KAM comes in two colours and two materials, so
-                   its four chips first read "WH · WH · Light Grey ·
-                   Light Grey" — two pairs of identical-looking
-                   controls that are different boats at different
-                   prices. Where every finish shares a material the
-                   chip stays the colour alone, because repeating
-                   "HYP" four times says nothing. */
-                material={pick.model.materials.length > 1}
-                on={offer.entry.rowId === pick.offer.entry.rowId}
-                onChoose={(next) => setPick({ model: pick.model, offer: next })}
-              />
-            ))}
-          </ul>
+          <Colourways
+            offers={pick.model.offers}
+            chosenRowId={pick.offer.entry.rowId}
+            material={pick.model.materials.length > 1}
+            label={`Finishes of ${pick.model.name}`}
+            strip
+            onChoose={(next) => setPick({ model: pick.model, offer: next })}
+          />
         ) : null}
         <Button
           tone="primary"
@@ -303,7 +303,7 @@ function ModelCard({
           if (first) onChoose(first)
         }}
       >
-        <span className="pl-well">
+        <span className="pl-well m-lit m-grain">
           <span className="pl-plate" aria-hidden="true">
             <span className="t-display pl-mono">{markOf(model.name)}</span>
           </span>
@@ -332,40 +332,6 @@ function ModelCard({
             {model.offers.length > 1 ? `${model.offers.length} finishes` : ''}
           </span>
         </span>
-      </button>
-    </li>
-  )
-}
-
-function Colour({
-  offer,
-  material,
-  on,
-  onChoose,
-}: {
-  offer: Offer
-  material: boolean
-  on: boolean
-  onChoose: (offer: Offer) => void
-}): ReactElement {
-  /* The code is the LAST token of the row's own hierarchy cell —
-     "HYP B-G-B" splits into a material and a colourway. Read through
-     the map it is "Black / Grey / Black"; unread it is exactly the
-     code the price file carries, and nothing else. */
-  const { code } = splitVariant(offer.leaf)
-  const read = colourwayOf(code)
-  const mat = materialOf(offer.leaf)
-  const say = read.read ? read.say : code
-
-  return (
-    <li>
-      <button
-        type="button"
-        className={on ? 't-caption pl-way is-on' : 't-caption pl-way'}
-        aria-pressed={on}
-        onClick={() => onChoose(offer)}
-      >
-        {material && mat !== '' ? `${say} · ${mat}` : say}
       </button>
     </li>
   )

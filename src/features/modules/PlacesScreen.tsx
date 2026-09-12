@@ -28,7 +28,7 @@
 import { useMemo, useState } from 'react'
 import type { ReactElement } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
-import { Field } from '@/ui'
+import { Field, Marque } from '@/ui'
 import { markOf } from '@/lib/mark'
 import { FrozenPhoto } from '@/features/quote/photo'
 import { doorPicture } from '@/features/dashboard/doors'
@@ -88,7 +88,7 @@ export function PlacesScreen({ onOpen, onSettings, onNew }: PlacesScreenProps): 
         <div className="mo-col">
           <header className="mo-head">
             <div className="mo-head-say">
-              <h1 className="t-marque mo-marque">Modules</h1>
+              <Marque as="h1" className="t-marque mo-marque">Modules</Marque>
               <p className="t-small mo-sub">
                 {places.length} {places.length === 1 ? 'place' : 'places'} ·{' '}
                 {rows.toLocaleString('en-AU')} {rows === 1 ? 'row' : 'rows'} in them
@@ -166,7 +166,7 @@ function Tile({
     <li className="mo-cell">
       <div className="mo-tile" data-kind={place.kind}>
         <button type="button" className="mo-face" data-press="card" onClick={onOpen}>
-          <span className="mo-well">
+          <span className="mo-well m-lit m-grain">
             {/* The plate is under every tile and the photograph covers
                 it: `FrozenPhoto` draws nothing rather than a broken
                 image, and asking a second time whether it will is a

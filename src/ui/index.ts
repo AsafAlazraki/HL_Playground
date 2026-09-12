@@ -124,3 +124,12 @@ export type { ProductStageProps, StagePicture } from './ProductStage'
 
 export { PriceBar } from './PriceBar'
 export type { PriceBarProps, PriceBarTax, PriceLevelChoice } from './PriceBar'
+
+/* THE MARQUE'S ENTRANCE — reactbits Split Text ported native, and
+   the mechanism `DESIGN_SYSTEM.md` §2 asks every Showroom screen
+   for. See `Marque.tsx` for why it splits on words and not glyphs. */
+export { Completion } from './Completion'
+export type { CompletionProps, CompletionStep, CompletionTax } from './Completion'
+
+export { Marque } from './Marque'
+export type { MarqueProps } from './Marque'

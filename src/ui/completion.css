@@ -1,0 +1,335 @@
+/* ============================================================
+   THE QUOTE'S FOOT (ui-done-) — a card, not a bar.
+
+   A bar welded to the bottom edge reads as chrome. A card floating
+   over the pane with its own shadow and its own edge reads as the
+   thing you are making, which is what it is. §5's material is
+   spent here and on the cascade sheet — the two surfaces the
+   re-mine names as earning it — and nowhere else.
+
+   RESPONSIVE BY CONTAINER, NOT BY WINDOW. Its host declares
+   `container-type: inline-size`, so this reflows on the room it
+   actually has rather than on how wide the browser happens to be.
+   That is the only way a card that also has to work in a narrow
+   drawer is right in both places.
+   ============================================================ */
+
+.ui-done {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--s-5);
+  position: relative;
+  margin: 0 var(--gutter) var(--s-4);
+  padding: var(--s-4) var(--s-5);
+  border: var(--border) solid var(--glass-edge);
+  border-radius: 18px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  box-shadow:
+    inset 0 1px 0 var(--edge-light),
+    var(--e4);
+  overflow: hidden;
+  transition:
+    border-color var(--d-slow) var(--ease-out),
+    box-shadow var(--d-slow) var(--ease-out);
+}
+
+/* THE EDGE TAKES THE ACCENT WHEN THE QUOTE IS WHOLE. Not colour for
+   its own sake: it is the ring's signal repeated on the element a
+   person is about to press. */
+.ui-done[data-complete] {
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 1px 0 var(--edge-light),
+    0 0 0 1px color-mix(in srgb, var(--accent) 34%, transparent),
+    var(--e4);
+}
+
+/* ------------------------------------------------------------
+   THE SWEEP — Border Beam, re-opened and corrected twice.
+
+   ONE PASS, LEFT TO RIGHT. The 2026-09-10 deletion measured a
+   conic orbit crawling the long edges of a 773x56 strip and was
+   right about that; a linear sweep crosses in one move. And
+   causality is spent after one pass, so this element only exists
+   while it runs — there is nothing left to switch off.
+
+   IT IS A LUMINANCE EDGE, NOT A WASH. That measurement killed it
+   as a 9-15% blue wash over an already-washed head, which was
+   never what it is: a narrow bright band with soft shoulders.
+   ------------------------------------------------------------ */
+.ui-done-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 38%,
+    color-mix(in srgb, var(--accent) 34%, transparent) 48%,
+    var(--edge-light) 50%,
+    color-mix(in srgb, var(--accent) 34%, transparent) 52%,
+    transparent 62%
+  );
+  transform: translate3d(-100%, 0, 0);
+  animation: ui-done-sweep var(--d-scene) var(--ease-out) forwards;
+}
+
+@keyframes ui-done-sweep {
+  to {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+/* ------------------------------------------------------------
+   THE ARC — one segment per step, so it is a MAP and not a
+   percentage. The gaps are the stops still open, and a person can
+   see at a glance which one is the hole.
+   ------------------------------------------------------------ */
+.ui-done-arc {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.ui-done-arc svg {
+  display: block;
+  /* twelve o'clock, clockwise — the only direction anybody reads a
+     dial, and the reason the offset carries a quarter turn */
+  transform: rotate(-90deg);
+}
+
+.ui-done-track {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 3;
+}
+
+.ui-done-seg {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.45;
+  transition:
+    stroke var(--d-slow) var(--ease-out),
+    opacity var(--d-slow) var(--ease-out);
+}
+
+.ui-done-seg.is-on {
+  stroke: var(--accent);
+  opacity: 1;
+}
+
+.ui-done[data-complete] .ui-done-seg.is-on {
+  stroke: var(--success);
+}
+
+.ui-done-count {
+  position: absolute;
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+.ui-done-count b {
+  font-size: var(--t-small-size);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+/* the ring is decoration; this is what a screen reader is given */
+.ui-done-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------
+   THE FIGURE. Never a hue, always tabular — and it never counts
+   up: a dealer reads it aloud while it is on screen.
+   ------------------------------------------------------------ */
+.ui-done-figure {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.ui-done-cap {
+  margin: 0;
+  color: var(--fg-tertiary);
+}
+
+.ui-done-now {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-figure-xl-size);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  color: var(--fg);
+}
+
+.ui-done-ex {
+  margin: 0;
+  color: var(--fg-tertiary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-done-unpriced {
+  margin: 0;
+  max-width: 46ch;
+  color: var(--warning);
+}
+
+/* ------------------------------------------------------------
+   THE LADDER, as a segmented control.
+   ------------------------------------------------------------ */
+.ui-done-levels {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+}
+
+.ui-done-level {
+  padding: var(--s-1) var(--s-3);
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg-secondary);
+  font: inherit;
+  font-size: var(--t-small-size);
+  cursor: pointer;
+  transition:
+    background var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out);
+}
+
+.ui-done-level.is-on {
+  background: var(--surface-1);
+  color: var(--fg);
+  box-shadow: var(--e1);
+}
+
+.ui-done-level:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ui-done-do {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s-1);
+}
+
+.ui-done-why {
+  margin: 0;
+  max-width: 34ch;
+  text-align: right;
+  color: var(--fg-tertiary);
+}
+
+/* ------------------------------------------------------------
+   AND IT FOLDS ON THE ROOM IT HAS.
+
+   Three stops, in the order of what is least load-bearing: the
+   note under the action goes first (longest string, and the
+   refusal is also stated inside the button), then the ladder takes
+   its own row, then the whole card stacks and the figure steps
+   down so it can never set a width the card cannot hold.
+   ------------------------------------------------------------ */
+@container (max-width: 940px) {
+  .ui-done {
+    gap: var(--s-4);
+  }
+
+  .ui-done-why {
+    display: none;
+  }
+}
+
+@container (max-width: 760px) {
+  .ui-done {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'arc figure'
+      'levels do';
+    row-gap: var(--s-3);
+  }
+
+  .ui-done-arc {
+    grid-area: arc;
+  }
+
+  .ui-done-figure {
+    grid-area: figure;
+  }
+
+  .ui-done-levels {
+    grid-area: levels;
+    justify-self: start;
+  }
+
+  .ui-done-do {
+    grid-area: do;
+    align-items: stretch;
+  }
+
+  .ui-done-now {
+    font-size: var(--t-figure-lg-size);
+  }
+}
+
+@container (max-width: 460px) {
+  .ui-done {
+    margin-inline: var(--s-3);
+    padding: var(--s-3);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'figure'
+      'arc'
+      'levels'
+      'do';
+  }
+
+  .ui-done-arc {
+    justify-self: start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-done-sweep {
+    display: none;
+  }
+
+  .ui-done-seg,
+  .ui-done {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .ui-done {
+    background: var(--surface-1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

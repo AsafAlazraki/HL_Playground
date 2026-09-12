@@ -46,7 +46,7 @@
 import { useMemo, useState } from 'react'
 import { AnimatePresence } from 'motion/react'
 import type { ReactElement } from 'react'
-import { Button, Field, PriceBar, ProductStage, Stepper } from '@/ui'
+import { Button, Completion, Field, ProductStage, Stepper } from '@/ui'
 import type { Step } from '@/ui'
 import { money } from '@/lib/money'
 import { QUOTE_LEVEL_ORDER, LEVEL_TITLE } from '@/types/model'
@@ -196,7 +196,52 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
       </div>
 
       <footer className="bs-bar">
-        <PriceBar
+        {/* ============================================================
+            THE FOOT IS A CARD THAT FILLS UP, not a bar.
+
+            `PriceBar` is a solid strip welded to the bottom edge: the
+            figure, the ladder, the action, and nothing about where in
+            the quote anybody is. The rail at the top carried that and
+            the foot carried money, so the surface a person watches
+            while deciding told them half of what they were deciding.
+
+            `Completion` is the same information as a floating card
+            with an arc around it — one segment per stop, lit when
+            that stop is decided, so the gaps ARE the work left. When
+            the last one lands the card says so once and stops.
+            ============================================================ */}
+        <Completion
+          /* ============================================================
+             THE ARC COUNTS THE BANDS THE RAIL COUNTS, and the first
+             draft counted `steps` instead: the card read "3 / 7" under
+             a rail reading "STEP 3 OF 5", which is two counts of one
+             quote on one screen — the exact fault this rebuild has
+             been fixing everywhere else.
+
+             `orderBands` is the answer the rail already uses: seven
+             trailer TABLES are one `03 Trailer` band, because a dealer
+             does not think "now I will open the GFAB Trailers table".
+             The handover is the band the rail adds at the end, so it
+             is the step the arc adds too.
+             ============================================================ */
+          steps={[
+            ...bands.map((b) => ({
+              id: b.id,
+              title: b.name,
+              /* A BAND IS DECIDED WHEN IT HOLDS A LINE — or when it
+                 DECIDES NOTHING, which `orderBands` marks: the band
+                 holding only the subject is the thing being
+                 configured, not a choice anybody can make, so leaving
+                 it unlit would be the arc asking for something that
+                 cannot be given. */
+              done: !b.decides || b.tables.some((t) => t.step.lines.length > 0),
+            })),
+            {
+              id: HANDOVER_STEP,
+              title: 'Who it is for',
+              done: quote.customer.name.trim() !== '',
+            },
+          ]}
           total={totals.total}
           caption="Package pricing"
           tax={

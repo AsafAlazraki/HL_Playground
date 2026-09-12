@@ -1078,3 +1078,185 @@
     --sheen: none;
   }
 }
+
+/* ============================================================
+   THE EXPRESSIVE LAYER — the classes that SPEND the material and
+   motion tokens above.
+
+   Everything from `--glass-bg` to `--mat-sheet-blur` to `--grain`
+   has shipped in this file since it was written, and until now
+   NOTHING CONSUMED ANY OF IT. `docs/plan/REBUILD.md`'s root cause 1
+   is exactly this shape one level up: the system switched off its
+   own expressive layer and then rejected components for being
+   invisible. Tokens nobody reads are the same failure with the
+   switch left on.
+
+   The ports below are `docs/research/motion-libraries-remine-2026-09-12.md`
+   §7, built native in these tokens. No installs, no invented
+   curves, no invented durations.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   MATERIALIZE — blur and scale together, never a plain fade.
+
+   §5: "materialize — animate blur radius and scale together". A
+   photograph that fades in has no substance; one that resolves out
+   of blur while it settles has weight. `scale(0)` is banned by §6
+   and 0.96 is the floor it names.
+
+   IT IS THE ENTRANCE FOR SHOWROOM ONLY. §2 gives Cockpit "no
+   entrance animation" and the rule is not relaxed: nothing in here
+   is applied to a register screen.
+   ------------------------------------------------------------ */
+@keyframes m-materialize {
+  from {
+    opacity: 0;
+    filter: blur(12px);
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+  }
+}
+
+.m-materialize {
+  animation: m-materialize var(--d-scene) var(--ease-out) backwards;
+  animation-delay: var(--m-delay, 0ms);
+}
+
+/* ------------------------------------------------------------
+   BACKLIGHT — one light source, derived from the thing's own kind.
+
+   §2 SHOWROOM-2 asks for real depth with light from one direction.
+   A cut-out render on a lit ground is that in a single move, and
+   the hue is `--kind`, so the glow is a fact about the product
+   rather than decoration: a boat glows indigo, a motor amber.
+
+   It is a PSEUDO-ELEMENT UNDER THE CONTENT, so nothing has to be
+   restructured to take it, and it never intercepts a pointer.
+   ------------------------------------------------------------ */
+.m-lit {
+  position: relative;
+  isolation: isolate;
+}
+
+.m-lit::before {
+  content: '';
+  position: absolute;
+  inset: -12% -6% -22%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    62% 58% at 50% 38%,
+    color-mix(in srgb, var(--kind, var(--accent)) 26%, transparent) 0%,
+    color-mix(in srgb, var(--kind, var(--accent)) 8%, transparent) 45%,
+    transparent 72%
+  );
+}
+
+/* ------------------------------------------------------------
+   GRAIN — the tooth that stops a wide gradient banding.
+
+   The 6% alpha cap that made this pointless is deleted (§9), so
+   the test is the measurement rather than the ceiling. It sits
+   over the light, under the content, and is `aria-hidden` by
+   construction because it is a pseudo-element.
+   ------------------------------------------------------------ */
+.m-grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.34'/%3E%3C/svg%3E");
+}
+
+/* ------------------------------------------------------------
+   GLASS — switched back on, and spent on the two surfaces that
+   earn it.
+
+   §9.3 deletes "glass is retired" AND the bridge line that zeroed
+   every blur token. §5's rule is kept: bigger surfaces read as
+   thicker, and two translucent surfaces are never stacked. A chip
+   takes `--mat-chip-blur`, a bar takes panel, a sheet takes sheet.
+   ------------------------------------------------------------ */
+.m-glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  border-color: var(--glass-edge);
+}
+
+.m-glass--sheet {
+  backdrop-filter: blur(var(--mat-sheet-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-sheet-blur)) saturate(var(--glass-sat));
+}
+
+/* ------------------------------------------------------------
+   SPLIT — a marque arriving a word at a time.
+
+   §6's stagger is 30-80ms and §2 asks Showroom for a choreographed
+   entrance; 40ms per word, capped so a long name does not run past
+   `--d-scene`. The whole string is in the DOM as one text node's
+   worth of words, so a screen reader reads a sentence and not a
+   column of letters.
+   ------------------------------------------------------------ */
+.m-split {
+  display: inline-block;
+}
+
+.m-split-word {
+  display: inline-block;
+  animation: m-word var(--d-slow) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * var(--stagger));
+}
+
+@keyframes m-word {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translate3d(0, var(--rise), 0);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* ------------------------------------------------------------
+   THE EDGE FADE — a mask, never a blur.
+
+   §5 asks for a scroll-edge fade where floating chrome overlaps
+   content, "not a 1px border". `build.css:796`'s own note is right
+   that a compositor layer over hundreds of scrolling rows is the
+   wrong trade at 15,691 rows, so this is a mask and stays one.
+   ------------------------------------------------------------ */
+.m-fade-b {
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 56px), transparent 100%);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 56px), transparent 100%);
+}
+
+/* ------------------------------------------------------------
+   AND ALL OF IT STOPS WHEN ASKED. §6, and it is not negotiable:
+   the colour and the layout carry every one of these on their own.
+   ------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .m-materialize,
+  .m-split-word {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .m-glass,
+  .m-glass--sheet {
+    background: var(--surface-1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

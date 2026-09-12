@@ -39,13 +39,13 @@
 import { useMemo, useState } from 'react'
 import type { ReactElement } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
-import { Field } from '@/ui'
+import { Field, Marque } from '@/ui'
 import { markOf } from '@/lib/mark'
 import { buildEntries } from '@/features/modules/read'
 import { FrozenPhoto } from '@/features/quote/photo'
-import { colourwayOf, splitVariant } from '@/features/quote/colourway'
+import { Colourways } from './Colourways'
 import { finishLevels, foldModels, leafValues, priceOf } from './fold'
-import type { Model, Offer } from './fold'
+import type { Model } from './fold'
 import './catalogue-screen.css'
 
 export interface CatalogueScreenProps {
@@ -103,7 +103,7 @@ export function CatalogueScreen({
         <div className="ct-col">
           <header className="ct-head">
             <div className="ct-head-say">
-              <h1 className="t-marque ct-marque">{entity.name}</h1>
+              <Marque as="h1" className="t-marque ct-marque">{entity.name}</Marque>
               <p className="t-small ct-sub">
                 {models.length} {models.length === 1 ? 'model' : 'models'} ·{' '}
                 {rows.toLocaleString('en-AU')} {rows === 1 ? 'row' : 'rows'} ·{' '}
@@ -197,7 +197,7 @@ function Card({
             else if (first) onOpenRow(first.entry.rowId)
           }}
         >
-          <span className="ct-well">
+          <span className="ct-well m-lit m-grain">
             <span className="ct-plate" aria-hidden="true">
               <span className="t-display ct-mono">{markOf(model.name)}</span>
             </span>
@@ -231,45 +231,29 @@ function Card({
             grid a grid. On the place screen they live in the bar,
             because that screen has one, and this one does not: a
             catalogue is for reading, not for committing to. */}
+        {/* ============================================================
+            THE FINISHES ARE RENDERS, NOT A LIST OF WORDS.
+
+            They were rows of text — "Light Grey · PVC  $2,770" —
+            which is the 588-variant problem solved correctly and
+            not solved WELL: the seed holds a distinct photograph
+            per variant, so the difference between two codes is a
+            thing a person can see rather than a string they decode.
+            `Colourways` is reactbits' Chroma Grid inverted, which
+            the re-mine calls the best idea in either library for
+            this exact problem.
+            ============================================================ */}
         {many && open ? (
-          <ul className="ct-ways">
-            {model.offers.map((offer) => (
-              <Finish
-                key={offer.entry.rowId}
-                offer={offer}
-                material={model.materials.length > 1}
-                onOpen={() => onOpenRow(offer.entry.rowId)}
-              />
-            ))}
-          </ul>
+          <Colourways
+            offers={model.offers}
+            chosenRowId=""
+            material={model.materials.length > 1}
+            label={`Finishes of ${model.name}`}
+            onChoose={(offer) => onOpenRow(offer.entry.rowId)}
+          />
         ) : null}
       </div>
     </li>
   )
 }
 
-function Finish({
-  offer,
-  material,
-  onOpen,
-}: {
-  offer: Offer
-  material: boolean
-  onOpen: () => void
-}): ReactElement {
-  const { code, material: mat } = splitVariant(offer.leaf)
-  const read = colourwayOf(code)
-  const say = read.read ? read.say : code
-  const clean = mat.replace(/[()]/g, ' ').replace(/\s+/g, ' ').trim()
-
-  return (
-    <li>
-      <button type="button" className="ct-way" onClick={onOpen}>
-        <span className="t-small ct-way-say">
-          {material && clean !== '' ? `${say} · ${clean}` : say}
-        </span>
-        <span className="t-caption ct-way-n">{offer.entry.price}</span>
-      </button>
-    </li>
-  )
-}

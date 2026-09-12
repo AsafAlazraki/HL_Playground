@@ -1,0 +1,178 @@
+/* ============================================================
+   THE COLOURWAY GRID (cw-) — Chroma Grid, inverted.
+
+   `cw-` was checked against every stylesheet in `src` before use.
+
+   Colour is the CONTENT here, not a hover reward: these are the
+   per-colourway renders of one hull, and the whole reason the
+   screen exists is that two codes are the same boat in two
+   finishes. So nothing happens on hover beyond a card's ordinary
+   lift — a Showroom grid is hovered a hundred times a session —
+   and SELECTION is what animates.
+   ============================================================ */
+
+.cw {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+  gap: var(--s-2);
+  margin: 0;
+  padding: var(--s-3) var(--s-4) var(--s-4);
+}
+
+.cw-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: 0;
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  /* THE ENTRANCE IS STAGGERED, ONCE, at §6's 40ms — Staggered
+     Menu's mechanic, and the bottom row is the canonical moment
+     §6 names for it. */
+  animation: m-materialize var(--d-slow) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * var(--stagger));
+  transition:
+    border-color var(--d-press) var(--ease-out),
+    box-shadow var(--d-press) var(--ease-out),
+    transform var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cw-tile:hover {
+    border-color: var(--line-strong);
+  }
+}
+
+.cw-tile:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   SELECTION IS WHAT ANIMATES — the accent ring, and the render
+   growing 1 → 1.04 over 180ms.
+
+   §7.2 asks for exactly this, and it is a scale on the PICTURE
+   rather than on the tile: growing the tile would push its
+   neighbours and make the grid breathe every time somebody moved
+   an arrow key. The ring is two pixels of accent and the state is
+   also on `aria-checked`, so it is never colour alone.
+   ============================================================ */
+.cw-tile.is-on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 var(--border-strong) var(--accent);
+}
+
+.cw-tile.is-on .cw-img {
+  transform: scale(1.04);
+}
+
+.cw-well {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: linear-gradient(180deg, var(--surface-3) 0%, var(--bg-sunken) 100%);
+  overflow: hidden;
+}
+
+.cw-img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* CONTAIN. A cropped hull is a hull with its bow cut off. */
+  object-fit: contain;
+  transition: transform var(--d-med) var(--ease-out);
+}
+
+.cw-say {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0 var(--s-2) var(--s-2);
+  min-width: 0;
+}
+
+/* THE NAME THE MAP COULD READ — "Black / Grey / Black". Where it
+   could not, this is the code itself and the line below is empty,
+   because half a translation reads as one that worked. */
+.cw-name {
+  color: var(--fg);
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  min-height: 2lh;
+  max-height: 2lh;
+  overflow: hidden;
+}
+
+.cw-line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+/* THE DEALER'S OWN IDENTIFIER, in the sheet's own characters. §4
+   forbids uppercasing it or cutting it: `(PVC) WH` is what goes on
+   an order. */
+.cw-code,
+.cw-mat {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-label-size);
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
+
+.cw-mat {
+  color: var(--fg-quaternary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cw-tile {
+    animation: none;
+  }
+
+  .cw-img,
+  .cw-tile.is-on .cw-img {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* ============================================================
+   THE STRIP — one row that scrolls, for a fixed bar.
+
+   The place screen's finishes live in its commit bar, and a bar
+   that grows a second row moves the button somebody is reaching
+   for. So the grid becomes a single scrolling row there, with
+   smaller tiles: the render still does the work, and the bar's
+   height never changes.
+   ============================================================ */
+.cw--strip {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: var(--s-1) 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cw--strip .cw-tile {
+  flex: 0 0 auto;
+  width: 98px;
+}
+
+.cw--strip .cw-name {
+  min-height: 1lh;
+  max-height: 1lh;
+}

@@ -325,3 +325,227 @@
 .fd-row-say {
   color: var(--fg-tertiary);
 }
+
+/* ============================================================
+   THE BRANDS — what a dealer actually thinks in.
+
+   The four kind doors are the roll-up; these are Highfield,
+   Stabicraft, Stacer. A front door that never names one of the
+   business's own brands is a front door for a database.
+
+   THE WELL IS LIT AND GRAINED. `--kind` drives a radial backlight
+   under the render (§2 SHOWROOM-2: real depth, one light
+   direction), so a boat glows indigo and a motor amber — the hue
+   is a fact about the product, not decoration. The grain is the
+   tooth that stops a wide gradient banding, which the deleted 6%
+   cap used to make pointless.
+   ============================================================ */
+
+.fd-brands {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  grid-auto-rows: 1fr;
+  gap: var(--s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fd-brand-cell {
+  display: flex;
+  min-width: 0;
+}
+
+.fd-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  padding: 0;
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: var(--e-card);
+  transition:
+    box-shadow var(--d-press) var(--ease-out),
+    border-color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .fd-brand:hover {
+    box-shadow: var(--e-card-hover);
+    border-color: var(--line-strong);
+  }
+}
+
+.fd-brand:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+.fd-brand-well {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  flex: 0 0 auto;
+  background: var(--surface-2);
+  border-bottom: var(--border) solid var(--line-subtle);
+  overflow: hidden;
+}
+
+.fd-brand-img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* CONTAIN — a cropped hull is a hull with its bow cut off. */
+  object-fit: contain;
+}
+
+.fd-brand-say {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s-3);
+  min-width: 0;
+}
+
+.fd-brand-name {
+  color: var(--fg);
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  min-height: 2lh;
+  max-height: 2lh;
+  overflow: hidden;
+}
+
+/* A FIGURE IS NEVER A HUE, and it is always mono and tabular. */
+.fd-brand-n {
+  color: var(--fg-tertiary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   A RECENT QUOTE IS A PICTURE OF A BOAT.
+
+   `subjectImage` is frozen onto every quote at pick time and this
+   list drew none of them — a row of grey text for a document whose
+   whole subject is a photograph.
+   ============================================================ */
+
+.fd-quotes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fd-quote {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-2);
+  border: var(--border) solid var(--line-subtle);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--d-press) var(--ease-out),
+    border-color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .fd-quote:hover {
+    background: var(--surface-2);
+    border-color: var(--line);
+  }
+}
+
+.fd-quote:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+.fd-quote-well {
+  position: relative;
+  flex: 0 0 auto;
+  display: block;
+  width: 76px;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--r-control);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.fd-quote-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.fd-quote-say {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fd-quote-name {
+  color: var(--fg);
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.fd-quote-who {
+  color: var(--fg-tertiary);
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* A FIGURE IS NEVER A HUE, and it is always mono and tabular. */
+.fd-quote-sum {
+  flex: 0 0 auto;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The plate under every brand well — three of the six biggest
+   places sell parts and rigging and carry no photograph. */
+.fd-brand-plate {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--kind, transparent) 10%, var(--surface-2));
+}
+
+.fd-brand-mark {
+  color: var(--fg-secondary);
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+}
+
+.fd-brand-img {
+  background: color-mix(in srgb, var(--kind, transparent) 10%, var(--surface-2));
+}

@@ -112,7 +112,24 @@ export function ProductStage({
 
   return (
     <div className="ui-stage">
-      <div className="ui-stage-frame">
+      {/* ============================================================
+          THE FRAME IS LIT AND GRAINED, which is the whole of §2's
+          SHOWROOM-2 requirement — "real depth, light from one
+          direction" — on the one element in the app that is
+          entirely about a product.
+
+          The light is `--kind`'s: a boat is lit indigo and a motor
+          amber, so the glow is a fact about the thing rather than
+          an effect. The grain is the tooth that stops a 700px
+          gradient banding, and it only became worth having when §9
+          deleted the 6% alpha cap that made every material token in
+          this system invisible.
+
+          Both are pseudo-elements underneath the picture, so the
+          crossfade below is untouched and nothing had to be
+          restructured to take them.
+          ============================================================ */}
+      <div className="ui-stage-frame m-lit m-grain">
         <img
           className="ui-stage-img"
           key={shown.src}

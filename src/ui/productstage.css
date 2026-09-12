@@ -75,6 +75,29 @@
    glass surface arriving, and this is the same boat in another
    colour, seen dozens of times a minute while somebody works
    through the colourways. */
+/* ============================================================
+   IT MATERIALISES, IT DOES NOT FADE.
+
+   §5: "materialize — animate blur radius and scale together". The
+   first paint of a hull is the one impression the screen gets, and
+   a picture that fades up has no substance; one that resolves out
+   of blur while it settles has weight. `scale(0)` is banned by §6
+   and 0.96 is the floor it names.
+
+   ONLY THE ARRIVAL. Once a stage is up, changing the picture takes
+   the opacity crossfade below — a second materialise on every chip
+   press would be the screen performing.
+   ============================================================ */
+.ui-stage-img {
+  animation: m-materialize var(--d-scene) var(--ease-out) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-stage-img {
+    animation: none;
+  }
+}
+
 .ui-stage-img[data-fade] {
   animation: ui-stage-fade var(--d-slow) var(--ease-out) both;
 }

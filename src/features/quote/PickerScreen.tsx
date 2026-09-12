@@ -30,7 +30,7 @@
 
 import { useMemo, useState } from 'react'
 import type { ReactElement } from 'react'
-import { Field } from '@/ui'
+import { Field, Marque } from '@/ui'
 import { markOf } from '@/lib/mark'
 import { useProjectStore } from '@/store/useProjectStore'
 import { buildEntries } from '@/features/modules/read'
@@ -132,7 +132,7 @@ export function PickerScreen({ onOpen, onClose }: PickerScreenProps): ReactEleme
       <div className="qp-col">
         <header className="qp-head">
           <div className="qp-head-say">
-            <h1 className="t-marque qp-ask">What are you quoting?</h1>
+            <Marque as="h1" className="t-marque qp-ask">What are you quoting?</Marque>
             <p className="t-small qp-sub">
               {openTotal} {openTotal === 1 ? 'place' : 'places'} you can start from.
             </p>
@@ -246,7 +246,7 @@ function DoorCard({
         data-press="card"
         onClick={onOpen}
       >
-        <span className="qp-well">
+        <span className="qp-well m-lit m-grain">
           {/* ============================================================
               THE PLATE IS ALWAYS DRAWN, AND THE PHOTOGRAPH COVERS IT.
 
