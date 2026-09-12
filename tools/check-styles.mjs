@@ -436,6 +436,81 @@ for (const f of css) {
   }
 }
 
+/* ============================================================
+   THE DURATIONS ARE IN TWO PLACES, AND THIS IS WHERE THEY ARE
+   COMPARED.
+
+   `system.css` declares `--d-press` and friends for CSS
+   transitions. `src/ui/motion.ts` declares `D_PRESS` and friends
+   for `motion`, which reads JavaScript and cannot read a custom
+   property. Reading one back with getComputedStyle at runtime
+   would put a synchronous style recalculation in the hot path of
+   the thing that is supposed to feel fast, so they are duplicated
+   deliberately — and a duplicated number without a guard is drift
+   with a delay.
+
+   IT IS HERE RATHER THAN IN VITEST because a CSS file read through
+   `?raw` comes back as an EMPTY STRING under this project's vitest
+   — measured, both as a direct import and through
+   `import.meta.glob`. An empty subject makes every assertion pass
+   vacuously, which is a guard that reports green and means
+   nothing. Node reads files natively, so the check lives beside
+   the other source-scanning guards.
+
+   SPRINGS ARE CHECKED THE OTHER WAY ROUND: `system.css` must
+   declare NONE. A `--spring-*` token is a token nothing can
+   consume, and re-adding one recreates the two-vocabulary problem
+   `bridge.css` caused by holding a second copy of the type ramp.
+   ============================================================ */
+
+const SYSTEM_CSS = join(SRC, 'styles', 'system.css')
+const MOTION_TS = join(SRC, 'ui', 'motion.ts')
+const drift = []
+
+try {
+  const sheet = readFileSync(SYSTEM_CSS, 'utf8').replace(COMMENTS, '')
+  const motion = readFileSync(MOTION_TS, 'utf8').replace(COMMENTS, '')
+
+  /** `--d-press: 120ms;` → 120 */
+  const cssMs = (token) => {
+    const m = sheet.match(new RegExp(`\\s${token}:\\s*(\\d+)ms\\s*;`))
+    return m ? Number(m[1]) : null
+  }
+  /** `export const D_PRESS = 120` → 120 */
+  const tsNum = (name) => {
+    const m = motion.match(new RegExp(`export const ${name}\\s*=\\s*(\\d+)\\b`))
+    return m ? Number(m[1]) : null
+  }
+
+  const PAIRS = [
+    ['--d-press', 'D_PRESS'],
+    ['--d-fast', 'D_FAST'],
+    ['--d-med', 'D_MED'],
+    ['--d-slow', 'D_SLOW'],
+    ['--d-sheet', 'D_SHEET'],
+    ['--d-scene', 'D_SCENE'],
+    ['--d-exit', 'D_EXIT'],
+    ['--stagger', 'STAGGER_MS'],
+  ]
+
+  for (const [token, name] of PAIRS) {
+    const a = cssMs(token)
+    const b = tsNum(name)
+    /* A side that cannot be read is a finding, not a pass — that is
+       the whole lesson of the vacuous-green failure above. */
+    if (a === null || b === null || a !== b) {
+      drift.push({ token, name, css: a ?? 'not found', ts: b ?? 'not found' })
+    }
+  }
+
+  const springs = sheet.match(/--spring-[a-z-]+\s*:/g)
+  if (springs) {
+    for (const s of springs) drift.push({ token: s.replace(/\s*:$/, ''), name: '—', css: 'declared', ts: 'CSS cannot hold a Transition' })
+  }
+} catch (err) {
+  drift.push({ token: 'system.css / motion.ts', name: '—', css: 'unreadable', ts: String(err.message) })
+}
+
 const pad = (s, n) => String(s).padEnd(n)
 console.log('\nSTYLE CONTRACT')
 console.log(`  ${css.length} stylesheets · ${tsx.length} components`)
@@ -493,12 +568,23 @@ if (overRamp > 0) {
   )
 }
 
+if (drift.length) {
+  console.log(`MOTION DRIFT — system.css and src/ui/motion.ts disagree (${drift.length}):`)
+  for (const d of drift) {
+    console.log(`  ${pad(d.token, 18)} ${pad(`css ${d.css}`, 18)} ts ${d.ts}`)
+  }
+  console.log(
+    '\n  The two are duplicated on purpose — motion reads JavaScript and\n' +
+      '  cannot read a custom property. Change both, in the same commit.\n',
+  )
+}
+
 const bad =
-  fresh.length + small.length + undeclared.length + literals.length + overRamp
+  fresh.length + small.length + undeclared.length + literals.length + overRamp + drift.length
 console.log(
   bad
-    ? `FAIL — ${fresh.length} new orphan(s), ${small.length} under the type floor, ${undeclared.length} undeclared var(s), ${literals.length} literal colour(s), ${overRamp} over the type-ramp ceiling. ${known.size} known, ${dead.length} dead rules.\n`
-    : `OK — no new orphans, nothing under ${FLOOR}px, every var declared, no literal colours, ${literalPx.length}/${LITERAL_PX_CEILING} literal px. ${known.size} known (baselined), ${dead.length} dead rules.\n`,
+    ? `FAIL — ${fresh.length} new orphan(s), ${small.length} under the type floor, ${undeclared.length} undeclared var(s), ${literals.length} literal colour(s), ${overRamp} over the type-ramp ceiling, ${drift.length} motion drift. ${known.size} known, ${dead.length} dead rules.\n`
+    : `OK — no new orphans, nothing under ${FLOOR}px, every var declared, no literal colours, motion in step, ${literalPx.length}/${LITERAL_PX_CEILING} literal px. ${known.size} known (baselined), ${dead.length} dead rules.\n`,
 )
 
 process.exit(bad ? 1 : 0)

@@ -76,3 +76,41 @@ export type { FieldProps, FieldType } from './Field'
 
 export { SectionHead } from './SectionHead'
 export type { SectionHeadLevel, SectionHeadProps } from './SectionHead'
+
+/* ADDED BY THE REBUILD. `Stepper` is the first primitive written
+   for the two-register system rather than retrofitted onto it: it
+   is SHOWROOM only, it exists because `DESIGN_SYSTEM.md` §9.6
+   reversed PHASE_TWO's "no step rail and no progress at all", and
+   it beats the app it replaces on the one thing that rail got
+   wrong — production's is display-only. */
+export { Stepper } from './Stepper'
+export type { Step, StepperProps } from './Stepper'
+
+/* THE MOTION LAYER. No React in it: the physics, the durations and
+   the orchestration are data, and they were inside a provider
+   module until the rebuild split them out. `features/views/
+   stillness.tsx` re-exports them so its fourteen consumers did not
+   have to move in the same commit. */
+export {
+  CAM_FIT_MS,
+  CAM_MS,
+  cameraMs,
+  D_EXIT,
+  D_FAST,
+  D_MED,
+  D_PRESS,
+  D_SCENE,
+  D_SHEET,
+  D_SLOW,
+  enter,
+  INSTANT,
+  RISE,
+  SPRING,
+  SPRING_GRABBED,
+  SPRING_QUICK,
+  SPRING_SLOW,
+  stagger,
+  STAGGER_MS,
+  staggerVar,
+  transitionFor,
+} from './motion'

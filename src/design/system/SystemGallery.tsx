@@ -9,6 +9,7 @@
    person reads all day, not a thing anybody is sold. */
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Stepper } from '@/ui/Stepper'
 import { contrastOf, fmt, renderedPx } from './measure'
 
 type Theme = 'light' | 'dark'
@@ -67,6 +68,7 @@ export function SystemGallery() {
         <ColourSection />
         <MaterialSection />
         <MotionSection />
+        <StepperSection />
         <DensitySection />
       </main>
     </div>
@@ -559,6 +561,57 @@ function Computed({ token }: { token: string }) {
     >
       {value || '—'}
     </span>
+  )
+}
+
+/* ---- STEPPER ----------------------------------------------- */
+
+/* The real seven stages, with the real answers from the SP560 walk
+   in the production app's own evidence trail
+   (`tasks/test-evidence/ffr33-sp560-proof/`). Plausible content
+   rather than lorem: a rail full of "Step one" tells you nothing
+   about whether two lines of a boat name fit. */
+const BUILD_STEPS = [
+  { id: 'hull', name: 'The hull', chose: 'Sport SP560 — Light Grey / White' },
+  { id: 'options', name: 'Factory options', chose: 'Fabric T Top, Stern Shade' },
+  { id: 'motor', name: 'Motor', chose: 'Yamaha F90XB' },
+  { id: 'trailer', name: 'Trailer', chose: 'REDCO TA600-MOB' },
+  { id: 'dealer', name: 'Dealer fit', chose: '3 items' },
+  { id: 'admin', name: 'Administration' },
+  {
+    id: 'summary',
+    name: 'Summary',
+    refusedBecause: 'Nothing is addressed yet. Name a customer on Administration first.',
+  },
+] as const
+
+function StepperSection() {
+  const [at, setAt] = useState('motor')
+  const done = ['hull', 'options']
+
+  return (
+    <Section
+      title="Stepper"
+      says="Where you are in a build, and how to get back. PHASE_TWO specified no step rail at all; DESIGN_SYSTEM §9.6 reverses that for this screen, because the evidence against progress indicators is about linear web forms a stranger fills in once."
+    >
+      <div className="gal-stage" data-register="showroom">
+        <Stepper
+          steps={BUILD_STEPS}
+          currentId={at}
+          doneIds={done}
+          onGo={setAt}
+          label="Build steps"
+        />
+      </div>
+      <p className="t-small gal-dim gal-note">
+        Press an answered step — the indicator travels rather than
+        re-appearing, which is what says your press did that. The original's
+        rail is display-only: to change the hull colour from the Summary you
+        press Back six times. The last step refuses with a sentence rather
+        than greying out, because dimming is what you do when you have given
+        up on explaining.
+      </p>
+    </Section>
   )
 }
 

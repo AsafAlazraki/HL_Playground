@@ -552,3 +552,20 @@ body {
 .gal-out {
   color: var(--warning);
 }
+
+/* A Showroom region inside a Cockpit page. The nesting is
+   deliberate and visible in the markup — DESIGN_SYSTEM §1: a screen
+   may not be half of each, but it may CONTAIN a region of the
+   other, declared. */
+.gal-stage {
+  padding: var(--s-6);
+  background: var(--surface-1);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-panel);
+  box-shadow: var(--e-card);
+}
+
+.gal-note {
+  max-width: 68ch;
+  margin: 0;
+}

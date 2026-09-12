@@ -814,13 +814,12 @@
   --d-scene: 620ms;
   --d-exit: 140ms;
 
-  /* springs, as bounce/duration pairs for motion v13 */
-  --spring-ui-bounce: 0;
-  --spring-ui-duration: 0.4;
-  --spring-sheet-bounce: 0.06;
-  --spring-sheet-duration: 0.45;
-  --spring-momentum-bounce: 0.2;
-  --spring-momentum-duration: 0.55;
+  /* THE SPRINGS ARE NOT HERE, and that is deliberate. They live in
+     `src/ui/motion.ts` as Transition objects, because `motion` reads
+     JavaScript and cannot read a custom property — a spring declared
+     here would be a token nothing consumes, which is the inverse of
+     the undefined-var defect `check-styles` already guards against.
+     One spring vocabulary, in the one place that can use it. */
 
   /* the stagger unit. 30-80ms is the published band; 40 is one
      frame at 24fps and reads as deliberate rather than laggy. */

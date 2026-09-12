@@ -24,7 +24,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useReducedMotion } from 'motion/react'
-import type { Transition } from 'motion/react'
+
 
 export interface Stillness {
   /** true = draw the final state immediately, animate nothing */
@@ -137,99 +137,28 @@ export function StillnessProvider({ children }: { children: ReactNode }) {
 export const useStillness = (): Stillness => useContext(StillnessCtx)
 
 /* ============================================================
-   THE PHYSICS — three configs, stated in Apple's two parameters.
+   THE PHYSICS AND THE CAMERA MOVED TO `src/ui/motion.ts`.
 
-   apple-design §4: Apple deliberately replaced the physics triplet
-   with DAMPING RATIO (how much it overshoots) and RESPONSE (how
-   quickly it reaches the target, in seconds). Motion wants the
-   triplet, so the triplet is what is written — but the triplet was
-   DERIVED from the two numbers that were actually chosen, and both
-   are stated on every line so the next person can check the
-   arithmetic rather than take it on faith:
+   They are data, not React, and everything above this line is a
+   provider and a context. Splitting them means the numbers are
+   reachable from code that has no business importing a React
+   module — and it is one step of the `src/lib` rule applied here:
+   a file that holds no hooks should not need a renderer.
 
-       ζ = c / 2√(k·m)          response = 2π / √(k/m)
-
-   ζ = 1.0 THROUGHOUT, and that is a decision with a reason.
-   apple-design §4 reserves bounce for an interaction that CARRIED
-   momentum — a flick, a throw, a drag release. Nothing in this app
-   throws anything: every one of these animations is the answer to
-   a button press or to a list changing under a store write. §4 is
-   explicit that overshoot on a menu that merely faded in feels
-   wrong, so there is no bounce here until this app grows a gesture
-   that earns it.
-
-   THE THREE ARE SEPARATED BY RESPONSE, NOT BY FEEL. 220 / 300 / 400
-   is roughly a 1.36 ratio per step — far enough apart to be a
-   decision, close enough that the app still reads as one object.
-   emil-design-eng's frequency table picks between them: the thing
-   you see constantly gets QUICK, the thing you see occasionally
-   gets the default, the big surface that moves rarely gets SLOW.
-
-   WHAT WAS DELETED, AND WHY. `SPRING_SOFT` (k 220 / c 30 / m 1) was
-   ζ 1.011 — OVER-damped, so it could not even overshoot — with a
-   response of 424ms and a 0.5% settle at ~565ms. It was slower than
-   the default in both, and it was bound to exactly the three
-   animations in this file that drive `height`, the most expensive
-   property any of them touch. The two springs were the wrong way
-   round: the cheap animations got the quick one and the expensive
-   ones got the long one. Nothing replaces it — its three call sites
-   take `SPRING`, which is 124ms quicker to the target.
+   They are RE-EXPORTED rather than relocated-and-repointed so the
+   fourteen files importing `SPRING` and `transitionFor` from this
+   path kept working in the same commit. New code imports from
+   `@/ui/motion`; this line goes when the last old consumer does.
    ============================================================ */
 
-/** ζ 1.000 · response 300ms. The default: anything summoned by a
- *  press. apple-design §4's drawer row without the bounce, because
- *  these drawers are opened by a button and never by a drag. */
-export const SPRING: Transition = { type: 'spring', stiffness: 439, damping: 41.9, mass: 1 }
-
-/** ζ 0.999 · response 220ms. For what a person sees dozens of times
- *  an hour — rows entering and leaving a list. emil-design-eng: at
- *  that frequency the instruction is "remove or drastically reduce",
- *  and 220ms is the reduction that keeps the list from flickering
- *  items in and out with no transition at all. */
-export const SPRING_QUICK: Transition = { type: 'spring', stiffness: 816, damping: 57.1, mass: 1 }
-
-/** ζ 0.999 · response 400ms. apple-design §4's move/reposition row
- *  (damping 1.0, response 0.4) exactly. For a large surface arriving
- *  — a whole block card — where a quick settle reads as a snap. */
-export const SPRING_SLOW: Transition = { type: 'spring', stiffness: 247, damping: 31.4, mass: 1 }
-
-/** What a spring becomes when the page must not move. */
-export const INSTANT: Transition = { duration: 0 }
-
-export const transitionFor = (still: boolean, spring: Transition = SPRING): Transition =>
-  still ? INSTANT : spring
-
-/* ============================================================
-   THE CAMERA — two durations, and both of them ask first.
-
-   A viewport move is not like the animations above: it translates
-   EVERYTHING on the blueprint at once, which is the full-viewport
-   vestibular case apple-design §14 names by name. Five of the six
-   camera moves in this app played at full length regardless of what
-   the reader had asked their operating system for, and they did it
-   at four different durations for one class of motion.
-
-   Two values, because a bigger move genuinely deserves longer and
-   nothing else does:
-     CAM_MS      — walking to one object that is already on the sheet
-     CAM_FIT_MS  — reframing the whole sheet
-
-   `cameraMs` is the camera's `transitionFor`. It collapses to 0 —
-   React Flow then jumps straight to the target, which is the
-   "static transition" §14 asks for, not a cancelled navigation —
-   under reduced motion AND while a caret is in a text box, because
-   a camera that walks off while someone is typing is the same
-   offence as a list that reflows under them.
-   ============================================================ */
-
-/** Walking to an object. Long enough for the eye to follow the move
- *  and keep its bearings, short enough to be the answer to a press. */
-export const CAM_MS = 320
-
-/** Reframing the whole sheet. Longer because the excursion is
- *  larger — the eye is being asked to re-find everything, not to
- *  follow one card. */
-export const CAM_FIT_MS = 420
-
-/** The camera's `transitionFor`: the duration, or none of it. */
-export const cameraMs = (still: boolean, ms: number = CAM_MS): number => (still ? 0 : ms)
+export {
+  SPRING,
+  SPRING_QUICK,
+  SPRING_SLOW,
+  SPRING_GRABBED,
+  INSTANT,
+  transitionFor,
+  CAM_MS,
+  CAM_FIT_MS,
+  cameraMs,
+} from '@/ui/motion'

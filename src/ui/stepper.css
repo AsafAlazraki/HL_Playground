@@ -1,0 +1,324 @@
+/* ============================================================
+   STEPPER — the rail.
+
+   IT IS A HORIZONTAL RAIL THAT BECOMES A VERTICAL ONE, and the
+   breakpoint is not a width guess: it is `--measure`. Below the
+   point where seven steps stop fitting without either truncating a
+   name or shrinking type under the floor, the rail stacks. Rule:
+   nothing truncates mid-word, so a name that will not fit gets a
+   different layout rather than an ellipsis.
+
+   EVERY PRESSABLE THING HAS HOVER, PRESS AND FOCUS. A survey
+   before the rebuild found 295 button treatments of which 137 were
+   missing at least one. The rail has all three, and press lands on
+   pointer-down.
+   ============================================================ */
+
+.ui-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  container-type: inline-size;
+}
+
+/* -- the count ------------------------------------------------ */
+
+.ui-stepper-count {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  margin: 0;
+  color: var(--fg-tertiary);
+}
+
+.ui-stepper-where {
+  color: var(--fg);
+}
+
+/* -- the list ------------------------------------------------- */
+
+.ui-stepper-list {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ui-stepper-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* -- the step itself ------------------------------------------ */
+
+.ui-stepper-go {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: var(--s-2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg-tertiary);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    color var(--d-press) var(--ease-out),
+    background var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-stepper-item[data-state='done'] .ui-stepper-go:hover,
+  .ui-stepper-item[data-state='current'] .ui-stepper-go:hover {
+    background: var(--surface-3);
+    color: var(--fg);
+  }
+}
+
+/* PRESS ON POINTER-DOWN, and scaled to the surface. 0.97 is the
+   control value; this is a control. */
+.ui-stepper-item[data-state='done'] .ui-stepper-go:active,
+.ui-stepper-item[data-state='current'] .ui-stepper-go:active {
+  transform: scale(0.97);
+}
+
+.ui-stepper-go:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A STEP AHEAD IS NOT A CONTROL AND DOES NOT PRETEND TO BE. It
+   takes no hover, no press and the default cursor — but it keeps
+   its contrast, because a person reads the rail to find out what
+   is coming and greying that out is hiding the map. */
+.ui-stepper-item[data-state='ahead'] .ui-stepper-go {
+  cursor: default;
+}
+
+/* A REFUSED STEP STAYS FOCUSABLE. `aria-disabled`, never
+   `disabled`: a disabled control cannot be focused and is skipped
+   by a screen reader, so the one person who needs the reason is
+   the one person who cannot reach it. */
+.ui-stepper-item[data-state='refused'] .ui-stepper-go {
+  cursor: not-allowed;
+}
+
+.ui-stepper-item[data-state='current'] .ui-stepper-go,
+.ui-stepper-item[data-state='done'] .ui-stepper-go {
+  color: var(--fg);
+}
+
+/* -- the mark ------------------------------------------------- */
+
+.ui-stepper-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: var(--control-h-sm);
+  height: var(--control-h-sm);
+  border-radius: var(--r-full);
+  border: var(--border) solid var(--line);
+  background: var(--surface-1);
+  color: var(--fg-tertiary);
+  transition:
+    background var(--d-fast) var(--ease-out),
+    border-color var(--d-fast) var(--ease-out),
+    color var(--d-fast) var(--ease-out);
+}
+
+.ui-stepper-mark svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ui-stepper-mark[data-mark='done'] {
+  background: var(--success);
+  border-color: var(--success);
+  color: var(--fg-on-accent);
+}
+
+.ui-stepper-mark[data-mark='current'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+
+.ui-stepper-mark[data-mark='refused'] {
+  border-style: dashed;
+  border-color: var(--line-strong);
+}
+
+/* -- the name and what was chosen ----------------------------- */
+
+.ui-stepper-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* NOTHING TRUNCATES MID-WORD, and the first draft of this file
+   broke that rule in the same session it was written. It carried
+   `overflow-wrap: break-word`, which is not a safety net — it is
+   an instruction to split a word anywhere — and "Administration"
+   rendered as "Administrati / on" at 1440.
+
+   `break-word` is gone. A name wraps at spaces or it does not
+   wrap: if it still does not fit, the layout changes (below), not
+   the word. */
+.ui-stepper-name {
+  color: inherit;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+}
+
+/* WHAT WAS CHOSEN, which is the half the original leaves out. A
+   rail that prints only stage names teaches the order of the form;
+   one that prints the answers shows the shape of the deal.
+
+   IT IS THE FIRST THING TO GO when the rail is tight — see the
+   container query below. A name a person cannot read is a broken
+   rail; an answer they have to open the step to see is a smaller
+   loss than the original, which never showed it at all. */
+.ui-stepper-chose {
+  color: var(--fg-tertiary);
+  overflow-wrap: normal;
+  word-break: keep-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* -- the travelling indicator --------------------------------- */
+
+/* ONE OF THESE EXISTS AT A TIME and `layoutId` moves it. It is an
+   underline rather than a fill so it cannot sit behind the name —
+   a kind hue or an accent may carry a surface, never reading text. */
+.ui-stepper-here {
+  position: absolute;
+  left: var(--s-2);
+  right: var(--s-2);
+  bottom: 0;
+  height: var(--border-strong);
+  border-radius: var(--r-full);
+  background: var(--accent);
+}
+
+/* -- the run between steps ------------------------------------ */
+
+.ui-stepper-run {
+  flex: 1 1 auto;
+  min-width: var(--s-3);
+  height: var(--border);
+  margin: 0 var(--s-1);
+  background: var(--line);
+  position: relative;
+  overflow: hidden;
+}
+
+/* THE RUN FILLS TOWARD THE STEP IT REACHES, once, on arrival. It
+   is a scaleX from a left origin — transform only, off the main
+   thread, no layout — for the same reason the refusal strike is:
+   a width animation on a flex child relayouts the whole rail every
+   frame. */
+.ui-stepper-run[data-lit]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--success);
+  transform-origin: left center;
+  animation: ui-stepper-fill var(--run-ms, 200ms) var(--ease-out) both;
+}
+
+@keyframes ui-stepper-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* -- the refusal ---------------------------------------------- */
+
+/* A SENTENCE, WHERE THE THING IS REFUSED. Never a tooltip, never a
+   spec, never a dimmed control with nothing to read. */
+.ui-stepper-why {
+  position: absolute;
+  top: 100%;
+  left: var(--s-2);
+  right: var(--s-2);
+  margin: var(--s-1) 0 0;
+  color: var(--warning);
+}
+
+/* -- tight: the answers go before the names do ---------------- */
+
+/* Seven steps carrying both a name and an answer need roughly
+   1100px. Below that the answer is dropped rather than the name
+   being crushed — measured at 1440 in a panel, where "Factory
+   options" over "Fabric T To…" was already two crowded lines and
+   "Administration" had nowhere left to go. */
+@container (max-width: 1100px) {
+  .ui-stepper-chose {
+    display: none;
+  }
+}
+
+/* -- narrow: the rail stacks ---------------------------------- */
+
+/* Seven steps with names stop fitting well before the window does.
+   A container query rather than a media query, because this rail
+   goes inside a panel as often as across a stage, and what matters
+   is the space it was given rather than the size of the screen. */
+@container (max-width: 760px) {
+  .ui-stepper-list {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--s-1);
+  }
+
+  .ui-stepper-item {
+    flex: 0 0 auto;
+  }
+
+  .ui-stepper-go {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .ui-stepper-run {
+    display: none;
+  }
+
+  .ui-stepper-here {
+    left: 0;
+    top: var(--s-1);
+    bottom: var(--s-1);
+    right: auto;
+    width: var(--border-strong);
+    height: auto;
+  }
+
+  .ui-stepper-why {
+    position: static;
+    margin-left: calc(var(--control-h-sm) + var(--s-2));
+  }
+}
+
+/* Movement goes; colour and opacity stay. */
+@media (prefers-reduced-motion: reduce) {
+  .ui-stepper-run[data-lit]::after {
+    animation: none;
+    transform: scaleX(1);
+  }
+}
