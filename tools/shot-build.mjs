@@ -18,6 +18,8 @@
        node tools/shot-build.mjs --cold 10       N cold loads, counted
        node tools/shot-build.mjs --old           the shipped screen
 
+   The picker has its own: `tools/shot-picker.mjs`.
+
    It needs `npm run dev` up. `HL_ORIGIN` overrides the origin, so
    the same script can be pointed at a preview build — which is the
    only honest place to take a performance number.
@@ -26,8 +28,8 @@
 import { chromium } from 'playwright-core'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
+import { ORIGIN, wait, signInAndSeed, midWord, sayMidWord } from './drive.mjs'
 
-const ORIGIN = process.env.HL_ORIGIN ?? 'http://localhost:5090'
 const argv = process.argv.slice(2)
 const arg = (name, fallback) => {
   const i = argv.indexOf(`--${name}`)
@@ -40,8 +42,6 @@ const COLD = Number(arg('cold', '0'))
 const BUILD = has('old') ? 'old' : 'new'
 const OUT = join(process.cwd(), 'out', 'build')
 
-const wait = (p, ms) => p.waitForTimeout(ms)
-
 const browser = await chromium.launch({ channel: 'chrome', headless: true })
 const ctx = await browser.newContext({ viewport: { width: w, height: h } })
 const page = await ctx.newPage()
@@ -52,23 +52,7 @@ const thrown = []
 page.on('pageerror', (e) => thrown.push(String(e.message)))
 
 try {
-  await page.goto(ORIGIN)
-
-  /* Sign in. The demo button FILLS the form; it does not submit. */
-  const demo = page.getByRole('button', { name: /demo account/i })
-  if (await demo.count()) {
-    await demo.first().click()
-    await page.getByRole('button', { name: /^Sign in$/ }).first().click()
-    await wait(page, 900)
-  }
-
-  /* The real seed, so this is a picture of the product and not of
-     an empty state. */
-  const load = page.getByRole('button', { name: /Master Price File/i })
-  if (await load.count()) {
-    await load.first().click()
-    await wait(page, 4000)
-  }
+  await signInAndSeed(page)
 
   /* Mint a quote the way a dealer does: New quote -> a place -> a
      row -> Start. Nothing is inserted behind the app's back, so a
@@ -130,73 +114,8 @@ try {
   })
   console.log(JSON.stringify(read, null, 2))
 
-  /* ============================================================
-     NOTHING TRUNCATES MID-WORD — computed, not eyeballed.
-
-     `DESIGN_SYSTEM.md` §4 allows a clamp to two lines with the
-     whole string still in the DOM, and forbids a cut that lands
-     inside a word: a proper noun or a part number is the one kind
-     of string a truncation cannot be read through. The visual QA
-     of 2026-09-09 found the app's only one on a name — "Alazr |
-     aki" — and a first draft of `stepper.css` put another on
-     "Administration" hours after the rule was written.
-
-     A `Range` walks the text character by character and reports
-     the first cut where the characters either side are both word
-     characters. Same ruler the sweep used.
-     ============================================================ */
-  const midWord = await page.evaluate(() => {
-    const bad = []
-    const leaves = [...document.querySelectorAll('*')].filter(
-      (el) => el.children.length === 0 && (el.textContent ?? '').trim().length > 1,
-    )
-    for (const el of leaves) {
-      const cs = getComputedStyle(el)
-      if (cs.display === 'none' || cs.visibility === 'hidden') continue
-      const node = el.firstChild
-      if (!node || node.nodeType !== 3) continue
-      const text = node.textContent ?? ''
-
-      /* A clipped single line: does the ellipsis land inside a word? */
-      if (cs.textOverflow === 'ellipsis' && el.scrollWidth > el.clientWidth + 1) {
-        bad.push({ kind: 'clip', text: text.trim().slice(0, 44), where: el.className })
-        continue
-      }
-
-      let prevTop = null
-      for (let i = 0; i < text.length; i++) {
-        const r = document.createRange()
-        r.setStart(node, i)
-        r.setEnd(node, i + 1)
-        const b = r.getBoundingClientRect()
-        if (b.width === 0) continue
-        if (prevTop !== null && b.top > prevTop + 1) {
-          const before = text[i - 1] ?? ''
-          const after = text[i] ?? ''
-          if (/\w/.test(before) && /\w/.test(after)) {
-            bad.push({
-              kind: 'break',
-              text: text.trim().slice(0, 44),
-              at: `${before}|${after}`,
-              where: el.className,
-            })
-          }
-        }
-        prevTop = b.top
-      }
-    }
-    return { checked: leaves.length, bad }
-  })
-
-  if (midWord.bad.length) {
-    console.log(`\nMID-WORD (${midWord.bad.length} of ${midWord.checked} leaves):`)
-    for (const b of midWord.bad) {
-      console.log(`  ${b.kind} ${b.at ?? ''} "${b.text}" · ${b.where}`)
-    }
-    process.exitCode = 1
-  } else {
-    console.log(`nothing truncates mid-word · ${midWord.checked} text leaves checked`)
-  }
+  const found = await midWord(page)
+  if (!sayMidWord(found)) process.exitCode = 1
 
   mkdirSync(OUT, { recursive: true })
   const file = join(OUT, `build-${BUILD}-${w}x${h}.png`)

@@ -7,6 +7,7 @@
    window's identity lives here.
    ============================================================ */
 
+import { useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import type { EntityDef, TableKind } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
@@ -29,6 +30,8 @@ import { QuoteStage } from './QuoteStage'
    cycle, and Vite resolves it to `undefined` at run time rather
    than failing to build. */
 import { QuoteStart, type QuoteStartProps } from '@/features/quote/QuoteStart'
+import { PickerScreen } from '@/features/quote/PickerScreen'
+import { rebuiltPicker } from '@/features/quote/rebuilt'
 import { ModuleStage } from './ModuleStage'
 import { CustomerStage } from './CustomerStage'
 import { AdminStage } from './AdminStage'
@@ -292,12 +295,35 @@ function QuoteStartStage(props: Omit<QuoteStartProps, 'modules' | 'entities' | '
   const modules = useProjectStore((st) => st.modules)
   const entities = useProjectStore((st) => st.entities)
   const rowsByEntity = useProjectStore((st) => st.rowsByEntity)
+
+  /* THE REBUILT FIRST SCREEN, BEHIND THE SAME SWITCH AS THE
+     CONFIGURATOR — see `features/quote/rebuilt.ts` for why it is
+     the hash and not a search param.
+
+     IT REPLACES ONE SCREEN OF TWO, on purpose. Choosing a PLACE
+     and choosing a ROW are different questions, and only the first
+     was failing: measured at 1280x800 on the real seed it ran 3.68x
+     scale contrast against the >=6x §2 requires, four type steps,
+     SIX different card heights in one view, and no photographs at
+     all. The second screen already draws each row own picture.
+
+     `startAt` is the seam and it already existed — it matches on a
+     door key — so picking a place here opens the existing screen
+     already standing in it. Rebuilding the row half in order to
+     change the place half would be work done to avoid a handoff the
+     component already supports. */
+  const [at, setAt] = useState<string | null>(props.startAt ?? null)
+  if (rebuiltPicker() && at === null) {
+    return <PickerScreen onOpen={(door) => setAt(door.key)} onClose={props.onClose} />
+  }
+
   return (
     <QuoteStart
       modules={modules}
       entities={entities}
       rowsByEntity={rowsByEntity}
       {...props}
+      {...(at ? { startAt: at } : {})}
     />
   )
 }

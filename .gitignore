@@ -44,3 +44,6 @@ tools/teardown/out/
 # what a failing run produced, so they are never committed
 tools/shots/*.actual.png
 tools/shots/*.diff.png
+
+# harness output — screenshots, traces and scratch probes
+out/
