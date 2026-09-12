@@ -249,6 +249,35 @@
   box-shadow: none;
 }
 
+/* A REFUSED BUTTON STILL RINGS, and it did not.
+
+   THE DEFECT, found by tabbing the rebuilt quote screen rather
+   than by reading this file. `.ui-btn[aria-disabled='true']` above
+   sets `box-shadow: none`, and the PRIMARY tone draws its focus
+   ring as a box-shadow (`--focus`) because an accent outline
+   against an accent fill has nothing to read against. Both
+   selectors are specificity (0,2,0) — one class plus one attribute
+   against one class plus one pseudo-class — so source order
+   decides, the refused rule is written later, and it won.
+
+   The consequence is the exact failure this component's
+   `aria-disabled` argument exists to prevent. The whole reason it
+   is not `disabled` is that the control STAYS REACHABLE so the
+   person who needs the reason can get to it. A sighted keyboard
+   user could still tab onto "Give it to the customer" and had no
+   way to see that they had.
+
+   Measured on the build screen at 1440x900: thirteen tab stops,
+   this was the one with no visual change between focused and
+   resting. Other tones are unaffected — they ring with an
+   `outline`, which the refused rule does not touch.
+
+   (0,3,0) beats both, and it restores the ring without touching
+   the refused colours. */
+.ui-btn[aria-disabled='true']:focus-visible {
+  box-shadow: var(--focus);
+}
+
 .ui-btn-slot {
   display: inline-flex;
   flex-direction: column;

@@ -142,3 +142,55 @@ describe('Button', () => {
     expect(screen.queryByText('Pick a table first.')).not.toBeInTheDocument()
   })
 })
+
+/* ============================================================
+   A REFUSED BUTTON STAYS REACHABLE — the whole argument for
+   `aria-disabled` over `disabled`.
+
+   The CSS half of this was broken and shipped:
+   `.ui-btn[aria-disabled='true']` set `box-shadow: none`, which at
+   equal specificity and later source order beat
+   `.ui-btn--primary:focus-visible`'s ring. A sighted keyboard user
+   could tab onto a refused primary button and see nothing. Found
+   by tabbing the rebuilt quote screen, not by reading the file.
+
+   A rendering test cannot see a box-shadow, so what is asserted
+   here is the half that lives in the DOM — the control is still in
+   the tab order and still announces itself — and `button.css`
+   holds the other half with a (0,3,0) rule written after the
+   refused block.
+   ============================================================ */
+describe('a refused button is still reachable', () => {
+  it('keeps its place in the tab order', async () => {
+    render(
+      <>
+        <button type="button">before</button>
+        <Button tone="primary" refusedBecause="It has no name yet.">
+          Give it to the customer
+        </Button>
+      </>,
+    )
+    const refused = screen.getByRole('button', { name: /Give it to the customer/ })
+    /* The DOM property, not the attribute: a truly disabled button
+       is skipped by Tab and by a screen reader, which would put the
+       reason out of reach of the one person who needs it. */
+    expect(refused).not.toBeDisabled()
+    expect(refused).toHaveAttribute('aria-disabled', 'true')
+
+    await userEvent.tab()
+    await userEvent.tab()
+    expect(refused).toHaveFocus()
+  })
+
+  it('points at its reason, so focusing it reads the refusal', () => {
+    render(
+      <Button tone="primary" refusedBecause="It has no name yet.">
+        Give it to the customer
+      </Button>,
+    )
+    const refused = screen.getByRole('button', { name: /Give it to the customer/ })
+    const id = refused.getAttribute('aria-describedby')
+    expect(id).toBeTruthy()
+    expect(document.getElementById(id!)).toHaveTextContent('It has no name yet.')
+  })
+})
