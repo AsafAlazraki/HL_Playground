@@ -253,6 +253,7 @@ export function FlowStage({ onClose, onOpenTable }: FlowStageProps): ReactElemen
   return (
     <div
       className="shell-viewstage shell-flowstage"
+      data-register="cockpit"
       role="region"
       {...stage}
       /* see the header note — the sheet's Delete handler would take a
@@ -269,15 +270,27 @@ export function FlowStage({ onClose, onOpenTable }: FlowStageProps): ReactElemen
             Back
           </Button>
         </div>
+        {/* ============================================================
+            THE NAME STAYS, THE ASIDE GOES.
+
+            The bar read "Fitment · what goes with what, counted" over
+            a page head reading "FROM YOUR PRICE FILE / What one boat
+            can be sold with / What may go with what, in 5 kinds of
+            pairing." Two statements of the same thing, 80px apart,
+            and the lower one is the better written of the two.
+
+            The NAME is kept, unlike on Rules and Review, and the
+            difference is real: those two pages print their own name
+            in their own head and this one does not — its head asks
+            a question. Take the name away here and nothing on screen
+            says which place you are in.
+            ============================================================ */}
         <p className="shell-view-what">
           {/* Fitment, not "What fits what" — commit 4c4a3e2's rule: a
               place is a noun naming what is on the screen, never a
               question. The bar was renamed and the stages it opens
               were not, so the two disagreed. */}
           <span className="ds-display-lg shell-view-what-name">Fitment</span>
-          <span className="shell-view-what-sep" aria-hidden="true">
-            ·
-          </span>
           {/* NOT AD COPY. This read "walk the rows, collect the matches",
               which DESIGN_PRINCIPLES §6 names as the outgoing build's
               failure by that exact phrasing: a door caption written as a
@@ -286,12 +299,20 @@ export function FlowStage({ onClose, onOpenTable }: FlowStageProps): ReactElemen
               point here ("to work out what goes with something, use
               Fitment"), so the two doors describe each other the same
               way round. */}
-          {/* THE ASIDE SAYS WHAT SORT OF PLACE THIS IS, and this page
-              is now two sorts, so it says which one is up. Neither is
-              a question and neither is the shape of the screen. */}
-          <span className="shell-view-what-say">
-            {face === 'fanout' ? 'what goes with what, counted' : 'the rules that work out what fits'}
-          </span>
+          {/* AND THE ASIDE IS DRAWN ONLY ON THE FACE WHOSE OWN HEAD
+              DOES NOT SAY IT. The fan-out's head already reads "What
+              may go with what, in 5 kinds of pairing" directly under
+              this line; the builder's does not. */}
+          {face === 'fanout' ? null : (
+            <>
+              <span className="shell-view-what-sep" aria-hidden="true">
+                ·
+              </span>
+              <span className="shell-view-what-say">
+                the rules that work out what fits
+              </span>
+            </>
+          )}
         </p>
       </div>
 

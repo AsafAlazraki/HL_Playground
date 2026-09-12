@@ -390,7 +390,7 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
      ============================================================ */
   if (!table) {
     return (
-      <div className="cx-root">
+      <div className="cx-root" data-register="cockpit">
         <div className="ds-aurora ds-grain cx-sky" aria-hidden="true" />
         <div className="cx-scroll">
           {/* THE EMPTY STATE IS THE SYSTEM'S CARD, raised, at the
@@ -443,7 +443,7 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
   }
 
   return (
-    <div className="cx-root">
+    <div className="cx-root" data-register="cockpit">
       <div className="ds-aurora ds-grain cx-sky" aria-hidden="true" />
       <div className="cx-scroll">
         {/* THE FRAME SCROLLS; THE PAGE INSIDE IT HAS A WIDTH.
@@ -565,7 +565,24 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
                 <Card tone="raised" pad="lg">
                   <div className="cx-empty-body">
                     <SectionHead level="none">Nobody in it yet</SectionHead>
-                    <h2 className="ds-hero cx-empty-title">The register is here and waiting.</h2>
+                    {/* ============================================================
+                        `t-display` AND NOT `ds-hero`, AND IT IS A WHOLE STEP
+                        FOR A WHOLE STEP — rule 6, and crm.css's own note
+                        about this element ("six declarations became a
+                        class name") is the reason it is a class swap
+                        rather than one overridden property.
+
+                        The hero step clamps to 43.52px at 1280, which
+                        put this screen at 3.68x scale contrast against
+                        Cockpit's 2.5-3.2x band. An empty state drawn at
+                        the size of a full one is the same fault the
+                        front door and the quotes board both had; this
+                        one is a card in the middle of a register, and
+                        the register is what the screen is.
+
+                        `.ds-hero` is unchanged for its other eight uses.
+                        ============================================================ */}
+                    <h2 className="t-display cx-empty-title">The register is here and waiting.</h2>
                     <p className="cx-empty-say">Add somebody, or file them from a quote.</p>
 
                     <Button
