@@ -29,15 +29,57 @@ export type Lockup = {
  *  `DEC Rigging Kit (Twin Eng)` 26 — which is the one that must fail. */
 const MAKER_MAX = 20
 
-/** THE MEASURED CEILING, and the reason it is seven. Archivo at the
- *  marque step is 82.86px at 1280 and the identity column's content box
- *  is 360.3px. Measured in Chrome with the face loaded: `CL290FT` 325.6
- *  and `SP760ST` 330.3 fit; `RU230KAM` 418.8, `XF450USA` 391.2 and
- *  `F9.9SMHB` 381.9 do not. A model code is one unbroken token, so a
- *  code that does not fit has nowhere to wrap — it would overflow into
- *  the pane's `overflow: hidden` and lose letters. Seven characters is
- *  where that boundary sits, so eight steps the whole thing down. */
-const MARQUE_TOKEN_MAX = 7
+/* ============================================================
+   THE MEASURED CEILING — AND IT WAS SEVEN, MEASURED AGAINST A
+   COLUMN THAT NO LONGER EXISTS.
+
+   The original number: Archivo at the marque step was 82.86px at
+   1280 and `ProductPane`'s identity column was 360.3px, so
+   `CL290FT` 325.6 and `SP760ST` 330.3 fit while `RU230KAM` 418.8,
+   `XF450USA` 391.2 and `F9.9SMHB` 381.9 did not. Seven was right
+   for that pane.
+
+   BOTH HALVES OF IT MOVED. `system.css` re-cut the ramp and the
+   marque step is 75.52px at 1280; `BuildScreen` replaced the pane
+   and its lockup's content box is 481px. Re-measured in Chrome on
+   the rebuilt screen with the face loaded:
+
+     CL290FT   312      RU320KAM  396
+     SP760ST   319      ADV7      196
+     RU230KAM  396      F9.9SMHB  367
+     XF450USA  377      1450 Frontier  446
+
+   Every one of them fits. The stale seven was stepping `RU230KAM`
+   down to the hero step and costing the configurator its register:
+   measured at 4.39x scale contrast where Showroom requires 6x, with
+   the PRICE as the largest thing on a screen whose subject is a
+   boat.
+
+   Nine, because at ~49.5px per character a nine-character code is
+   ~445px against the 481 available and a ten is ~495 and over. A
+   model code is one unbroken token with nowhere to wrap, so a code
+   that does not fit would overflow into `overflow: hidden` and lose
+   letters — the step down is still the right answer past the line,
+   and the line is the thing that had rotted.
+
+   AND ONE TOKEN IS NOT THE WHOLE TEST, which raising this from
+   seven to nine exposed. `Fusion Apollo RA670 Stereo w 2 Pairs of
+   XS 6.5 Speakers + 1.8mtr Aerial` is seventy characters whose
+   LONGEST token is "Speakers" at eight — so the old seven caught it
+   by accident and nine let it through, to be set at 75.52px across
+   eight lines. A token ceiling asks "can this wrap at all"; a whole
+   ceiling asks "how many lines will it take". Both have to hold.
+
+   Twenty characters is two lines at this step and this column, and
+   two lines of marque is a lockup. Three is a paragraph.
+
+   THESE ARE PROXIES FOR A WIDTH, and the first one went stale
+   because a character count cannot know either the step or the
+   column. Re-measure whenever either moves: `tools/drive.mjs` and a
+   probe span is all it takes.
+   ============================================================ */
+const MARQUE_TOKEN_MAX = 9
+const MARQUE_WHOLE_MAX = 20
 
 /**
  * TAKE THE LABEL APART SO THE MARQUE CAN BE ONE WORD.
@@ -79,5 +121,10 @@ export function marqueOf(label: string): Lockup {
   if (model === '') return { maker: '', model: whole, trim: '', long: true }
 
   const longest = model.split(/\s+/).reduce((n, word) => Math.max(n, word.length), 0)
-  return { maker, model, trim, long: longest > MARQUE_TOKEN_MAX }
+  return {
+    maker,
+    model,
+    trim,
+    long: longest > MARQUE_TOKEN_MAX || model.length > MARQUE_WHOLE_MAX,
+  }
 }

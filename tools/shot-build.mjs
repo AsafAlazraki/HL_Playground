@@ -54,17 +54,35 @@ page.on('pageerror', (e) => thrown.push(String(e.message)))
 try {
   await signInAndSeed(page)
 
-  /* Mint a quote the way a dealer does: New quote -> a place -> a
-     row -> Start. Nothing is inserted behind the app's back, so a
-     break anywhere in that path is a break this script reports. */
+  /* ============================================================
+     MINT A QUOTE THE WAY A DEALER DOES: New quote -> a place -> a
+     model -> Start. Nothing is inserted behind the app's back, so a
+     break anywhere in that path is a break this script reports.
+
+     AND IT WALKS WHICHEVER PICKER IS UP. This drove the shipped one
+     by its `aria-label` and stopped working the day the rebuilt
+     screens became the default — the harness for the configurator
+     failed at the FIRST step, thirty seconds of timeout, with
+     nothing wrong with the configurator. A driver pinned to one of
+     two screens is a driver that reports on the wrong thing.
+     ============================================================ */
   await page.getByRole('button', { name: /New quote/ }).first().click()
-  await wait(page, 1200)
-  await page.locator('[aria-label*="places you can quote from" i] button').first().click()
-  await wait(page, 1400)
-  await page.getByRole('option').first().click()
-  await wait(page, 900)
+  await wait(page, 2000)
+
+  const rebuiltPicker = await page.locator('.qp-card').count()
+  if (rebuiltPicker > 0) {
+    await page.locator('.qp-card').first().click()
+    await wait(page, 2300)
+    await page.locator('.pl-card').first().click()
+    await wait(page, 600)
+  } else {
+    await page.locator('[aria-label*="places you can quote from" i] button').first().click()
+    await wait(page, 1400)
+    await page.getByRole('option').first().click()
+    await wait(page, 900)
+  }
   await page.getByRole('button', { name: /Start the quote|Back to the quote/ }).first().click()
-  await wait(page, 1800)
+  await wait(page, 2200)
 
   const id = new globalThis.URL(page.url()).searchParams.get('id')
   if (!id) throw new Error('no quote was minted — the path to one is broken')

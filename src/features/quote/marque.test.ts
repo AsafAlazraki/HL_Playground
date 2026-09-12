@@ -51,14 +51,16 @@ describe('marqueOf', () => {
   })
 
   it('keeps a model with no qualifier whole and leaves the trim empty', () => {
-    /* `F9.9SMHB` is eight characters, which is past the measured
-       seven that fit the identity column at the display step — so it
-       is marked long and the surface takes the --t-hero step. */
+    /* `F9.9SMHB` is eight characters and measures 367px at the
+       marque step against the rebuilt lockup's 481px column, so it
+       is NOT long — it was, against `ProductPane`'s 360px column at
+       a step that was 82.86px. Both halves of that measurement
+       moved; marque.ts carries the new one. */
     expect(marqueOf('Yamaha - F9.9SMHB')).toEqual({
       maker: 'Yamaha',
       model: 'F9.9SMHB',
       trim: '',
-      long: true,
+      long: false,
     })
   })
 
@@ -84,13 +86,30 @@ describe('marqueOf', () => {
     expect(l.long).toBe(true)
   })
 
-  it('is exactly seven characters that fit, and eight that do not', () => {
-    /* The boundary is a MEASUREMENT, not a taste: Archivo at 82.86px
-       renders `SP760ST` at 330.3px and `RU230KAM` at 418.8px into a
-       360.3px column. If either half of this flips, the column either
-       overflows or gives up a step it did not need to. */
+  it('is nine characters that fit, and ten that do not', () => {
+    /* The boundary is a MEASUREMENT, not a taste. Archivo at the
+       marque step is 75.52px and the rebuilt lockup's content box is
+       481px: `SP760ST` renders at 319 and `RU230KAM` at 396, both
+       inside it, and ~49.5px per character puts ten at ~495 and over.
+
+       IT WAS SEVEN, AND SEVEN WAS COSTING THE CONFIGURATOR ITS
+       REGISTER — `RU230KAM` stepped down to the hero and the screen
+       measured 4.39x scale contrast where Showroom requires 6x, with
+       the PRICE the largest thing on a screen about a boat. */
     expect(marqueOf('Highfield - SP760ST').long).toBe(false)
-    expect(marqueOf('Highfield - RU230KAM (PVC) WH').long).toBe(true)
+    expect(marqueOf('Highfield - RU230KAM (PVC) WH').long).toBe(false)
+    /* Nine and ten, spelled out: F250XCA24 is nine characters. */
+    expect(marqueOf('Yamaha - F250XCA24').long).toBe(false)
+    expect(marqueOf('Yamaha - F250XCA241').long).toBe(true)
+  })
+
+  /* A TOKEN CEILING IS NOT THE WHOLE TEST. A name can be seventy
+     characters with no token over eight — it wraps, and at 75.52px
+     it wraps onto eight lines. Two ceilings, and both have to hold. */
+  it('marks a long name long even when every word in it is short', () => {
+    const l = marqueOf('Stacer - 399 Proline Angler Side Console Package')
+    expect(l.maker).toBe('Stacer')
+    expect(l.long).toBe(true)
   })
 
   it('never drops a character of any label the seed produces', () => {
