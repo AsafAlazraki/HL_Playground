@@ -1,0 +1,352 @@
+/* ============================================================
+   EVERY PLACE (mo-) — SHOWROOM.
+
+   `mo-` was checked against every stylesheet in `src` before use.
+
+   The fifth screen on this skeleton: a port that scrolls, a column
+   on a measure, a marque, and a grid of equal photographic cards
+   with a fixed line budget. That it is the fifth is the point — a
+   register is only a register once the screens in it are built the
+   same way.
+   ============================================================ */
+
+.mo {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* `.shell-stage` is `overflow: hidden` and hands every stage a box
+   of exactly the window's height. A screen that does not scroll
+   inside itself is not short — it is CUT. */
+.mo-port {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.mo-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+  width: var(--measure);
+  margin: 0 auto;
+  padding: var(--section-gap) var(--gutter) var(--s-16);
+  container-type: inline-size;
+}
+
+/* -- the marque ------------------------------------------------ */
+
+.mo-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.mo-head-say {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+.mo-marque {
+  margin: 0;
+  color: var(--fg);
+}
+
+.mo-sub {
+  margin: 0;
+  color: var(--fg-tertiary);
+}
+
+.mo-head-do {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.mo-head-do > :first-child {
+  flex: 0 1 42ch;
+  min-width: 0;
+}
+
+.mo-new {
+  flex: 0 0 auto;
+  height: var(--input-h);
+  padding: 0 var(--s-4);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font: inherit;
+  font-size: var(--t-small-size);
+  cursor: pointer;
+  transition:
+    background var(--d-press) var(--ease-out),
+    border-color var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mo-new:hover {
+    background: var(--surface-3);
+    border-color: var(--line-strong);
+    color: var(--fg);
+  }
+}
+
+.mo-new:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* -- the chips ------------------------------------------------- */
+
+.mo-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.mo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--control-h-sm);
+  padding: 0 var(--s-3);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-chip);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font: inherit;
+  font-size: var(--t-small-size);
+  cursor: pointer;
+  transition:
+    background var(--d-press) var(--ease-out),
+    border-color var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mo-chip:hover {
+    background: var(--surface-3);
+    color: var(--fg);
+  }
+}
+
+.mo-chip:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* THE CHOSEN CHIP IS SOLID, NOT A WASH OF THE ACCENT. The accent on
+   its own wash is the pairing rule 4 exists to catch — system.css
+   measures it at 4.16:1 over `--surface-3`. `--accent-fg` is the ink
+   chosen per theme to sit ON the accent. */
+.mo-chip.is-on {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+/* A FIGURE IS NEVER A HUE, and it is always mono and tabular. */
+.mo-chip-n {
+  color: inherit;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-caption-size);
+  opacity: 0.75;
+}
+
+.mo-none {
+  margin: 0;
+  color: var(--fg-secondary);
+}
+
+/* -- the grid -------------------------------------------------- */
+
+.mo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+  grid-auto-rows: 1fr;
+  gap: var(--s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mo-cell {
+  display: flex;
+  min-width: 0;
+}
+
+.mo-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  overflow: hidden;
+  box-shadow: var(--e-card);
+  transition:
+    box-shadow var(--d-press) var(--ease-out),
+    border-color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mo-tile:hover {
+    box-shadow: var(--e-card-hover);
+    border-color: var(--line-strong);
+  }
+}
+
+/* THE TILE IS A BOX AND THE FACE IS THE BUTTON, because a tile
+   carries a second act — its settings — and a button inside a
+   button is not a thing a browser will draw. */
+.mo-face {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 1;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mo-face:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* -- the picture ----------------------------------------------- */
+
+.mo-well {
+  --mat: linear-gradient(180deg, var(--surface-3) 0%, var(--bg-sunken) 100%);
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  flex: 0 0 auto;
+  background: var(--mat);
+  border-bottom: var(--border) solid var(--line-subtle);
+  overflow: hidden;
+}
+
+.mo-plate {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--kind, transparent) 10%, var(--surface-2));
+}
+
+.mo-mono {
+  color: var(--fg-secondary);
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+}
+
+.mo-img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--mat);
+  /* CONTAIN. A cropped hull is a hull with its bow cut off. */
+  object-fit: contain;
+}
+
+.mo-rail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border: 0;
+  background: var(--kind, var(--line));
+}
+
+/* -- the words ------------------------------------------------- */
+
+.mo-say {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-3) var(--s-4);
+  min-width: 0;
+}
+
+.mo-name {
+  color: var(--fg);
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  min-height: 2lh;
+  max-height: 2lh;
+  overflow: hidden;
+}
+
+.mo-count {
+  color: var(--fg-secondary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  min-height: 1lh;
+  max-height: 1lh;
+  overflow: hidden;
+}
+
+/* -- the second act -------------------------------------------- */
+
+/* SETTINGS IS A WORD, NOT A COG IN A CORNER. It sits under the
+   card's own text rather than over the photograph, because a
+   control floated on a picture is a control a person has to find
+   twice — once to see it and once to be sure it is not part of the
+   picture. */
+.mo-set {
+  flex: 0 0 auto;
+  padding: var(--s-2) var(--s-4);
+  border: 0;
+  border-top: var(--border) solid var(--line-subtle);
+  background: none;
+  color: var(--fg-tertiary);
+  font: inherit;
+  font-size: var(--t-caption-size);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mo-set:hover {
+    background: var(--surface-2);
+    color: var(--fg);
+  }
+}
+
+.mo-set:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* -- narrow ---------------------------------------------------- */
+
+@container (max-width: 640px) {
+  .mo-head-do {
+    flex-wrap: wrap;
+  }
+
+  .mo-head-do > :first-child {
+    flex: 1 1 100%;
+  }
+}

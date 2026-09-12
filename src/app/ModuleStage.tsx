@@ -74,6 +74,8 @@
    ============================================================ */
 
 import { useCallback, useEffect, useState } from 'react'
+import { PlacesScreen } from '@/features/modules/PlacesScreen'
+import { rebuiltPicker } from '@/features/quote/rebuilt'
 import type { CSSProperties, ReactElement } from 'react'
 import { CaretLeft } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
@@ -416,6 +418,16 @@ export function ModuleStage({
                dashboard's empty quotes card offers the act rather
                than describing the route to it. */
             {...(onNewQuote ? { onNewQuote: () => onNewQuote(open.id) } : {})}
+          />
+        ) : rebuiltPicker() ? (
+          /* THE REBUILT GRID OF PLACES, behind the same switch as the
+             rest. The acts are the shipped ones, wired to the same
+             three places — `PlacesScreen` carries what was measured
+             on the grid it replaces. */
+          <PlacesScreen
+            onOpen={(id) => onOpen(id)}
+            onSettings={(id) => setSettings({ moduleId: id })}
+            onNew={() => setCreating(true)}
           />
         ) : (
           <Dashboard

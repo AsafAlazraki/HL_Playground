@@ -1,0 +1,202 @@
+/* ============================================================
+   EVERY PLACE (mo-) — SHOWROOM.
+
+   THE STRUCTURE HERE WAS ALREADY RIGHT, which makes this the
+   shortest of the rebuilds and worth saying out loud: photographic
+   cards, filter chips that carry their own counts, a census in the
+   head. What it did not have, measured at 1280x800 on the real seed:
+
+     register        NONE      a catalogue of what you sell is
+                               Showroom, and it never said so
+     scale contrast  3.09x     against the >=6x §2 requires
+     card wells      ragged    "Highfield Inflatables" wraps to two
+                               lines and its photograph is shorter
+                               than every other card's in the row
+
+   THE THIRD ONE IS THE SAME FAULT THE PICKER HAD. A card sized by
+   its own string makes its neighbours lie about how much room a
+   picture gets — and the only thing that decided it was how long a
+   brand's name happens to be. Two lines of name, one of census, and
+   the well is a ratio.
+
+   `doorPicture` IS THE ENGINE, unchanged: the biggest photograph
+   any row of the place carries, a held copy before a hotlink,
+   because taking the FIRST in row order gave the Boats door a grey
+   close-up of a hull fitting and the Trailers door a wordmark.
+   ============================================================ */
+
+import { useMemo, useState } from 'react'
+import type { ReactElement } from 'react'
+import { useProjectStore } from '@/store/useProjectStore'
+import { Field } from '@/ui'
+import { markOf } from '@/lib/mark'
+import { FrozenPhoto } from '@/features/quote/photo'
+import { doorPicture } from '@/features/dashboard/doors'
+import { usePlaces } from '@/features/dashboard/usePlaces'
+import type { Place } from './places'
+import { placeFilters, placesUnder } from './places'
+import './places-screen.css'
+
+export interface PlacesScreenProps {
+  /** open one place — its own catalogue */
+  onOpen: (moduleId: string) => void
+  /** the place's settings, WITHOUT opening it on the way. Opening it
+   *  first would swap this stage for the module's own window and
+   *  take the request with it — `ModuleStage` carries that
+   *  measurement. */
+  onSettings: (moduleId: string) => void
+  onNew: () => void
+}
+
+export function PlacesScreen({ onOpen, onSettings, onNew }: PlacesScreenProps): ReactElement {
+  const entities = useProjectStore((s) => s.entities)
+  const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
+  const modules = useProjectStore((s) => s.modules)
+  const places = usePlaces()
+  const [chip, setChip] = useState('all')
+  const [query, setQuery] = useState('')
+
+  /* A PLACE HAS NO PICTURE OF ITS OWN, so it borrows the best one
+     its own stock carries. Built once per place rather than per
+     render: `doorPicture` walks every row of every table behind it,
+     and Highfield alone is 604. */
+  const covers = useMemo(() => {
+    const found = new Map<string, ReturnType<typeof doorPicture>>()
+    for (const p of places) {
+      const module = modules[p.moduleId]
+      const ids = p.tableId ? [p.tableId] : (module?.tableIds ?? [])
+      found.set(p.key, doorPicture(ids, entities, rowsByEntity))
+    }
+    return found
+  }, [places, modules, entities, rowsByEntity])
+
+  const chips = useMemo(() => placeFilters(places), [places])
+  const typed = query.trim().toLowerCase()
+  const shown = useMemo(() => {
+    const byChip = placesUnder(places, chip)
+    if (typed === '') return byChip
+    return byChip.filter((p) =>
+      `${p.name} ${p.moduleName} ${p.typeLabel}`.toLowerCase().includes(typed),
+    )
+  }, [places, chip, typed])
+
+  const rows = places.reduce((n, p) => n + p.census.items, 0)
+
+  return (
+    <div className="mo" data-register="showroom">
+      <div className="mo-port">
+        <div className="mo-col">
+          <header className="mo-head">
+            <div className="mo-head-say">
+              <h1 className="t-marque mo-marque">Modules</h1>
+              <p className="t-small mo-sub">
+                {places.length} {places.length === 1 ? 'place' : 'places'} ·{' '}
+                {rows.toLocaleString('en-AU')} {rows === 1 ? 'row' : 'rows'} in them
+              </p>
+            </div>
+            <div className="mo-head-do">
+              <Field
+                label="Find a place"
+                value={query}
+                onChange={setQuery}
+                placeholder="Highfield, Yamaha, trailers…"
+                type="search"
+                autoComplete="off"
+              />
+              <button type="button" className="mo-new" onClick={onNew}>
+                New module
+              </button>
+            </div>
+          </header>
+
+          {/* THE CHIPS CARRY THEIR OWN COUNTS, which is what makes a
+              filter answerable before it is pressed. `placeFilters`
+              resolves them and they are the same census the cards
+              print, so the two can never disagree. */}
+          <div className="mo-chips" role="group" aria-label="Narrow by what a place holds">
+            {chips.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                className={c.key === chip ? 'mo-chip is-on' : 'mo-chip'}
+                aria-pressed={c.key === chip}
+                onClick={() => setChip(c.key)}
+              >
+                {c.label}
+                <span className="mo-chip-n">{c.count}</span>
+              </button>
+            ))}
+          </div>
+
+          {shown.length === 0 ? (
+            <p className="t-small mo-none">
+              Nothing here matches “{query}”. Clear the search to see all {places.length} places.
+            </p>
+          ) : (
+            <ul className="mo-grid">
+              {shown.map((place) => (
+                <Tile
+                  key={place.key}
+                  place={place}
+                  cover={covers.get(place.key)}
+                  onOpen={() => onOpen(place.moduleId)}
+                  onSettings={() => onSettings(place.moduleId)}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Tile({
+  place,
+  cover,
+  onOpen,
+  onSettings,
+}: {
+  place: Place
+  cover: ReturnType<typeof doorPicture>
+  onOpen: () => void
+  onSettings: () => void
+}): ReactElement {
+  return (
+    <li className="mo-cell">
+      <div className="mo-tile" data-kind={place.kind}>
+        <button type="button" className="mo-face" data-press="card" onClick={onOpen}>
+          <span className="mo-well">
+            {/* The plate is under every tile and the photograph covers
+                it: `FrozenPhoto` draws nothing rather than a broken
+                image, and asking a second time whether it will is a
+                second verdict that can disagree with the first. */}
+            <span className="mo-plate" aria-hidden="true">
+              <span className="t-display mo-mono">{markOf(place.name)}</span>
+            </span>
+            <FrozenPhoto img={cover} fallbackAlt={place.name} className="mo-img" w={480} h={300} />
+            <span className="k-rail mo-rail" aria-hidden="true" />
+          </span>
+          <span className="mo-say">
+            <span className="t-title mo-name">{place.name}</span>
+            <span className="t-caption mo-count">
+              {/* THE DEALER'S OWN PLURAL, and what is held back said
+                  in words rather than subtracted in silence. */}
+              {place.retired
+                ? 'no longer sold'
+                : `${place.census.items.toLocaleString('en-AU')} ${place.census.noun}`}
+            </span>
+          </span>
+        </button>
+        <button
+          type="button"
+          className="mo-set"
+          onClick={onSettings}
+          aria-label={`Settings for ${place.name}`}
+        >
+          Settings
+        </button>
+      </div>
+    </li>
+  )
+}
