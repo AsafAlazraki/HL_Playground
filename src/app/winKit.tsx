@@ -7,7 +7,7 @@
    window's identity lives here.
    ============================================================ */
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import type { EntityDef, TableKind } from '@/types/model'
 import { TableKindSymbol, kindOf } from '@/features/tablekit'
@@ -31,6 +31,8 @@ import { QuoteStage } from './QuoteStage'
    than failing to build. */
 import { QuoteStart, type QuoteStartProps } from '@/features/quote/QuoteStart'
 import { PickerScreen } from '@/features/quote/PickerScreen'
+import { PlaceScreen } from '@/features/quote/PlaceScreen'
+import { quoteDoors } from '@/features/quote/start'
 import { rebuiltPicker } from '@/features/quote/rebuilt'
 import { ModuleStage } from './ModuleStage'
 import { CustomerStage } from './CustomerStage'
@@ -296,25 +298,43 @@ function QuoteStartStage(props: Omit<QuoteStartProps, 'modules' | 'entities' | '
   const entities = useProjectStore((st) => st.entities)
   const rowsByEntity = useProjectStore((st) => st.rowsByEntity)
 
-  /* THE REBUILT FIRST SCREEN, BEHIND THE SAME SWITCH AS THE
+  /* THE REBUILT FIRST TWO SCREENS, BEHIND THE SAME SWITCH AS THE
      CONFIGURATOR — see `features/quote/rebuilt.ts` for why it is
      the hash and not a search param.
 
-     IT REPLACES ONE SCREEN OF TWO, on purpose. Choosing a PLACE
-     and choosing a ROW are different questions, and only the first
-     was failing: measured at 1280x800 on the real seed it ran 3.68x
-     scale contrast against the >=6x §2 requires, four type steps,
-     SIX different card heights in one view, and no photographs at
-     all. The second screen already draws each row own picture.
+     BOTH OF THEM, IN THE END. This said "it replaces one screen of
+     two, on purpose ... the second screen already draws each row's
+     own picture", and then the second screen was measured: 3.09x
+     scale contrast, six type steps, 56px rows, 40px thumbnails —
+     and Highfield opening onto seven rows of ONE boat at one price,
+     under a line reading "The first 50 are drawn — type a model or
+     a series to reach the other 538". It draws pictures and it was
+     still the worse of the two. PlaceScreen's own header carries
+     the argument.
 
-     `startAt` is the seam and it already existed — it matches on a
-     door key — so picking a place here opens the existing screen
-     already standing in it. Rebuilding the row half in order to
-     change the place half would be work done to avoid a handoff the
-     component already supports. */
+     `startAt` is the seam and it already existed: it matches on a
+     door key, so the shipped screen still opens standing in a place
+     when the switch is off. */
   const [at, setAt] = useState<string | null>(props.startAt ?? null)
-  if (rebuiltPicker() && at === null) {
-    return <PickerScreen onOpen={(door) => setAt(door.key)} onClose={props.onClose} />
+  const doors = useMemo(
+    () => quoteDoors(modules, entities, rowsByEntity),
+    [modules, entities, rowsByEntity],
+  )
+
+  if (rebuiltPicker()) {
+    if (at === null) {
+      return <PickerScreen onOpen={(door) => setAt(door.key)} onClose={props.onClose} />
+    }
+    const door = doors.find((d) => d.key === at)
+    /* A KEY THAT NAMES NOTHING FALLS THROUGH to the shipped screen
+       rather than drawing an empty place: `startAt` can arrive from
+       a module tile's quick action, and a table deleted since that
+       tile was drawn is a real state. */
+    if (door) {
+      return (
+        <PlaceScreen door={door} onBack={() => setAt(null)} onStarted={props.onStarted} />
+      )
+    }
   }
 
   return (

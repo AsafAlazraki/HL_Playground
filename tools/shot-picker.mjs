@@ -1,8 +1,10 @@
 /* ============================================================
-   DRIVE THE PICKER, AND MEASURE IT.
+   DRIVE THE SHOWROOM ENTRY PATH, AND MEASURE IT.
 
-   It is the first Showroom screen a dealer sees, and it is the one
-   the plan puts first for that reason. What it is measured on:
+   Choose a place, choose a model, start a quote — one act in three
+   screens, driven in one run because a screen that measures
+   perfectly and does not lead to the next one has not been tested.
+   What each screen is measured on:
 
      ratio      >=6x, which is what SHOWROOM requires
      steps      how much of the ten-step ramp is in use
@@ -17,7 +19,10 @@
 
        node tools/shot-picker.mjs                 1280x800, rebuilt
        node tools/shot-picker.mjs --at 1440x900
-       node tools/shot-picker.mjs --old           the shipped screen
+       node tools/shot-picker.mjs --old           the shipped picker
+
+   `--old` stops after the picker: the place screen it opens is the
+   shipped one, which `check-shots` already photographs.
 
    It needs `npm run dev` up.
    ============================================================ */
@@ -108,13 +113,67 @@ try {
   await wait(page, 1600)
   const opened = await page.evaluate(() => ({
     rows: document.querySelectorAll('[role="option"]').length,
+    models: document.querySelectorAll('.pl-cell').length,
     heading: document.querySelector('h1, h2')?.textContent?.trim().slice(0, 40) ?? null,
   }))
-  if (opened.rows > 0) {
-    console.log(`the first card opens its place · ${opened.rows} rows offered`)
+  if (opened.rows > 0 || opened.models > 0) {
+    console.log(
+      `the first card opens its place · ${opened.models || opened.rows} ${opened.models ? 'models' : 'rows'} offered`,
+    )
   } else {
     console.log(`DEAD — the first card led nowhere (heading "${opened.heading}")`)
     process.exitCode = 1
+  }
+
+  /* ============================================================
+     AND THE PLACE SCREEN, ON THE SAME RUN.
+
+     It is the second half of one act — choose a place, choose a
+     model — and the screen where the 588-variant problem lives. The
+     shipped one opens Highfield onto seven rows of ONE boat at one
+     price under "the first 50 are drawn"; the rebuilt one folds
+     604 rows into models and puts the finishes in the bar. Same
+     three numbers as above: ramp, card heights, photographs.
+     ============================================================ */
+  if (BUILD === 'new') {
+    const place = await page.evaluate(() => {
+      const cells = [...document.querySelectorAll('.pl-cell')]
+      const hs = cells.map((c) => Math.round(c.getBoundingClientRect().height))
+      return {
+        cards: cells.length,
+        cardHeights: [...new Set(hs)].sort((a, b) => a - b),
+        withPhoto: cells.filter((c) => c.querySelector('img')).length,
+        series: document.querySelectorAll('.pl-series').length,
+      }
+    })
+    console.log('\nplace: ' + JSON.stringify({ ...place, ...(await ramp(page)) }))
+    if (place.cardHeights.length !== 1) {
+      console.log(`RAGGED — ${place.cardHeights.length} model heights: ${place.cardHeights.join(' · ')}`)
+      process.exitCode = 1
+    }
+    if (!sayMidWord(await midWord(page))) process.exitCode = 1
+
+    const shot = join(OUT, `place-${w}x${h}.png`)
+    await page.screenshot({ path: shot })
+    console.log(`wrote ${shot}`)
+
+    /* AND IT MINTS. The whole path is only worth measuring if it
+       ends in a quote — a screen that chooses beautifully and
+       cannot start one is the dead control, one step along. */
+    await page.locator('.pl-card').first().click()
+    await wait(page, 500)
+    await page.getByRole('button', { name: /Start the quote|Back to the quote/ }).click()
+    await wait(page, 2400)
+    const minted = await page.evaluate(() => ({
+      id: new URL(window.location.href).searchParams.get('id'),
+      screen: document.querySelector('.bs') ? 'rebuilt build' : document.querySelector('.qb-scroll') ? 'shipped build' : null,
+    }))
+    if (minted.id && minted.screen) {
+      console.log(`picking one starts a quote · ${minted.id} · ${minted.screen}`)
+    } else {
+      console.log('DEAD — "Start the quote" minted nothing')
+      process.exitCode = 1
+    }
   }
 
   if (thrown.length) {
