@@ -490,6 +490,7 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
       return (
         <QuoteStage
           quoteId={s.quoteId}
+          onNewQuote={h.newQuote}
           onOpen={(quoteId) => h.openWin({ kind: 'quote', quoteId })}
           /* THE OTHER HALF OF THE LINK. A quote says who it is filed
              under; pressing that opens them, with every other quote

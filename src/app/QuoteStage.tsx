@@ -52,6 +52,8 @@ import type { ReactElement } from 'react'
 import { useEffect, useState } from 'react'
 import { ArrowLeft, ClockCounterClockwise, Kanban, ListBullets } from '@phosphor-icons/react'
 import { QuoteList, QuotePage, useQuote, useQuotes } from '@/features/quote'
+import { QuotesScreen } from '@/features/quote/QuotesScreen'
+import { rebuiltPicker } from '@/features/quote/rebuilt'
 import { useProjectStore } from '@/store/useProjectStore'
 import { isRetired } from '@/types/model'
 import { ICON_SIZE } from '@/lib/icons'
@@ -69,6 +71,9 @@ const VIEW_KEY = 'hl.quotes.view'
 export interface QuoteStageProps {
   /** the quote being looked at, or null for the list of them */
   quoteId: string | null
+  /** raise another one. A register of quotes that cannot start one
+   *  sends a person to the rail for the act the page is about. */
+  onNewQuote: () => void
   /** The shell holds which one is open, so the door in the panel and
    *  the stage can never disagree about what is on screen. Passing
    *  null goes back to the list without closing the stage. */
@@ -99,6 +104,7 @@ export interface QuoteStageProps {
 
 export function QuoteStage({
   quoteId,
+  onNewQuote,
   onOpen,
   onOpenCustomer,
   onOpenHistory,
@@ -154,12 +160,28 @@ export function QuoteStage({
    *  header naming a screen that is not on. Published by `Board`;
    *  see `BoardProps.onRecord` for why the state stays down there. */
   const [recordOpen, setRecordOpen] = useState(false)
+  const rebuiltRegister = rebuiltPicker()
 
+  /* ============================================================
+     WHICH WAY OF LOOKING THIS OPENS ON.
+
+     The board, until the register was rebuilt. Measured at 1280x800
+     with four quotes on it, the board draws five columns of which
+     four hold nothing, each a full-height well with a sentence in
+     it, and the one with content shows three of its four cards.
+     The register shows every one of them at the Cockpit row height
+     with the reference, the customer, the boat, the day, where it
+     is up to and what it comes to.
+
+     A REMEMBERED CHOICE STILL WINS, both ways. This only decides
+     what a person who has never chosen gets. */
   const [view, setView] = useState<'board' | 'list'>(() => {
     try {
-      return globalThis.localStorage?.getItem(VIEW_KEY) === 'list' ? 'list' : 'board'
+      const held = globalThis.localStorage?.getItem(VIEW_KEY)
+      if (held === 'list' || held === 'board') return held
+      return rebuiltPicker() ? 'list' : 'board'
     } catch {
-      return 'board'
+      return rebuiltPicker() ? 'list' : 'board'
     }
   })
   useEffect(() => {
@@ -320,7 +342,13 @@ export function QuoteStage({
           The switcher is in `tools` for the same reason the modules
           grid's type filters are: it says which part of the page
           you are looking at, which is what that row is for. */}
-      {quote || recordOpen ? null : (
+      {/* AND IT STANDS ASIDE FOR THE REBUILT REGISTER, which draws
+          its own head — with the money the yard has out on it, which
+          this one has no room for — and carries the same three ways
+          of looking. The note above is the reason this is an either
+          and not a both: "two titles, and the centred one won the
+          eye because it was first". */}
+      {quote || recordOpen || (rebuiltRegister && view !== 'board') ? null : (
         <PageHead
           eyebrow="Selling"
           name="Quotes"
@@ -377,6 +405,20 @@ export function QuoteStage({
             quoteId={quote.id}
             onOpenQuote={(id) => onOpen(id)}
             onOpenCustomer={onOpenCustomer}
+          />
+        ) : view === 'board' && !rebuiltPicker() ? (
+          <Board orgSlug={orgSlug} onOpen={(id) => onOpen(id)} onRecord={setRecordOpen} />
+        ) : rebuiltPicker() && view !== 'board' ? (
+          /* THE REBUILT REGISTER, behind the same switch as the rest.
+             The board is untouched and one press away — measured, it
+             is four fifths empty and says so five times, but the
+             morning a pipeline IS the question it is the right way to
+             look, and nothing about it changed. */
+          <QuotesScreen
+            onOpenQuote={(id) => onOpen(id)}
+            onOpenBoard={() => setView('board')}
+            {...(onOpenHistory ? { onOpenHistory } : {})}
+            onNewQuote={onNewQuote}
           />
         ) : view === 'board' ? (
           <Board orgSlug={orgSlug} onOpen={(id) => onOpen(id)} onRecord={setRecordOpen} />
