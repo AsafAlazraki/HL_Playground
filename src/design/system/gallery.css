@@ -569,3 +569,60 @@ body {
   max-width: 68ch;
   margin: 0;
 }
+
+/* -- showroom section ----------------------------------------- */
+
+.gal-showroom {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--s-8);
+  align-items: start;
+}
+
+.gal-showroom-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.gal-marque {
+  margin: 0;
+  color: var(--fg);
+}
+
+.gal-showroom-side p {
+  margin: 0;
+}
+
+.gal-showroom-acts {
+  display: flex;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+.gal-btn[data-quiet] {
+  background: transparent;
+  color: var(--fg-secondary);
+  border-color: var(--line);
+}
+
+.gal-stage-chip {
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--r-chip);
+  background: var(--surface-1);
+}
+
+/* The bar is given a container so its own container query has
+   something to answer, and a rounded clip so the blur has an edge. */
+.gal-bar {
+  container-type: inline-size;
+  border-radius: var(--r-panel);
+  overflow: hidden;
+  border: var(--border) solid var(--line);
+}
+
+@container (max-width: 900px) {
+  .gal-showroom {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

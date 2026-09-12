@@ -1,0 +1,214 @@
+/* ============================================================
+   PRICE BAR.
+
+   IT IS ONE OF THE TWO SURFACES ALLOWED TO BLUR. It sits over
+   scrolling content and has to say so — `DESIGN_SYSTEM.md` §5,
+   and the masthead is the other. A third exception wants an
+   argument, not a commit.
+
+   THE FIGURE IS THE SUBJECT. `--t-figure-xl` is the largest thing
+   on a configurator that is not the product itself, it is mono,
+   and it is tabular so the digits do not jitter between two totals
+   of the same width.
+   ============================================================ */
+
+.ui-pricebar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-8);
+  padding: var(--s-4) var(--s-6);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  border-top: var(--border) solid var(--line);
+  box-shadow: inset 0 1px 0 var(--edge-light), var(--e3);
+}
+
+.ui-pricebar-cap {
+  color: var(--fg-tertiary);
+  display: block;
+}
+
+/* -- the figure ----------------------------------------------- */
+
+.ui-pricebar-figure {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ui-pricebar-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+}
+
+.ui-pricebar-now {
+  color: var(--fg);
+  /* A FIGURE IS NEVER A HUE. DESIGN_SYSTEM §3: a price is not
+     decorative, so this is ink and never the accent or a kind. */
+}
+
+/* -- the delta ------------------------------------------------ */
+
+/* THE FIGURE DOES NOT MOVE; THIS DOES. It arrives, holds long
+   enough to be read, and leaves — one animation, keyed on the
+   change so a new delta remounts and replays it. No timer in
+   JavaScript, because a timer would be a second opinion about
+   whether this is on screen.
+
+   TRANSFORM AND OPACITY ONLY. Both are compositor properties, so
+   this cannot cost a layout on the one surface that must stay
+   responsive while somebody is picking options. */
+.ui-pricebar-delta {
+  color: var(--fg-tertiary);
+  animation: ui-pricebar-delta var(--d-scene) var(--ease-out) both;
+  animation-delay: 0ms;
+}
+
+.ui-pricebar-delta[data-up] {
+  color: var(--fg-secondary);
+}
+
+@keyframes ui-pricebar-delta {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  72% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.ui-pricebar-ex {
+  color: var(--fg-tertiary);
+}
+
+/* THE UNPRICED COUNT. Carmine, because it is the one thing on this
+   bar that changes what the figure MEANS — and it is a sentence
+   with a number in it, not a badge. */
+.ui-pricebar-unpriced {
+  color: var(--danger);
+  max-width: 46ch;
+}
+
+/* -- the level chooser ---------------------------------------- */
+
+.ui-pricebar-levels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin-left: auto;
+}
+
+.ui-pricebar-seg {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface-3);
+  border-radius: var(--r-control);
+}
+
+.ui-pricebar-level {
+  height: var(--control-h-sm);
+  padding: 0 var(--control-pad-x-md);
+  border: 0;
+  border-radius: var(--r-chip);
+  background: transparent;
+  color: var(--fg-secondary);
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-pricebar-level:hover {
+    color: var(--fg);
+  }
+}
+
+.ui-pricebar-level:active {
+  transform: scale(0.97);
+}
+
+.ui-pricebar-level:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ui-pricebar-level[aria-pressed='true'] {
+  background: var(--surface-1);
+  color: var(--fg);
+  box-shadow: var(--e1);
+}
+
+/* -- the action ----------------------------------------------- */
+
+.ui-pricebar-act {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s-1);
+}
+
+.ui-pricebar-note {
+  color: var(--fg-tertiary);
+  text-align: right;
+  max-width: 34ch;
+}
+
+/* -- narrow ---------------------------------------------------- */
+
+@container (max-width: 720px) {
+  .ui-pricebar {
+    flex-wrap: wrap;
+    gap: var(--s-4);
+  }
+
+  .ui-pricebar-levels {
+    margin-left: 0;
+  }
+
+  .ui-pricebar-act {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .ui-pricebar-note {
+    text-align: left;
+    max-width: none;
+  }
+}
+
+/* Movement goes; colour and opacity stay. The delta still says the
+   figure changed — it simply does not travel to say it. */
+@media (prefers-reduced-motion: reduce) {
+  .ui-pricebar-delta {
+    animation-name: ui-pricebar-delta-still;
+  }
+
+  @keyframes ui-pricebar-delta-still {
+    0% {
+      opacity: 0;
+    }
+    18%,
+    72% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}

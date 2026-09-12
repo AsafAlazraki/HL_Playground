@@ -1,0 +1,224 @@
+/* ============================================================
+   PRODUCT STAGE.
+
+   THE ASPECT IS HELD, NOT GUESSED — and the number came from
+   measuring the library rather than picking a nice ratio. Sampled
+   from `public/seed-images` (220 files) in the browser:
+
+     formosa-grt-tiller        1024 x 539   1.90
+     319-skimma-lifestyle       700 x 369   1.90
+     formosa-srt-centre-console 1100 x 619  1.78
+     1-12                        894 x 597  1.50
+     1450fr-19                  1100 x 733  1.50
+     formosa-centre-cabin       1100 x 825  1.33
+
+   The spread is 1.33 to 1.90, so NO frame fits them all and the
+   question is which mismatch to distribute. 16:10 (1.60) sits in
+   the middle: the widest letterboxes by 1.19, the tallest
+   pillarboxes by 1.20. 3:2 was the first draft and it put 1.27 of
+   letterbox on the most common shape in the set.
+
+   THE FRAME MUST NOT RESIZE. A stage that sizes to its image jumps
+   every time a colourway is picked, and the chips that pick them
+   are beside it — the row of controls would walk up and down under
+   the cursor.
+
+   SO THE MAT IS DELIBERATE, because with that spread there will
+   always be one. The first draft used `--bg-canvas`, which is
+   within a few per cent of the page ground, so the bars read as
+   the image failing to fill rather than as matting. A distinctly
+   deeper plate with its own inner edge reads as a frame the
+   picture is mounted in — which is what it is.
+
+   THE GROUND IS NOT WHITE. A white boat on a white card has no
+   edge, and a good share of the seeded hulls are white or ivory.
+   ============================================================ */
+
+.ui-stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  container-type: inline-size;
+}
+
+.ui-stage-frame {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  max-width: 100%;
+  border-radius: var(--r-panel);
+  /* THE PLATE. Deeper than the page and lit from above, so the mat
+     around a 1.33 or a 1.90 picture reads as a mount rather than as
+     the image having failed to fill. */
+  background:
+    linear-gradient(180deg, var(--surface-4) 0%, var(--bg-sunken) 100%);
+  border: var(--border) solid var(--line);
+  overflow: hidden;
+  box-shadow:
+    var(--e-card),
+    inset 0 1px 0 var(--edge-light),
+    inset 0 0 0 1px var(--line-subtle);
+}
+
+.ui-stage-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* CONTAIN, NEVER COVER. A cropped boat is a boat with its bow cut
+     off, and the shape of the hull is the thing a dealer turns the
+     screen around for. */
+  object-fit: contain;
+}
+
+/* THE CROSSFADE — 260ms, OPACITY ONLY, and it runs only when the
+   picture actually changed. `PHASE_TWO` §4.1. It is deliberately
+   NOT §5's materialize (blur and scale together): that is for a
+   glass surface arriving, and this is the same boat in another
+   colour, seen dozens of times a minute while somebody works
+   through the colourways. */
+.ui-stage-img[data-fade] {
+  animation: ui-stage-fade var(--d-slow) var(--ease-out) both;
+}
+
+@keyframes ui-stage-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* -- what sits over it ---------------------------------------- */
+
+.ui-stage-over {
+  position: absolute;
+  left: var(--s-4);
+  bottom: var(--s-4);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* -- the arrows ------------------------------------------------ */
+
+.ui-stage-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: var(--control-h-lg);
+  height: var(--control-h-lg);
+  border-radius: var(--r-full);
+  border: var(--border) solid var(--line);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  cursor: pointer;
+  box-shadow: var(--e2);
+  transition:
+    background var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out),
+    opacity var(--d-fast) var(--ease-out);
+  /* THEY REST QUIET AND COME UP ON APPROACH. Two controls at full
+     strength over a photograph compete with the product; invisible
+     ones cannot be found. 0.55 is legible without being loud, and
+     it goes to 1 on hover, on focus, and on any device without a
+     fine pointer. */
+  opacity: 0.55;
+}
+
+.ui-stage-arrow[data-side='back'] {
+  left: var(--s-3);
+}
+
+.ui-stage-arrow[data-side='on'] {
+  right: var(--s-3);
+}
+
+.ui-stage-arrow svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-stage-frame:hover .ui-stage-arrow {
+    opacity: 1;
+  }
+
+  .ui-stage-arrow:hover {
+    background: var(--surface-2);
+    color: var(--fg);
+  }
+}
+
+/* A COARSE POINTER GETS THEM AT FULL STRENGTH. There is no hover to
+   reveal them with, and a control that only appears on a gesture
+   the device cannot make is a control that does not exist. */
+@media (hover: none), (pointer: coarse) {
+  .ui-stage-arrow {
+    opacity: 1;
+  }
+}
+
+.ui-stage-arrow:focus-visible {
+  opacity: 1;
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Press scaled to the surface, and it keeps the centring translate
+   — a bare `scale()` here would drop the element half its height. */
+.ui-stage-arrow:active {
+  transform: translateY(-50%) scale(0.94);
+}
+
+/* -- the foot -------------------------------------------------- */
+
+.ui-stage-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: 0 var(--s-1);
+}
+
+.ui-stage-says {
+  color: var(--fg-secondary);
+  min-width: 0;
+  /* Nothing truncates mid-word: this wraps at spaces or not at all. */
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.ui-stage-count {
+  color: var(--fg-tertiary);
+  flex: 0 0 auto;
+}
+
+/* -- nothing to show ------------------------------------------- */
+
+/* A SENTENCE, NOT A BROKEN GLYPH. "No picture" is a fact about the
+   price file, and the dealer reading it is the person who can fix
+   it — so it reads as a note, not as an error the app has hit. */
+.ui-stage[data-empty='true'] {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 3 / 2;
+  border-radius: var(--r-panel);
+  background: var(--bg-canvas);
+  border: var(--border) dashed var(--line);
+}
+
+.ui-stage-empty {
+  margin: 0;
+  padding: 0 var(--s-6);
+  color: var(--fg-tertiary);
+  text-align: center;
+  max-width: 32ch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-stage-img[data-fade] {
+    animation: none;
+  }
+}

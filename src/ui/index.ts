@@ -114,3 +114,13 @@ export {
   staggerVar,
   transitionFor,
 } from './motion'
+
+/* THE SHOWROOM SURFACES. `ProductStage` is the register's §2
+   requirement — the thing being sold, present and large. `PriceBar`
+   is the figure that stays on screen for the whole of a build, and
+   never invents a tax rate the price file does not carry. */
+export { ProductStage } from './ProductStage'
+export type { ProductStageProps, StagePicture } from './ProductStage'
+
+export { PriceBar } from './PriceBar'
+export type { PriceBarProps, PriceBarTax, PriceLevelChoice } from './PriceBar'

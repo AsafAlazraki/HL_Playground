@@ -9,6 +9,8 @@
    person reads all day, not a thing anybody is sold. */
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { PriceBar } from '@/ui/PriceBar'
+import { ProductStage } from '@/ui/ProductStage'
 import { Stepper } from '@/ui/Stepper'
 import { contrastOf, fmt, renderedPx } from './measure'
 
@@ -69,6 +71,7 @@ export function SystemGallery() {
         <MaterialSection />
         <MotionSection />
         <StepperSection />
+        <ShowroomSection />
         <DensitySection />
       </main>
     </div>
@@ -610,6 +613,121 @@ function StepperSection() {
         press Back six times. The last step refuses with a sentence rather
         than greying out, because dimming is what you do when you have given
         up on explaining.
+      </p>
+    </Section>
+  )
+}
+
+/* ---- SHOWROOM: the stage and the bar ------------------------ */
+
+/* REAL SEEDED PHOTOGRAPHY, not a grey box. `public/seed-images`
+   holds 220 of them and the point of the stage is that a boat is
+   on it — a placeholder would prove the layout and hide the thing
+   the layout is for. */
+const PICTURES = [
+  {
+    src: '/seed-images/formosa-grt-tiller-1-1024x539-05202db9.webp',
+    alt: 'Formosa GRT tiller-steer, on the water',
+    says: 'GRT 425 — Tiller',
+  },
+  {
+    src: '/seed-images/formosa-srt-centre-console-2-12b25b52.webp',
+    alt: 'Formosa SRT centre console, starboard quarter',
+    says: 'SRT 495 — Side Console',
+  },
+  {
+    src: '/seed-images/formosa-centre-cabin-1-4b56a989.webp',
+    alt: 'Formosa centre cabin, bow on',
+    says: 'SRT 635 — Territory',
+  },
+]
+
+const LEVELS = [
+  { key: 'cash', label: 'Cash' },
+  { key: 'trade', label: 'Trade' },
+]
+
+function ShowroomSection() {
+  const [pic, setPic] = useState(0)
+  const [level, setLevel] = useState('cash')
+  const [extras, setExtras] = useState(0)
+
+  /* A real arithmetic rather than a random number, so the delta on
+     the bar is a figure somebody could check: the SP560 walk in the
+     production evidence trail totals $103,731 inc GST. */
+  const base = level === 'cash' ? 103_731 : 97_420
+  const total = base + extras * 2_720
+
+  return (
+    <Section
+      title="Showroom — the stage and the bar"
+      says="The two surfaces a customer actually looks at. The stage is a requirement of the register, not a nicety: §2 says the thing being sold is present, large and photographic — the build before the rebuild drew the hull at 264×176 in a white card."
+    >
+      <div className="gal-showroom" data-register="showroom">
+        <ProductStage
+          pictures={PICTURES}
+          index={pic}
+          onIndex={setPic}
+          overlay={
+            <span className="k-chip t-label gal-stage-chip" data-kind="boat">
+              Boat
+            </span>
+          }
+        />
+
+        <div className="gal-showroom-side">
+          <p className="t-label gal-dim">Highfield</p>
+          <p className="t-marque gal-marque">ADV7</p>
+          <p className="t-small gal-dim gal-note">
+            Press the arrows — the render crossfades at 260ms, opacity only,
+            and only when the picture actually changed. It is deliberately not
+            the blur-and-scale materialize §5 asks of a glass surface: this is
+            the same boat in another colour, seen dozens of times a minute.
+          </p>
+          <div className="gal-showroom-acts">
+            <button
+              type="button"
+              className="gal-btn t-small"
+              onClick={() => setExtras((n) => n + 1)}
+            >
+              Add an option
+            </button>
+            <button
+              type="button"
+              className="gal-btn t-small"
+              data-quiet="true"
+              onClick={() => setExtras((n) => Math.max(0, n - 1))}
+            >
+              Take one off
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="gal-bar">
+        <PriceBar
+          total={total}
+          caption="Package pricing"
+          tax={{ rate: 0.1, label: 'GST', included: true }}
+          notPriced={extras > 2 ? 1 : 0}
+          levels={LEVELS}
+          levelKey={level}
+          onLevel={setLevel}
+          action={
+            <button type="button" className="gal-btn t-small">
+              Give it to the customer
+            </button>
+          }
+          actionNote="This quote is addressed to nobody."
+        />
+      </div>
+
+      <p className="t-small gal-dim gal-note">
+        The figure does not count up — a dealer reads it aloud to somebody
+        standing beside them. The delta appears and fades. Add three options
+        and the bar reports a line it cannot price: null is a real state, and
+        a total that treats it as zero is wrong by exactly the amount nobody
+        noticed.
       </p>
     </Section>
   )
