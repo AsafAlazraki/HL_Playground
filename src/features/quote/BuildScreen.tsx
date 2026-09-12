@@ -46,14 +46,14 @@
 import { useMemo, useState } from 'react'
 import { AnimatePresence } from 'motion/react'
 import type { ReactElement } from 'react'
-import { Field, PriceBar, ProductStage, Stepper } from '@/ui'
+import { Button, Field, PriceBar, ProductStage, Stepper } from '@/ui'
 import type { Step } from '@/ui'
 import { money } from '@/lib/money'
 import { QUOTE_LEVEL_ORDER, LEVEL_TITLE } from '@/types/model'
 import type { QuoteDef, QuoteLine } from '@/types/model'
 import { customerBook, freezeCustomer, hasCustomerRegister, sectionKinds, stepOffer } from './freeze'
 import type { Candidate } from './freeze'
-import { addLine, linkCustomer, patchQuote, removeLine, setLevel } from './quotes'
+import { addLine, issueQuote, linkCustomer, patchQuote, removeLine, setLevel } from './quotes'
 import { orderBands } from './bands'
 import { CascadeSheet } from './CascadeSheet'
 import { cascadeOfConflict } from './cascade'
@@ -74,7 +74,7 @@ export interface BuildScreenProps {
   onIssued?: (quote: QuoteDef) => void
 }
 
-export function BuildScreen({ quote }: BuildScreenProps): ReactElement {
+export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement {
   const steps = useMemo(() => buildSteps(quote), [quote])
   const kinds = useMemo(() => sectionKinds(quote), [quote])
   const totals = quoteTotals(quote)
@@ -229,15 +229,44 @@ export function BuildScreen({ quote }: BuildScreenProps): ReactElement {
             }
             setProposal({ conflict, levelKey: k, levelLabel: label })
           }}
+          /* IT WAS A DEAD CONTROL, AND A `disabled` ONE, which is two
+             rules broken in one element.
+
+             It had no `onClick` at all: pressing the one primary
+             action on the screen did nothing, which is worse than
+             being refused because it gives no reason either. And it
+             was a raw `<button disabled>`, which `Button` refuses on
+             purpose — its own note says a disabled button "cannot be
+             focused or hovered and is skipped by a screen reader, so
+             the person who needs the reason is the one person who
+             cannot reach it."
+
+             `refusedBecause` keeps it focusable, marks it
+             `aria-disabled`, blocks the click and puts the engine's
+             own blocker beneath it. One reason, attached to the
+             control it refuses. */
           action={
-            <button type="button" className="bs-give" disabled={refusals.length > 0}>
+            <Button
+              tone="primary"
+              size="lg"
+              refusedBecause={refusals[0]}
+              onClick={() => {
+                if (issueQuote(quote.id)) onIssued?.(quote)
+              }}
+            >
               Give it to the customer
-            </button>
+            </Button>
           }
-          /* RULE 10 — a thing that cannot be done says why, where it
-             is refused. The blockers come from the engine, already
-             worded; this screen never paraphrases one. */
-          actionNote={refusals[0]}
+          /* NO `actionNote`. The reason lives on the control that is
+             refused, via `Button`'s `refusedBecause` — printing it
+             twice would be the app saying one thing in two voices,
+             and `Field` makes the same call for the same reason:
+             a hint and a refusal never stack.
+
+             A SECOND blocker, where there is one, is on the handover
+             stop as a list. That is a different job: the bar says
+             why this button will not fire, the stop says everything
+             still standing between here and a document. */
         />
       </footer>
 
@@ -469,6 +498,30 @@ function BandPane({ quote, band }: { quote: QuoteDef; band: Band }): ReactElemen
   )
 }
 
+/* ============================================================
+   THE CURATION TOOLBAR — the one pattern worth stealing.
+
+   `hl-journeys.md` §4 calls Step 5's toolbar "the single
+   interaction in either journey that is unambiguously right", and
+   names the five things that make it so:
+
+     · narrow the pool to what fits THIS build, by rules
+     · put the rule's reason in the operator's own words
+     · keep a SEARCH that ignores the narrowing
+     · keep a SHOW-ALL that turns the narrowing off entirely
+     · and STATE THE COUNT of what was hidden
+
+   `stepOffer` already returns every one of those numbers —
+   `narrowed`, `catalogue`, `pool`, `beyond`, `matched`, `capped`,
+   `heldCount`, `reason` — and takes `query` and `all`. The engine
+   has had the whole toolbar since before the rebuild; what was
+   missing was the controls.
+
+   WITHOUT THEM A BAND IS UNUSABLE AT SCALE. Dealer fit is 1,791
+   rows in the seeded file and the cap draws forty. A list that
+   shows forty of 1,791 with no way to search past them is a list
+   that has hidden 1,751 things without saying so.
+   ============================================================ */
 function TablePart({
   quote,
   step,
@@ -478,10 +531,34 @@ function TablePart({
   step: BuildStep
   named: boolean
 }): ReactElement {
+  const [query, setQuery] = useState('')
+  const [all, setAll] = useState(false)
+
   const offer = useMemo(
-    () => (step.subject ? null : stepOffer(quote, step.section)),
-    [quote, step],
+    () => (step.subject ? null : stepOffer(quote, step.section, { query, all })),
+    [quote, step, query, all],
   )
+
+  /* THE SEARCH IS DRAWN WHENEVER THERE IS MORE THAN A HANDFUL, not
+     only when the cap bit. A person who can see every option does
+     not need to search; a person looking at forty of 1,791 needs
+     to know they can. */
+  const worthSearching = Boolean(offer && (offer.capped || offer.catalogue > 8))
+
+  /* A HEADING WITH NOTHING UNDER IT IS FURNITURE. Dealer fit spans
+     three tables on the seeded file and one of them offers nothing
+     for this hull, so the band drew "Dealer Fit Packages" as a bare
+     heading above the next table's content — which reads as a
+     section that failed to load rather than as a table with nothing
+     to say. A table with no picks, no candidates and nothing to
+     explain is simply not drawn; `bands.ts` makes the same call one
+     level up, where an absent kind is an absent band. */
+  const empty =
+    step.lines.length === 0 &&
+    (offer?.candidates.length ?? 0) === 0 &&
+    !worthSearching &&
+    !step.why
+  if (empty) return <></>
 
   return (
     <div className="bs-part">
@@ -504,12 +581,66 @@ function TablePart({
               rule 3 broken on the screen written to keep it.
               Uppercase is a section caption, a group caption or a
               mono stamp, and nothing else. */}
+          {worthSearching ? (
+            <div className="bs-curate">
+              <Field
+                label={`Find in ${step.title}`}
+                value={query}
+                onChange={setQuery}
+                placeholder="Any word on the row"
+                type="search"
+                autoComplete="off"
+              />
+              {/* SHOW-ALL IS A SWITCH, NOT A LINK, because it has a
+                  state a person needs to see from across the row:
+                  with it on, the list has stopped answering "what
+                  fits this boat". */}
+              <button
+                type="button"
+                className="bs-showall t-small"
+                aria-pressed={all}
+                onClick={() => setAll((v) => !v)}
+              >
+                {all ? 'Only what fits' : 'Show everything'}
+              </button>
+            </div>
+          ) : null}
           <p className="bs-offer-cap">
             <span className="t-label bs-offer-count">
               {offer.candidates.length} offered
             </span>
-            {offer.reason ? (
+            {/* THE REASON DESCRIBES THE NARROWING, so it may only be
+                printed while the narrowing is on. With Show
+                everything pressed the caption read "only what
+                somebody picked for this one shows here" over a list
+                of 2,238 parts, which is the app asserting something
+                it had just stopped doing. */}
+            {all ? (
+              <span className="t-caption bs-offer-why">
+                everything on this table, not only what fits this one
+              </span>
+            ) : offer.reason ? (
               <span className="t-caption bs-offer-why">{offer.reason}</span>
+            ) : null}
+            {/* WHAT IS NOT ON SCREEN, SAID OUT LOUD. A list that draws
+                forty of 1,791 and says nothing has hidden 1,751 things
+                silently, which is the failure the whole curation
+                mechanism exists to end. */}
+            {offer.capped ? (
+              <span className="t-caption bs-offer-more">
+                {offer.matched - offer.candidates.length} more match — narrow it with the
+                search
+              </span>
+            ) : null}
+            {offer.beyond > 0 ? (
+              <span className="t-caption bs-offer-more">
+                {offer.beyond} more match outside what fits this one
+              </span>
+            ) : null}
+            {offer.heldCount > 0 ? (
+              <span className="t-caption bs-offer-more">
+                {offer.heldCount} held back as no longer sold
+              </span>
             ) : null}
           </p>
           {/* The gap between the two is the flex gap on `.bs-offer-cap`,
