@@ -25,8 +25,11 @@ usually right.
 - `docs/plan/CONFIGURATOR_PLAYBOOK.md` — the existing teardowns (Porsche, Boston
   Whaler, Sea Ray, McLaren, Malibu, Bennington, Rivian, GOV.UK, NN/g)
 - `docs/plan/PHASE_TWO.md` — the roadmap and its §0 first-hand research
-- `docs/specs/DESIGN_PRINCIPLES.md` and `DESIGN_CONTRACT.md` — the ten rules and
-  the token names. **Any recommendation that breaks these must say so out loud.**
+- `docs/specs/DESIGN_SYSTEM.md` — the two registers, the rules, the exact motion
+  values, and §9's record of what was deleted from the old constitution.
+  **Any recommendation that breaks these must say so out loud** — and read §9
+  before you reject anything, because the archived `DESIGN_PRINCIPLES.md` is
+  where a lot of good ideas went to die.
 - `docs/specs/CLUELESS_USER_TESTS.md` — open findings O4–O12
 - `docs/audit/` — the evidence the plans answer
 
@@ -98,9 +101,18 @@ Then:
   a source you actually read. Say "not verified" rather than estimating.
 - **Cite with URLs.** A source you cannot link is a source the next person cannot
   check.
-- **Contradiction is a finding.** If the research contradicts
-  `DESIGN_PRINCIPLES.md`, do not quietly follow the research. Write the conflict
-  up and let a person choose.
+- **Contradiction is a finding, and it escalates — it does not decide.** If the
+  research contradicts `DESIGN_SYSTEM.md`, do not quietly follow the research;
+  and do **not** close the item by citing the rule either. Write the conflict up
+  as a decision a person has to make, and say what you would do. "Rejected: it
+  breaks §N" is the failure mode that produced a static app for months — a rule
+  is a decision somebody made, and it can be re-made.
+- **Enumerate before you conclude.** If you survey a library, a gallery or a
+  cohort, list every item you assessed. A verdict of "none of them fit" over a
+  named subset is a finding about the subset, and must say so. Two verdicts in
+  `docs/research/` had to be corrected for exactly this: nine of twenty-seven
+  components examined and reported as "none", fifteen of a hundred reported as
+  "three".
 - **One file per subtask.** Do not append to an existing research file unless the
   new work genuinely supersedes it — in which case replace it and note the date.
 

@@ -2,24 +2,54 @@
 
 ## Before you style anything
 
-**Read `docs/specs/DESIGN_PRINCIPLES.md` first.** It is short, and it supersedes
-`docs/specs/ART_DIRECTION.md` and `docs/specs/APPLE_PASS.md`, which describe a
-design that has been replaced.
+**Read `docs/specs/DESIGN_SYSTEM.md` first.** It supersedes
+`DESIGN_PRINCIPLES.md`, `ART_DIRECTION.md` and `APPLE_PASS.md`, all three now in
+`docs/specs/archive/`.
 
-The ten rules, so a wrong turn is obvious before you open the file:
+**The app is two registers, and a screen belongs to exactly one.**
+
+- **SHOWROOM** — home, the quote picker, the configurator, the cascade, the
+  quote document, catalogues, onboarding. Somebody is being sold to, and a
+  customer may be looking over the dealer's shoulder.
+- **COCKPIT** — the register, data, columns, rules, fitment, review, levels,
+  admin, the board, customers. Somebody is working, all day.
+
+The stage root carries `data-register`. A component never branches on register
+in TSX; it takes the tokens it is given.
+
+**Each register has requirements, not just prohibitions** — a screen that breaks
+no rules and is still bad is the failure this replaced. Showroom needs a
+photographic product stage, real depth, a choreographed entrance, and ≥6× scale
+contrast. Cockpit needs ≥18 rows at 1280×800, tabular figures, keyboard parity,
+no entrance animation, and 2.5–4× scale contrast.
+
+The rules that hold everywhere:
 
 1. Never write a literal colour — use a token.
 2. Never write a `font-size` below **11px**.
 3. Uppercase is a label style, **never** a name or a value.
 4. Every text/background pair clears **4.5:1** — and a tint counts.
-5. One accent. Kind colour is an eighth-note, not a theme.
-6. Type steps are sets — take size, weight, leading and tracking together.
+5. One primary action per screen. A kind hue only marks a thing that HAS that
+   kind, and a figure is never a hue.
+6. Type steps are sets — size, weight, leading and tracking travel together.
 7. Tracking goes **negative** as size grows, ~0 at reading size.
 8. Every pressable thing has hover, press and focus. Press on pointer-down.
 9. If an act is undoable it gets a toast with UNDO, not a dialog.
 10. Anything that cannot be done says **why**, where it is.
+11. Never invent a figure the price file does not carry.
 
-The design system is `src/styles/ds.css`. Every surface is drawn at
+**Motion: never invent a curve or a duration.** §6 of `DESIGN_SYSTEM.md` carries
+the exact values. Keyboard-initiated actions do not animate — that is a
+disqualifier, not a judgement call. Motion's `x`/`y`/`scale` shorthand is *not*
+hardware-accelerated; use the full `transform` string.
+
+**§9 records what was deleted from the old constitution and why** — the 6% alpha
+cap, "glass is retired", the accent count, the frequency table as a universal
+filter. Read it before you re-derive any of them and re-block the work. It is
+there because those clauses, not laziness, are what rejected every visual idea
+this project brought for months.
+
+The design system is `src/styles/system.css`. Every surface is drawn at
 `/design.html` (`npm run dev`, then open it) — check your screen against it.
 
 ## Before you commit
@@ -199,7 +229,8 @@ number here is asserted for today's tree.
 
 | doc | what it is |
 |---|---|
-| `docs/specs/DESIGN_PRINCIPLES.md` | how to build a screen. Start here |
+| `docs/specs/DESIGN_SYSTEM.md` | how to build a screen. **Start here** |
+| `docs/plan/REBUILD.md` | the ground-up rebuild: the two registers, the phases |
 | `docs/specs/RESPONSIVE.md` | how a screen answers the window. The eleventh rule |
 | `docs/plan/MODULE_SYSTEM.md` | what the app is becoming — modules, capabilities |
 | `docs/plan/UX_PASS.md` | the process work: undo, search, import, refusals |
@@ -215,10 +246,10 @@ number here is asserted for today's tree.
   over one screen is worse than the problem it solves.
 - **Commit messages explain the decision**, not the diff. Say what was measured
   and why the change is what it is.
-- **`main` is the safe branch**, and it has not moved since 2026-08-15. Work
-  lands on **`stunning`**: `origin/stunning` is 102 commits ahead of
-  `origin/main`. `redesign` is abandoned at 48 ahead, last touched 2026-09-01;
-  do not branch from it.
+- **`main` and `stunning` are identical** as of 2026-09-12 at `e36c61b` — the
+  backlog merged. The ground-up rebuild lands on **`rebuild`**, branched from
+  there. `redesign` is abandoned at 48 ahead, last touched 2026-09-01; do not
+  branch from it.
 
 ## Where learnings go
 

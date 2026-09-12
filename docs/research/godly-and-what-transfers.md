@@ -126,3 +126,53 @@ of itself. We have the photograph.
 **Not verified:** whether `recent.design` and the old `godly.website` curate the
 same pool, or whether the redirect merged two galleries. The categories and the
 items are what the live site served on the date above.
+
+---
+
+## CORRECTION — 2026-09-12: the swatch rejection was wrong on a checkable fact
+
+The section above rejects colour swatches for Highfield's 588 variants on this
+premise:
+
+> "Searched `tools/seed/extracts/b2_headers.json` ... There is **no colour
+> column**. The colour is inside the *name*, as a code. Rendering swatches would
+> therefore mean **parsing `B-G-B` and asserting it means black tube, grey deck,
+> black console** ... That is the guess §7 forbids."
+
+**The decode map exists, in this repo, and the production app ships it.**
+
+`docs/specs/HELMLOGIC_GROUND_TRUTH.md` §1.3 records it verbatim from the
+production sources, citing `HIGHFIELD_DATA_REVIEW.md:3265-3279` and
+`scripts/reseed-correct-vendor.py:57-71`:
+
+> "Colour codes are compound tokens decoded through a ~15-entry part map —
+> `B-G-DG`, `W-W-WD`, `LG-W-LB`, `I-B-C` — where `W`=White, `B`=Black, `G`=Grey,
+> `DG`=Dark Grey, `LG`=Light Grey, `LB`=Light Blue, `WD`=Wood, `MB`=Military
+> Black, `C`=Carbon."
+
+And the original HelmLogic renders it. Its Step 1 variant cards read
+**"SP560 — DARK GREY / GREY / MILITARY BLACK"**, **"SP560 — BLACK / BLACK / DARK
+BLUE"**, **"SP560 — IVORY / BLACK / CARBON"**, each over a per-colourway render
+of that exact boat. Evidence:
+`tasks/test-evidence/ffr33-sp560-proof/s1-variant.png` in the production repo.
+
+**What went wrong, and it is worth naming because it is repeatable:** the
+session searched one extract file for a *column*, did not find one, and stopped.
+It did not check the ground-truth document in the same repo that answers the
+question directly. A negative result from one file was reported as a fact about
+the domain.
+
+**What is true after the correction:**
+
+- Decoding `B-G-B` is not a guess. It is a documented mapping, sourced from the
+  business's own importer, already in `docs/specs/`.
+- The swatch and the photograph are not competitors. The original ships **both**
+  — a decoded name *and* a colourway render — and that is better than either.
+  The photograph proves the boat; the decoded name makes 588 variants
+  sortable, filterable and speakable over a phone.
+- The one caveat the original section raised that still stands: a brand using
+  the same letters differently would break the map. So the decode is **per
+  brand**, it is **data not code**, and an unmapped token renders as the raw
+  code rather than a wrong word.
+
+The rebuild builds this. See `docs/specs/DESIGN_SYSTEM.md` §9.8.

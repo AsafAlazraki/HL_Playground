@@ -1,3 +1,40 @@
+> # ARCHIVED 2026-09-12 — SUPERSEDED BY `docs/specs/DESIGN_SYSTEM.md`
+>
+> **Do not follow this file, and do not cite it to reject anything.** It is kept
+> because a repo that hides its reversals repeats them.
+>
+> This was the constitution, and `CLAUDE.md` ordered every session to read it
+> first. It is well written, most of it was right, and roughly half of it is
+> carried into `DESIGN_SYSTEM.md` unchanged — the contrast floor, the language
+> rules, the safety rules, the type discipline, "measure, don't eyeball".
+>
+> What it got wrong was the thesis, and the thesis did real damage over months:
+>
+> > *"The name of the system is Quiet Precision… calm, legible, and **boring in
+> > the way good instruments are boring**."*
+>
+> That is a fair description of the screens a dealer works in all day and a bad
+> one for the screens a customer is shown. Applied to all of them, it produced an
+> app the owner rejected on sight, repeatedly, and it starved the working screens
+> of density too — because restraint was the whole answer, nothing was ever made
+> denser either.
+>
+> Three clauses in particular functioned as a veto on every visual idea brought
+> to this project, and every rejection in `docs/research/` cites one of them:
+>
+> - **§4b's 6% alpha ceiling** on the expressive layer, stated as though it were
+>   physics. It killed the one motion component that had been built and verified
+>   working in a browser.
+> - **§5's "glass is retired" / no new `backdrop-filter`** — while `bridge.css`
+>   had already set every material blur token to `0px`, so the system had
+>   switched its own expressive layer off and then rejected components for being
+>   invisible against the surfaces it had flattened.
+> - **§1's "one accent, roughly four times per screen"** — a Cockpit rule applied
+>   to Showroom screens, where it starved the design.
+>
+> `DESIGN_SYSTEM.md` §9 records each deletion and what replaces it. Read that
+> before re-deriving any of these from first principles.
+
 # DESIGN PRINCIPLES — how to build a screen here
 
 **This supersedes `ART_DIRECTION.md` and `APPLE_PASS.md`.** Both describe "The

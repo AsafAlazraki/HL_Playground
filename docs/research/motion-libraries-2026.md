@@ -124,3 +124,93 @@ they look good in a demo.
 - `.claude/skills/emil-design-eng/SKILL.md` — the frequency table
 - `docs/specs/DESIGN_PRINCIPLES.md` §1, §4b, §5
 - `docs/plan/PHASE_TWO.md` §4
+
+---
+
+## CORRECTION — 2026-09-12: the verdicts stand for what was examined, and most of it was not
+
+This file is the best-executed rejection in the repo and it is also, in one
+specific way, not evidence. The distinction matters because its verdicts were
+quoted afterwards as settled.
+
+### The arithmetic
+
+| library | claimed | actually enumerated |
+|---|---|---|
+| **reactbits** | "27 components, overwhelmingly decorative. **None** fits." | **9** — Ballpit, Splash Cursor, Blob Cursor, Pixel Trail, Aurora, Balatro, Magnet Lines, Ribbons, Metallic Paint |
+| **magicui** | "100 components. **Three** fit." | about **15** |
+
+So "none fits" is a finding about **nine of twenty-seven**, and "three fit" is a
+finding about **fifteen of a hundred**. The other eighteen and eighty-five were
+never named, never gated, never seen. The nine that were examined are cursor
+effects and animated backgrounds and the verdict on *them* is correct — there is
+no reading of this product where a ball pit belongs behind a price file. That
+sentence is doing rhetorical work for eighteen components it never looked at.
+
+reactbits also ships, among the unexamined: Count Up, Decrypted Text, Shiny
+Text, Glass Surface, Elastic Slider, Dock, Stack, Magnet, Spotlight Card,
+Gradient Text, Scroll Float, Animated List, Infinite Scroll, Card Swap, Bounce
+Cards. Several of those are list, surface and text-transition components, which
+is the category this app actually has moments for.
+
+### The filters did the rejecting, and two of the three are now gone
+
+The file is explicit that the verdict is produced by three filters applied in
+order, and names them: `DESIGN_PRINCIPLES` §5 (one accent, about four times a
+screen), `DESIGN_PRINCIPLES` §4b (the 6% alpha cap), and the frequency table in
+`.claude/skills/emil-design-eng`.
+
+Under `docs/specs/DESIGN_SYSTEM.md`, which replaces `DESIGN_PRINCIPLES.md`:
+
+- the **6% cap is deleted** (§9.2) and replaced by the measurement it was
+  standing in for — put text on the surface and check 4.5:1;
+- the **accent count is deleted** (§9.4) in favour of "one primary action per
+  screen";
+- the **frequency table is narrowed** (§9.5) — it governs Cockpit in full, and
+  in Showroom only its top two rows, because a moment that happens once per
+  quote is the bottom row of that table, not the first.
+
+A rejection that was produced by a filter does not survive the filter's removal.
+These need re-running, not re-quoting.
+
+### The Border Beam deletion, revisited
+
+The port and its two corrections are **kept in full and are the recipe**:
+`@property`-registered angle, `mask-composite: exclude`, verified in-browser;
+**run once, not forever**, because the purpose is causality and causality is
+spent after one pass; and **a sweep, not an orbit**, because a conic gradient on
+a 773x56 strip crawls the long edges and snaps the short ones.
+
+The *deletion* is the part that does not survive. It reads:
+
+> "A 9-15% blue wash moving across a surface that is already washed is not
+> perceptible. Making it perceptible means pushing past §4b's cap, which
+> invalidates the measured contrast table."
+
+Two things are wrong with that as a general conclusion. First, §4b's cap is
+gone, so "pushing past it" is no longer disqualifying — the test is now whether
+the text on that surface still clears 4.5:1, and a moving highlight on a band
+*head* does not sit behind reading text at all. Second, the beam was only ever
+tried as a **wash**. A 1px lit edge is a luminance effect on a border, not ink
+over text, and it was never measured that way before the component was removed.
+
+### What this file still gets right, and keeps
+
+- **Nothing needs installing.** `motion` v13 is already a dependency and is the
+  same runtime both libraries are built on. Anything worth taking is built
+  natively in tokens. That was true then and is true now.
+- **threlte cannot be used** — it is Svelte. Correct, and not a matter of taste.
+- **Number Ticker on the price stays rejected** — a dealer reads the figure
+  aloud. Restated in `DESIGN_SYSTEM.md` §6.
+- **Magic Card's cursor spotlight on option cards stays rejected** in Cockpit,
+  where a dealer hovers hundreds of times a day. Re-openable on a Showroom
+  surface touched once per quote.
+- **Progressive Blur** shipped, at `build.css:796`.
+- **Animated Beam** on the relationship canvas remains the most concrete
+  unexecuted recommendation in the corpus. Still worth building.
+
+### What the rebuild does
+
+Re-mine both libraries against the enumerated component list, not a sample, with
+`DESIGN_SYSTEM.md` as the filter. Port natively. Record what is rejected **and
+name it**, so the next session inherits a list rather than a number.

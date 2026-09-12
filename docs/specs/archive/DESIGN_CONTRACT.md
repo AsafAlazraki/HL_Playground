@@ -1,3 +1,28 @@
+> # ARCHIVED 2026-09-12 — SUPERSEDED BY `docs/specs/DESIGN_SYSTEM.md`
+>
+> This file records *Quiet Precision as the redesign actually built it*. It is
+> kept as history and is **no longer authority**. Three reasons it had to stop
+> being one:
+>
+> 1. Its own summary is the thesis the rebuild replaced — *"Blue is the only
+>    accent and it appears about four times a screen… Nothing shouts."*
+> 2. It forbids creating or editing `src/styles/**` and `src/design/**`, which
+>    is precisely the work the rebuild does.
+> 3. It documents the two-vocabulary token system (`bridge.css` mapping the old
+>    names onto the new) that the rebuild deletes in favour of one.
+>
+> **It also disagreed with the doc that superseded it**, and the disagreement
+> was never resolved: §11 here says a kind hue is *"a rail, a dot or a glyph —
+> never a fill behind text, never chrome"*, while `DESIGN_PRINCIPLES.md` §1,
+> written later, explicitly overturned that and allowed a hue to carry a
+> surface. `DESIGN_SYSTEM.md` §3 settles it: **a hue may carry a surface, never
+> sits behind reading text, and only ever appears on a thing that HAS that
+> kind.**
+>
+> What is still worth reading here: the measured contrast ratios, the tracking
+> values, and the per-surface measurements. Numbers taken in a browser do not
+> rot the way prose does.
+
 # THE DESIGN CONTRACT — Quiet Precision, as the redesign actually built it
 
 Authority order, highest first: **(1) the CSS and TSX on `redesign` at HEAD, (2) the commit
