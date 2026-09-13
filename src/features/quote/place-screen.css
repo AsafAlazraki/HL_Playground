@@ -17,6 +17,12 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  /* NAMED, because the commit card is a sibling of the scrollport
+     and not inside `.pl-col` — so the column container that every
+     other narrow rule on this screen uses cannot reach it. An
+     unnamed container here would also be the nearest ancestor for
+     rules meant for the column. */
+  container: place / inline-size;
 }
 
 /* THE PORT. `.shell-stage` is `overflow: hidden` and hands every
@@ -430,5 +436,228 @@
   .pl-name {
     min-height: 0;
     max-height: none;
+  }
+}
+
+/* ============================================================
+   THE BAR IS A CARD NOW.
+
+   The owner's words about the configurator's foot — "I don't like
+   the solid bar at the bottom of the quote, let's use cards and
+   shadows" — were answered on the configurator and not here, and
+   this is the same strip doing the same job one screen earlier: a
+   full-bleed panel welded to the bottom edge with a 1px rule on
+   top, which reads as chrome the app grew rather than as the thing
+   being committed to.
+
+   IT KEEPS ITS ONE GOOD ARGUMENT. It is still a sibling of the
+   scrollport rather than an overlay on it, so nothing scrolls
+   behind the control a person is reaching for — `quote.css`
+   records what the overlay version costs. What changes is that it
+   now has edges, a ground of its own and air around it, and the
+   page ground runs past it on three sides.
+
+   AND THE EDGE ANSWERS THE PICK. Nothing chosen: a quiet card.
+   Something chosen: the accent on the edge and a ring outside it,
+   which is the same signal the completion card uses one screen
+   later, so the two read as one idea rather than two treatments.
+   ============================================================ */
+.pl-bar {
+  margin: 0 var(--gutter) var(--s-4);
+  padding: var(--s-4) var(--s-5);
+  border: var(--border) solid var(--glass-edge);
+  border-top: var(--border) solid var(--glass-edge);
+  border-radius: 18px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  box-shadow:
+    inset 0 1px 0 var(--edge-light),
+    var(--e4);
+  transition:
+    border-color var(--d-slow) var(--ease-out),
+    box-shadow var(--d-slow) var(--ease-out);
+}
+
+.pl-bar[data-picked] {
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 1px 0 var(--edge-light),
+    0 0 0 1px color-mix(in srgb, var(--accent) 34%, transparent),
+    var(--e4);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .pl-bar {
+    background: var(--surface-1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pl-bar {
+    transition: none;
+  }
+}
+
+/* ============================================================
+   AND THE SERIES SNAP, WITH THEIR NAMES STICKING.
+
+   Seven series of near-identical hulls is the same scroll the
+   catalogue has and the same help it wanted: proximity so a dealer
+   scanning past four series to reach the fifth is never fought,
+   and a heading that stays so they always know which bay they are
+   in. Every series BUT THE FIRST asks — the catalogue's own
+   measurement: a snap target 83px down a freshly-opened page is
+   inside the proximity threshold, and the browser scrolls there
+   before anybody touches the wheel.
+   ============================================================ */
+.pl-port {
+  scroll-snap-type: y proximity;
+  scroll-padding-top: var(--s-4);
+}
+
+.pl-series ~ .pl-series {
+  scroll-snap-align: start;
+  scroll-margin-top: var(--s-4);
+}
+
+.pl-series-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg);
+  backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
+  padding-top: var(--s-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pl-port {
+    scroll-snap-type: none;
+  }
+}
+
+/* ============================================================
+   THE FIRST MODEL OF A SERIES LEADS.
+
+   Same argument as the catalogue's, and the same measured shape:
+   two tracks wide, one row tall, because every render here is a
+   wide top-down hull and `object-fit` is `contain` for a rule
+   nothing overrides. A 2x2 lead letterboxes forty-five per cent of
+   the largest card on the screen.
+
+   `grid-auto-rows: 1fr` is why this one does NOT need
+   `align-self: stretch` and the catalogue's does: these cards are
+   already equal-height by declaration, because nothing on a place
+   card can open underneath itself.
+   ============================================================ */
+.pl-grid {
+  /* DENSE, because the lead spans two tracks and a sparse flow
+     would leave the hole it steps over unfilled. Safe here for the
+     usual reason: these are a SET being browsed, not a sequence
+     being read. */
+  grid-auto-flow: dense;
+}
+
+@container (min-width: 700px) {
+  .pl-cell--lead {
+    grid-column: span 2;
+  }
+
+  .pl-cell--lead .pl-card {
+    position: relative;
+  }
+
+  .pl-cell--lead .pl-well {
+    border-bottom: 0;
+  }
+
+  /* THE NAME ON THE PHOTOGRAPH, opaque where the words are and
+     fading only above them — the catalogue's correction, taken
+     first time here. A hull is white and a scrim that merely
+     tints cannot promise a ratio. */
+  .pl-cell--lead .pl-say {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: var(--s-12) var(--s-4) var(--s-4);
+    background: linear-gradient(
+      to top,
+      var(--surface-1) 0%,
+      var(--surface-1) 42%,
+      color-mix(in srgb, var(--surface-1) 72%, transparent) 70%,
+      transparent 100%
+    );
+  }
+
+  .pl-cell--lead .pl-name {
+    font-size: var(--t-display-size);
+    font-weight: var(--t-display-weight);
+    line-height: var(--t-display-lead);
+    letter-spacing: var(--t-display-track);
+    min-height: 1lh;
+    max-height: 2lh;
+  }
+}
+
+/* THE ACTION SITS AT THE END OF THE CARD, ALWAYS.
+
+   `.pl-bar` is a flex row of three things and the middle one — the
+   strip of colourways — only exists once a model with more than one
+   finish is picked. So with nothing picked the button landed in the
+   middle of the card with half the width empty beside it, and then
+   MOVED when a pick arrived. A commit surface must never move the
+   control a person is reaching for; that argument is already
+   written above about a second row of chips, and this is the same
+   fault along the other axis.
+
+   The button is the last child, so the auto margin holds it against
+   the right edge whether the strip is there or not. */
+.pl-bar > :last-child {
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+/* and it keeps a real gap from the strip even when the strip has
+   run out of room to scroll in */
+.pl-bar .pl-ways {
+  margin-right: var(--s-4);
+}
+
+/* ============================================================
+   AND THE CARD STACKS ON A PHONE.
+
+   Measured at 430x932 with a model picked: three things on one row
+   folded the subject label to five lines about nine characters
+   wide — "Highfield / - / RU230K... / (PVC) / WH" — beside one
+   colourway chip and a button. The name of the thing being
+   committed to was the least legible string on the screen.
+
+   Three rows, in the order a person answers them: WHAT this is,
+   WHICH finish, and then the one action. The strip keeps its own
+   sideways scroll — the sanctioned kind, declared — so the rows
+   above the action never change count and the button never moves.
+   ============================================================ */
+@container place (max-width: 680px) {
+  .pl-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-3);
+    margin-inline: var(--s-3);
+    padding: var(--s-3);
+  }
+
+  .pl-bar-say {
+    max-width: none;
+  }
+
+  .pl-bar > :last-child {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .pl-bar .pl-ways {
+    margin-right: 0;
   }
 }

@@ -125,7 +125,12 @@ try {
       if (DARK) await dark()
       await wait(page, 400)
       await settled(page)
-      const file = join(OUT, `${name}${DARK ? '-dark' : ''}.png`)
+      /* THE WIDTH IS IN THE NAME UNLESS IT IS THE BASELINE, and
+         that is not tidiness. Without it a run at 430 wrote over
+         the 1280 set file for file — same names, no warning — and
+         the "desktop" screenshots in a report were phones. */
+      const at = w === 1280 && h === 800 ? '' : `-${w}`
+      const file = join(OUT, `${name}${DARK ? '-dark' : ''}${at}.png`)
       await page.screenshot({ path: file })
       console.log(`  ${name}`)
     } catch (e) {

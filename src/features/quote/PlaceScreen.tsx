@@ -177,12 +177,17 @@ export function PlaceScreen({ door, onBack, onStarted }: PlaceScreenProps): Reac
                 </span>
               </p>
               <ul className="pl-grid">
-                {inSeries.map((model) => (
+                {inSeries.map((model, i) => (
                   <ModelCard
                     key={model.key}
                     model={model}
                     kind={door.kind}
                     on={pick?.model.key === model.key}
+                    /* THE FIRST MODEL OF EACH SERIES LEADS, and only
+                       where the series has more than two — a lead
+                       among two is just a wider card. Per SERIES and
+                       not per screen, so every bay has a way in. */
+                    lead={i === 0 && inSeries.length > 2}
                     onChoose={(offer) => setPick({ model, offer })}
                   />
                 ))}
@@ -201,7 +206,7 @@ export function PlaceScreen({ door, onBack, onStarted }: PlaceScreenProps): Reac
           materialises cannot. Outside the scrollport, so no card can
           pass behind it.
           ============================================================ */}
-      <footer className="pl-bar">
+      <footer className="pl-bar" data-picked={pick ? true : undefined}>
         <div className="pl-bar-say">
           {pick ? (
             <>
@@ -278,11 +283,15 @@ function ModelCard({
   model,
   kind,
   on,
+  lead,
   onChoose,
 }: {
   model: Model
   kind: string
   on: boolean
+  /** the first model of a series with more than two in it. Two
+   *  tracks wide, its name on the photograph. */
+  lead?: boolean
   onChoose: (offer: Offer) => void
 }): ReactElement {
   const first = model.offers[0]
@@ -292,7 +301,7 @@ function ModelCard({
   const { say: priced, spread } = priceOf(model)
 
   return (
-    <li className="pl-cell">
+    <li className={lead ? 'pl-cell pl-cell--lead' : 'pl-cell'}>
       <button
         type="button"
         className={on ? 'pl-card is-mine' : 'pl-card'}
