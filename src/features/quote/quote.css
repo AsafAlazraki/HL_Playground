@@ -3436,6 +3436,17 @@
   background: var(--paper-sunken);
 }
 
+/* AND THE MAT DOES NOT PRINT. On a screen a contained picture in a
+   4:3 frame needs a ground under its letterbox or the bars read as
+   the image failing to fill. On paper the mat is the paper: a grey
+   panel behind a photograph is ink a dealer is paying for, and it
+   is the first thing their print dialog turns off anyway. */
+@media print {
+  .qt-doc-photo {
+    background: none;
+  }
+}
+
 /* ============================================================
    AND THE SUBJECT LOCKUP RAN PAST ITS OWN BOX.
 
@@ -3508,8 +3519,26 @@
   container: idcol / inline-size;
 }
 
-.qt-doc-marque-model {
-  font-size: clamp(1.75rem, 17cqi, 5.5rem);
+/* SCREEN ONLY, AND THAT WORD IS LOAD-BEARING. This rule was
+   appended to the end of the file, which puts it AFTER the print
+   block — same selector, same specificity, later in source — so it
+   won the cascade on PAPER too and set the model code to 88px
+   where this file intends 22pt.
+
+   Found by rendering the page in print media — which this file has
+   been measured in before (the note at the 688px breakpoint above
+   is from one such run) but which no GUARD does: every automated
+   ruler in this repo walks the screen, so a print regression can
+   only ever be caught by somebody deciding to look.
+
+   The unit is the reason it can only be a screen rule. A `cqi` is
+   one per cent of a container whose width is decided by a window; a
+   sheet of A4 has a width decided by A4, and points are what that
+   asks for. */
+@media screen {
+  .qt-doc-marque-model {
+    font-size: clamp(1.75rem, 17cqi, 5.5rem);
+  }
 }
 
 /* ============================================================
