@@ -3343,3 +3343,171 @@
     min-width: 140px;
   }
 }
+
+/* ============================================================
+   THE PICTURE COLUMN ON THE QUOTATION.
+
+   A fixed track, so a line with a photograph and a line without
+   put their descriptions in the same place down the page —
+   `FrozenPhoto` returns null for any address it cannot fetch, and
+   on a real quote that is most accessory lines. A column that
+   sized to its content would set the description's left edge from
+   whichever rows happened to have pictures.
+
+   THE MAT IS THE PAPER, NOT A PLATE. Every other well in this app
+   draws a deliberate surface under a missing picture; this
+   document does not, and that is `photo.tsx`'s rule rather than an
+   omission: on the page a customer is handed, an absent picture is
+   absent. Nothing hatched, nothing grey, nothing to explain.
+   ============================================================ */
+.qt-col-pic {
+  width: 108px;
+  padding-right: var(--sp-3);
+}
+
+.qt-doc-pic {
+  display: block;
+  width: 96px;
+  height: 60px;
+  /* CONTAIN, as everywhere. A cropped hull is a hull with its bow
+     cut off, and this is the copy the bow gets looked at on. */
+  object-fit: contain;
+  object-position: left center;
+  border-radius: 3px;
+}
+
+/* the heading over it is for a screen reader only — a column of
+   thumbnails needs no label, and "Photo" printed over them is a
+   word on a quotation doing nothing */
+.qt-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ON A NARROW PAGE THE PICTURE GOES BEFORE THE WORDS DO. At 430px
+   the rig has four columns in about 330px of paper; a 108px track
+   is a third of it, and the description — which carries the name,
+   the join's facts and any override — is what a customer reads.
+   The photograph is the first thing that can be spent.
+
+   A NAMED CONTAINER ON THE SHEET, which is the right question to
+   ask: this document is 880px of paper centred in whatever the
+   window is, so it is the PAPER's width that decides whether a
+   108px track is affordable, not the window's. On a wide screen
+   with a narrow stage they are not the same number. */
+.qt-doc {
+  container: sheet / inline-size;
+}
+
+@container sheet (max-width: 560px) {
+  .qt-col-pic {
+    display: none;
+  }
+}
+
+/* ============================================================
+   THE HERO ON THE CUSTOMER'S COPY WAS CROPPED.
+
+   `object-fit: cover` on `.qt-doc-photo`, in a 300x225 frame — a
+   4:3 box holding a library measured at 1.33 to 1.90. Every other
+   well in this app carries the same sentence and obeys it: a
+   cropped hull is a hull with its bow cut off, and the shape of
+   the hull is the thing a dealer turns the screen around for. The
+   one page a customer keeps was the one place that did not.
+
+   It went unfound for a simple reason: `qa-responsive` never
+   opened this screen. The picture audit that catches exactly this
+   — `cropped · <class>` — has existed since the sweep was written
+   and had ten screens to walk, and the quotation was not one of
+   them. It is now, and it found this at all eight widths.
+
+   SO: CONTAIN, and the frame keeps its own ground, because a
+   contained picture in a 4:3 frame always leaves a mat and a mat
+   that matches the paper reads as the photograph failing to fill.
+   ============================================================ */
+.qt-doc-photo {
+  object-fit: contain;
+  background: var(--paper-sunken);
+}
+
+/* ============================================================
+   AND THE SUBJECT LOCKUP RAN PAST ITS OWN BOX.
+
+   Measured: 695 wide inside 678 at 1024, and 660 inside 520 at
+   834 — so a hundred and forty pixels of the model name, the
+   material and the spec strip were cut off the right of the
+   paper, at the two widths where a dealer most often turns a
+   laptop around.
+
+   The row is `display: flex` with a fixed 300px photograph and a
+   words column beside it, and the words column had no `min-width:
+   0`. A flex item's default `min-width: auto` refuses to shrink
+   below its content, and the content here includes `RU230KAM` set
+   at the marque step and a spec strip of six figures — so the
+   column pushed the row wider than the sheet instead of wrapping
+   inside it. The oldest flexbox fault there is, on the newest
+   part of this page.
+   ============================================================ */
+.qt-doc-subject > * {
+  min-width: 0;
+}
+
+.qt-doc-subject {
+  /* AND IT MAY WRAP, because at 1024 and 834 a 300px photograph and
+     an unbreakable model code genuinely do not share a line. The
+     model is sized against its own column above, so wrapping gives
+     it more room rather than a bigger problem. */
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+   AND THE MODEL CODE IS SIZED BY THE PAPER, NOT THE WINDOW.
+
+   Measured at 390x844: `RU230KAM` set at the marque step came out
+   45.26px and 246px wide inside a 228px sheet — eighteen pixels of
+   the model name off the right of the page a customer is handed.
+   `--t-marque-size` is a `vw` clamp, and `vw` is the window; this
+   document is a fixed sheet centred in whatever the window is, so
+   the two are never the same number and on a phone the sheet is
+   the smaller one.
+
+   A model code is ONE UNBREAKABLE TOKEN — `word-break: keep-all`
+   above says so, and it is right: a cut inside `RU230KAM` cannot
+   be read through. So nothing here can wrap its way out of the
+   problem; the size has to come down.
+
+   `cqi` IS THE RIGHT UNIT AND THE ONLY ONE. One per cent of the
+   sheet's inline size. The clamp keeps both ends on the ramp — its
+   floor is `--t-display-size`'s floor and its ceiling is
+   `--t-marque-size`'s at a laptop — so this is the same ladder
+   read against the right ruler, not a new size invented for a
+   breakpoint. At 390 it resolves to about 31px and the code lays
+   out at 168px inside 228.
+   ============================================================ */
+.qt-doc-subject-id {
+  /* THE COLUMN THE NAME IS ACTUALLY SET IN, which is not the sheet:
+     beside a 300px photograph it is about half of it, and on its own
+     line after a wrap it is all of it. Sizing the model against the
+     SHEET gave it 88px in a 440px column and pushed the whole lockup
+     under the picture at a laptop.
+
+     AND IT MUST GROW INTO WHAT IS LEFT. A zero min-width alone let
+     it shrink to its minimum and stay there: the spec strip came out
+     one figure per line — "OA / Length / 2.3" — beside a third of
+     a page of white. The basis is what decides wrapping: 320px of
+     words earns a line beside the picture, and below that the row
+     wraps and the column takes the whole sheet. */
+  flex: 1 1 320px;
+  min-width: 0;
+  container: idcol / inline-size;
+}
+
+.qt-doc-marque-model {
+  font-size: clamp(1.75rem, 17cqi, 5.5rem);
+}

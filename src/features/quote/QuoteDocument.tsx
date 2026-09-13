@@ -227,6 +227,15 @@ export function QuoteDocument({ quote }: QuoteDocumentProps): ReactElement {
       <table className="qt-doc-lines">
         <thead>
           <tr>
+            {/* THE PICTURE COLUMN HAS NO HEADING. "Photo" over a
+                column of thumbnails is a label for something
+                nobody needs told; the cell is its own legend. It
+                is still a real `th` so the header row keeps its
+                column count and the rig repeats correctly on page
+                two. */}
+            <th className="qt-col-pic">
+              <span className="qt-sr">Picture</span>
+            </th>
             <th className="mono-label qt-col-desc">Description</th>
             <th className="mono-label qt-col-qty">Qty</th>
             <th className="mono-label qt-col-amt">Amount</th>
@@ -238,7 +247,7 @@ export function QuoteDocument({ quote }: QuoteDocumentProps): ReactElement {
           return (
             <tbody key={section.blockId}>
               <tr className="qt-doc-sec">
-                <th className="mono-label" colSpan={3} scope="colgroup">
+                <th className="mono-label" colSpan={4} scope="colgroup">
                   {section.title}
                 </th>
               </tr>
@@ -372,6 +381,37 @@ function DocLine({ line }: { line: QuoteLine }): ReactElement {
   const { unit, amount, overridden } = lineAmount(line)
   return (
     <tr className="qt-doc-line">
+      {/* ============================================================
+          THE THING ITSELF, ON THE DOCUMENT A CUSTOMER READS.
+
+          The original HelmLogic printed a picture beside every line
+          and this rebuild did not, which left the one Showroom
+          surface that actually leaves the building as the only one
+          with no photographs on it. The teardown table lists
+          "product presence" as one of four counts the original beat
+          the Playground on, and this is where it beat it hardest.
+
+          `FrozenPhoto` decides, exactly as it does everywhere else:
+          a picture we cannot fetch is drawn as NOTHING, never as a
+          broken glyph — "a broken glyph on a quotation is worse
+          than no photograph" is that file's own header. So this
+          cell is often empty, and it holds a fixed width anyway, so
+          that an empty one and a full one put every description in
+          the same place down the page.
+
+          IT PRINTS. Real table layout, not a background image, so
+          it survives `@media print` without asking the browser for
+          background graphics — which most print dialogs have off.
+          ============================================================ */}
+      <td className="qt-col-pic">
+        <FrozenPhoto
+          img={line.image}
+          fallbackAlt={line.label}
+          className="qt-doc-pic"
+          w={96}
+          h={60}
+        />
+      </td>
       <td className="qt-col-desc">
         {/* NO STAR ON THE CUSTOMER'S COPY, AND IT IS THE SAME FACT
             TWICE. A recommended line drew an ochre star AND the word

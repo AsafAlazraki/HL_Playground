@@ -74,6 +74,21 @@ const SCREENS = {
       await p.locator('.qp-card').first().click()
     },
   ],
+  document: [
+    '.qt-doc',
+    async (p) => {
+      await SCREENS.configurator[1](p)
+      await wait(p, 2700)
+      const who = p.getByRole('button', { name: /Who it is for/ })
+      if (await who.count()) await who.first().click()
+      await wait(p, 1300)
+      const name = p.getByPlaceholder(/their name/i)
+      await name.fill('Mark McWilliams')
+      await name.press('Tab')
+      await wait(p, 1100)
+      await p.getByRole('button', { name: /Give it to the customer/ }).click()
+    },
+  ],
   configurator: [
     '.bs',
     async (p) => {
@@ -126,11 +141,26 @@ for (const w of WIDTHS) {
     /* the scrollport is the screen's own, never the window's —
        `.shell-stage` is `overflow: hidden` and every screen owns
        the box it scrolls in */
-    await page.evaluate((y) => {
-      const port = document.querySelector('[class$="-port"], .ct-port, .bs-port')
-      if (port) port.scrollBy(0, y)
-      else window.scrollBy(0, y)
+    /* FIND THE SCROLLPORT, DO NOT NAME IT. Every screen owns its
+       own — `.shell-stage` is `overflow: hidden` — and the first
+       version of this guessed at `[class$="-port"]`, which silently
+       scrolled nothing on the quote document and produced a
+       "scrolled" frame identical to the unscrolled one. A frame
+       that looks like evidence and is not is the worst kind. */
+    const moved = await page.evaluate((y) => {
+      let best = null
+      for (const el of document.querySelectorAll('*')) {
+        if (el.scrollHeight - el.clientHeight < 40) continue
+        const over = getComputedStyle(el).overflowY
+        if (over !== 'auto' && over !== 'scroll') continue
+        if (!best || el.clientHeight > best.clientHeight) best = el
+      }
+      const port = best ?? document.scrollingElement
+      const was = port.scrollTop
+      port.scrollBy(0, y)
+      return { where: best ? best.className || best.tagName : 'window', by: port.scrollTop - was }
     }, SCROLL)
+    if (moved.by === 0) console.log(`        scroll moved nothing (${moved.where})`)
     await wait(page, 800)
     await page.screenshot({ path: `out/one/${screen}-${w}${suffix}-scrolled.png` })
   }

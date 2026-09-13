@@ -92,6 +92,29 @@ const STOPS = [
     },
   ],
   [
+    'document',
+    '.qt-doc',
+    async (p) => {
+      await rail(p, /^Home/)
+      await wait(p, 1200)
+      await p.getByRole('button', { name: /New quote/ }).first().click()
+      await wait(p, 2100)
+      await p.locator('.qp-card').first().click()
+      await wait(p, 2300)
+      await p.locator('.pl-card').first().click()
+      await wait(p, 600)
+      await p.getByRole('button', { name: /Start the quote|Back to the quote/ }).click()
+      await wait(p, 2700)
+      const who = p.getByRole('button', { name: /Who it is for/ })
+      if (await who.count()) await who.first().click()
+      await wait(p, 1300)
+      await p.getByPlaceholder(/their name/i).fill('Mark McWilliams')
+      await p.getByPlaceholder(/their name/i).press('Tab')
+      await wait(p, 1100)
+      await p.getByRole('button', { name: /Give it to the customer/ }).click()
+    },
+  ],
+  [
     'configurator',
     '.bs',
     async (p) => {
@@ -166,12 +189,37 @@ async function overflow(page, root) {
     const side = doc.scrollWidth - doc.clientWidth
     const stage = document.querySelector(rootSel)
     const bad = []
+
+    /* IT IS THE ANCESTOR THAT IS CLIPPED, NOT ALWAYS THE ELEMENT.
+       `drive.mjs` tests the element itself, which is enough for the
+       mid-word ruler because that one only looks at elements that
+       hold text directly. This walks every node, so it meets the
+       CHILDREN of an sr-only wrapper: `.ui-stepper-name` is
+       `position: static` inside a `.ui-stepper-text` clipped to a
+       pixel, and reported as `74>1` four times on the phone rail.
+       Nobody can see it, so nobody can see it overflow. */
+    const srOnly = (el) => {
+      for (let n = el; n && n !== stage.parentElement; n = n.parentElement) {
+        const b = n.getBoundingClientRect()
+        if (b.width <= 2 && b.height <= 2 && getComputedStyle(n).position === 'absolute') {
+          return true
+        }
+      }
+      return false
+    }
     for (const el of stage ? stage.querySelectorAll('*') : []) {
       const cs = getComputedStyle(el)
       if (cs.display === 'none' || cs.visibility === 'hidden') continue
       /* a declared scroller is doing its job, not failing */
       if (cs.overflowX === 'auto' || cs.overflowX === 'scroll') continue
       if (cs.overflowX === 'hidden' || cs.overflowX === 'clip') continue
+      /* AND AN SR-ONLY STRING IS A DECLARED CLIP, NOT AN OVERFLOW.
+         The same test `drive.mjs` applies in the mid-word ruler and
+         for the same reason: a label clipped to a pixel FOR a
+         screen reader reports as `49>1` here, four times over on
+         the phone step rail, and a finding that is always noise
+         trains a reader to skip the output. */
+      if (srOnly(el)) continue
       if (el.scrollWidth > el.clientWidth + 2 && el.clientWidth > 0) {
         bad.push(`${el.className || el.tagName} ${el.scrollWidth}>${el.clientWidth}`)
       }
