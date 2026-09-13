@@ -411,3 +411,54 @@
     flex: 1 1 auto;
   }
 }
+
+/* ============================================================
+   THE THIRD SOLID BAR, AND THE LAST ONE.
+
+   The configurator's foot became a card, then the place screen's,
+   and this one was still a full-bleed strip welded to the bottom
+   of the sheet with a 1px rule on top — on the surface
+   `DESIGN_SYSTEM` §5 names, beside the completion card, as one of
+   exactly two that earn glass. Three surfaces in one flow, doing
+   the same job, and the third was still chrome.
+
+   All three answer the same way now: a card with its own edge, its
+   own shadow, air around it, and the ground running past. What
+   this one adds is that the ground behind it is the SHEET's, and
+   the sheet's body scrolls under it — so the glass is doing what
+   glass is for rather than being a texture.
+
+   IT DOES NOT SCROLL. That was already right and is kept: the two
+   actions and the figure they cost are the decision, and a
+   decision that can be scrolled off the screen is a decision a
+   person can miss.
+   ============================================================ */
+.cs-foot {
+  margin: 0 var(--sp-4) var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--glass-edge);
+  border-top: 1px solid var(--glass-edge);
+  border-radius: 16px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  box-shadow:
+    inset 0 1px 0 var(--edge-light),
+    var(--e4);
+}
+
+/* AND THE BODY ENDS WHERE THE CARD BEGINS, with nothing between:
+   the scrollport kept a bottom pad sized for a bar that had a rule
+   on it and no margin, which under a floating card is a second gap
+   on top of the card's own. */
+.cs-scroll {
+  padding-bottom: var(--sp-2);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .cs-foot {
+    background: var(--surface-1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

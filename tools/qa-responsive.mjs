@@ -130,6 +130,28 @@ const STOPS = [
       await rail(p, /^Quotes/)
     },
   ],
+  /* THE CASCADE SHEET. `DESIGN_SYSTEM` §5 names exactly two surfaces
+     that earn glass — the completion card and this — and no ruler in
+     this repo had ever opened it. It is what a price-level change
+     says before it moves every line already on the quote. */
+  [
+    'cascade',
+    '.cs-sheet',
+    async (p) => {
+      await rail(p, /^Home/)
+      await wait(p, 1200)
+      await p.getByRole('button', { name: /New quote/ }).first().click()
+      await wait(p, 2100)
+      await p.locator('.qp-card').first().click()
+      await wait(p, 2300)
+      await p.locator('.pl-card').first().click()
+      await wait(p, 600)
+      await p.getByRole('button', { name: /Start the quote|Back to the quote/ }).click()
+      await wait(p, 2200)
+      await p.locator('.ui-done-level:not(.is-on)').first().click()
+      await wait(p, 1200)
+    },
+  ],
   [
     'document',
     '.qt-doc',

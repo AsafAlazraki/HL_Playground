@@ -98,6 +98,23 @@ const SCREENS = {
       await rail(p, /^Quotes/)
     },
   ],
+  /* THE CASCADE SHEET. `DESIGN_SYSTEM` §5 names exactly two surfaces
+     that earn glass — the completion card and this — and no harness
+     had ever opened it. It is the announcement a price-level change
+     makes before it moves every line already on the quote:
+     `levelConflict` returns null when nothing actually moves, and
+     then the change simply happens, because a sheet that opens to
+     report no change is furniture. So this presses the OTHER rung
+     and the sheet appears only if there is something to say. */
+  cascade: [
+    '.cs-sheet',
+    async (p) => {
+      await SCREENS.configurator[1](p)
+      await wait(p, 2200)
+      await p.locator('.ui-done-level:not(.is-on)').first().click()
+      await wait(p, 1200)
+    },
+  ],
   document: [
     '.qt-doc',
     async (p) => {
