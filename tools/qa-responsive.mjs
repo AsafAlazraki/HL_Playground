@@ -304,6 +304,17 @@ for (const [w, h] of WIDTHS) {
   for (const [name, sure, open] of STOPS) {
     if (only && name !== only) continue
     try {
+      /* CLOSE WHATEVER THE LAST STOP LEFT OPEN. The header of this
+         file says every stop starts from Home — and nothing enforced
+         it, which held only while no stop ended on an overlay. The
+         cascade stop does: it ends with the sheet up, and the sheet's
+         scrim swallows the rail press, so the two stops after it
+         reported UNREACHED at every width for a reason that had
+         nothing to do with them. Escape is the app's own dismissal,
+         so this measures the real gesture rather than reaching past
+         it into the DOM. */
+      await page.keyboard.press('Escape')
+      await wait(page, 400)
       await open(page)
       await wait(page, 2400)
       await settled(page)
