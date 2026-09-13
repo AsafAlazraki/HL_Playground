@@ -35,7 +35,7 @@
    ============================================================ */
 
 import { chromium } from 'playwright-core'
-import { wait, signInAndSeed, midWord, contrast } from './drive.mjs'
+import { wait, settled, signInAndSeed, midWord, contrast } from './drive.mjs'
 
 const argv = process.argv.slice(2)
 const only = argv.indexOf('--only') >= 0 ? argv[argv.indexOf('--only') + 1] : null
@@ -197,6 +197,7 @@ for (const [w, h] of WIDTHS) {
     try {
       await open(page)
       await wait(page, 2400)
+      await settled(page)
       if (!(await page.locator(sure).count())) {
         console.log(`    ${name.padEnd(13)} UNREACHED`)
         findings += 1

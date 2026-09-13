@@ -61,6 +61,7 @@ import { levelConflict } from './conflict'
 import type { Conflict } from './conflict'
 import { marqueOf } from './marque'
 import { FrozenPhoto } from './photo'
+import { markOf } from '@/lib/mark'
 import type { Band } from './bands'
 import { buildSteps, HANDOVER_STEP } from './steps'
 import type { BuildStep } from './steps'
@@ -793,7 +794,19 @@ function CandidateCard({
           else addLine(quote.id, step.section.blockId, line)
         }}
       >
-        <span className="bs-cand-well">
+        <span className="bs-cand-well m-lit m-grain">
+          {/* THE PLATE UNDER THE PICTURE, which is what shows when
+              there is no picture — and there often is not. A fuse
+              block, a bilge pump and a set of tube covers are real
+              lines on a real quote and almost none of them is
+              photographed.  correctly returns null for
+              those, and until now the well below it was 300px of
+              empty gradient in a 480px column: the biggest thing on
+              the step, saying nothing. The catalogue card solved
+              this already; this is the same answer one size down. */}
+          <span className="bs-cand-plate" aria-hidden="true">
+            <span className="t-display bs-cand-mono">{markOf(line.label)}</span>
+          </span>
           {/* `FrozenPhoto` answers "can these pixels be painted, and
               from where" — the repository's own copy when it holds
               one, the maker's address when it does not — while the

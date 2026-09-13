@@ -94,7 +94,7 @@
   flex: 0 0 auto;
 }
 
-.ui-done-arc svg {
+.ui-done-dial {
   display: block;
   /* twelve o'clock, clockwise — the only direction anybody reads a
      dial, and the reason the offset carries a quarter turn */
@@ -331,5 +331,147 @@
     background: var(--surface-1);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
+  }
+}
+
+/* ============================================================
+   THE CHECK THAT DRAWS ITSELF.
+
+   It sits exactly where the count sat, over the ring, and the two
+   never coexist — the count is what you read while there is
+   something left to count, and a shape is what you read when there
+   is not.
+
+   `stroke-dasharray` has to be longer than the path. The path is
+   two segments, roughly 7.8 and 17.3 units, so 30 covers it with
+   room; a dasharray SHORTER than the path leaves a second dash
+   visible at the start, which is the classic line-draw artefact.
+   ============================================================ */
+.ui-done-check {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  /* AND IT IS NOT TURNED. The dial is rotated -90deg so the ring
+     starts at twelve o'clock, and that rule was written as
+     `.ui-done-arc svg` — which reached this one too. Measured: the
+     check rendered as a ">" for one build, a tick lying on its side,
+     which reads as "next" rather than "done". A tick is the one
+     shape here whose orientation IS its meaning. The rotation now
+     names `.ui-done-dial`; this stays explicit so the next svg added
+     to this box cannot inherit the same fault by accident. */
+  transform: none;
+}
+
+.ui-done-tick {
+  stroke: var(--success);
+}
+
+.ui-done-tick[data-draw] {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  /* AFTER THE RING, NOT WITH IT. The segments take `--d-slow` to
+     take the success hue; the check starts as that lands, so the
+     two read as one gesture — ring closes, then the mark is made.
+     One stagger step, §6's own 40ms, and no invented number. */
+  animation: ui-done-draw var(--d-med) var(--ease-out) var(--d-slow) forwards;
+}
+
+@keyframes ui-done-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ------------------------------------------------------------
+   AND THE CARD SETTLES.
+
+   A quote becoming whole is the one moment on this screen worth a
+   move, and until now the card said so only with a sweep across
+   it. This is the card taking the news: it drops the last few
+   pixels of its rise and comes back to rest, at §6's `--rise` and
+   §6's curve. It runs once, keyed on the landing, and there is
+   nothing left of it afterwards.
+
+   `translate3d`, never `translateY` — §6, and the reason is that
+   the shorthand is not composited.
+   ------------------------------------------------------------ */
+.ui-done[data-landed] {
+  animation: ui-done-land var(--d-scene) var(--ease-out) both;
+}
+
+@keyframes ui-done-land {
+  0% {
+    transform: translate3d(0, var(--rise), 0) scale(0.994);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* ------------------------------------------------------------
+   THE RING'S OWN PULSE — one ripple out of the closed ring.
+
+   The segments turn green and the check is drawn, and both of
+   those happen INSIDE the 52px box. The pulse is what carries the
+   event to the corner of an eye that was looking at the total
+   instead. It is a ring expanding and thinning to nothing: a
+   single pass, at the scene duration, and then the element that
+   draws it is gone with the rest of the landing.
+   ------------------------------------------------------------ */
+.ui-done[data-landed] .ui-done-track {
+  animation: ui-done-pulse var(--d-scene) var(--ease-out) var(--d-fast) forwards;
+  transform-origin: center;
+}
+
+@keyframes ui-done-pulse {
+  0% {
+    stroke: var(--success);
+    stroke-width: 3;
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  100% {
+    stroke: var(--success);
+    stroke-width: 1;
+    opacity: 0;
+    transform: scale(1.55);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-done[data-landed],
+  .ui-done[data-landed] .ui-done-track,
+  .ui-done-tick[data-draw] {
+    animation: none;
+  }
+
+  .ui-done-tick[data-draw] {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ============================================================
+   AND ON A PHONE THE ARC STAYS BESIDE THE FIGURE.
+
+   The 460px stop used to give every part its own row, and measured
+   at 430x932 that card was 280px — thirty per cent of the screen,
+   on a screen where the thing being sold is the point. The arc is
+   52px and the figure is about 70; side by side they cost what the
+   taller of them costs. Only the two controls stack, because a
+   segmented ladder and a full-width primary action genuinely do
+   not share a row at this width.
+   ============================================================ */
+@container (max-width: 460px) {
+  .ui-done {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'arc figure'
+      'levels levels'
+      'do do';
+    align-items: center;
+  }
+
+  .ui-done-arc {
+    justify-self: start;
   }
 }

@@ -157,11 +157,118 @@
      card's own budget is what makes the closed ones equal; the open
      one is deliberately taller, because it is showing more. */
   align-items: start;
+  /* DENSE, because the lead card below spans two tracks and a
+     sparse flow would leave the hole it steps over unfilled. Dense
+     is safe here for the reason it usually is not: these cards are
+     a SET being browsed, not a sequence being read, so a card
+     backfilling an earlier gap is not out of order — it is the
+     grid doing what a masonry wall does. */
+  grid-auto-flow: dense;
 }
 
 .ct-cell {
   display: flex;
   min-width: 0;
+}
+
+/* ============================================================
+   THE LEAD — the first model of a band, at twice the size.
+
+   A grid of forty identical cards has no focal point and nothing
+   to enter by, which is the fault a uniform grid always has: it
+   reads as a result set rather than as a showroom floor. The lead
+   takes two tracks and two rows, its render fills the card, and
+   the model's name sits ON the photograph rather than under it.
+
+   ONLY WHERE THERE IS ROOM FOR IT. Below 700px of column the span
+   is dropped entirely — a "lead" that is the same width as every
+   other card is just a taller card, and on a phone it would push
+   the second model off the first screen.
+
+   THE BAND'S OWN FIRST CARD, not the page's: every series gets an
+   entry point, which is what makes scrolling through seven of them
+   feel like walking past seven bays rather than reading one list.
+   ============================================================ */
+@container (min-width: 700px) {
+  .ct-cell--lead {
+    /* TWO TRACKS WIDE, ONE ROW TALL — because of what the
+       photographs ARE. Every render in this catalogue is a top-down
+       hull, roughly 16:9, and `object-fit` is `contain` here for a
+       reason nothing overrides: a cropped hull is a hull with its
+       bow cut off. A 2x2 lead was measured at 490x600 holding a
+       490x276 photograph — forty-five per cent of the biggest card
+       on the screen was empty gradient. Twice the width and the
+       same height fits the picture almost exactly, and still reads
+       as the lead: it is the only card whose name is set at display
+       size, on the photograph, rather than under it. */
+    grid-column: span 2;
+    /* AND IT MUST STRETCH, or the span is two rows of nothing.
+       `.ct-grid` is `align-items: start` on purpose — a card that
+       opens its finishes must not drag its row-mates taller — and
+       that default reached this one too: the lead reserved a 600px
+       hole and then drew itself flat at the top of it, which is
+       exactly what the first photograph of this showed. The lead is
+       the one cell that wants its row's whole height, so it is the
+       one cell that overrides the rule. */
+    align-self: stretch;
+  }
+
+  .ct-cell--lead .ct-well {
+    /* NO RATIO. The height comes from the two rows it spans, and a
+       ratio fighting that is how a 2x2 cell ends up 16/10 with a
+       band of dead card underneath. */
+    aspect-ratio: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    /* the words sit ON the well now, so the rule that separated
+       them has nothing left to separate */
+    border-bottom: 0;
+  }
+
+  .ct-cell--lead .ct-card {
+    height: 100%;
+  }
+
+  .ct-cell--lead .ct-face {
+    height: 100%;
+  }
+
+  /* THE NAME SITS ON THE PHOTOGRAPH, and the scrim is what makes
+     that legible rather than lucky.
+
+     THE FIRST VERSION FADED TO 94%, AND THE NAME LANDED ON THE
+     HULL. Once the lead went one row tall the photograph filled the
+     card, so the bottom third of it is boat — a white boat, which
+     is the worst case for ink that assumes a surface. This is
+     opaque where the words are and only fades ABOVE them, so the
+     ratio is the ratio of `--fg` on `--surface-1`: measured, not
+     hoped for. The fade still reads as a photograph running under
+     the words rather than a panel sitting on top of one. */
+  .ct-cell--lead .ct-say {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: var(--s-12) var(--s-4) var(--s-4);
+    background: linear-gradient(
+      to top,
+      var(--surface-1) 0%,
+      var(--surface-1) 42%,
+      color-mix(in srgb, var(--surface-1) 72%, transparent) 70%,
+      transparent 100%
+    );
+  }
+
+  .ct-cell--lead .ct-name {
+    font-size: var(--t-display-size);
+    font-weight: var(--t-display-weight);
+    line-height: var(--t-display-lead);
+    letter-spacing: var(--t-display-track);
+    min-height: 1lh;
+    max-height: 2lh;
+  }
+
+  .ct-cell--lead .ct-card {
+    position: relative;
+  }
 }
 
 .ct-card {
@@ -359,5 +466,58 @@
   .ct-name {
     min-height: 0;
     max-height: none;
+  }
+}
+
+/* ============================================================
+   IT SNAPS TO THE BAND, AND THE BAND'S NAME STAYS.
+
+   Seven series and sixty-seven models is a long scroll, and a long
+   scroll that stops wherever the finger left it always leaves a
+   row of cards half off the top. `proximity` and not `mandatory`:
+   mandatory fights a person who is scanning past four series to
+   reach the fifth, which is exactly what a dealer does. Proximity
+   only takes over once they have nearly stopped, which is the
+   moment the help is wanted.
+
+   THE HEADING STICKS so you always know which bay you are in.
+   Seven bands of near-identical hulls is precisely the case where
+   scrolling loses you, and the sticky rule costs nothing that the
+   band head was not already drawing.
+   ============================================================ */
+.ct-port {
+  scroll-snap-type: y proximity;
+  scroll-padding-top: var(--s-4);
+}
+
+/* EVERY BAND BUT THE FIRST, and the reason is a real defect this
+   shipped with for one photograph. `scroll-snap-align: start` on
+   `.ct-band` made the FIRST band a snap target 83px down the
+   document, and proximity is measured from where you are: at rest
+   on a freshly-opened page that is 83px away, inside the threshold,
+   so the browser scrolled there by itself. The marque, the search
+   field and the sheet link were cut in half before anybody touched
+   the wheel. The top of a document must always be somewhere the
+   document can sit, so the band already at the top does not ask. */
+.ct-band ~ .ct-band {
+  scroll-snap-align: start;
+  scroll-margin-top: var(--s-4);
+}
+
+.ct-band-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  /* the ground travels with it, or the cards scroll THROUGH the
+     heading — the fault a sticky header has when it is transparent */
+  background: var(--bg);
+  backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
+  padding-top: var(--s-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-port {
+    scroll-snap-type: none;
   }
 }

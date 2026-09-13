@@ -100,7 +100,31 @@ export function ProductStage({
   }
   const changed = shown ? seen.changed && seen.src === shown.src : false
 
-  if (!shown) {
+  /* ============================================================
+     A PICTURE THAT DOES NOT ARRIVE IS NOT A PICTURE.
+
+     Measured on the Stabicraft 1450 Explorer: the seed carries an
+     absolute URL to the manufacturer's own site, the request fails,
+     and this stage — the largest element on the screen and the
+     entire reason the register is called Showroom — drew Chrome's
+     broken-image box with the alt string beside it. `naturalWidth`
+     was 0 and `complete` was true, which is exactly the pair that
+     means "failed", and nothing here was asking.
+
+     `FrozenPhoto` already refuses to draw a broken image elsewhere
+     in the app; the stage never got the same treatment. A failed
+     src falls back to the sentence, which is the honest thing on
+     screen and also tells the dealer — the person who can fix it —
+     what to fix.
+
+     KEYED BY SRC, so a different colourway gets its own verdict
+     rather than inheriting the last one's failure, and a set that
+     retries does not stay dead.
+     ============================================================ */
+  const [broken, setBroken] = useState<Record<string, true>>({})
+  const dead = shown ? broken[shown.src] === true : false
+
+  if (!shown || dead) {
     return (
       <div className="ui-stage" data-empty="true">
         <p className="ui-stage-empty t-small">{emptyBecause}</p>
@@ -141,6 +165,7 @@ export function ProductStage({
              the thing a person came to look at trades the only
              impression that matters for a request nobody saved. */
           loading={at === 0 ? 'eager' : 'lazy'}
+          onError={() => setBroken((b) => (b[shown.src] ? b : { ...b, [shown.src]: true }))}
         />
 
         {overlay ? <div className="ui-stage-over">{overlay}</div> : null}

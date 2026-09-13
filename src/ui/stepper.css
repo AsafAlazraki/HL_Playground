@@ -339,3 +339,75 @@
     transform: scaleX(1);
   }
 }
+
+/* ============================================================
+   ON A PHONE IT IS A STRIP OF MARKS, NOT A STACK OF ROWS.
+
+   Measured at 390x844: the stacked rail was 290px tall — a third
+   of the screen, above the fold, spent on five step names that the
+   line directly above it ("Step 2 of 5 · Motor") already says. The
+   product the dealer is selling started below 470px.
+
+   So below the width where a phone is a phone, the names go and
+   the marks stay — EXCEPT the one you are on, which keeps its
+   name so the strip reads on its own rather than depending on the
+   count line. It scrolls sideways in its own box, which is the one
+   sanctioned reason anything may: a strip of chips, declared.
+
+   NOTHING IS REMOVED FROM THE DOM. Every step is still a button,
+   still in the tab order, still carrying its refusal in
+   `aria-describedby` — this is a layout, not a smaller feature.
+   ============================================================ */
+@container (max-width: 520px) {
+  .ui-stepper-list {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--s-1);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    /* the marks come to rest on a mark, not between two */
+    scroll-snap-type: x proximity;
+  }
+
+  .ui-stepper-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ui-stepper-item {
+    flex: 0 0 auto;
+    scroll-snap-align: center;
+  }
+
+  .ui-stepper-go {
+    width: auto;
+  }
+
+  .ui-stepper-text {
+    display: none;
+  }
+
+  .ui-stepper-item[data-state='current'] .ui-stepper-text {
+    display: flex;
+  }
+
+  /* a refused step keeps its name too: rule 10 says a refusal says
+     why WHERE IT IS, and a bare numbered disc says nothing */
+  .ui-stepper-item[data-state='refused'] .ui-stepper-text {
+    display: flex;
+  }
+
+  .ui-stepper-why {
+    position: static;
+    margin-left: 0;
+  }
+
+  .ui-stepper-here {
+    left: var(--s-1);
+    right: var(--s-1);
+    top: auto;
+    bottom: 0;
+    width: auto;
+    height: var(--border-strong);
+  }
+}

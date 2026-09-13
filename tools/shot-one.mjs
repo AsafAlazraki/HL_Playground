@@ -1,0 +1,140 @@
+/* ============================================================
+   ONE SCREEN, EVERY WIDTH — the loop between an edit and a look.
+
+   `shot-all.mjs` photographs fourteen screens at one width, which
+   is the right tool for the document at the end. It is the wrong
+   tool while you are changing ONE screen's layout: it costs a
+   minute and gives you thirteen pictures you did not ask for.
+
+       node tools/shot-one.mjs catalogue
+       node tools/shot-one.mjs configurator --dark
+       node tools/shot-one.mjs catalogue --scroll 700
+
+   Files land in `out/one/<screen>-<width>.png`, and a second frame
+   per width if `--scroll` is given — which is how you see a sticky
+   heading do its job, since a sticky element looks identical to a
+   static one until something has moved under it.
+
+   It prints `pageerror` on its own line. Three wrong readings in
+   this project's history were a partially-transformed module and
+   not a code defect; `CLAUDE.md` carries the rule and this is the
+   line that catches it.
+   ============================================================ */
+
+import { chromium } from 'playwright-core'
+import { mkdirSync } from 'node:fs'
+import { wait, settled, signInAndSeed } from './drive.mjs'
+
+const argv = process.argv.slice(2)
+const flag = (n, d) => {
+  const i = argv.indexOf(`--${n}`)
+  return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : d
+}
+const screen = argv.find((a) => !a.startsWith('--')) ?? 'home'
+const DARK = argv.includes('--dark')
+const SCROLL = Number(flag('scroll', 0))
+const CLICK = flag('click', '')
+const WIDTHS = flag('widths', '1440,1280,1024,834,600,430')
+  .split(',')
+  .map(Number)
+
+const rail = (p, name) => p.getByRole('button', { name }).first().click()
+
+/** [root selector, how to get there]. The root doubles as the proof
+ *  the screen arrived — a screenshot of the wrong screen is worse
+ *  than no screenshot, because it looks like evidence. */
+const SCREENS = {
+  home: ['.fd', async (p) => rail(p, /^Home/)],
+  modules: ['.mo', async (p) => rail(p, /^Modules/)],
+  data: ['.dt', async (p) => rail(p, /^Data/)],
+  quotes: ['.qz', async (p) => rail(p, /^Quotes/)],
+  customers: ['.cx-root', async (p) => rail(p, /^Customers/)],
+  admin: ['.ad', async (p) => rail(p, /^Admin/)],
+  catalogue: [
+    '.ct',
+    async (p) => {
+      await rail(p, /^Data/)
+      await wait(p, 1600)
+      await p.locator('.dt-open').filter({ hasText: 'Highfield Inflatables' }).first().click()
+    },
+  ],
+  picker: [
+    '.qp',
+    async (p) => {
+      await rail(p, /^Home/)
+      await wait(p, 1200)
+      await p.getByRole('button', { name: /New quote/ }).first().click()
+    },
+  ],
+  place: [
+    '.pl',
+    async (p) => {
+      await SCREENS.picker[1](p)
+      await wait(p, 2100)
+      await p.locator('.qp-card').first().click()
+    },
+  ],
+  configurator: [
+    '.bs',
+    async (p) => {
+      await SCREENS.place[1](p)
+      await wait(p, 2300)
+      await p.locator('.pl-card').first().click()
+      await wait(p, 700)
+      await p.getByRole('button', { name: /Start the quote|Back to the quote/ }).click()
+    },
+  ],
+}
+
+const [sure, open] = SCREENS[screen] ?? []
+if (!open) {
+  console.log(`  no such screen. one of: ${Object.keys(SCREENS).join(', ')}`)
+  process.exit(1)
+}
+
+mkdirSync('out/one', { recursive: true })
+const browser = await chromium.launch({ channel: 'chrome', headless: true })
+const suffix = (DARK ? '-dark' : '') + (flag('tag', '') ? '-' + flag('tag', '') : '')
+
+for (const w of WIDTHS) {
+  const ctx = await browser.newContext({
+    viewport: { width: w, height: w < 700 ? 932 : 900 },
+    colorScheme: DARK ? 'dark' : 'light',
+  })
+  const page = await ctx.newPage()
+  const thrown = []
+  page.on('pageerror', (e) => thrown.push(String(e.message)))
+  await signInAndSeed(page)
+  await wait(page, 1500)
+  await open(page)
+  await wait(page, 2600)
+  /* one more press once the screen is up, by CSS selector — which
+     is how you photograph a step of the configurator other than
+     the one the walk happens to end on. The trailer stop has no
+     options for this hull, so a driver that always lands there
+     photographs the one step that shows nothing. */
+  if (CLICK) {
+    await page.locator(CLICK).first().click()
+    await wait(page, 1400)
+  }
+  await settled(page)
+  const there = await page.locator(sure).count()
+  console.log(`  ${String(w).padStart(4)}  ${there ? 'ok' : 'UNREACHED'}`)
+  if (thrown.length) console.log(`        pageerror: ${thrown[0].slice(0, 110)}`)
+  await page.screenshot({ path: `out/one/${screen}-${w}${suffix}.png` })
+  if (SCROLL > 0) {
+    /* the scrollport is the screen's own, never the window's —
+       `.shell-stage` is `overflow: hidden` and every screen owns
+       the box it scrolls in */
+    await page.evaluate((y) => {
+      const port = document.querySelector('[class$="-port"], .ct-port, .bs-port')
+      if (port) port.scrollBy(0, y)
+      else window.scrollBy(0, y)
+    }, SCROLL)
+    await wait(page, 800)
+    await page.screenshot({ path: `out/one/${screen}-${w}${suffix}-scrolled.png` })
+  }
+  await ctx.close()
+}
+await browser.close()
+console.log(`\n  out/one/${screen}-*${suffix}.png\n`)

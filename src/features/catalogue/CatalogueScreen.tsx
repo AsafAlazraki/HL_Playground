@@ -148,9 +148,14 @@ export function CatalogueScreen({
                 </span>
               </p>
               <ul className="ct-grid">
-                {inBand.map((model) => (
+                {inBand.map((model, i) => (
                   <Card
                     key={model.key}
+                    /* THE FIRST OF EACH BAND LEADS IT. Every series
+                       gets an entry point, so scrolling past seven of
+                       them reads as walking past seven bays rather
+                       than down one list. */
+                    lead={i === 0 && inBand.length > 2}
                     model={model}
                     kind={entity.kind ?? 'custom'}
                     open={open === model.key}
@@ -170,12 +175,14 @@ export function CatalogueScreen({
 function Card({
   model,
   kind,
+  lead = false,
   open,
   onToggle,
   onOpenRow,
 }: {
   model: Model
   kind: string
+  lead?: boolean
   open: boolean
   onToggle: () => void
   onOpenRow: (rowId: string) => void
@@ -185,7 +192,7 @@ function Card({
   const many = model.offers.length > 1
 
   return (
-    <li className="ct-cell">
+    <li className={lead ? 'ct-cell ct-cell--lead' : 'ct-cell'}>
       <div className="ct-card" data-kind={kind}>
         <button
           type="button"

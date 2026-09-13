@@ -722,3 +722,84 @@
 .bs-offer-more {
   color: var(--fg-tertiary);
 }
+
+/* ============================================================
+   WHEN IT STACKS, SOMETHING HAS TO SCROLL.
+
+   `.bs` is `auto / minmax(0,1fr) / auto` — rail, body, the
+   completion card — and at full width the STEP column owns the
+   scroll while the product stays put. Stacking the body to one
+   column took that away and gave the scroll to nobody: measured at
+   430x932, the body was 285px tall holding 1,100px of content,
+   which painted straight through the completion card and off the
+   bottom of the screen. The photograph of the boat had the price
+   card sitting across the middle of it.
+
+   So below the stacking width the BODY is the scrollport. The
+   completion card stays in its own row, pinned, which is what a
+   card and not a bar was always for.
+   ============================================================ */
+@container (max-width: 1000px) {
+  .bs-body {
+    overflow-y: auto;
+    /* the card floats over the last of the list, so the list needs
+       room to finish underneath it */
+    padding-bottom: var(--s-4);
+  }
+}
+
+/* ============================================================
+   THE PRODUCT TAKES THE LARGER HALF.
+
+   A 50/50 split was measured at 1440 with the motor step open: the
+   option column held one 248px card in 590px of track and the
+   stage — the reason this register is called Showroom — was the
+   same width as the empty space beside it. The options grid is
+   `auto-fill` at 248px, so anything from 560px up holds two cards;
+   below that it holds one and the extra width is waste. Giving the
+   difference to the stage buys ~90px of hull at 1440 and costs the
+   option column nothing it was using.
+   ============================================================ */
+@container (min-width: 1200px) {
+  .bs-body {
+    grid-template-columns: minmax(0, 1.22fr) minmax(0, 1fr);
+  }
+}
+
+/* ============================================================
+   THE PLATE UNDER AN OPTION'S PICTURE.
+
+   Most accessory lines in this price file have no photograph — a
+   fuse block, a bilge pump, a set of tube covers — and `FrozenPhoto`
+   is right to draw nothing rather than a broken glyph. What it left
+   behind was the defect: a 16:10 well of plain gradient, 300px tall
+   in a 480px column, which is the largest object on the step and
+   carries no information at all.
+
+   So the well holds a mark: the line's own initials, set at display
+   size in the display face, on the lit ground. It is not a picture
+   pretending to be one — it is a plate, which is what a maker puts
+   on a part that is not worth photographing. The photograph paints
+   over it when there is one.
+   ============================================================ */
+.bs-cand-plate {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--kind, transparent) 10%, var(--surface-2));
+}
+
+.bs-cand-mono {
+  color: var(--fg-secondary);
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+}
+
+/* the picture sits ON the plate, and covers it entirely when it
+   arrives — so the two never show at once */
+.bs-cand-img {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--surface-3) 0%, var(--bg-sunken) 100%);
+}

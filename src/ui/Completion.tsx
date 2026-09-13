@@ -125,7 +125,13 @@ export function Completion({
       {justLanded ? <span className="ui-done-sweep" aria-hidden="true" /> : null}
 
       <div className="ui-done-arc">
-        <svg viewBox={`0 0 ${BOX} ${BOX}`} width={BOX} height={BOX} aria-hidden="true">
+        <svg
+          className="ui-done-dial"
+          viewBox={`0 0 ${BOX} ${BOX}`}
+          width={BOX}
+          height={BOX}
+          aria-hidden="true"
+        >
           <circle className="ui-done-track" cx={BOX / 2} cy={BOX / 2} r={R} />
           {/* ONE SEGMENT PER STEP, so the ring is a map and not a
               percentage: the gaps are the stops still open. Each is
@@ -146,11 +152,56 @@ export function Completion({
             )
           })}
         </svg>
-        <span className="ui-done-count">
-          <b>{done}</b>
-          <span aria-hidden="true">/</span>
-          <span>{all}</span>
-        </span>
+        {/* ============================================================
+            AND WHEN THE RING CLOSES, A CHECK DRAWS ITSELF IN IT.
+
+            The count is the honest reading while the quote is being
+            built — "3 / 5" is a map, and it is what a dealer glances
+            at. It is the wrong thing to leave on screen once there
+            is nothing left to count: "5 / 5" asks a person to compare
+            two numbers to learn something the shape could just say.
+
+            SO IT IS A SWAP, NOT A BADGE ADDED ON TOP. The check takes
+            the count's place, and it DRAWS — `stroke-dashoffset` from
+            the full length to nothing, which is a line being made
+            rather than a glyph appearing. It runs on the landing
+            only: arrive on a finished quote and the check is simply
+            there, because the app is not performing at somebody who
+            did nothing.
+
+            IT IS ITS OWN SVG AND IT IS NOT TURNED. The dial beside it
+            is rotated -90° so the ring starts at twelve o'clock, and
+            the first version of this shared that rotation: the tick
+            rendered on its side, as a ">", which reads as "next"
+            rather than "done". A tick is the one shape here whose
+            orientation IS its meaning, so the rotation is named onto
+            `.ui-done-dial` rather than onto every svg in the box.
+            ============================================================ */}
+        {complete ? (
+          <svg
+            className="ui-done-check"
+            viewBox={`0 0 ${BOX} ${BOX}`}
+            width={BOX}
+            height={BOX}
+            aria-hidden="true"
+          >
+            <path
+              className="ui-done-tick"
+              d="M17.5 26.5 L23 32 L34.5 20"
+              fill="none"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              data-draw={justLanded || undefined}
+            />
+          </svg>
+        ) : (
+          <span className="ui-done-count">
+            <b>{done}</b>
+            <span aria-hidden="true">/</span>
+            <span>{all}</span>
+          </span>
+        )}
         <span className="ui-done-sr">
           {done} of {all} decided
         </span>

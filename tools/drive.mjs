@@ -16,6 +16,40 @@ export const ORIGIN = process.env.HL_ORIGIN ?? 'http://localhost:5090'
 
 export const wait = (page, ms) => page.waitForTimeout(ms)
 
+/* ============================================================
+   AND THEN WAIT FOR THE PHOTOGRAPHS.
+
+   A fixed `wait` is a guess about the network, and on a catalogue
+   of sixty-seven renders the guess was wrong: two runs of the same
+   screen at the same width produced one sheet of finished hulls
+   and one sheet of half-decoded slivers. Every picture ruler in
+   this repo — the `cropped`/`spilling`/`upscaled` audit, the
+   screenshots the owner actually looks at — reads `naturalWidth`,
+   and an image still arriving has a `naturalWidth` of 0.
+
+   `img.complete` is true for a failed image too, which is correct
+   here: a broken `src` is a finding, not something to wait out.
+   The timeout returns rather than throws for the same reason — a
+   driver that dies because one render is slow tells you nothing
+   about the other sixty-six.
+   ============================================================ */
+export async function settled(page, ms = 6000) {
+  try {
+    await page.waitForFunction(
+      () => [...document.images].every((i) => i.complete),
+      undefined,
+      { timeout: ms },
+    )
+  } catch {
+    /* some picture never arrived; the rulers will say which */
+  }
+  /* one frame past the last decode, so what is measured is what
+     was painted and not what was merely loaded */
+  await page.evaluate(
+    () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+  )
+}
+
 /** Sign in with the demo account and load the Master Price File —
  *  53 tables, 15,691 rows, 25 modules. A screen measured against an
  *  empty store is a picture of an empty state. */

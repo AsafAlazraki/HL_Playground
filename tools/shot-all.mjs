@@ -16,7 +16,7 @@
 import { chromium } from 'playwright-core'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { wait, signInAndSeed } from './drive.mjs'
+import { wait, settled, signInAndSeed } from './drive.mjs'
 
 const argv = process.argv.slice(2)
 const arg = (n, d) => {
@@ -124,6 +124,7 @@ try {
       await wait(page, 2600)
       if (DARK) await dark()
       await wait(page, 400)
+      await settled(page)
       const file = join(OUT, `${name}${DARK ? '-dark' : ''}.png`)
       await page.screenshot({ path: file })
       console.log(`  ${name}`)
