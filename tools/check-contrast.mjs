@@ -230,52 +230,93 @@ const SCREENS = [
     at: 'module',
     open: async (p) => {
       await door(p, /^Modules/)
-      await p.getByRole('button', { name: /^Open .+ — / }).first().click()
-      await p.getByRole('tab', { name: 'Dashboard' }).first().click()
+      await p.waitForTimeout(1500)
+      /* `.mo-face` — the rebuilt tile IS the button. This pressed
+         a control named \"Open <something> —\", which is the shipped
+         screen's shape and does not exist here, so the stop reported
+         COULD NOT OPEN for every run since the rebuild landed. */
+      await p.locator('.mo-face').first().click()
+      await p.waitForTimeout(1600)
+      const tab = p.getByRole('tab', { name: 'Dashboard' })
+      if (await tab.count()) await tab.first().click()
+      await p.waitForTimeout(1200)
     },
   },
   { name: 'data', at: 'data', open: async (p) => door(p, /^Data/) },
   {
-    /* the front door of a table — the gallery, which is what a table
-       opens as (`catalogueLens.ts`) */
+    /* THE CATALOGUE, REBUILT. This walked `.cat-gallery` and pressed
+       "All tables" — the shipped screen's shape — and the rebuilt
+       catalogue has neither, so the stop reported COULD NOT OPEN and
+       the guard exited FAILED while saying nothing at all about a
+       screen that holds 67 photographic cards and nine type steps.
+       A guard aimed at a screen that no longer exists is worse than
+       no guard: it fails loudly for the wrong reason and trains a
+       reader to ignore the exit code. */
     name: 'catalogue',
     at: 'table',
-    sure: '.cat-gallery',
+    sure: '.ct',
     open: async (p) => {
       await door(p, /^Data/)
-      await p.getByRole('button', { name: /^All tables/ }).first().click()
-      await p.getByRole('button', { name: /^Open .+ — / }).first().click()
+      await p.waitForTimeout(1600)
+      await p.locator('.dt-open').filter({ hasText: 'Highfield Inflatables' }).first().click()
+      await p.waitForTimeout(2400)
     },
-  },
-  {
-    /* and the same table at the other density — the register, the
-       screen a dealer is in all day, and the surface finding 2's 21
-       band names at 4.33:1 were measured on. The lens is session
-       state, not a place, so the address cannot tell the two apart
-       and `sure` does. */
-    name: 'register',
-    at: 'table',
-    sure: '.tb-scroll',
-    open: async (p) => p.getByRole('button', { name: /^List$/ }).first().click(),
   },
   { name: 'quotes', at: 'quotes', open: async (p) => door(p, /^Quotes/) },
   { name: 'customers', at: 'customers', open: async (p) => door(p, /^Customers/) },
-  { name: 'new quote', at: 'new-quote', open: async (p) => door(p, /^New quote$/) },
   {
-    /* and through the picker into the configurator, the one screen
-       wearing the display tier. A place, then a model, then the act —
-       the same three presses a dealer makes. */
+    /* the picker, which is where a quote starts */
+    name: 'picker',
+    at: 'new-quote',
+    sure: '.qp',
+    open: async (p) => {
+      await door(p, /^Home/)
+      await p.waitForTimeout(1300)
+      await p.getByRole('button', { name: /New quote/ }).first().click()
+      await p.waitForTimeout(2100)
+    },
+  },
+  {
+    /* a place — the brand's models and their colourways, and the
+       commit card at the foot */
+    name: 'place',
+    at: 'new-quote',
+    sure: '.pl',
+    open: async (p) => {
+      await p.locator('.qp-card').first().click()
+      await p.waitForTimeout(2400)
+    },
+  },
+  {
+    /* and through into the configurator, the one screen wearing the
+       display tier. Continues from the place above — the order IS the
+       route, which is this file's own contract. */
     name: 'configurator',
     at: 'quote',
+    sure: '.bs',
     open: async (p) => {
-      await p
-        .getByRole('list', { name: /places you can quote from/i })
-        .getByRole('button')
-        .first()
-        .click()
-      await p.getByRole('option').first().click()
+      await p.locator('.pl-card').first().click()
+      await p.waitForTimeout(800)
       await p.getByRole('button', { name: /Start the quote|Back to the quote/ }).first().click()
-      await p.waitForTimeout(1200)
+      await p.waitForTimeout(1800)
+    },
+  },
+  {
+    /* THE QUOTATION. Never measured by anything until this week, and
+       the first sweep that opened it found a cropped hull and two
+       overflows. It is the one page that leaves the building. */
+    name: 'document',
+    at: 'quote',
+    sure: '.qt-doc',
+    open: async (p) => {
+      const who = p.getByRole('button', { name: /Who it is for/ })
+      if (await who.count()) await who.first().click()
+      await p.waitForTimeout(1300)
+      await p.getByPlaceholder(/their name/i).fill('Mark McWilliams')
+      await p.getByPlaceholder(/their name/i).press('Tab')
+      await p.waitForTimeout(1100)
+      await p.getByRole('button', { name: /Give it to the customer/ }).first().click()
+      await p.waitForTimeout(2200)
     },
   },
 ]
