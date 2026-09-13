@@ -3511,3 +3511,38 @@
 .qt-doc-marque-model {
   font-size: clamp(1.75rem, 17cqi, 5.5rem);
 }
+
+/* ============================================================
+   THE LETTERHEAD ON A 320px WINDOW.
+
+   `.qt-plate` — the box carrying the date, the reference and who
+   prepared it — holds `min-width: 236px` so its three rows of
+   mono never re-wrap and the quotation always looks the same width
+   across the top. At 320 the sheet is about 158px inside its own
+   padding, so that minimum simply ran past it: measured
+   `qt-doc-head 164>158` and `qt-plate 163>156`.
+
+   The minimum goes below the width where it cannot be honoured.
+   The plate then sizes to its own content, which at this width is
+   the whole column anyway, so the three rows still do not re-wrap
+   — the thing the minimum was protecting survives without it.
+   ============================================================ */
+@container sheet (max-width: 300px) {
+  .qt-plate {
+    min-width: 0;
+    width: 100%;
+  }
+
+  /* AND ITS ROWS STACK. Dropping the minimum gave the plate the
+     column, and the head still ran six pixels over: a row of this
+     plate is a label and a value on one line, and 'PREPARED BY'
+     beside 'Asaf Alazraki' in mono does not fit in 158px however
+     the box around it is sized. The label goes above the value —
+     which is what a label does everywhere else in this app, and
+     only ever sat beside it here because there was room. */
+  .qt-plate-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+  }
+}

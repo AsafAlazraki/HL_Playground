@@ -27,8 +27,12 @@
    THE WIDTHS ARE REAL DEVICES, not round numbers: 1440 a laptop,
    1280 the sweep's own baseline, 1024 an iPad landscape, 834 an
    iPad portrait, 768 the old tablet floor, 600 a phablet, 430 an
-   iPhone Pro Max, 390 an iPhone. The last two are where a dealer
-   actually stands on a pontoon with a customer.
+   iPhone Pro Max, 390 an iPhone — the last two being where a dealer
+   actually stands on a pontoon with a customer — and 320, which is
+   not a device at all but a window dragged narrower than any of
+   them. That one is in the list because "every screen size" means
+   every size a person can produce, and the first look below 390
+   found a defect that had been there the whole time.
 
    It needs `npm run dev` up, and a server restarted since any
    structural edit — `CLAUDE.md` carries why.
@@ -49,6 +53,15 @@ const WIDTHS = [
   [600, 900],
   [430, 932],
   [390, 844],
+  /* AND 320, WHICH IS NOT A PHONE. It is a window dragged narrower
+     than any phone made this decade — a size a person can produce
+     with a mouse, and therefore a size the owner's "every screen
+     size" covers. The floor was 390 and the first look below it
+     found the catalogue's search field squashed to about eighty
+     pixels beside a button that would not shrink: "A mode" and then
+     nothing. A search field too narrow to show what was typed into
+     it is not a narrow field, it is a broken one. */
+  [320, 720],
 ]
 
 const rail = (p, name) => p.getByRole('button', { name }).first().click()

@@ -1419,3 +1419,33 @@
    the row under the cursor cannot move because the bar changed its
    mind. What is lost is the ink that said "off" on the letter-key
    switch; the words say it, and `aria-pressed` still carries it. */
+
+/* ============================================================
+   THE EMPTY CARD WAS WIDER THAN THE WINDOW IT SAT IN.
+
+   `max-width: min(680px, calc(100% - var(--page-gutter) * 2))` is
+   right and was not enough: the card is a `ui-card--pad-lg`, and
+   at 320 its own padding plus the primitive's minimum put its
+   min-content above what the subtraction left. Measured:
+   `ui-card 241>214`, `cx-empty-body 217>166`.
+
+   A card cannot be narrower than its padding, so below the width
+   where the two fight, the padding gives way. The content is five
+   stacked things with air between them — an eyebrow, a headline, a
+   sentence, an act and a footnote — and at this size air inside
+   the card is the cheapest thing on the screen.
+   ============================================================ */
+@media (max-width: 380px) {
+  .cx-empty {
+    max-width: 100%;
+    margin-inline: 0;
+  }
+
+  .cx-empty .ui-card {
+    padding: var(--s-4);
+  }
+
+  .cx-empty-body {
+    gap: var(--s-3);
+  }
+}

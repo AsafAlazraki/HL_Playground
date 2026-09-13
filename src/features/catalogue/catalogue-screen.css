@@ -481,3 +481,33 @@
     scroll-snap-type: none;
   }
 }
+
+/* ============================================================
+   THE FIND FIELD AND THE SHEET LINK STACK BEFORE THEY SQUASH.
+
+   `.ct-head-do` is a row: a field that may take up to 42ch, and a
+   button whose label is four words and cannot shrink. Measured at
+   320px — a window dragged narrower than any phone, which is a
+   size a person can produce and therefore a size this has to work
+   at — the button held its 140px and the field was left about
+   eighty: "A mode" and then nothing. A search field too narrow to
+   show what was typed into it is not a narrow search field, it is
+   a broken one.
+
+   The button goes under it rather than beside it, and takes the
+   full width, because at this size everything does.
+   ============================================================ */
+@container (max-width: 420px) {
+  .ct-head-do {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ct-head-do > :first-child {
+    flex: 1 1 auto;
+  }
+
+  .ct-sheet {
+    width: 100%;
+  }
+}

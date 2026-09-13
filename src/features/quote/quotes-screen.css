@@ -519,3 +519,17 @@
 .qz-port {
   flex: 0 1 auto;
 }
+
+/* THE THREE WAYS OF LOOKING WRAP. `.qz-head` already wraps, so the
+   title and this row separate when they must — but this row itself
+   did not, and three buttons side by side have a min-content of
+   234px. Measured at 320: `qz-head 234>224`, ten pixels of "New
+   quote" off the right of a window somebody dragged narrow.
+
+   `justify-content: flex-end` so that when they DO take a second
+   line they stay under the primary action rather than drifting
+   left away from where a person just looked. */
+.qz-ways {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}

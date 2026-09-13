@@ -803,3 +803,36 @@
   inset: 0;
   background: linear-gradient(180deg, var(--surface-3) 0%, var(--bg-sunken) 100%);
 }
+
+/* ============================================================
+   A PLATE IS A NAMEPLATE, NOT A BILLBOARD.
+
+   The plate under an option's picture was the right answer to
+   300px of empty gradient and it became a different wrong answer
+   at width. `.bs-offer` is `auto-fill` at 248px, so in the step
+   column at 1440 — about 430px after the product took the larger
+   half — a LONE option gets one track and fills it. Measured on
+   the dealer-fit step: one line, no photograph, and a 430x270
+   lilac rectangle with the letters "TC" in the middle of it, the
+   largest object on the screen after the hull.
+
+   So a well with nothing in it is a BAND. It keeps the ratio when
+   there is a photograph, because that is the picture's shape, and
+   takes a fixed band when there is not, because a plate has no
+   shape of its own to honour — it is a maker's plate, and those
+   are wide and short.
+
+   `:has()` ASKS THE RIGHT QUESTION. `FrozenPhoto` returns null for
+   an address it cannot fetch, so "is there an img in this well" is
+   exactly the fact, decided once, in the one place that knows.
+   Nothing here duplicates that verdict.
+
+   AND THE ROW STAYS LEVEL. `.bs-offer` is `align-items: stretch`
+   and `.bs-cand-say` is `flex: 1 1 auto`, so a plate card beside a
+   photographed one grows its words instead of ending short: the
+   two wells differ and the two cards do not.
+   ============================================================ */
+.bs-cand-well:not(:has(.bs-cand-img)) {
+  aspect-ratio: auto;
+  height: 116px;
+}
