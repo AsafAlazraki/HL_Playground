@@ -212,6 +212,104 @@ const SCREENS = [
       await p.waitForTimeout(1800)
     },
   },
+
+  /* ============================================================
+     THE FOUR SURFACES THIS GUARD HAD NEVER PHOTOGRAPHED.
+
+     `check-shots` is the only PIXEL regression in the repo, and it
+     covered ten screens while `qa-responsive` grew to thirteen and
+     `check-contrast` to eleven. The four missing were the place,
+     the quotation, the board with rows on it and the cascade sheet
+     — which is to say the four surfaces changed most in the last
+     week, including three whose feet were rebuilt from bars into
+     cards. A pixel guard that does not watch what is moving is
+     watching the wrong thing.
+
+     They follow the configurator above and continue from it, which
+     is this file's contract: the order IS the route.
+     ============================================================ */
+  {
+    /* back out of the build to the place it came from — the commit
+       card at its foot is one of the three */
+    name: 'place',
+    at: 'new-quote',
+    sure: '.pl-bar',
+    /* FROM HOME, NOT BACKWARDS. The first draft pressed the way
+       back out of the build and timed out: 'Back' is drawn by the
+       shell as well as the stage, and on the configurator the one
+       this found was not the one that moves. Walking forward from
+       the rail is the route every other harness takes and the one
+       a dealer takes. */
+    open: async (p) => {
+      await p.locator('nav.sn').getByRole('button', { name: /^Home/ }).first().click()
+      await p.waitForTimeout(1400)
+      await p.getByRole('button', { name: /New quote/ }).first().click()
+      await p.waitForTimeout(2100)
+      await p.locator('.qp-card').first().click()
+      await p.waitForTimeout(2400)
+      await p.locator('.pl-card').first().click()
+      await p.waitForTimeout(1400)
+    },
+  },
+  {
+    /* and the sheet the spec names beside the completion card. It
+       is reachable only by moving the price level on a quote whose
+       lines actually move, which is why nothing had ever opened
+       it. */
+    name: 'cascade',
+    at: 'quote',
+    sure: '.cs-sheet',
+    open: async (p) => {
+      await p.getByRole('button', { name: /Start the quote|Back to the quote/ }).first().click()
+      await p.waitForTimeout(2000)
+      await p.locator('.ui-done-level:not(.is-on)').first().click()
+      await p.waitForTimeout(1400)
+    },
+  },
+  {
+    /* the quotation, frozen. Escape first: the cascade above leaves
+       its sheet up and the scrim swallows every press under it —
+       the fault `qa-responsive` hit the day the cascade was added
+       to it, and the same answer. */
+    name: 'document',
+    at: 'quote',
+    sure: '.qt-doc',
+    open: async (p) => {
+      /* PRESS THE SHEET'S OWN WAY OUT, not Escape. The sheet takes
+         focus when it opens and its Escape handler sits on the
+         sheet element, so Escape works for a person — measured. It
+         does not work HERE, because this harness blurs focus before
+         every capture on purpose (a focus ring is a pixel that
+         moves), so by the next stop the key has nowhere to land.
+         The button is the gesture anyway. */
+      const leave = p.locator('.cs-foot').getByRole('button').first()
+      if (await leave.count()) {
+        await leave.click()
+        await p.waitForTimeout(900)
+      }
+      const who = p.getByRole('button', { name: /Who it is for/ })
+      if (await who.count()) await who.first().click()
+      await p.waitForTimeout(1300)
+      await p.getByPlaceholder(/their name/i).fill('Mark McWilliams')
+      await p.getByPlaceholder(/their name/i).press('Tab')
+      await p.waitForTimeout(1100)
+      await p.getByRole('button', { name: /Give it to the customer/ }).first().click()
+      await p.waitForTimeout(2200)
+    },
+  },
+  {
+    /* and the board WITH A ROW ON IT — the `quotes` stop above is
+       the empty one, which is a true state and the one a new dealer
+       sees, but it exercises neither the pipeline strip nor the
+       rig. By here a quote has been issued. */
+    name: 'board',
+    at: 'quotes',
+    sure: '.qz-row',
+    open: async (p) => {
+      await p.locator('nav.sn').getByRole('button', { name: /^Quotes/ }).first().click()
+      await p.waitForTimeout(1600)
+    },
+  },
 ]
 
 const file = (name) => join(DIR, `${name.replace(/\s+/g, '-')}.png`)
