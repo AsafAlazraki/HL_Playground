@@ -159,14 +159,31 @@
   width: 135px;
 }
 
+/* AND THE TEN PIXELS THE DATE NEEDS COME FROM HERE, because this is
+   the only column in the rig that WRAPS. Every other one is nowrap
+   over hidden — which is to say every other one clips rather than
+   reflows — so a subject that outgrows 290px takes a second line
+   and nothing is lost. */
 .qz-col--what {
-  width: 300px;
+  width: 290px;
 }
 
 /* 110 AND NOT 95: a mono `2026-09-13` at the small step is 104px
-   with its padding, and 95 hard-clipped every row of the column. */
+   with its padding, and 95 hard-clipped every row of the column.
+
+   IT WAS 100 WHEN THIS WAS MEASURED AGAIN, with that paragraph
+   still sitting above it. The comment recorded the right number and
+   the rule disagreed with it, which is the one kind of comment
+   worse than none. The rig sums to 985 and the port is 992 at
+   1280x800, so ten pixels had to be found rather than added; they
+   came from the subject column above.
+
+   Every row of the date column was hard-clipped at 1024, 834 and
+   768, and a hard clip is the worse of the two cuts — an ellipsis
+   at least says a string was cut. Nothing found it because the only
+   board any sweep had ever opened was an empty one. */
 .qz-col--day {
-  width: 100px;
+  width: 110px;
 }
 
 .qz-col--stage {
@@ -352,4 +369,153 @@
   .qz-col--day {
     display: none;
   }
+}
+
+/* ============================================================
+   THE PIPELINE STRIP (qz-pipe) — COCKPIT.
+
+   Cards, because each one is a separate object a person presses,
+   and a row of equal cards is the one shape that says "these are
+   the same kind of thing, pick one". Not a chart: a chart needs a
+   legend and an axis and answers a question in two steps. This
+   answers it in the figure.
+
+   A FIGURE IS NEVER A HUE (rule 5). The money on these cards is
+   `--fg` and mono and tabular, exactly as it is in the table
+   below; the accent appears only on the card that is ON, where it
+   marks a STATE and not a value.
+
+   NO ENTRANCE ANIMATION. §2: Cockpit does not animate on arrival.
+   A dealer opens this screen forty times a day.
+   ============================================================ */
+.qz-pipe {
+  display: grid;
+  /* AUTO-FILL AND NOT AUTO-FIT, which is the whole difference
+     between a strip and two billboards. Auto-fit collapses the
+     tracks nothing occupies and hands their width to the cards
+     that exist: measured with two stages on a 992px board, that is
+     two 500px tiles each carrying one figure. Auto-fill keeps the
+     empty tracks, so a stage card is about 190px whether there are
+     two of them or seven, and the row reads as a rank of the same
+     kind of thing — which is what it is. */
+  grid-template-columns: repeat(auto-fill, minmax(min(168px, 100%), 1fr));
+  gap: var(--s-3);
+  flex: 0 0 auto;
+  /* IT SCROLLS RATHER THAN WRAPPING TO A SECOND ROW on a phone:
+     four stages at 168px need 672px, and a second row of pipeline
+     is a second row of chrome above the rows a person came for. */
+  container-type: inline-size;
+}
+
+.qz-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--s-3) var(--s-4) calc(var(--s-3) + 3px);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: var(--e-card);
+  transition:
+    border-color var(--d-press) var(--ease-out),
+    box-shadow var(--d-press) var(--ease-out),
+    background var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qz-stage:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--e-card-hover);
+  }
+}
+
+.qz-stage:active {
+  box-shadow: var(--e1);
+}
+
+.qz-stage:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ON IS A STATE AND IT IS NOT COLOUR ALONE — `aria-pressed` carries
+   it too, and the edge and the ring are two marks rather than one
+   tint a person has to remember the meaning of. */
+.qz-stage[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+  box-shadow: 0 0 0 var(--border-strong) var(--accent);
+}
+
+.qz-stage-name {
+  color: var(--fg-tertiary);
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.qz-stage[aria-pressed='true'] .qz-stage-name {
+  color: var(--accent);
+}
+
+.qz-stage-worth {
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.qz-stage-n {
+  color: var(--fg-tertiary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* THE RULER INSIDE THE CARD. A 3px band along the foot, scaled to
+   this stage's share of the largest — so the shape of the
+   pipeline is readable across the row without a single axis,
+   tick or legend. `transform: scaleX` and not `width`, because a
+   width animates on the layout thread and this one does move:
+   pressing a stage does not change it, but a quote moving stage
+   does, and that is a real event worth seeing. */
+.qz-stage-bar {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 3px;
+  background: var(--line-strong);
+  transform: scaleX(var(--share, 0));
+  transform-origin: left center;
+  transition: transform var(--d-slow) var(--ease-out);
+}
+
+.qz-stage[aria-pressed='true'] .qz-stage-bar {
+  background: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qz-stage,
+  .qz-stage-bar {
+    transition: none;
+  }
+}
+
+/* ============================================================
+   AND THE TABLE STOPS STRETCHING INTO A VOID.
+
+   `.qz-port` was `flex: 1`, so with one quote on the board it drew
+   a bordered white panel six hundred pixels tall holding a single
+   row. `min-height` rather than a height: it still takes every
+   pixel it is given when there are rows to fill them, and it stops
+   at what it holds when there are not. The ground under it is the
+   page, which is what the space actually is.
+   ============================================================ */
+.qz-port {
+  flex: 0 1 auto;
 }

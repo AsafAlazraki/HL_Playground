@@ -74,6 +74,30 @@ const SCREENS = {
       await p.locator('.qp-card').first().click()
     },
   ],
+  /* THE BOARD WITH SOMETHING ON IT. `quotes` opens a fresh session's
+     board, which is empty — a true state, and the one a new dealer
+     sees, but it cannot show what the board DOES. This raises two:
+     one carried all the way to the customer and one left as a draft,
+     so the pipeline strip has two stages to count and the rows have
+     something to sort. */
+  board: [
+    '.qz',
+    async (p) => {
+      await SCREENS.document[1](p)
+      await wait(p, 2200)
+      await rail(p, /^Home/)
+      await wait(p, 1300)
+      await p.getByRole('button', { name: /New quote/ }).first().click()
+      await wait(p, 2100)
+      await p.locator('.qp-card').nth(1).click()
+      await wait(p, 2300)
+      await p.locator('.pl-card').first().click()
+      await wait(p, 700)
+      await p.getByRole('button', { name: /Start the quote|Back to the quote/ }).click()
+      await wait(p, 1800)
+      await rail(p, /^Quotes/)
+    },
+  ],
   document: [
     '.qt-doc',
     async (p) => {

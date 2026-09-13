@@ -85,6 +85,11 @@ export function QuotesScreen({
   const at = useStages(slug)
   const [query, setQuery] = useState('')
   const [by, setBy] = useState<SortBy>('day')
+  /* THE STAGE A PERSON IS LOOKING AT, or every stage. Not a
+     multi-select: a dealer asks "what is sitting in Issued", one
+     stage at a time, and a set of checkboxes over four stages is
+     four controls answering a question nobody asked. */
+  const [onlyStage, setOnlyStage] = useState('')
 
   const rows = useMemo<Row[]>(() => {
     const stages = stagesOf(slug)
@@ -114,7 +119,9 @@ export function QuotesScreen({
 
   const typed = query.trim().toLowerCase()
   const shown = useMemo(() => {
-    const list = typed === '' ? rows.slice() : rows.filter((r) => r.hay.includes(typed))
+    const narrowed = onlyStage === '' ? rows : rows.filter((r) => r.stage === onlyStage)
+    const list =
+      typed === '' ? narrowed.slice() : narrowed.filter((r) => r.hay.includes(typed))
     /* THE SECOND KEY IS ALWAYS THE REFERENCE, so a sort is stable
        and the screen does not reshuffle its ties between paints. */
     const ref = (a: Row, b: Row): number => b.reference.localeCompare(a.reference, 'en-AU')
@@ -126,7 +133,46 @@ export function QuotesScreen({
       return ref(a, b)
     })
     return list
-  }, [rows, typed, by])
+  }, [rows, typed, by, onlyStage])
+
+  /* ============================================================
+     THE PIPELINE, COUNTED — and it is a control, not a chart.
+
+     A board holding a handful of quotes was a table stretched to
+     the height of the window with six hundred pixels of white
+     under one row. Every ruler passed it: nothing overflowed,
+     nothing was cut, every ratio cleared. It was still the worst
+     screen in the app, because the Cockpit register's whole claim
+     is DENSITY and a screen with nothing to be dense about has to
+     answer a different question.
+
+     The question a dealer actually asks a quotes board is not
+     "list them" — it is "how much is sitting where". So the space
+     above the rows carries one segment per stage with its count
+     and its value, and pressing one narrows the list to it.
+     Derived entirely from the rows already on screen: no figure
+     here is computed from anything the quotes do not carry.
+
+     ORDERED BY THE STAGE MODEL, NOT BY SIZE. The stages are a
+     pipeline and their order is the order they happen in; sorting
+     them by value would put a dealer's own process in an order
+     their business does not have.
+     ============================================================ */
+  const pipeline = useMemo(() => {
+    const seen = new Map<string, { stage: string; n: number; worth: number }>()
+    for (const r of rows) {
+      const key = r.stage === '' ? 'No stage' : r.stage
+      const got = seen.get(key) ?? { stage: key, n: 0, worth: 0 }
+      got.n += 1
+      got.worth += r.amount
+      seen.set(key, got)
+    }
+    return [...seen.values()]
+  }, [rows])
+
+  /* the widest segment is the ruler the others are drawn against,
+     so an empty board draws no bars rather than dividing by zero */
+  const biggest = pipeline.reduce((n, p) => Math.max(n, p.worth), 0)
 
   /* WHAT THE YARD HAS OUT, counted over what is SHOWN — a total
      under a filtered list that counted everything would be a figure
@@ -138,8 +184,18 @@ export function QuotesScreen({
       <header className="qz-head">
         <div className="qz-head-say">
           <h1 className="t-display qz-name">Quotes</h1>
+          {/* BOTH HALVES COUNT THE SAME LIST, and they did not. The
+              figure was summed over what is SHOWN — correct, and for
+              the stated reason: a total under a filtered list that
+              counted everything is a figure about a list nobody is
+              looking at. The COUNT beside it was `rows.length`, all
+              of them. With the pipeline strip narrowing to one stage
+              that read "2 quotes · $4,706 out", which is a sentence
+              about nothing: neither the two nor the figure is wrong
+              on its own and together they are false. The tools line
+              below says "1 of 2", so nothing is hidden by agreeing. */}
           <p className="t-small qz-census">
-            {rows.length} {rows.length === 1 ? 'quote' : 'quotes'} · {money(worth)} out
+            {shown.length} {shown.length === 1 ? 'quote' : 'quotes'} · {money(worth)} out
           </p>
         </div>
         {/* THE SAME THREE WAYS OF LOOKING the host's header carried,
@@ -161,6 +217,44 @@ export function QuotesScreen({
         </nav>
       </header>
 
+      {/* ============================================================
+          ONE SEGMENT PER STAGE, AND PRESSING ONE NARROWS THE LIST.
+
+          `aria-pressed` rather than a link or a tab: it is a filter
+          that is on or off, and the same press turns it off again.
+          The bar under each figure is the stage's share of the
+          largest stage's value — a ruler inside the card rather
+          than a chart beside it, so it costs no legend.
+          ============================================================ */}
+      {pipeline.length > 1 ? (
+        <div className="qz-pipe" role="group" aria-label="Narrow by stage">
+          {pipeline.map((p) => (
+            <button
+              key={p.stage}
+              type="button"
+              className="qz-stage"
+              aria-pressed={onlyStage === p.stage}
+              onClick={() => setOnlyStage(onlyStage === p.stage ? '' : p.stage)}
+            >
+              <span className="t-label qz-stage-name">{p.stage}</span>
+              <span className="t-figure-lg qz-stage-worth">{money(p.worth)}</span>
+              <span className="t-caption qz-stage-n">
+                {p.n} {p.n === 1 ? 'quote' : 'quotes'}
+              </span>
+              <span
+                className="qz-stage-bar"
+                aria-hidden="true"
+                style={
+                  {
+                    '--share': biggest === 0 ? 0 : p.worth / biggest,
+                  } as Record<string, number>
+                }
+              />
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       <div className="qz-tools">
         <Field
           label="Find a quote"
@@ -170,10 +264,20 @@ export function QuotesScreen({
           type="search"
           autoComplete="off"
         />
+        {/* AND IT SAYS WHAT IS NOT BEING SHOWN. The curation contract
+            `hl-journeys` calls the one interaction in the old app
+            that is unambiguously right: narrow by a rule, name the
+            rule, and STATE THE COUNT HIDDEN. A list that is quietly
+            shorter than the board says it is, is a list a dealer
+            will trust once and then not again. */}
         <p className="t-caption qz-count" aria-live="polite">
           {typed === ''
-            ? `${shown.length} ${shown.length === 1 ? 'quote' : 'quotes'}`
-            : `${shown.length} of ${rows.length} match “${query}”`}
+            ? onlyStage === ''
+              ? `${shown.length} ${shown.length === 1 ? 'quote' : 'quotes'}`
+              : `${shown.length} of ${rows.length} · ${onlyStage} only`
+            : onlyStage === ''
+              ? `${shown.length} of ${rows.length} match “${query}”`
+              : `${shown.length} of ${rows.length} match “${query}” in ${onlyStage}`}
         </p>
       </div>
 

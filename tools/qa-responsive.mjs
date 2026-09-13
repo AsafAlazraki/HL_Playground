@@ -91,6 +91,45 @@ const STOPS = [
       await p.locator('.qp-card').first().click()
     },
   ],
+  /* THE BOARD WITH ROWS ON IT. The `quotes` stop above opens a
+     fresh session's board, which is empty — a true state and worth
+     measuring, but it exercises none of the pipeline strip and none
+     of the table. This raises two quotes in two stages first. */
+  [
+    'board',
+    '.qz-pipe',
+    async (p) => {
+      await rail(p, /^Home/)
+      await wait(p, 1200)
+      await p.getByRole('button', { name: /New quote/ }).first().click()
+      await wait(p, 2100)
+      await p.locator('.qp-card').first().click()
+      await wait(p, 2300)
+      await p.locator('.pl-card').first().click()
+      await wait(p, 600)
+      await p.getByRole('button', { name: /Start the quote|Back to the quote/ }).click()
+      await wait(p, 2700)
+      const who = p.getByRole('button', { name: /Who it is for/ })
+      if (await who.count()) await who.first().click()
+      await wait(p, 1300)
+      await p.getByPlaceholder(/their name/i).fill('Mark McWilliams')
+      await p.getByPlaceholder(/their name/i).press('Tab')
+      await wait(p, 1100)
+      await p.getByRole('button', { name: /Give it to the customer/ }).click()
+      await wait(p, 2200)
+      await rail(p, /^Home/)
+      await wait(p, 1300)
+      await p.getByRole('button', { name: /New quote/ }).first().click()
+      await wait(p, 2100)
+      await p.locator('.qp-card').nth(1).click()
+      await wait(p, 2300)
+      await p.locator('.pl-card').first().click()
+      await wait(p, 600)
+      await p.getByRole('button', { name: /Start the quote|Back to the quote/ }).click()
+      await wait(p, 1800)
+      await rail(p, /^Quotes/)
+    },
+  ],
   [
     'document',
     '.qt-doc',
