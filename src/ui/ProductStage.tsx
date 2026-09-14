@@ -194,6 +194,32 @@ export function ProductStage({
         ) : null}
       </div>
 
+      {/* ============================================================
+          THE GALLERY STRIP — Porsche's, measured live 2026-09-15: a
+          row of 98x58 thumbnails under the stage, radius 12, the
+          shown one ringed, an arrow at the end when they overflow.
+          Every picture the stage holds is a press away, which the
+          two arrows alone never made visible: a person could not
+          see there WERE nine views until they had pressed through
+          eight of them.
+          ============================================================ */}
+      {many ? (
+        <div className="ui-stage-strip" role="tablist" aria-label="Pictures">
+          {pictures.map((pic, i) => (
+            <button
+              type="button"
+              key={pic.src}
+              role="tab"
+              className="ui-stage-thumb"
+              aria-selected={i === at}
+              aria-label={pic.alt}
+              onClick={() => go(i)}
+            >
+              <img src={pic.src} alt="" loading="lazy" decoding="async" />
+            </button>
+          ))}
+        </div>
+      ) : null}
       {many || shown.says ? (
         <div className="ui-stage-foot">
           {shown.says ? <span className="t-small ui-stage-says">{shown.says}</span> : null}

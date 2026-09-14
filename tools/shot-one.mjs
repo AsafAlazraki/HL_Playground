@@ -204,7 +204,12 @@ const SCREENS = {
     async (p) => {
       await SCREENS.place[1](p)
       await wait(p, 2300)
-      await p.locator('.pl-card').first().click()
+      /* WHICH BOAT. `HL_MODEL="SP560"` picks a card by its name;
+         the first card on the shelf is an RU230 with nothing paired
+         to it, which photographs a configurator with nothing in it. */
+      const model = process.env.HL_MODEL
+      const card = model ? p.locator('.pl-card').filter({ hasText: model }).first() : p.locator('.pl-card').first()
+      await card.click()
       await wait(p, 700)
       await p.getByRole('button', { name: /Start the quote|Back to the quote/ }).click()
     },

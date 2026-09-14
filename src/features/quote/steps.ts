@@ -149,7 +149,11 @@ function whyOf(section: QuoteSection, reach: StepReach): string {
     return heldBackSentence(section.heldCount ?? 0, section.title)
   }
   if (reach === 'bare') {
-    return `Nothing from ${section.title} was put in the list of what goes with this one, so this stop has nothing to offer yet. Everything in ${section.title} is still one press away here — say what goes with it on the subject's own page and it arrives curated.`
+    /* ONE SENTENCE. It was three, and on a trailer stop with two
+       tables it was two four-line paragraphs of the same three — the
+       largest block of text on the screen, saying "nothing here".
+       Rule 10 asks for the why, not an essay. */
+    return `Nothing from ${section.title} is paired with this one yet — pair it on the subject's own page and it shows here.`
   }
   return ''
 }

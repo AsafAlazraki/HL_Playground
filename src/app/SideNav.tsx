@@ -262,7 +262,12 @@ export function SideNav({
   const modules = useBrowsableModules()
   const org = useProjectStore((s) => s.meta.org)
 
-  const [collapsed, setCollapsed] = useState(() => readFlag(RAIL_KEY, false))
+  /* NARROW BY DEFAULT. A 224px column of five words beside a
+     Showroom page is a fifth of a 1280 laptop spent on navigation a
+     dealer uses forty times a day and could use from a 56px rail of
+     glyphs — and the owner asked for it to read as a sidebar, not a
+     second page. Whatever a person sets is remembered. */
+  const [collapsed, setCollapsed] = useState(() => readFlag(RAIL_KEY, true))
   useEffect(() => {
     try {
       globalThis.localStorage?.setItem(RAIL_KEY, collapsed ? '1' : '0')

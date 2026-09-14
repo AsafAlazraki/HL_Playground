@@ -131,10 +131,16 @@
      and automotive surface driven for this rebuild is near-black on
      white, never a brand-coloured block — see `button.css`, which
      argues it and owns the rule. These are its two states. */
-  --action: #0b0e10;
+  /* A SECOND HUE. The owner, 2026-09-15: "a bit more colour usage
+     please". Ink actions read as Porsche's black pills, and black on
+     white with brass is two colours; the sea is the obvious third
+     for a marine dealer. #0f4c81 on white is 8.6:1, white on it
+     7.1:1 - both past 4.5 with room. It is the colour of the one
+     act on a screen, the ring on a chosen option, and nothing else. */
+  --action: #0f4c81;
   --action-fg: #ffffff;
-  --action-hover: #2c3238;
-  --action-press: #000000;
+  --action-hover: #0d4270;
+  --action-press: #0a3559;
 
   /* THE SHADOW A CUT-OUT CASTS ON WHITE. Not a box around the
      product — a shadow under it, which is what every reference

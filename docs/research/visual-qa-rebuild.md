@@ -265,3 +265,42 @@ The configurator's scale ratio fell to 3.09× because the marque lockup
 over the hull was already hidden and the price figure now sits at the
 display step. Same standing question as the 4.73× above: the spec says
 6×, the owner said the big head was awful.
+
+## 2026-09-15, later — the rail re-cut to Porsche's, with Porsche on screen
+
+"More like Porsche the right side, not less. STUDY IT." Driven live at
+`configurator.porsche.com/en-AU/mode/model/9921B2`, 1440×900, and
+measured: no stepper anywhere; the sections stacked down one rail the
+page scrolls through; each a white card (radius 16) whose head carries
+the group's name at 16/600 and its price beside it in grey; option rows
+of an 88×88 thumbnail on a 12px radius, a bold name, one grey line, the
+price, hairlines between; the chosen swatch ringed; 98×58 thumbnails in
+a strip under the stage; the price and one black pill in a slim bar that
+sticks. `out/ref/porsche-top.png` and `porsche-scrolled.png` are the
+frames.
+
+What changed to match, and it is the first change to the configurator's
+MARKUP in this rebuild: the stepper is gone; every band is rendered on
+the rail at once, in order, with the handover last, and `openId` — still
+the one "current" — follows the scroll through an IntersectionObserver
+on the rail rather than a press. `ProductStage` grew a thumbnail strip;
+`subjectPictures` feeds it the hull and every picked line with a
+photograph, so a quote with a motor and a trailer on it shows three. The
+option deck is thumbnail rows. The money card is a slim top bar. The
+refusal for an unpaired table is one sentence (`steps.ts:152`), not
+three. The sidebar collapses by default and reads as a sidebar. `--action`
+is a sea blue (#0f4c81; 8.6:1 on white, 7.1:1 under white) on every
+primary action, chosen ring and "On the quote" chip.
+
+The harness now takes `HL_MODEL` on the configurator route, because the
+first card on the shelf is an RU230 with nothing paired to it and a
+configurator photographed with nothing in it proves nothing. The SP560
+has a Yamaha F90 and a Redco trailer paired.
+
+| ruler | result |
+|---|---|
+| `check:types` · `lint` · `vitest` | clean · 343/343 · 2,974 passed |
+| `check-collide` | one collision found and fixed ("Recommended" spilt 3px past an 88px thumb), then nothing overlaps |
+| `check-contrast` | 1,277 text nodes across 11 screens, all clear |
+| `qa-sweep` | clean; configurator 3.09× |
+| `check:shots --update` | 14 of 14 re-taken |

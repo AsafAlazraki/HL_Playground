@@ -3424,3 +3424,11 @@
     background: var(--surface-1);
   }
 }
+
+/* THE RAIL READS AS A RAIL. It was white on a white page with a
+   hairline nobody saw; the owner asked for it to be clearly a
+   sidebar. A tone off the page and a real line. */
+.sn {
+  background: var(--surface-2);
+  border-right: var(--border) solid var(--line);
+}

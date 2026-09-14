@@ -43,11 +43,10 @@
    and nothing here may reintroduce it.
    ============================================================ */
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence } from 'motion/react'
 import type { ReactElement } from 'react'
-import { Button, Completion, Field, ProductStage, Stepper } from '@/ui'
-import type { Step } from '@/ui'
+import { Button, Completion, Field, ProductStage } from '@/ui'
 import { money } from '@/lib/money'
 import { QUOTE_LEVEL_ORDER, LEVEL_TITLE } from '@/types/model'
 import type { QuoteDef, QuoteLine } from '@/types/model'
@@ -117,7 +116,6 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
     () => bands.find((b) => b.decides && b.amount === null)?.id ?? bands[0]?.id ?? '',
   )
 
-  const open = bands.find((b) => b.id === openId) ?? bands[0]
 
   /* THE PROPOSAL IS A QUESTION, NOT A WRITE. Nothing has changed on
      the quote while this is set: the committed total stays exactly
@@ -128,6 +126,29 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
     levelKey: string
     levelLabel: string
   } | null>(null)
+  /* WHICH SECTION IS UNDER THE EYE. With every band on the rail at
+     once, "current" is a fact about where the rail is scrolled to —
+     the topmost section inside the upper 40% of the rail — and not
+     about which stop was pressed. `rootMargin` cuts the bottom 60%
+     off the observed area so a section becomes current as its head
+     comes up the rail, not as its foot leaves it. */
+  const railRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const rail = railRef.current
+    if (!rail || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(
+      (entries) => {
+        const top = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
+        const id = top?.target.getAttribute('data-band')
+        if (id) setOpenId(id)
+      },
+      { root: rail, rootMargin: '0px 0px -60% 0px', threshold: 0 },
+    )
+    for (const sect of rail.querySelectorAll('.bs-sect')) io.observe(sect)
+    return () => io.disconnect()
+  }, [bands])
   const { still } = useStillness()
 
   return (
@@ -260,25 +281,6 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
         />
       </footer>
 
-      <header className="bs-rail">
-        {/* THE LAST STOP IS NOT A BAND. `steps.ts` declares
-            `HANDOVER_STEP` beside the subject for exactly this
-            reason: "who is it for" is the one question no table can
-            carry, and `CONFIGURATOR.md` calls its absence from the
-            build screen "the single biggest fault in the flow" —
-            it sends a person to the document to do something the
-            build should own. */}
-        <Stepper
-          steps={[...bands.map((b) => railStop(b, refusals)), handoverStop(quote)]}
-          currentId={openId}
-          doneIds={[
-            ...bands.filter((b) => b.amount !== null).map((b) => b.id),
-            ...(quote.customer?.name ? [HANDOVER_STEP] : []),
-          ]}
-          onGo={setOpenId}
-          label="Build steps"
-        />
-      </header>
 
       <div className="bs-body">
         <section className="bs-product" aria-label="What is being quoted">
@@ -306,7 +308,7 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
           </h1>
 
           <ProductStage
-            pictures={subjectPictures(quote)}
+            pictures={subjectPictures(quote, steps)}
             emptyBecause={`No picture on ${quote.subjectLabel} yet. Add one on its row and it shows here.`}
           />
 
@@ -322,7 +324,7 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
           ) : null}
         </section>
 
-        <section className="bs-step" aria-label={openId === HANDOVER_STEP ? 'Who it is for' : (open?.name ?? 'This step')}>
+        <section className="bs-step" aria-label="What goes with it" ref={railRef}>
           {/* ============================================================
               THE NAME HEADS THE OPTIONS, not the photograph.
 
@@ -340,11 +342,49 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
             {lockup.trim ? <p className="t-small bs-trim">{lockup.trim}</p> : null}
           </header>
 
-          {openId === HANDOVER_STEP ? (
+          {/* ============================================================
+              EVERY SECTION, STACKED, THE WAY PORSCHE'S ARE.
+
+              It was one band at a time behind a stepper — a tab strip
+              across the top of the page, five words with circles and
+              ticks and a caption under each, and the rail showed only
+              the stop you had pressed. Porsche's configurator, driven
+              live on 2026-09-15, has no stepper at all: Exterior,
+              Wheels, Interior and the rest are stacked down one rail
+              and you SCROLL through them; the section under your eye
+              is the current one. The owner asked for exactly that.
+
+              So every band is on the rail at once, in order, and the
+              handover is the last section. `openId` is still the
+              current one — it now follows the scroll instead of the
+              press — and every pure function under it is untouched.
+              ============================================================ */}
+          {bands.map((b) => (
+            <section
+              key={b.id}
+              className="bs-sect"
+              id={`bs-sect-${b.id}`}
+              data-band={b.id}
+              data-current={openId === b.id || undefined}
+              aria-label={b.name}
+            >
+              <BandPane quote={quote} band={b} />
+            </section>
+          ))}
+          <section
+            className="bs-sect"
+            id={`bs-sect-${HANDOVER_STEP}`}
+            data-band={HANDOVER_STEP}
+            data-current={openId === HANDOVER_STEP || undefined}
+            aria-label="Who it is for"
+          >
+            <div className="bs-pane-head">
+              <p className="t-label bs-pane-num">
+                {String(bands.length + 1).padStart(2, '0')} Who it is for
+              </p>
+            </div>
             <Handover quote={quote} refusals={refusals} />
-          ) : open ? (
-            <BandPane quote={quote} band={open} />
-          ) : null}
+          </section>
         </section>
       </div>
 
@@ -381,46 +421,35 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
  *  engine's own clause for where the decision stands — "chosen:
  *  Yamaha - F9.9SMHB", "7 offered", "73 no longer sold" — and this
  *  screen never paraphrases it. */
-function railStop(b: Band, refusals: readonly string[]): Step {
-  return {
-    id: b.id,
-    name: b.name,
-    chose: b.fact || undefined,
-    /* A stop is never refused by the rail itself — nothing in this
-       sequence gates anything after it, which `steps.ts` records as
-       the second thing production's flow got wrong. The paperwork
-       is the one stop that can be blocked, and only by a blocker
-       the engine already worded. */
-    refusedBecause:
-      b.id === 'admin' && refusals.length > 0 ? refusals[0] : undefined,
-  }
-}
 
 /** The handover, as a rail stop. It is never refused: a quote can
  *  always be addressed, and the blockers that stop it being ISSUED
  *  are said on the bar, beside the action they block. */
-function handoverStop(quote: QuoteDef): Step {
-  return {
-    id: HANDOVER_STEP,
-    name: 'Who it is for',
-    chose: quote.customer?.name || undefined,
-  }
-}
 
 /** The subject's picture, as the stage wants it. One for now — a
  *  frozen quote holds a single `subjectImage`, and the colourway
  *  gallery is the picker's job rather than the document's. */
-function subjectPictures(quote: QuoteDef) {
-  const img = quote.subjectImage
-  if (!img) return []
-  return [
-    {
-      src: img.src,
-      /* NEVER "image". A screen reader reading "image" has been told
-         nothing; the row's own label is what the thing is. */
-      alt: img.alt ?? quote.subjectLabel,
-    },
-  ]
+function subjectPictures(quote: QuoteDef, steps: readonly BuildStep[]) {
+  /* THE GALLERY — the hull first, then everything picked that has a
+     photograph. Porsche's strip under the stage holds nine views
+     of one car; this quote has one view of the hull and a
+     photograph of most of what goes on it — a motor, a trailer, a
+     rigging kit — and until now the stage showed the hull alone.
+     Each picture SAYS what it is under the stage, because a Yamaha
+     on its own is not obviously the Yamaha on this quote. Keyed by
+     src so the same picture twice is one thumbnail. */
+  const out: { src: string; alt: string; says?: string }[] = []
+  const seen = new Set<string>()
+  const add = (src: string | undefined, alt: string, says?: string) => {
+    if (!src || seen.has(src)) return
+    seen.add(src)
+    out.push({ src, alt, says })
+  }
+  add(quote.subjectImage?.src, quote.subjectImage?.alt ?? quote.subjectLabel)
+  for (const step of steps) {
+    for (const line of step.lines) add(line.image?.src, line.label, line.label)
+  }
+  return out
 }
 
 /* ---- who it is for ----------------------------------------- */
@@ -612,6 +641,9 @@ function BandPane({ quote, band }: { quote: QuoteDef; band: Band }): ReactElemen
         <p className="t-label bs-pane-num">
           {band.num} {band.name}
         </p>
+        {band.amount !== null ? (
+          <p className="t-mono bs-pane-amt">{money(band.amount)}</p>
+        ) : null}
         <p className="t-small bs-pane-why">{band.fact}</p>
       </div>
 

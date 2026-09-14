@@ -294,3 +294,63 @@
 .ui-stage-img {
   filter: saturate(1.05) contrast(1.02);
 }
+
+/* ============================================================
+   THE GALLERY STRIP — Porsche's, measured live 2026-09-15: 98x58
+   thumbnails on a 12px radius, the shown one ringed, under the
+   stage. Every picture the stage holds is visible at once.
+   ============================================================ */
+.ui-stage {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.ui-stage-frame {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ui-stage-strip {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--s-1);
+  margin: var(--s-3) 0 0;
+  padding: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ui-stage-thumb {
+  flex: 0 0 98px;
+  height: 58px;
+  padding: 0;
+  border: var(--border-strong) solid transparent;
+  border-radius: 12px;
+  background: var(--surface-2);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color var(--d-press) var(--ease-out);
+}
+
+.ui-stage-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ui-stage-thumb[aria-selected='true'] {
+  border-color: var(--fg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-stage-thumb:hover {
+    border-color: var(--line-strong);
+  }
+}
+
+.ui-stage-thumb:focus-visible {
+  outline: var(--border-strong) solid var(--action);
+  outline-offset: 2px;
+}

@@ -450,19 +450,19 @@
    so.
    ============================================================ */
 .ui-btn--primary {
-  background: var(--fg);
-  color: var(--surface-1);
+  background: var(--action);
+  color: var(--action-fg);
   box-shadow: none;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .ui-btn--primary:hover {
-    background: var(--ink-press-hover);
+    background: var(--action-hover);
   }
 }
 
 .ui-btn--primary:active {
-  background: var(--ink-press-down);
+  background: var(--action-press);
 }
 
 /* and a refused primary stays ink, at the weight a refusal has */
