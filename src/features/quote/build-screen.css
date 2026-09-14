@@ -1,199 +1,362 @@
 /* ============================================================
-   THE CONFIGURATOR — SHOWROOM.
+   THE CONFIGURATOR (bs-) — SHOWROOM, REBUILT.
 
-   THREE ROWS THAT NEVER MOVE: the rail, the work, the bar. The
-   only thing that scrolls is the middle, and inside it only the
-   step column — the product stays put, which is the composition
-   `PHASE_TWO` §0 measured on Porsche and the one thing every
-   configurator in that study agreed on.
+   WHAT IT WAS: a form in two columns. The boat on the left, a pane
+   of decisions on the right, a bar underneath. That is the shape
+   every configurator in the teardowns has, and it has two faults
+   that no amount of styling fixes.
 
-   The old screen put the total at the foot of a 3,762px scroll in
-   an 805px port, so the figure a person is deciding against was
-   four screens away from the decision. Measured, on a Highfield
-   CL360 at 1600x1000.
+   THE PRODUCT GETS HALF A SCREEN. On a 1440px laptop the hull was
+   590px wide — narrower than the empty space beside it on any step
+   with one option — on the screen whose entire purpose is to make
+   somebody want a boat.
+
+   AND IT IS A DIFFERENT SCREEN ON A PHONE. Two columns become one
+   stacked column, so the layout a dealer learns at a desk is not
+   the layout they use on a pontoon. Every reflow defect this
+   screen has ever had came from that fold: a step pane keeping a
+   fixed height while its overflow went visible, a body dividing
+   itself between two rows, a spec strip painting through the
+   completion card.
+
+   WHAT IT IS NOW: A STAGE WITH A TRAY.
+
+     the filmstrip   where you are, along the top
+     the stage       the hull, the full width of the window, lit,
+                     with its name and its figures ON it
+     the tray        this stop's options, a deck that scrolls
+                     sideways and snaps
+     the foot        what it comes to, and the one action
+
+   Four bands, stacked, in that order — AT EVERY WIDTH. A phone
+   gets the same four bands narrower, not a different screen. The
+   deck is the reason that works: a horizontal tray shows four
+   cards at 1440 and one and a half at 390 without changing shape,
+   where a grid has to fold, and a folding grid is where the bugs
+   live.
+
+   NOTHING IN THE MARKUP MOVED. `.bs-body` is `display: contents`,
+   so the product and the step pane become bands of the outer grid
+   directly. The engine, the refusals, the frozen lines and every
+   recorded verdict are exactly what they were.
    ============================================================ */
 
 .bs {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  /* THE STAGE HAS A FLOOR AND THE TRAY HAS A CEILING, and the
+     first draft of this had neither. `minmax(0, 1fr)` lets a row
+     shrink to nothing when the rows around it want the space, and
+     an `auto` tray full of option cards wants all of it: measured,
+     the stage band collapsed to about forty pixels and the marque
+     and the spec strip — which are laid OVER the stage — landed on
+     top of the deck. A band that can be zero is not a band. */
+  grid-template-rows: auto minmax(260px, 1fr) minmax(0, 0.62fr) auto;
   height: 100%;
   min-height: 0;
-  background: var(--stage-bg);
+  background: var(--bg);
   container-type: inline-size;
 }
 
-/* -- the rail ------------------------------------------------- */
+/* THE BODY IS NOT A BOX ANY MORE. `display: contents` dissolves it
+   so its two children are rows of `.bs` — which is how the layout
+   changed shape without the component changing. */
+.bs-body {
+  display: contents;
+}
+
+/* -- the filmstrip -------------------------------------------- */
 
 .bs-rail {
-  padding: var(--s-4) var(--gutter);
-  background: var(--surface-1);
-  border-bottom: var(--border) solid var(--line);
+  padding: var(--s-3) var(--gutter);
+  border-bottom: var(--border) solid var(--line-subtle);
+  background: linear-gradient(180deg, var(--surface-1) 0%, var(--bg) 100%);
 }
 
-/* -- the two columns ------------------------------------------ */
+/* ============================================================
+   THE STAGE — the hull, and the words ON it.
 
-.bs-body {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--s-8);
-  min-height: 0;
-  padding: var(--section-gap) var(--gutter);
-}
+   The marque and the spec strip used to sit above and below the
+   photograph in a column. Here they are laid over it: the name
+   top-left where a title goes, the figures along the foot where a
+   maker's plate goes. That is what gives the picture the whole
+   band instead of the third left over after the type.
 
-/* THE PRODUCT DOES NOT SCROLL. It is what the whole screen is
-   about; scrolling it away to read a list of trailers is the
-   inversion this rebuild exists to end. */
+   IT IS A LAYER, NOT A COLUMN. One grid cell with three things
+   stacked in it, so the hull is as large as the band and nothing
+   competes with it for height.
+   ============================================================ */
+
 .bs-product {
+  position: relative;
+  display: grid;
+  grid-template-areas: 'stage';
+  min-height: 0;
+  padding: var(--s-4) var(--gutter) 0;
+}
+
+.bs-product > * {
+  grid-area: stage;
+  min-height: 0;
+}
+
+.bs-product .ui-stage {
+  height: 100%;
+  min-height: 0;
+}
+
+/* the frame fills the band and the picture keeps its own ratio
+   inside it: `contain` is not negotiable here, because a cropped
+   hull is a hull with its bow cut off */
+/* AND THE STAGE IS THE BOTTOM LAYER OF THE THREE. The lockup and
+   the spec strip carry `z-index: 2`, which should be enough — a
+   positioned element with a z-index paints above one without. It
+   was not: `.ui-stage-frame` isolates (it carries `m-lit`, which
+   needs its own stacking context for the glow behind it), and an
+   isolated box that comes later in the DOM wins its own context.
+   Saying 1 out loud settles it rather than relying on the order
+   the markup happens to be in. */
+.bs-product .ui-stage {
+  z-index: 1;
+}
+
+.bs-product .ui-stage-frame {
+  aspect-ratio: auto;
+  height: 100%;
+  min-height: 0;
+  border-radius: var(--r-panel);
+}
+
+/* -- the lockup, over the stage ------------------------------- */
+
+/* THE NAME SITS ON THE PHOTOGRAPH, top-left, and it is the largest
+   thing on the screen. `pointer-events: none` because it is a
+   label on a picture and not a control over one — the stage's
+   arrows and the colourway chips underneath must stay reachable. */
+.bs-lockup {
+  position: relative;
+  z-index: 2;
+  align-self: start;
+  justify-self: start;
   display: flex;
   flex-direction: column;
-  gap: var(--s-3);
+  gap: 2px;
+  margin: 0;
+  padding: var(--s-5) var(--s-6);
+  /* THE CAP WAS 22ch AND IT WAS MEASURED IN THE WRONG FACE. A `ch`
+     is the width of a zero in the element's OWN font, and this
+     element is set in the body face while the marque inside it is
+     set in the display face at the marque step — so 22ch resolved
+     to about 180px around a word that wants 430, and `RU230KAM`
+     ran fifty pixels out of its own box. Measured.
+
+     Nothing needs to cap it. The marque's own clamp bounds the
+     type and the stage bounds the marque; 100% is the only limit
+     that is true at every width. */
+  max-width: 100%;
   min-width: 0;
-  align-self: start;
-  position: sticky;
-  top: 0;
+  pointer-events: none;
 }
 
 .bs-eyebrow {
   margin: 0;
-  color: var(--fg-tertiary);
+  /* the brass holds on the plate as well as on the floor, which is
+     the point of a metal rather than a tint */
+  color: var(--accent-press);
 }
 
 .bs-marque {
-  margin: 0 0 var(--s-2);
-  color: var(--fg);
-  /* Nothing truncates mid-word. A model code is the one string a
-     cut cannot be read through. */
+  /* INK ON THE PLATE, NOT LIGHT ON THE ROOM. The stage is the one
+     lit surface in this application and the type that sits on it
+     has to run the other way — a caption on a photographic print
+     is printed. The first draft carried this in  with three
+     shadows behind it, which is the treatment for a name over a
+     dark photograph and was invisible the moment the plate became
+     a sweep. */
+  color: var(--sweep-ink);
   overflow-wrap: normal;
   word-break: keep-all;
 }
 
-/* -- the specs ------------------------------------------------ */
+.bs-trim {
+  color: var(--sweep-ink-soft);
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
 
+/* -- the plate of figures, along the foot of the stage --------- */
+
+/* WHAT THE BOAT IS, as a strip across the bottom of its own
+   photograph, the way a plate sits on a transom. It was a row
+   under the picture, which cost the picture its height and made
+   seven figures look like a table. */
 .bs-specs {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--s-2) var(--s-5);
-  margin: var(--s-2) 0 0;
+  position: relative;
+  z-index: 2;
+  align-self: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-6);
+  margin: 0;
+  padding: var(--s-5) var(--s-6);
+  width: 100%;
+  pointer-events: none;
+  /* A FADE OF THE PLATE'S OWN LIGHT, not a dark bar. The strip has
+     to separate seven figures from whatever the hull is doing
+     behind them, and on a lit plate the way to do that is more
+     light rather than less. */
+  background: linear-gradient(
+    to top,
+    var(--sweep-mid) 0%,
+    color-mix(in srgb, var(--sweep-mid) 72%, transparent) 56%,
+    transparent 100%
+  );
+  border-radius: 0 0 var(--r-panel) var(--r-panel);
 }
 
 .bs-spec {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s-3);
-  padding-bottom: var(--s-1);
-  border-bottom: var(--border) solid var(--line-subtle);
+  gap: var(--s-2);
   min-width: 0;
 }
 
 .bs-spec-lab {
   margin: 0;
-  color: var(--fg-tertiary);
-  min-width: 0;
+  color: var(--sweep-ink-soft);
+  overflow-wrap: normal;
+  word-break: keep-all;
 }
 
 .bs-spec-val {
   margin: 0;
-  color: var(--fg);
-  flex: 0 0 auto;
+  color: var(--sweep-ink);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
-/* -- the step column ------------------------------------------ */
+/* ============================================================
+   THE TRAY — this stop's decisions, as a deck.
+
+   A vertical list of options in a side pane is a form. A deck you
+   push sideways is a tray of things, which is what they are: four
+   motors, seven trailers, a shelf of dealer fit.
+
+   AND IT IS THE SAME SHAPE AT EVERY WIDTH. Four cards at 1440, one
+   and a half at 390 — the card keeps its size and the window shows
+   fewer of them, which is exactly what a shelf does.
+   ============================================================ */
 
 .bs-step {
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
   min-height: 0;
+  /* AND THE TRAY SCROLLS RATHER THAN GROWING. A stop with a picked
+     line, a curation toolbar, seven table headings and a deck is
+     taller than any window has to spare, and a tray that simply
+     takes what it needs takes it from the boat.
+
+     THE CAP IS A SHARE OF THE GRID, NOT OF THE VIEWPORT. The first
+     draft said `min(48vh, 440px)`, which does not know what the
+     rail and the foot have already taken: at 1440x900 the two of
+     them leave 654px, the stage holds its 260 floor, and a 440px
+     tray simply ran out through the bottom of the screen and under
+     the completion card. `0.62fr` divides what is actually left.
+     ============================================================ */
   overflow-y: auto;
-  /* SCROLL-EDGE FADE, NOT A DIVIDER. DESIGN_SYSTEM §5: where
-     floating chrome overlaps content, fade a mask rather than
-     drawing a 1px line and calling it separation. A mask costs no
-     compositor layer, which a blur over a scrolling list of
-     hundreds of rows would. */
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 var(--s-4),
-    #000 calc(100% - var(--s-5)),
-    transparent 100%
-  );
+  padding: var(--s-4) 0 var(--s-2);
+  border-top: var(--border) solid var(--line-subtle);
+  background: linear-gradient(180deg, var(--surface-1) 0%, var(--bg) 120%);
 }
 
 .bs-pane {
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
-  padding-bottom: var(--s-8);
+  gap: var(--s-3);
+  min-height: 0;
+}
+
+/* Everything in the tray keeps the gutter; only the deck runs to
+   the edge, because a shelf that stops short of the window looks
+   like it has ended. */
+.bs-pane-head,
+.bs-picked,
+.bs-curate,
+.bs-offer-cap,
+.bs-part,
+.bs-stops,
+.bs-ready,
+.bs-hand,
+.bs-book {
+  margin-inline: var(--gutter);
 }
 
 .bs-pane-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+}
+
+.bs-pane-num {
+  margin: 0;
+  color: var(--accent);
+}
+
+.bs-pane-why {
+  margin: 0;
+  color: var(--fg-secondary);
+  max-width: 74ch;
+}
+
+/* -- what is already on this stop ----------------------------- */
+
+.bs-picked {
   display: flex;
   flex-direction: column;
   gap: var(--s-1);
 }
 
-
-.bs-pane-why {
-  margin: 0;
-  color: var(--fg-secondary);
-  max-width: 60ch;
-}
-
-/* -- what is already on -------------------------------------- */
-
-.bs-picked {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  background: var(--surface-1);
-  border: var(--border) solid var(--line);
-  border-radius: var(--r-card);
-  overflow: hidden;
-}
-
 .bs-line {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  display: flex;
   align-items: center;
   gap: var(--s-3);
-  min-height: var(--row-h);
   padding: var(--s-2) var(--s-3);
-  border-bottom: var(--border) solid var(--line-subtle);
-}
-
-.bs-line:last-child {
-  border-bottom: 0;
+  border: var(--border) solid var(--accent-line);
+  border-radius: var(--r-control);
+  background: var(--accent-wash);
 }
 
 .bs-line-name {
-  color: var(--fg);
+  flex: 1 1 auto;
   min-width: 0;
+  color: var(--fg);
   overflow-wrap: normal;
   word-break: keep-all;
 }
 
 .bs-line-amt {
+  flex: 0 0 auto;
   color: var(--fg);
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
-/* NULL IS A REAL STATE, and carmine is how the rest of the app
-   already says it. */
 .bs-line-unpriced {
-  color: var(--danger);
+  flex: 0 0 auto;
+  color: var(--warning);
+  font-family: var(--font-mono);
 }
 
 .bs-line-off {
-  height: var(--control-h-sm);
-  padding: 0 var(--control-pad-x-md);
+  flex: 0 0 auto;
+  padding: var(--s-1) var(--s-3);
   border: var(--border) solid var(--line);
   border-radius: var(--r-control);
-  background: transparent;
+  background: var(--surface-2);
   color: var(--fg-secondary);
   font: inherit;
-  font-size: var(--t-caption-size);
+  font-size: var(--t-small-size);
   cursor: pointer;
   transition:
     background var(--d-press) var(--ease-out),
@@ -202,8 +365,8 @@
 
 @media (hover: hover) and (pointer: fine) {
   .bs-line-off:hover {
-    background: var(--danger-wash);
-    color: var(--danger);
+    background: var(--surface-4);
+    color: var(--fg);
   }
 }
 
@@ -216,36 +379,140 @@
   outline-offset: 2px;
 }
 
-/* -- what is offered ------------------------------------------ */
+/* -- narrowing the shelf -------------------------------------- */
+
+/* NARROW BY RULE, SAY THE RULE, SEARCH PAST IT, SWITCH IT OFF,
+   STATE WHAT WAS HIDDEN. `hl-journeys` calls this the one
+   interaction in the app being replaced that is unambiguously
+   right, and the engine has returned every number it needs since
+   before the rebuild. */
+.bs-curate {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-3);
+}
+
+.bs-curate > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 42ch;
+}
+
+.bs-showall {
+  flex: 0 0 auto;
+  height: var(--input-h);
+  padding: 0 var(--control-pad-x-lg);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+  color: var(--fg-secondary);
+  font: inherit;
+  font-size: var(--t-small-size);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out),
+    border-color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bs-showall:hover {
+    background: var(--surface-4);
+    color: var(--fg);
+  }
+}
+
+.bs-showall:active {
+  transform: scale(0.97);
+}
+
+.bs-showall:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ON MEANS THE LIST HAS STOPPED ANSWERING "WHAT FITS THIS BOAT",
+   which is a state worth seeing from across the room. */
+.bs-showall[aria-pressed='true'] {
+  background: var(--accent-wash);
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
 
 .bs-offer-cap {
-  margin: var(--s-2) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2) var(--s-3);
+}
+
+.bs-offer-count {
+  color: var(--accent);
+}
+
+/* A reason keeps its own case — uppercasing content is lossy, and
+   a refusal is content. */
+.bs-offer-why,
+.bs-offer-more {
   color: var(--fg-tertiary);
 }
 
+/* ============================================================
+   THE DECK ITSELF.
+
+   One row, scrolling sideways, snapping to a card.
+   `scroll-padding-left` so a snapped card rests inside the gutter
+   rather than against the window, and the row keeps its own
+   padding so a card's shadow is not clipped by its own scroller.
+
+   `proximity` and not `mandatory`: a dealer flicking past four
+   motors to reach the fifth should not be fought, and proximity
+   only takes over once they have nearly stopped.
+   ============================================================ */
 .bs-offer {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(228px, 262px);
+  align-items: stretch;
   gap: var(--s-3);
   margin: 0;
-  padding: 0;
+  padding: var(--s-1) var(--gutter) var(--s-3);
   list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: var(--gutter);
+  scrollbar-width: thin;
 }
+
+.bs-offer > li {
+  display: flex;
+  scroll-snap-align: start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bs-offer {
+    scroll-snap-type: none;
+  }
+}
+
+/* -- an option ------------------------------------------------- */
 
 .bs-cand {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s-1);
+  align-items: stretch;
   width: 100%;
-  padding: var(--s-3) var(--s-4);
-  background: var(--surface-1);
+  padding: 0;
   border: var(--border) solid var(--line);
   border-radius: var(--r-card);
+  background: var(--surface-1);
   color: var(--fg);
   font: inherit;
   text-align: left;
   cursor: pointer;
+  overflow: hidden;
   box-shadow: var(--e-card);
   transition:
     border-color var(--d-press) var(--ease-out),
@@ -256,6 +523,7 @@
 @media (hover: hover) and (pointer: fine) {
   .bs-cand:hover {
     box-shadow: var(--e-card-hover);
+    border-color: var(--line-strong);
   }
 }
 
@@ -271,8 +539,8 @@
   outline-offset: 2px;
 }
 
-/* PICKED IS UNMISTAKABLE. The old screen marked it with a tint a
-   person had to look for; the original HelmLogic — which nobody
+/* PICKED IS UNMISTAKABLE. The shipped screen marked it with a tint
+   a person had to look for; the original HelmLogic — which nobody
    thinks is beautiful — used a full border, a wash and a word, and
    was right to. */
 .bs-cand[data-on] {
@@ -281,134 +549,41 @@
   box-shadow: var(--glow-sm);
 }
 
-.bs-cand-name {
-  min-width: 0;
-  overflow-wrap: normal;
-  word-break: keep-all;
-}
-
-.bs-cand-amt {
-  color: var(--fg-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
-/* -- the bar -------------------------------------------------- */
-
-.bs-bar {
-  container-type: inline-size;
-}
-
-/* THE ACTION IS `Button`, NOT A LOCAL RULE. `.bs-give` was a
-   hand-rolled primary button with its own four states — the exact
-   shape that produced 295 button treatments across 39 stylesheets,
-   137 of them missing at least one state. Adopting the primitive
-   means DELETING, which is what the primitive layer is for. */
-
-
-/* -- narrow --------------------------------------------------- */
-
-@container (max-width: 1000px) {
-  .bs-body {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--s-6);
-  }
-
-  .bs-product {
-    position: static;
-  }
-
-  .bs-step {
-    overflow-y: visible;
-    mask-image: none;
-  }
-}
-
-/* -- a table inside a decision --------------------------------- */
-
-/* SEVEN TRAILER TABLES ARE SEVEN HEADINGS, NOT SEVEN STOPS. The
-   heading is drawn only where the decision really spans more than
-   one table — the treatment `QuoteStart` proved with
-   `.qs-sec-head`. One table needs no heading: its name is the
-   band's name, said twice. */
-.bs-part {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-}
-
-.bs-part-name {
-  margin: 0;
-  color: var(--fg);
-  overflow-wrap: normal;
-  word-break: keep-all;
-}
-
-.bs-part-why {
-  margin: 0;
-  color: var(--fg-secondary);
-  max-width: 60ch;
-}
-
-.bs-pane-num {
-  margin: 0;
-  color: var(--fg-tertiary);
-  padding-left: var(--s-3);
-  border-left: 3px solid var(--kind, var(--line));
-}
-
-/* THE LOCKUP — maker, model, trim, in one heading.
-
-   `subjectLabel` is four facts welded together and only the model
-   is a name. All three parts are drawn, in the order they were
-   written, so nothing about the thing being quoted is dropped —
-   they are simply set at the step each one has earned. */
-.bs-lockup {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0 0 var(--s-2);
-}
-
-.bs-trim {
-  color: var(--fg-tertiary);
-  overflow-wrap: normal;
-  word-break: keep-all;
-}
-
-.bs-offer-count {
-  color: var(--fg-tertiary);
-}
-
-/* The reason is a clause a sentence can sit "because" in front of.
-   It keeps its own case — uppercasing content is lossy, and this is
-   content. */
-.bs-offer-why {
-  color: var(--fg-secondary);
-}
-
-/* -- the option card, with the thing on it -------------------- */
-
-.bs-cand {
-  gap: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
-/* THE WELL IS THE MAT, and it is what shows through when there is
-   no picture. `FrozenPhoto` returns null rather than drawing a
-   broken image, so the ground below has to be a deliberate surface
-   rather than a hole — the same argument the product stage makes,
-   one size down. */
 .bs-cand-well {
   position: relative;
   display: block;
   width: 100%;
   aspect-ratio: 16 / 10;
-  background: linear-gradient(180deg, var(--surface-3) 0%, var(--bg-sunken) 100%);
+  flex: 0 0 auto;
+  overflow: hidden;
   border-bottom: var(--border) solid var(--line-subtle);
 }
 
+/* A PLATE IS A NAMEPLATE, NOT A BILLBOARD. A well with no picture
+   in it takes a band. The deck's cards are a fixed width, so this
+   can no longer balloon the way it did when a lone option filled a
+   one-track grid — but a plate is still wide and short, which is
+   what a plate is. */
+.bs-cand-well:not(:has(.bs-cand-img)) {
+  aspect-ratio: auto;
+  height: 96px;
+}
+
+.bs-cand-plate {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.bs-cand-mono {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+}
+
 .bs-cand-img {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
@@ -418,12 +593,12 @@
   object-fit: contain;
 }
 
-/* THE STAR THE PRICE FILE PUT THERE, said in a word. `recommended`
-   is the workbook's own mark, not our guess. */
+/* THE STAR THE PRICE FILE PUT THERE, said in a word. */
 .bs-cand-rec {
   position: absolute;
   top: var(--s-2);
   left: var(--s-2);
+  z-index: 1;
   padding: 2px var(--s-2);
   border-radius: var(--r-chip);
   background: var(--accent);
@@ -434,9 +609,17 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--s-2);
+  gap: var(--s-1);
+  flex: 1 1 auto;
   padding: var(--s-3) var(--s-4);
   width: 100%;
+}
+
+.bs-cand-name {
+  min-width: 0;
+  color: var(--fg);
+  overflow-wrap: normal;
+  word-break: keep-all;
 }
 
 /* WHAT COMES WITH IT — the five-way association, frozen onto the
@@ -444,11 +627,20 @@
    carries this; the original prints a motor's name and stops. */
 .bs-cand-facts {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-1) var(--s-2);
+  flex-direction: column;
+  gap: 1px;
 }
 
+/* A FACT CLAMPS TO TWO LINES WITH THE WHOLE STRING STILL IN THE
+   DOM — the sanctioned half of "nothing truncates mid-word".
+   Measured before this: three facts on a Yamaha F250 ran to seven
+   lines and pushed the price off its own card. */
 .bs-cand-fact {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
   color: var(--fg-secondary);
   min-width: 0;
   overflow-wrap: normal;
@@ -460,7 +652,17 @@
 }
 
 .bs-cand-unpriced {
-  color: var(--danger);
+  color: var(--warning);
+}
+
+/* The price is the second thing a person looks at, so it sits at
+   the bottom of the card rather than wherever the facts leave it. */
+.bs-cand-amt {
+  margin-top: auto;
+  padding-top: var(--s-2);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 /* THE WORD, because a tint alone asks a person to remember which
@@ -479,75 +681,95 @@
   border-top-color: var(--accent);
 }
 
-/* THE CAPTION IS TWO THINGS WITH A GAP, not one string. A label and
-   a sentence set at different steps cannot be joined by a space in
-   the markup — layout owns spacing. */
-.bs-offer-cap {
+/* -- a table inside a decision --------------------------------- */
+
+/* SEVEN TRAILER TABLES ARE SEVEN HEADINGS, NOT SEVEN STOPS. The
+   heading is drawn only where the decision really spans more than
+   one table: one table needs no heading, its name being the band's
+   name said twice. */
+.bs-part {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.bs-part-name {
+  margin: 0;
+  color: var(--fg);
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.bs-part-why {
+  margin: 0;
+  color: var(--fg-secondary);
+  max-width: 74ch;
+}
+
+/* -- what is in the way ---------------------------------------- */
+
+.bs-stops {
+  display: flex;
+  flex-direction: column;
   gap: var(--s-2);
+  padding: var(--s-4);
+  background: var(--danger-wash);
+  border-radius: var(--r-card);
+  /* the kind rail treatment, in the one hue that is not a kind: a
+     surface may carry it, reading text may not sit ON it */
+  border-left: 3px solid var(--danger);
 }
 
-/* EQUAL HEIGHT, so a row of options reads as a row of options
-   rather than a ragged shelf. The picture is a fixed aspect and the
-   word sits at the foot, so only the middle stretches. */
-.bs-offer {
-  align-items: stretch;
+.bs-stops-cap {
+  margin: 0;
+  color: var(--danger);
 }
 
-.bs-offer > li {
+.bs-stops-list {
   display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.bs-cand {
-  justify-content: flex-start;
+.bs-stop {
+  color: var(--fg);
 }
 
-.bs-cand-say {
-  flex: 1 1 auto;
+.bs-ready {
+  margin: 0;
+  padding: var(--s-4);
+  background: var(--success-wash);
+  border-left: 3px solid var(--success);
+  border-radius: var(--r-card);
+  color: var(--fg);
 }
 
-/* A FACT CLAMPS TO TWO LINES WITH THE WHOLE STRING STILL IN THE
-   DOM — the sanctioned half of "nothing truncates mid-word".
-   Measured before this: three facts on a Yamaha F250 ran to seven
-   lines and pushed the price off its own card. */
-.bs-cand-fact {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
-}
-
-/* The price is the second thing a person looks at, so it sits at
-   the bottom of the middle rather than wherever the facts leave it. */
-.bs-cand-amt {
-  margin-top: auto;
-  padding-top: var(--s-1);
-}
-
-/* -- who it is for -------------------------------------------- */
+/* -- who it is for --------------------------------------------- */
 
 .bs-hand {
   display: flex;
   flex-direction: column;
-  gap: var(--s-5);
+  gap: var(--s-4);
   max-width: 52ch;
 }
 
-/* THE REGISTER IS AN OFFER, NEVER A GATE. A walk-in who gave a name
-   and no details is a real quote — so this sits BELOW the field,
-   where it reads as "or", not as a step you have to pass. */
+/* -- the book of saved configurations -------------------------- */
+
 .bs-book {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  overflow: hidden;
 }
 
 .bs-book-cap {
-  color: var(--fg-tertiary);
   margin: 0;
+  padding: var(--s-3) var(--s-4);
+  color: var(--fg-tertiary);
+  border-bottom: var(--border) solid var(--line-subtle);
 }
 
 .bs-book-list {
@@ -556,10 +778,6 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  background: var(--surface-1);
-  border: var(--border) solid var(--line);
-  border-radius: var(--r-card);
-  overflow: hidden;
 }
 
 .bs-book-one {
@@ -569,7 +787,7 @@
   gap: var(--s-3);
   width: 100%;
   min-height: var(--row-h);
-  padding: var(--s-2) var(--s-3);
+  padding: var(--s-2) var(--s-4);
   border: 0;
   border-bottom: var(--border) solid var(--line-subtle);
   background: transparent;
@@ -616,319 +834,58 @@
   flex: 0 0 auto;
 }
 
-/* -- what is in the way --------------------------------------- */
+/* -- the foot -------------------------------------------------- */
 
-.bs-stops {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  padding: var(--s-4);
-  background: var(--danger-wash);
-  border-radius: var(--r-card);
-  /* The kind rail treatment, in the one hue that is not a kind: a
-     surface may carry it, reading text may not sit ON it. */
-  border-left: 3px solid var(--danger);
+.bs-bar {
+  container-type: inline-size;
 }
 
-.bs-stops-cap {
-  margin: 0;
-  color: var(--danger);
-}
+/* ============================================================
+   AND ON A SMALL WINDOW IT IS THE SAME FOUR BANDS.
 
-.bs-stops-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.bs-stop {
-  color: var(--fg);
-}
-
-.bs-ready {
-  margin: 0;
-  padding: var(--s-4);
-  background: var(--success-wash);
-  border-left: 3px solid var(--success);
-  border-radius: var(--r-card);
-  color: var(--fg);
-}
-
-/* -- the curation toolbar ------------------------------------- */
-
-/* NARROW BY RULE · SAY THE RULE · SEARCH PAST IT · SWITCH IT OFF ·
-   STATE WHAT WAS HIDDEN. `hl-journeys.md` §4 calls this the one
-   interaction in the app being replaced that is unambiguously
-   right, and the engine has returned every number it needs since
-   before the rebuild — what was missing was these controls. */
-.bs-curate {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--s-3);
-}
-
-.bs-curate > :first-child {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.bs-showall {
-  flex: 0 0 auto;
-  height: var(--input-h);
-  padding: 0 var(--control-pad-x-lg);
-  border: var(--border) solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface-1);
-  color: var(--fg-secondary);
-  font: inherit;
-  font-size: var(--t-small-size);
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background var(--d-press) var(--ease-out),
-    color var(--d-press) var(--ease-out),
-    border-color var(--d-press) var(--ease-out);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .bs-showall:hover {
-    color: var(--fg);
-    background: var(--surface-3);
+   That is the whole argument for this shape. There is no fold, no
+   column that becomes a row, no pane that gives up its scroll. The
+   stage gets shorter and the deck shows fewer cards. Every reflow
+   defect this screen has ever had lived at a fold that no longer
+   exists.
+   ============================================================ */
+@container (max-width: 760px) {
+  .bs-product {
+    padding-inline: var(--s-3);
   }
-}
 
-.bs-showall:active {
-  transform: scale(0.97);
-}
-
-.bs-showall:focus-visible {
-  outline: var(--border-strong) solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* ON MEANS THE LIST HAS STOPPED ANSWERING "WHAT FITS THIS BOAT",
-   which is a state worth seeing from across the row. */
-.bs-showall[aria-pressed='true'] {
-  background: var(--accent-wash);
-  border-color: var(--accent-line);
-  color: var(--accent);
-}
-
-/* A count of what is NOT on screen. It sits with the caption rather
-   than under the list, because it changes what the list means. */
-.bs-offer-more {
-  color: var(--fg-tertiary);
-}
-
-/* ============================================================
-   WHEN IT STACKS, SOMETHING HAS TO SCROLL.
-
-   `.bs` is `auto / minmax(0,1fr) / auto` — rail, body, the
-   completion card — and at full width the STEP column owns the
-   scroll while the product stays put. Stacking the body to one
-   column took that away and gave the scroll to nobody: measured at
-   430x932, the body was 285px tall holding 1,100px of content,
-   which painted straight through the completion card and off the
-   bottom of the screen. The photograph of the boat had the price
-   card sitting across the middle of it.
-
-   So below the stacking width the BODY is the scrollport. The
-   completion card stays in its own row, pinned, which is what a
-   card and not a bar was always for.
-   ============================================================ */
-@container (max-width: 1000px) {
-  .bs-body {
-    overflow-y: auto;
-    /* the card floats over the last of the list, so the list needs
-       room to finish underneath it */
-    padding-bottom: var(--s-4);
+  .bs-lockup,
+  .bs-specs {
+    padding: var(--s-3) var(--s-4);
   }
-}
 
-/* ============================================================
-   THE PRODUCT TAKES THE LARGER HALF.
-
-   A 50/50 split was measured at 1440 with the motor step open: the
-   option column held one 248px card in 590px of track and the
-   stage — the reason this register is called Showroom — was the
-   same width as the empty space beside it. The options grid is
-   `auto-fill` at 248px, so anything from 560px up holds two cards;
-   below that it holds one and the extra width is waste. Giving the
-   difference to the stage buys ~90px of hull at 1440 and costs the
-   option column nothing it was using.
-   ============================================================ */
-@container (min-width: 1200px) {
-  .bs-body {
-    grid-template-columns: minmax(0, 1.22fr) minmax(0, 1fr);
+  .bs-specs {
+    gap: var(--s-1) var(--s-4);
   }
-}
 
-/* ============================================================
-   THE PLATE UNDER AN OPTION'S PICTURE.
+  .bs-offer {
+    grid-auto-columns: minmax(200px, 232px);
+  }
 
-   Most accessory lines in this price file have no photograph — a
-   fuse block, a bilge pump, a set of tube covers — and `FrozenPhoto`
-   is right to draw nothing rather than a broken glyph. What it left
-   behind was the defect: a 16:10 well of plain gradient, 300px tall
-   in a 480px column, which is the largest object on the step and
-   carries no information at all.
-
-   So the well holds a mark: the line's own initials, set at display
-   size in the display face, on the lit ground. It is not a picture
-   pretending to be one — it is a plate, which is what a maker puts
-   on a part that is not worth photographing. The photograph paints
-   over it when there is one.
-   ============================================================ */
-.bs-cand-plate {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: color-mix(in srgb, var(--kind, transparent) 10%, var(--surface-2));
-}
-
-.bs-cand-mono {
-  color: var(--fg-secondary);
-  font-family: var(--font-display);
-  letter-spacing: 0.04em;
-}
-
-/* the picture sits ON the plate, and covers it entirely when it
-   arrives — so the two never show at once */
-.bs-cand-img {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, var(--surface-3) 0%, var(--bg-sunken) 100%);
-}
-
-/* ============================================================
-   A PLATE IS A NAMEPLATE, NOT A BILLBOARD.
-
-   The plate under an option's picture was the right answer to
-   300px of empty gradient and it became a different wrong answer
-   at width. `.bs-offer` is `auto-fill` at 248px, so in the step
-   column at 1440 — about 430px after the product took the larger
-   half — a LONE option gets one track and fills it. Measured on
-   the dealer-fit step: one line, no photograph, and a 430x270
-   lilac rectangle with the letters "TC" in the middle of it, the
-   largest object on the screen after the hull.
-
-   So a well with nothing in it is a BAND. It keeps the ratio when
-   there is a photograph, because that is the picture's shape, and
-   takes a fixed band when there is not, because a plate has no
-   shape of its own to honour — it is a maker's plate, and those
-   are wide and short.
-
-   `:has()` ASKS THE RIGHT QUESTION. `FrozenPhoto` returns null for
-   an address it cannot fetch, so "is there an img in this well" is
-   exactly the fact, decided once, in the one place that knows.
-   Nothing here duplicates that verdict.
-
-   AND THE ROW STAYS LEVEL. `.bs-offer` is `align-items: stretch`
-   and `.bs-cand-say` is `flex: 1 1 auto`, so a plate card beside a
-   photographed one grows its words instead of ending short: the
-   two wells differ and the two cards do not.
-   ============================================================ */
-.bs-cand-well:not(:has(.bs-cand-img)) {
-  aspect-ratio: auto;
-  height: 116px;
-}
-
-/* ============================================================
-   THE PRODUCT COLUMN MUST FIT THE ROW IT IS GIVEN.
-
-   `.bs` is a three-row grid — rail, body, the completion card —
-   and the body row is `minmax(0, 1fr)`. The product column inside
-   it is a marque, a stage at a fixed 16:10, and a spec strip, and
-   the three of them together are simply taller than that row at
-   1440x900. Nothing clips them, so the strip painted down under
-   the card: measured, `OA Length`, `2.3`, `Beam`, `1.37`, `Tube
-   Dia`, `Int Width` and `61 cm` all covered by `.ui-done`.
-
-   Every ruler in this repo reported that screen clean. The
-   contrast sweep measured the strip's ink against the ground it
-   was drawn on and it cleared; the overflow check asked whether
-   anything was wider than its box and nothing was. A thing hidden
-   under another thing is neither of those questions, which is why
-   `check-collide.mjs` now exists and why it starts at the document
-   rather than at a stage root.
-
-   THE STAGE IS WHAT GIVES WAY, and it is the right thing to: the
-   marque is a name and the strip is seven figures, both of them
-   as tall as their type and no taller. The photograph is the only
-   element on the column that can be any size at all, so it takes
-   the room the other two leave. That also makes the stage as large
-   as the window honestly allows, which on a Showroom screen is
-   what you want anyway.
-
-   `min-height: 0` on both, because a flex item will not shrink
-   below its content without it and the stage's content is an
-   image — the oldest reason a column like this refuses to fit.
-   ============================================================ */
-.bs-product {
-  height: 100%;
-  min-height: 0;
-}
-
-.bs-product .ui-stage {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.bs-product .ui-stage-frame {
-  /* the ratio is a FLOOR here, not a fixed shape: it keeps the
-     frame from collapsing when the column is short, and lets it
-     grow into the column when there is room */
-  aspect-ratio: auto;
-  height: 100%;
-  min-height: 0;
-}
-
-
-/* ============================================================
-   AND WHEN IT STACKS IT STOPS BEING A GRID.
-
-   The narrow rule above folds `.bs-body` to one column and hands
-   the scroll to it. It stayed a GRID while doing that, and a grid
-   with a definite height divides it between its rows: measured at
-   430x932 the body was 528px and gave the product 232 and the step
-   232 — while the step held 357px of content with its overflow
-   visible. A hundred and twenty-five pixels of "Nothing from GFAB
-   Trailers was put in the list…" painted straight down through the
-   completion card and over "$4,706".
-
-   A FLEX COLUMN CANNOT DO THAT. Its children take their own
-   height, the box scrolls when they add up to more than it has,
-   and nothing is asked to divide anything. The grid earns its keep
-   at full width, where two columns is the whole point of the
-   screen; stacked, there is one column and a grid is a promise
-   about tracks that no longer exist.
-   ============================================================ */
-@container (max-width: 1000px) {
-  .bs-body {
-    display: flex;
+  .bs-curate {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .bs-product,
-  .bs-step {
-    flex: 0 0 auto;
-    height: auto;
-    min-height: 0;
+  .bs-curate > :first-child {
+    max-width: none;
   }
 
-  /* stacked, the stage is a picture between a marque and a strip,
-     and each of the three wants its own height — the flexing stage
-     is a full-width answer to a column with room left in it */
-  .bs-product .ui-stage {
-    flex: 0 0 auto;
+  .bs-showall {
+    width: 100%;
   }
+}
 
-  .bs-product .ui-stage-frame {
-    aspect-ratio: 16 / 10;
-    height: auto;
+/* THE STAGE KEEPS A FLOOR. On a short window a proportional band
+   would leave the hull a letterbox, so it takes a minimum and the
+   page gives the height back from the tray instead. */
+@media (max-height: 720px) {
+  .bs {
+    grid-template-rows: auto minmax(220px, 1fr) auto auto;
   }
 }

@@ -265,8 +265,25 @@ const collisions = (page) =>
     /* AND WHAT IS COVERED — the renderer's own answer, which catches
        the cases the box test cannot: a thing painted over by an
        ancestor's sibling, a z-index that went the wrong way, a
-       sheet that did not close. */
+       sheet that did not close.
+
+       EXCEPT WHERE THE ELEMENT HAS OPTED OUT OF THE HIT TEST.
+       `elementFromPoint` can never return something with
+       `pointer-events: none`, so asking it about one always says
+       "covered" — the configurator's marque is laid over the
+       photograph with exactly that property, deliberately, so the
+       stage's arrows underneath stay pressable. The box test below
+       still watches those; this one cannot and should not pretend
+       to. */
+    const hittable = (el) => {
+      for (let n = el; n && n !== document.body; n = n.parentElement) {
+        if (getComputedStyle(n).pointerEvents === 'none') return false
+      }
+      return true
+    }
+
     for (const { el, r, t } of live) {
+      if (!hittable(el)) continue
       const over = coveredBy(el, r)
       if (over) {
         bad.push(`covered  "${t.slice(0, 26)}"  by  ${over.className || over.tagName}`)

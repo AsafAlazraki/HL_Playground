@@ -393,6 +393,19 @@ export function SideNav({
       data-collapsed={tight ? 'true' : 'false'}
       data-drawer={drawer ? 'true' : undefined}
       data-open={showing ? 'true' : undefined}
+      /* A CLOSED DRAWER IS NOT REACHABLE. Off-canvas is a transform,
+         and a transform moves pixels and nothing else: every door in
+         here stayed in the tab order and in the accessibility tree
+         while sitting outside the window. A keyboard user tabbing
+         off the top of a phone screen lands in a menu they cannot
+         see, and the harnesses found the same thing from the other
+         side — Playwright resolved "New quote" to the drawer's copy
+         and then could not click it, because it is not on the
+         screen.
+
+         `inert` is the whole answer: not focusable, not in the tree,
+         not hit-testable, and it costs one attribute. */
+      inert={drawer && !open ? true : undefined}
     >
       <div className="sn-head">
         <span className="sn-crest" aria-hidden="true">

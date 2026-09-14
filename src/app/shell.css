@@ -3397,6 +3397,27 @@
     transform: translate3d(0, 0, 0);
   }
 
+  /* AND IT IS HIDDEN WHEN IT IS SHUT, not merely moved. `inert` on
+     the element takes it out of the tab order and the
+     accessibility tree; this takes it out of RENDERING, so a screen
+     reader that walks the DOM and a harness that queries by role
+     both agree with the eye. The visibility flips only after the
+     slide has finished, or the drawer would vanish instead of
+     leaving. */
+  .sn[data-drawer] {
+    visibility: hidden;
+    transition:
+      transform var(--d-sheet) var(--ease-drawer),
+      visibility 0s linear var(--d-sheet);
+  }
+
+  .sn[data-drawer][data-open] {
+    visibility: visible;
+    transition:
+      transform var(--d-sheet) var(--ease-drawer),
+      visibility 0s;
+  }
+
   /* ------------------------------------------------------------
      THE HAMBURGER. Fixed, top-left, over everything but the drawer
      itself — it has to stay pressable while the drawer is open so

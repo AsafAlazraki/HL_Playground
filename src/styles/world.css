@@ -213,6 +213,30 @@
   --sheen: linear-gradient(180deg, rgba(255, 252, 245, 0.07) 0%, transparent 62%);
   --grad-surface: linear-gradient(180deg, #162A33 0%, #0C1A20 100%);
 
+  /* ------------------------------------------------------------
+     THE SWEEP — the one LIT surface in a dark application, and it
+     is a token because four screens draw it and a photograph's
+     ground has to be the same ground on all of them.
+
+     The seed is 1,411 manufacturer renders of white hulls on WHITE
+     backgrounds. On this floor they are bright rectangles; blending
+     cannot fix it because the hull is white too. So the plate under
+     a product photograph is lit — which is how the photograph was
+     taken, and how a showroom floor works.
+     ------------------------------------------------------------ */
+  --sweep-hi: #ffffff;
+  --sweep-mid: #f2f0ea;
+  --sweep-lo: #dcdcd4;
+  --sweep-seam: rgba(20, 30, 34, 0.16);
+  --sweep-vignette: rgba(20, 30, 34, 0.12);
+  --sweep-drop: rgba(0, 0, 0, 0.55);
+  /* AND THE INK THAT GOES ON IT. A lit plate is the one light
+     surface in this application, so it is the one place the ink
+     runs the other way: a caption on a photographic print is
+     printed, not glowing. */
+  --sweep-ink: #11202A;
+  --sweep-ink-soft: #46565F;
+
   /* the mark plate — a brass-tinted plate, not a grey square */
   --mark-paper: #16272E;
   --mark-ink: #D8A441;
@@ -425,29 +449,21 @@ body::before {
    than a rectangle with a picture in it, and that reads from
    across a room.
    ============================================================ */
-.ui-stage-frame,
-.ct-well,
-.pl-well,
-.mo-well,
-.bs-cand-well,
-.qp-well {
-  --mat: none;
-  background: radial-gradient(86% 74% at 50% 24%, #ffffff 0%, #f2f0ea 54%, #dcdcd4 100%);
-  border-color: var(--line);
-  box-shadow:
-    inset 0 -1px 0 rgba(0, 0, 0, 0.14),
-    inset 0 0 44px rgba(20, 30, 34, 0.1);
-}
+/* THE SWEEP MOVED TO THE FILES THAT OWN THE WELLS.
 
-/* THE STAGE IS THE SAME PLATE ONE SIZE UP, and it keeps the room's
-   shadow under it so it reads as lit rather than as a hole cut in
-   the floor. */
-.ui-stage-frame {
-  box-shadow:
-    inset 0 -1px 0 rgba(0, 0, 0, 0.14),
-    inset 0 0 70px rgba(20, 30, 34, 0.12),
-    0 26px 60px rgba(0, 0, 0, 0.6);
-}
+   It was written here against `.ui-stage-frame`, `.ct-well` and
+   their cousins, and it never once applied. A component stylesheet
+   is imported by its component; Vite emits it AFTER the global
+   sheet; at equal specificity the later rule wins. Every one of
+   those classes is declared in its own file, so every one of them
+   beat this — the change was in the repository and never on the
+   screen.
+
+   WHAT BELONGS HERE IS TOKENS. A token on `:root` is not in that
+   race: nothing else declares it, so it reaches every stylesheet
+   that reads it. `--sweep-*` above is the sweep, and each screen
+   draws it in its own file as that screen is rebuilt.
+   ============================================================ */
 
 /* AND THE KIND'S LIGHT WASHES UP BEHIND IT. `m-lit` has been in
    this repo for weeks and could never be seen: a 26% hue over a

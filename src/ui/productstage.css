@@ -245,3 +245,52 @@
     animation: none;
   }
 }
+
+/* ============================================================
+   THE SWEEP — and why this rule lives here and not in the world.
+
+   `world.css` sets every visual token and is loaded last in
+   `main.tsx`, so anything it says about a TOKEN wins everywhere.
+   Anything it says about a CLASS does not: a component stylesheet
+   is imported by its component, Vite emits it after the global
+   sheet, and at equal specificity later wins. The sweep was
+   written in `world.css` against `.ui-stage-frame` and this file's
+   own `.ui-stage-frame` quietly beat it — the stage stayed the
+   deep plate it had been and the change I thought I had made was
+   never on screen.
+
+   SO THE PLATE IS LIT, AND IT IS DECLARED WHERE THE FRAME IS.
+
+   Not a theme decision. The seed is 1,411 manufacturer renders and
+   nearly all of them are a white hull cut out on a WHITE ground —
+   not transparent, white. On the deep floor this app now stands on
+   they are bright rectangles with a boat somewhere inside, and no
+   blend mode fixes that: `multiply` makes the ground vanish and
+   takes the hull with it, because the hull is white too.
+
+   A lit sweep is how every one of these photographs was taken, and
+   how a dealer's floor works: the boat in the light, the room dark
+   around it. It is the strongest contrast in this palette and it
+   is pointed at the product.
+   ============================================================ */
+.ui-stage-frame {
+  background: radial-gradient(
+    86% 74% at 50% 24%,
+    var(--sweep-hi) 0%,
+    var(--sweep-mid) 54%,
+    var(--sweep-lo) 100%
+  );
+  border-color: var(--line);
+  box-shadow:
+    inset 0 -1px 0 var(--sweep-seam),
+    inset 0 0 70px var(--sweep-vignette),
+    0 26px 60px var(--sweep-drop);
+}
+
+/* the picture takes nothing but a touch of life. A drop-shadow
+   here would trace the white RECTANGLE and not the hull, which is
+   the mistake a dark theme usually makes with cut-out product
+   photography. */
+.ui-stage-img {
+  filter: saturate(1.05) contrast(1.02);
+}
