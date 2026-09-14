@@ -5335,3 +5335,176 @@
 .cn-new--fit .cn-new-effect {
   min-width: 0;
 }
+
+/* ============================================================
+   THE LEDGER BECOMES A LIST YOU CAN READ.
+
+   The re-composition above fixed the ORDER of a rule card — rate
+   first, then the rule, then the qualification, then what is
+   checked, then what is not, always with a reason. All of that
+   stands. What it did not fix was the SIZE.
+
+   MEASURED at 1440x900: one entry filled the screen. Sixteen rules
+   at about 340px each is 5,400px of scroll, so a person asking
+   "what does my price file assert" walked five screens to read
+   sixteen sentences — on a Cockpit surface, where `DESIGN_SYSTEM`
+   §2 asks for eighteen rows at 1280x800 and this managed one.
+
+   SO THE ENTRY IS A ROW UNTIL IT IS OPENED. The rate, the
+   sentence and the state are the row; the meter, the reasoning,
+   the live reading and the citation are one press behind it, in
+   the same order, in the same words. Nothing is removed — that
+   promise was made three sections up and it is kept here.
+
+   `display: contents` ON THE HEAD BLOCK is what makes one line
+   possible without a second DOM shape: `.cn-rl-top` stops being a
+   box and hands its two children straight to the row's grid, so
+   the rate, the sentence and the pill are three cells on one
+   baseline. Open, it becomes a box again and the card draws
+   exactly as it did before.
+   ============================================================ */
+
+.cn-rl-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-2) var(--s-4);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cn-rl-row:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 4px;
+  border-radius: var(--r-control);
+}
+
+/* -- shut -------------------------------------------------------- */
+
+.cn-rl:not(.is-open) {
+  padding: var(--s-3) var(--s-4);
+}
+
+.cn-rl:not(.is-open) .cn-rl-top {
+  display: contents;
+}
+
+/* THE RATE IS A COLUMN NOW, not a headline. Fixed width and
+   tabular, so sixteen percentages line up on their own decimal
+   down the page — which is the whole reason a register is faster
+   to read than a stack of cards. */
+.cn-rl:not(.is-open) .cn-rl-rate {
+  grid-column: 1;
+  grid-row: 1;
+  flex: 0 0 auto;
+  width: 5ch;
+  justify-content: flex-end;
+}
+
+.cn-rl:not(.is-open) .cn-rl-rate-n {
+  font-size: var(--t-mono-size);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* "581 of 581 testable live pairings" is the denominator's whole
+   story and it belongs with the meter that draws it. Shut, the
+   percentage is the summary and the rest is one press away. */
+.cn-rl:not(.is-open) .cn-rl-rate-of {
+  display: none;
+}
+
+.cn-rl:not(.is-open) .cn-rl-says {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+  min-width: 0;
+  font-size: var(--t-small-size);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cn-rl:not(.is-open) .cn-rl-pill {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  white-space: nowrap;
+}
+
+/* -- open -------------------------------------------------------- */
+
+/* open, the row goes back to being a block and the card draws as
+   it always has: the big rate, the pill beside it, the sentence
+   under both */
+.cn-rl.is-open .cn-rl-row {
+  display: block;
+}
+
+.cn-rl-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin-top: var(--s-3);
+}
+
+/* ============================================================
+   AND ON A NARROW WINDOW THE SHUT ROW KEEPS TWO LINES rather than
+   three columns — the rate and the state on one, the sentence
+   under them, which is the only arrangement that does not make a
+   nine-word rule into an ellipsis at 430px.
+   ============================================================ */
+@media (max-width: 720px) {
+  .cn-rl:not(.is-open) .cn-rl-says {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    white-space: normal;
+  }
+
+  .cn-rl:not(.is-open) .cn-rl-rate {
+    justify-content: flex-start;
+  }
+}
+
+/* ============================================================
+   AND THE AIR BETWEEN THEM COMES DOWN WITH THEM.
+
+   A row of 50px inside a 16px gap, under a 46px band, under a
+   24px caption, with 32px between groups, is a list whose spacing
+   was measured for cards 340px tall. Shrink the card and the
+   spacing is suddenly the loudest thing on the screen.
+
+   These are the Cockpit's own steps, and only the SHUT list takes
+   them: a group that has been opened goes back to the card rhythm,
+   because an expanded rule genuinely is a card and wants the room.
+   ============================================================ */
+
+.cn-ledger {
+  gap: var(--s-6);
+}
+
+.cn-grp-head.k-band {
+  padding: var(--s-2) var(--s-4);
+  margin-bottom: var(--s-2);
+}
+
+.cn-grp-say {
+  margin: 0 0 var(--s-2);
+}
+
+.cn-grp-list {
+  gap: var(--s-1);
+  margin-top: var(--s-2);
+}
+
+/* a shut row has its own hairline and does not also need a gap
+   wide enough to read as one */
+.cn-grp-list:has(.cn-rl.is-open) {
+  gap: var(--s-3);
+}

@@ -496,8 +496,40 @@
    the pixel as the instrument grows: 117 at 1440, 142.5 at 2560,
    which is 22 + the rig measured at that width less the 4.
    ============================================================ */
+/* ============================================================
+   AND FOR MONTHS THIS RULE DID NOTHING.
+
+   `inset` is the shorthand for top/right/bottom/left, and those
+   four properties apply to a POSITIONED box. `.shell-stage` is
+   `position: relative` and sits in its parent's normal flow, so
+   `bottom: 117px` on it shifts nothing and shrinks nothing:
+   measured at 1440x900 on the rules screen, the stage was
+   `inset: 0px 0px 117px` in its computed style and 900px tall,
+   bottom at 900, with the bar floating at 842.
+
+   The consequence is visible on every screen that raises an action
+   bar: the last rows of the list are drawn underneath it. On the
+   rules ledger a whole rule's sentence sat behind the pill.
+
+   AND PADDING IS NOT THE ANSWER EITHER, which took a second
+   measurement to find. `padding-bottom` shortens the CONTENT box,
+   and `.shell-stage > *` takes `height: 100%` of that — but
+   `.surface`, the box every stage actually draws in, is
+   `position: absolute; inset: 0`, and an absolutely-positioned
+   child resolves against its ancestor's PADDING box, which padding
+   grows rather than shrinks. Measured with the padding in place:
+   the stage computed `padding-bottom: 117px` and its children
+   still came back 900 tall.
+
+   HEIGHT IS THE ONE PROPERTY BOTH KINDS OF CHILD AGREE ON. The
+   stage is `height: 100%` of its grid area; taking the clearance
+   off there shrinks the border box, the padding box and the
+   content box together, so the flow children and the absolute ones
+   both land at 783. The arithmetic and the reasoning four
+   paragraphs up are unchanged — only where they are written.
+   ============================================================ */
 .shell-root.has-acts .shell-stage {
-  inset: 0 0 calc(var(--acts-clear, 132px) - 15px) 0;
+  height: calc(100% - (var(--acts-clear, 132px) - 15px));
 }
 
 /* ============================================================

@@ -250,6 +250,27 @@ function RuleRow({
   /* THE REASONING, SHUT BY DEFAULT. See the note at the disclosure. */
   const [why, setWhy] = useState(false)
 
+  /* ============================================================
+     AND THE WHOLE ENTRY IS SHUT BY DEFAULT TOO, which is the one
+     thing this surface still got wrong after the re-composition
+     above fixed the ORDER.
+
+     Measured at 1440x900: one entry filled the screen. Sixteen
+     rules at ~340px each is 5,400px of scroll, and a person who
+     wants to know "what does my price file assert" has to travel
+     five screens to read sixteen sentences. `DESIGN_SYSTEM` §2
+     asks Cockpit for eighteen rows at 1280x800 and this surface
+     managed one.
+
+     NOTHING IS REMOVED — that promise is three paragraphs up and
+     it still holds. The rate, the sentence and the state are the
+     row; the meter, the reasoning, the live reading and the
+     citation are one press behind it, in the same order, with the
+     same words. What changes is that the sixteen are a list you
+     can read rather than a stack you have to walk.
+     ============================================================ */
+  const [open, setOpen] = useState(false)
+
   /* THE REASON, CUT AT ITS OWN FIRST SENTENCE. Every one of these
      strings is built the same way — a sentence that IS the reason,
      then a paragraph explaining the app's limitation behind it — and
@@ -265,12 +286,23 @@ function RuleRow({
 
   return (
     <li
-      className={`cn-rl is-${state}`}
+      className={`cn-rl is-${state}${open ? ' is-open' : ''}`}
       /* the FULL-HEIGHT rail in the kind's hue — `k-rail` is 3px by
          the system's own definition, and `--cn-rl-accent` is kept as
          the name the stylesheet already knows it by */
       style={{ '--cn-rl-accent': accent, '--kind': accent } as CSSProperties}
     >
+      {/* THE ROW. A real button carrying the three things that
+          identify a rule — what share of the file keeps it, what it
+          says, and whether we check it — so the list is scannable
+          without opening anything. The sentence is the accessible
+          name; the rate and the pill are read out beside it. */}
+      <button
+        type="button"
+        className="cn-rl-row"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
       <div className="cn-rl-top">
         {measure ? (
           <p className="cn-rl-rate">
@@ -293,6 +325,12 @@ function RuleRow({
         <StatusPill state={state} where={seed.enforcedIn} />
       </div>
 
+      <p className="cn-rl-says">{seed.statement}</p>
+      </button>
+
+      {open ? (
+      <div className="cn-rl-body">
+
       {/* THE SAME MEASUREMENT, SEEN. `held / tested` as a 4px rule in
           the kind's own hue, so 685 of 757 does not read like 581 of
           581 at a glance. It is `aria-hidden` because the figure
@@ -307,8 +345,6 @@ function RuleRow({
           />
         </div>
       ) : null}
-
-      <p className="cn-rl-says">{seed.statement}</p>
 
       {/* THE REASONING MOVED BEHIND A DISCLOSURE, WHICH IS WHERE
           PHASE_TWO SENDS IT: "the explanation does not disappear; it
@@ -402,6 +438,8 @@ function RuleRow({
           because it is a reference, and it wraps rather than truncating
           — a half-printed cell address cannot be looked up. */}
       <Provenance text={seed.source} narrative="omit" />
+      </div>
+      ) : null}
     </li>
   )
 }

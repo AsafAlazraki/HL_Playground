@@ -71,6 +71,35 @@ const SCREENS = {
       await p.locator('.dt-open').filter({ hasText: 'Highfield Inflatables' }).first().click()
     },
   ],
+  /* THE THREE COCKPIT WINDOWS DATA OPENS. No harness had a stop for
+     any of them, so the rule editor, the fitment builder and the
+     reviewer — between them 5,400 lines of stylesheet — had never
+     been photographed or measured by anything. Each is a press on
+     the Data screen's own bar. */
+  rules: [
+    '.cn-root',
+    async (p) => {
+      await rail(p, /^Data/)
+      await wait(p, 1500)
+      await p.getByRole('button', { name: /^Rules/ }).first().click()
+    },
+  ],
+  fitment: [
+    '.ft',
+    async (p) => {
+      await rail(p, /^Data/)
+      await wait(p, 1500)
+      await p.getByRole('button', { name: /What fits what/ }).first().click()
+    },
+  ],
+  review: [
+    '.rw',
+    async (p) => {
+      await rail(p, /^Data/)
+      await wait(p, 1500)
+      await p.getByRole('button', { name: /^Review/ }).first().click()
+    },
+  ],
   picker: [
     '.qp',
     async (p) => {
