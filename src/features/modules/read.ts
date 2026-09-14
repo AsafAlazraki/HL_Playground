@@ -44,6 +44,7 @@ import { bandOf, formatCell, normColumn } from '@/features/views/columns'
    "206 groups" would be the jargon `leafNoun` exists to keep off the
    screen, and a second pluraliser is a second answer. */
 import { branchNoun, kindNoun, leafNoun } from '@/features/table/grouping'
+import { seededCopy, sourceKind } from '@/lib/imageSources'
 /* the direct path, as `columns` already is: nothing here needs the
    feature's React surface and a module must not pull ViewPage in to
    count its rows */
@@ -971,11 +972,28 @@ export interface Drawer {
   name: string
   /** the dealer's own singular for what this is a value of — 'category' */
   of: string
+  /** AND THEIR PLURAL, because "199 seriess" is what happens when a
+   *  face appends an s to a singular. `branchNoun` already resolves
+   *  both, and already knows that a word ending in s is its own
+   *  plural — it was throwing the second half away here. */
+  ofMany: string
   count: number
   /** the cheapest and dearest line in the drawer, already formatted.
    *  Both '' when nothing in it prices. */
   low: string
   high: string
+  /** THE BEST PHOTOGRAPH UNDER THIS BANNER, so a series can be drawn
+   *  as a door rather than as a row of text. The preference is
+   *  `doorPicture`'s, because a picture chosen two different ways in
+   *  one application is two applications: a HELD copy beats a
+   *  hotlink — a link we cannot fetch draws nothing, and a door that
+   *  draws nothing is worse than a door with the second-best boat on
+   *  it — and beyond that the bigger one wins.
+   *
+   *  It costs no new read. Every entry under the banner is already
+   *  in hand and already carries its own `img`; this is a pass over
+   *  a list that has been walked twice already. */
+  img?: ImageRef
 }
 
 /** Fewer headings than this and the ordinary grouped list is the
@@ -1017,9 +1035,11 @@ export function categoryDrawers(entries: IndexEntry[], tables: EntityDef[]): Dra
         kind,
         name,
         of: word.one,
+        ofMany: word.many,
         count: group.length,
         low: low?.price ?? '',
         high: high?.price ?? '',
+        img: bestPicture(group),
       })
     }
     /* BIGGEST FIRST INSIDE A TABLE, and never across tables: a
@@ -1029,4 +1049,27 @@ export function categoryDrawers(entries: IndexEntry[], tables: EntityDef[]): Dra
     out.push(...mine)
   }
   return out
+}
+
+/** The one a drawer wears. Same preference `doorPicture` applies to a
+ *  whole module — held before hotlinked, then bigger — so the front
+ *  door, a place's card and a series inside it can never disagree
+ *  about which photograph is the good one. */
+function bestPicture(group: readonly IndexEntry[]): ImageRef | undefined {
+  let best: ImageRef | undefined
+  let bestHeld = false
+  let bestSize = -1
+  for (const e of group) {
+    const img = e.img
+    if (!img || img.src === '') continue
+    const held = seededCopy(img.src) !== null || sourceKind(img.src) === 'own'
+    if (bestHeld && !held) continue
+    const size = (img.w ?? 0) * (img.h ?? 0)
+    if ((held && !bestHeld) || size > bestSize) {
+      best = img
+      bestHeld = held
+      bestSize = size
+    }
+  }
+  return best
 }

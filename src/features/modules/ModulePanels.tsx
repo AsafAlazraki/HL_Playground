@@ -44,6 +44,8 @@ import { ICON_SIZE } from '@/lib/icons'
 import { localDay, priceLevelsFor, quoteTotals, useQuotes } from '@/features/quote'
 import { ACTIVITY_EMPTY_HERE, ActivityList, useModuleActivity } from '@/features/activity'
 import { money } from '@/lib/money'
+import { markOf } from '@/lib/mark'
+import { FrozenPhoto } from '@/features/quote/photo'
 import { Button, Card, Row, SectionHead } from '@/ui'
 import {
   buildEntries,
@@ -247,24 +249,65 @@ export function ModuleHome({
                     that is not there. The two ends of the band are
                     REAL ROWS, never an average. */}
                 {series.length > 1 ? (
-                  <ul className="md-home-series">
+                  /* ============================================================
+                     THE SERIES ARE DOORS WITH BOATS ON THEM.
+
+                     This was eleven rows of text — a name, a count and a
+                     price band, all at one weight, running off the bottom
+                     of the screen — on the page a dealer lands on when
+                     they press their own brand. Measured: the largest
+                     thing on it was the module's name in the chrome, and
+                     the subject of the screen had no picture anywhere.
+
+                     Every series already knows its own best photograph:
+                     `categoryDrawers` picks it off the entries it is
+                     already walking, with `doorPicture`'s preference, so
+                     the front door, a place's card and a series inside it
+                     cannot disagree about which one is the good one.
+
+                     It is the same shelf every other Showroom screen in
+                     this app uses. A dealer who has learnt to push
+                     through the Classics on the catalogue has learnt to
+                     push through them here.
+                     ============================================================ */
+                  <ul className="md-shelf">
                     {series.map((d) => (
-                      <li key={d.key}>
-                        <Row
-                          dense
-                          name={d.name || `No ${d.of}`}
-                          meta={
-                            <span className="md-meta">
-                              <span className="md-figure">{grouped(d.count)}</span>
+                      <li key={d.key} className="md-shelf-cell">
+                        <button
+                          type="button"
+                          className="md-door"
+                          data-kind={d.kind}
+                          onClick={() => onStock(d.key)}
+                        >
+                          <span className="md-door-well">
+                            {d.img ? (
+                              <FrozenPhoto
+                                img={d.img}
+                                fallbackAlt={d.name || `No ${d.of}`}
+                                className="md-door-img"
+                                w={320}
+                                h={200}
+                              />
+                            ) : (
+                              <span className="md-door-mono">{markOf(d.name || d.of)}</span>
+                            )}
+                          </span>
+                          <span className="md-door-say">
+                            <span className="t-subtitle md-door-name">
+                              {d.name || `No ${d.of}`}
+                            </span>
+                            <span className="t-caption md-door-facts">
+                              <span className="md-figure">
+                                {grouped(d.count)} {d.count === 1 ? d.of : d.ofMany}
+                              </span>
                               {d.low ? (
                                 <span className="md-figure">
                                   {d.low === d.high ? d.low : `${d.low}–${d.high}`}
                                 </span>
                               ) : null}
                             </span>
-                          }
-                          onActivate={() => onStock(d.key)}
-                        />
+                          </span>
+                        </button>
                       </li>
                     ))}
                   </ul>

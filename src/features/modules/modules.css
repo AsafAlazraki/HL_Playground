@@ -4307,3 +4307,170 @@
   grid-auto-columns: minmax(0, auto);
   margin: 0;
 }
+
+/* ============================================================
+   THE RANGE, AS DOORS WITH BOATS ON THEM.
+
+   This card drew eleven rows of text — a name, a count and a price
+   band, all at one weight, running off the bottom of the screen —
+   on the page a dealer lands on when they press their own brand.
+   Measured at 1280x800: the largest thing on the screen was the
+   module's name in the chrome, and the subject of the screen had
+   no picture anywhere on it.
+
+   It is the same shelf the catalogue, the picker, a place and the
+   front door use: a band of cards that scrolls sideways and snaps.
+   One grammar, learnt once.
+
+   EVERY SERIES ALREADY KNEW ITS OWN PHOTOGRAPH. `categoryDrawers`
+   picks it off the entries it is already walking, with
+   `doorPicture`'s own preference — held before hotlinked, then
+   bigger — so the front door, a place's card and a series inside
+   it cannot disagree about which one is the good one. It costs no
+   new read.
+   ============================================================ */
+
+/* IT BLEEDS TO THE CARD'S OWN EDGE. A deck that stops short of the
+   edge of the box it is in reads as a list that has been cut off,
+   not as a shelf that continues — measured: the fourth series was
+   sliced down the middle by the card's 16px of padding and looked
+   like a rendering fault. Every other shelf in this app runs to the
+   window's edge for the same reason; this one runs to the card's,
+   which is the same idea inside a smaller room.
+
+   The negative margin is `Card`'s `pad="md"` — `--s-4`, from
+   `card.css` — and the padding puts it back inside, so the first
+   card still lines up with the caption above it and the last has
+   air after it. */
+.md-shelf {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(208px, 244px);
+  align-items: stretch;
+  gap: var(--s-3);
+  margin-inline: calc(var(--s-4) * -1);
+  padding: var(--s-1) var(--s-4) var(--s-3);
+  scroll-padding-left: var(--s-4);
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.md-shelf-cell {
+  display: flex;
+  min-width: 0;
+  scroll-snap-align: none start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .md-shelf {
+    scroll-snap-type: none;
+  }
+}
+
+.md-door {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--e1);
+  transition:
+    border-color var(--d-press) var(--ease-out),
+    box-shadow var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .md-door:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--e-card-hover);
+  }
+}
+
+.md-door:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* THE LIT SWEEP, declared here rather than in `world.css`: a
+   component stylesheet is emitted after the global one and beats it
+   at equal specificity. Tokens belong there, the drawing here. */
+.md-door-well {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  flex: 0 0 auto;
+  overflow: hidden;
+  background: radial-gradient(
+    86% 74% at 50% 24%,
+    var(--sweep-hi) 0%,
+    var(--sweep-mid) 54%,
+    var(--sweep-lo) 100%
+  );
+  box-shadow: inset 0 -1px 0 var(--sweep-seam);
+}
+
+.md-door-img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* CONTAIN. A cropped hull is a hull with its bow cut off. */
+  object-fit: contain;
+}
+
+/* a series with no photograph under it anywhere draws its own
+   initials on the plate rather than an empty box — and it is the
+   only place on this screen that letters stand in for a picture,
+   because a SERIES has no mark of its own the way a brand does */
+.md-door-mono {
+  color: color-mix(in srgb, var(--kind, var(--accent)) 55%, var(--sweep-ink));
+  font-family: var(--font-display);
+  font-size: var(--t-title-size);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.md-door-say {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  flex: 1 1 auto;
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  min-width: 0;
+}
+
+/* TWO LINES ALWAYS, whether the name needs them or not: a card
+   sized by its own string makes its neighbours lie about how much
+   room a picture gets. */
+.md-door-name {
+  color: var(--fg);
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  min-height: 2lh;
+  max-height: 2lh;
+  overflow: hidden;
+}
+
+.md-door-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px var(--s-3);
+  margin-top: auto;
+  color: var(--fg-tertiary);
+}
