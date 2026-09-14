@@ -397,7 +397,15 @@
 .qt-doc-marque-model {
   color: var(--sheet-ink);
   font-family: var(--font-display);
-  font-size: clamp(2.125rem, 15cqi, 4.25rem);
+  /* 18cqi AND NOT 15, MEASURED. `qa-sweep` put the document at
+     5.45x against the Showroom floor of 6x: 15cqi of the lockup
+     column resolved to 60px against an 11px label, and the sheet's
+     own total was close behind it. The boat is what the page is
+     about and it should be the largest thing on it by a clear
+     margin. 18cqi is 68px in this column, which is 6.2x, and
+     `RU230KAM` — eight characters with nowhere to break — still
+     lays out inside it with room to spare. */
+  font-size: clamp(2.25rem, 18cqi, 4.5rem);
   font-weight: 800;
   line-height: 0.94;
   letter-spacing: -0.04em;

@@ -420,9 +420,13 @@
   max-width: 68ch;
 }
 
+/* --fg-tertiary and not quaternary, for the reason the group
+   count above already gives: measured at 3.68:1 here, and a census
+   beside a refusal is the figure that says HOW MUCH is behind the
+   door somebody has just been turned away from. */
 .qp-off-count {
   flex: 0 0 auto;
-  color: var(--fg-quaternary);
+  color: var(--fg-tertiary);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }

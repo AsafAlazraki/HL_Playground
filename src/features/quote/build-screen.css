@@ -157,11 +157,19 @@
   pointer-events: none;
 }
 
+/* AND THE BRASS DOES NOT HOLD ON THE PLATE. The note here used to
+   say it did — "the point of a metal rather than a tint" — and that
+   was an assertion, not a measurement. `qa-sweep` puts
+   `--accent-press` (#BE8C2E) on the sweep at **2.64:1**, because a
+   metal that reads on a deep floor is a mid-tone on a lit one.
+
+   `--sheet-brass` is the same metal cut for paper — the token the
+   quotation's letterhead rule uses, computed at 5.56:1 on the
+   sheet and 5.3 here. A maker's name over their own boat is a word
+   somebody reads, so it takes a tier that clears. */
 .bs-eyebrow {
   margin: 0;
-  /* the brass holds on the plate as well as on the floor, which is
-     the point of a metal rather than a tint */
-  color: var(--accent-press);
+  color: var(--sheet-brass);
 }
 
 .bs-marque {
@@ -998,7 +1006,21 @@
    ============================================================ */
 @container (min-width: 640px) {
   .bs-product {
-    --bs-name: clamp(220px, 26cqi, 380px);
+    /* THE COLUMN IS SIZED FOR THE NAME, not for what was left over.
+       `qa-sweep` put this screen at 5.09x against the Showroom
+       floor of 6x, and the reason was that the largest type on the
+       configurator had become the PRICE at 56px — the boat's own
+       name, capped to fit a 307px column, came out under it. On a
+       screen whose entire subject is one hull, the hull's name
+       being the second-biggest thing is the ranking wrong way
+       round.
+
+       THE CONTAINER IS THE STAGE, NOT THE WINDOW: 1,056px at a
+       1280 viewport, because the rail takes 224 of it. 36cqi read
+       off that is 380 and the sweep came back 5.49x, still short.
+       40cqi is 422, which at the divisor below is a 68px marque —
+       6.2x — and the boat keeps the other 634. */
+    --bs-name: clamp(220px, 40cqi, 430px);
   }
 
   .bs-product .ui-stage-frame {
@@ -1017,7 +1039,7 @@
      padding, is the whole sum — and the code has nowhere to break,
      so there is no wrap to fall back on. */
   .bs-marque {
-    font-size: min(var(--t-marque-size), calc((var(--bs-name) - var(--s-12)) / 5.6));
+    font-size: min(var(--t-marque-size), calc((var(--bs-name) - var(--s-12)) / 5.5));
   }
 }
 
@@ -1065,4 +1087,56 @@
   .bs-trim {
     color: var(--fg-tertiary);
   }
+}
+
+/* ============================================================
+   THE GROUND A RULER CAN SEE IS THE GROUND A PERSON SEES.
+
+   `qa-sweep` reported the biggest type on the flagship screen at
+   **1.14:1** — `RU230KAM`, 40px, on the configurator — and the
+   marque is plainly legible in every screenshot of it. Both are
+   true, and the reason is worth writing down because it applies to
+   every lit plate in this application.
+
+   `drive.mjs`'s `ground()` walks ANCESTORS reading
+   `backgroundColor`. The lit plate is a `radial-gradient` (not a
+   background-COLOR) on `.ui-stage-frame` (a SIBLING, not an
+   ancestor). Two independent reasons the ruler cannot see it: it
+   walks past the frame entirely and lands on `.bs`, which is the
+   dark room, and reports dark ink on a dark ground.
+
+   THE ANSWER IS NOT TO EXEMPT THE RULER. A measurement that has to
+   be argued away is a measurement nobody will trust the next time,
+   and this repo has three sweeps in its history that reported false
+   catastrophes for exactly this class of reason. The answer is to
+   make the DOM say what is true: the lockup and the spec strip
+   carry their own light, so what composites is what is painted.
+
+   `--sweep-mid` IS THE RIGHT FLAT VALUE, computed rather than
+   picked. The plate's radial is `86% 74% at 50% 24%`, white at 0%
+   to `--sweep-mid` at 54%; at the lockup's own corner the radius
+   resolves around 0.37, which lands about #f6f4ef — four steps per
+   channel off `--sweep-mid`, under a grain overlay, at an edge
+   that is itself a gradient. There is no seam to see.
+   ============================================================ */
+
+/* AND IT FILLS THE BAND RATHER THAN FLOATING IN IT. A flat patch
+   the size of the words, sitting on a radial, is a lighter
+   rectangle with three visible edges — measured on the first
+   draft, and plain in the screenshot. Filling the reserved column
+   top to bottom leaves ONE edge, and that edge is where the
+   picture's own frame padding already ends, so the plate reads as
+   two panels rather than as a patch. */
+.bs-lockup {
+  align-self: stretch;
+  justify-content: center;
+  width: var(--bs-name);
+  background: var(--sweep-mid);
+}
+
+/* the strip already paints the plate's own light as a fade; this
+   is the same colour, flat, so the figures on it have a ground
+   rather than borrowing one */
+.bs-specs {
+  background-color: var(--sweep-mid);
 }

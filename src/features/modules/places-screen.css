@@ -218,8 +218,14 @@
   color: var(--accent-fg);
 }
 
+/* THE FOURTH INK TIER DOES NOT REACH HERE. Measured by
+   `qa-sweep`: `--fg-quaternary` on `--surface-1` is 3.68:1 over
+   thirty-one counts on this screen. It is a tier for a mark, not
+   for a figure somebody reads — and a count IS a figure somebody
+   reads, which is the same call `picker-screen.css` made about
+   its own. */
 .mo-chip-n {
-  color: var(--fg-quaternary);
+  color: var(--fg-tertiary);
   font-family: var(--font-mono);
   font-size: var(--t-mono-sm-size);
   font-variant-numeric: tabular-nums;
@@ -493,13 +499,19 @@
    came here for; it is what they came here for on the one morning
    in thirty that they did. A full-width strip at the foot of the
    card, no fill at rest, brass when reached. */
+/* QUIET IS A TIER, NOT A FADE. The first draft gave this
+   `--fg-quaternary` to keep it out of the way and `qa-sweep`
+   measured twenty-five of them at 3.68:1. A control a person is
+   meant to be able to find and press is a word they have to read;
+   the way to make it secondary is no fill at rest and the caption
+   step, which it already has. */
 .mo-set {
   flex: 0 0 auto;
   padding: var(--s-2) var(--s-4);
   border: 0;
   border-top: var(--border) solid var(--line-subtle);
   background: none;
-  color: var(--fg-quaternary);
+  color: var(--fg-tertiary);
   font: inherit;
   font-size: var(--t-caption-size);
   text-align: left;

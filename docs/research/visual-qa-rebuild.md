@@ -29,22 +29,61 @@ starts from.
 
 ## Every screen, 1280×800, both themes
 
+Re-run 2026-09-14, after the screens were rebuilt a second time — the
+quotation as a sheet of paper, Modules as shelves, Admin as a register,
+the rules ledger as a list.
+
 | screen | register | ratio | steps | thin | cut |
 |---|---|---|---|---|---|
-| home | showroom | 6.86× | 7 | 0 | 0 |
-| modules | showroom | 6.86× | 7 | 0 | 0 |
-| catalogue | showroom | 6.86× | 8 | 0 | 0 |
-| picker | showroom | 6.86× | 7 | 0 | 0 |
-| place | showroom | 6.86× | 7 | 0 | 0 |
-| configurator | showroom | 6.86× | 7 | 0 | 0 |
-| document | showroom | 6.86× | 10 | 0 | 0 |
-| data | cockpit | 2.82× | 6 | 0 | 0 |
-| quotes | cockpit | 2.82× | 6 | 0 | 0 |
-| customers | cockpit | 2.82× | 6 | 0 | 0 |
-| admin | cockpit | 2.82× | 7 | 0 | 0 |
-| rules | cockpit | 2.82× | 12 | 0 | 0 |
-| review | cockpit | 2.82× | 7 | 0 | 0 |
-| fitment | cockpit | 3.09× | 9 | 0 | 0 |
+| home | showroom | 7.45× | 6 | 0 | 0 |
+| modules | showroom | 7.45× | 6 | 0 | 0 |
+| catalogue | showroom | 7.45× | 7 | 0 | 0 |
+| picker | showroom | 7.45× | 6 | 0 | 0 |
+| place | showroom | 7.45× | 6 | 0 | 0 |
+| configurator | showroom | 6.19× | 7 | 0 | 0 |
+| document | showroom | 6.55× | 9 | 0 | 0 |
+| data | cockpit | 3.09× | 5 | 0 | 0 |
+| quotes | cockpit | 3.09× | 5 | 0 | 0 |
+| customers | cockpit | 3.09× | 5 | 0 | 0 |
+| admin | cockpit | 3.09× | 6 | 0 | 0 |
+| rules | cockpit | 3.09× | 6 | 0 | 0 |
+| review | cockpit | 3.09× | 6 | 0 | 0 |
+| fitment | cockpit | 3.09× | 8 | 0 | 0 |
+
+**It was not clean when the run started.** Four findings, and every one
+of them was work done in the preceding two days:
+
+- **modules, 31 thin.** The filter counts took `--fg-quaternary` — a
+  tier for a mark, not for a figure somebody reads — at 3.68:1. Then
+  twenty-five `Settings` doors at the same ratio, for the same reason.
+- **rules, 3 cut.** The collapsed ledger row truncated its sentence with
+  `text-overflow: ellipsis`, which cuts wherever the box ends: "the boat
+  ro…", "must be one of …", "the standard-…". A rule of the business, cut
+  inside its own last word. It wraps now.
+- **picker, 7 thin.** The refusal counts, same tier, same 3.68:1.
+- **configurator, 12 thin — including `RU230KAM` at 1.14:1.** This one
+  is the interesting one, and it is a finding about the RULER as much as
+  the screen. `drive.mjs`'s `ground()` walks ANCESTORS reading
+  `backgroundColor`. The lit plate is a `radial-gradient` (not a
+  background-colour) on `.ui-stage-frame` (a SIBLING, not an ancestor),
+  so the sweep walked past it, landed on the dark room, and reported dark
+  ink on a dark ground — while the marque is plainly legible in every
+  screenshot of it.
+
+  **The answer was not to exempt the ruler.** A measurement that has to be
+  argued away is one nobody trusts the next time, and this repo has three
+  sweeps in its history that reported false catastrophes for exactly this
+  class of reason. The lockup and the spec strip carry their own light
+  now, so what composites is what is painted. The value is computed, not
+  picked: the plate's radial resolves to about #f6f4ef at the lockup's own
+  corner, four steps per channel off `--sweep-mid`, under a grain
+  overlay, at an edge that is itself a gradient.
+
+**And two Showroom screens were under the 6× floor** — configurator 5.09,
+document 5.45 — because on both of them the largest type had become the
+PRICE. On a screen whose entire subject is one hull, the hull's name being
+the second-biggest thing is the ranking the wrong way round. Both now size
+the marque off the column it is in: 6.19× and 6.55×.
 
 **At 1024×768:** Showroom 6.07×, Cockpit 2.69–2.73×, still clean. This is
 the width where `visual-qa-2026-09-09` found the configurator's advantage

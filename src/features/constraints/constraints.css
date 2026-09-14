@@ -5420,15 +5420,24 @@
   display: none;
 }
 
+/* IT WRAPS RATHER THAN TRUNCATES, and that is not a preference.
+   `text-overflow: ellipsis` on a nowrap line cuts wherever the box
+   ends, and `qa-sweep` caught three of them mid-word: "the boat
+   ro…", "must be one of …", "the standard-…". A rule of the
+   business, cut inside its own last word, is a rule nobody can
+   read — and a mid-word cut is a disqualifier here, not a
+   judgement call.
+
+   A long rule takes two lines and the row grows by one. That is
+   still six rules on screen against the one this surface managed
+   before, and it is six rules a person can actually read. */
 .cn-rl:not(.is-open) .cn-rl-says {
   grid-column: 2;
   grid-row: 1;
   margin: 0;
   min-width: 0;
   font-size: var(--t-small-size);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
 }
 
 .cn-rl:not(.is-open) .cn-rl-pill {
