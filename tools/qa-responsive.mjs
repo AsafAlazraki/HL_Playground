@@ -243,7 +243,29 @@ async function pictures(page, root) {
       if (box.width > hostBox.width + 1) {
         bad.push(`spilling · ${where} ${Math.round(box.width)}>${Math.round(hostBox.width)}`)
       }
-      if (box.right > window.innerWidth + 1 || box.left < -1) {
+      /* A CARD IN A SIDEWAYS DECK IS SCROLLED, NOT OFF-SCREEN, and
+         this reported nine findings on Modules the day the shelves
+         landed because it could not tell the two apart. Every
+         Showroom browse screen in this app is bands of decks that
+         scroll horizontally — that IS the grammar — so the fourth
+         card of a row is past the right edge of the window by
+         design, exactly as the fortieth row of a table is past the
+         bottom of it.
+
+         `check-collide` already draws this distinction, with
+         `clipRect`, and for the same reason: a ruler that calls
+         normal scrolling a defect is a ruler nobody reads twice.
+         An image spilling its OWN host is still a finding — that
+         test is above and it is the one that catches a real
+         overflow. */
+      const inDeck = (() => {
+        for (let n = img.parentElement; n && n !== document.body; n = n.parentElement) {
+          const o = getComputedStyle(n).overflowX
+          if (o === 'auto' || o === 'scroll') return true
+        }
+        return false
+      })()
+      if (!inDeck && (box.right > window.innerWidth + 1 || box.left < -1)) {
         bad.push(`off-screen · ${where}`)
       }
       const natural = img.naturalWidth

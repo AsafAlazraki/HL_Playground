@@ -1066,9 +1066,22 @@
     row-gap: var(--s-2);
   }
 
+  /* AND THE PLATE COMES OFF WITH IT. The wide rule gives the
+     lockup a flat `--sweep-mid` ground so the contrast ruler can
+     see what it is painted on; here the lockup has stood off the
+     picture onto the room's own dark floor, and a light plate
+     under light ink is 1.03:1 — measured by `qa-responsive` at
+     600, 430, 390 and 320. Two of this file's own rules,
+     compounding.
+
+     `width: auto` and `align-self: start` undo the rest of the
+     wide rule's band, which has no column to fill here. */
   .bs-product > .bs-lockup {
     grid-area: name;
+    align-self: start;
+    width: auto;
     padding: 0;
+    background: none;
   }
 
   .bs-product > .ui-stage {
@@ -1079,6 +1092,16 @@
      the lit plate; standing on the room's own dark ground it is
      very nearly invisible, which is the mistake the two-column
      attempt made at full width and this must not repeat. */
+  /* THE BRASS SWAPS TOO, AND IN THE OTHER DIRECTION. The wide rule
+     uses `--sheet-brass`, the metal cut for paper, because
+     `--accent-press` measured 2.64:1 on the lit plate. On the dark
+     floor the same token is 3.3:1 — a metal reads on one ground or
+     the other, never both, which is the whole reason this palette
+     carries two of them. */
+  .bs-eyebrow {
+    color: var(--accent);
+  }
+
   .bs-marque {
     color: var(--fg);
     font-size: clamp(1.75rem, 11cqi, 2.75rem);
