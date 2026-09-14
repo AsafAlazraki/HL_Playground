@@ -38,7 +38,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { say } from '@/store/notes'
 import { currentUser } from '@/features/auth'
 import { localDay, localDayOf } from './day'
-import { mintFreeLine, mintQuoteFromView, referenceFor, type PriceChange } from './freeze'
+import { mintFreeLine, mintQuoteFromView, referenceFor, refinishSubject, type PriceChange } from './freeze'
 import { money, priceAtLevel, quoteLevelChoices, repricedAt } from './pricing'
 import { issueBlockers, lineAmount } from './totals'
 import type { AdjustmentKind, QuoteAdjustment, QuoteDef, QuoteLine } from '@/types/model'
@@ -959,6 +959,33 @@ export function addLine(id: string, blockId: string, line: QuoteLine): void {
  *  label a person is about to type, and the sentence "` ` put on the
  *  quote · no price on it" is what a note fired here would say. When
  *  a surface calls it, it gets the same treatment `addLine` has. */
+/* THE FINISH CHANGES; NOTHING ELSE DOES. Undoable, like every act
+   that moves a line (rule 9), and the undo re-roots back rather
+   than restoring a snapshot, so a line added in between survives. */
+export function refinish(id: string, rowId: string): void {
+  const before = registry.get(id)
+  if (!before || before.state !== 'draft') return
+  const next = refinishSubject(before, rowId)
+  if (!next || next === before) return
+  const wasRow = before.rootRowId
+  const wasLabel = before.subjectLabel
+  mutate(id, () => next)
+  say({
+    text: `Now ${next.subjectLabel}`,
+    act: {
+      label: 'Undo',
+      onPick: () => {
+        const now = draftForUndo(id)
+        if (!now || now.rootRowId !== rowId) return
+        const back = refinishSubject(now, wasRow)
+        if (!back || back === now) return
+        mutate(id, () => back)
+        say({ text: `Back to ${wasLabel}` })
+      },
+    },
+  })
+}
+
 export function addFreeLine(id: string, label: string, amount: number | null): void {
   const current = registry.get(id)
   if (!current) return

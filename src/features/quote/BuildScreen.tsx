@@ -59,7 +59,11 @@ import {
   stepOffer,
 } from './freeze'
 import type { Candidate } from './freeze'
-import { addLine, issueQuote, linkCustomer, patchQuote, removeLine, setLevel } from './quotes'
+import { addLine, issueQuote, linkCustomer, patchQuote, refinish, removeLine, setLevel } from './quotes'
+import { buildEntries } from '@/features/modules/read'
+import { finishLevels, foldModels, leafValues } from '@/features/catalogue/fold'
+import { Colourways } from '@/features/catalogue/Colourways'
+import { useProjectStore } from '@/store/useProjectStore'
 import { orderBands } from './bands'
 import { CascadeSheet } from './CascadeSheet'
 import { cascadeOfConflict } from './cascade'
@@ -107,6 +111,30 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
      I will open the GFAB Trailers table". */
   const bands = useMemo(() => orderBands(steps, kinds), [steps, kinds])
 
+  /* ============================================================
+     THE FINISHES — Porsche's swatch grid, only where there is one.
+
+     The place screen already folds a table's rows into models and
+     their finishes (`foldModels`), and already decides whether a
+     table's last level IS a finish (`finishLevels`: half the rows
+     must carry a readable colourway, so a motor's shaft codes never
+     become swatches). This asks the same fold for the subject's
+     own model, and draws the grid only when that model has more
+     than one row — the SP560 has fifteen, an RU230 has four, a
+     Yamaha F90 has one and gets nothing. "Only where appropriate"
+     is a fact the fold already knows.
+     ============================================================ */
+  const rowsByEntity = useProjectStore((s) => s.rowsByEntity)
+  const root = useProjectStore((s) => s.entities[quote.rootTableId])
+  const finishes = useMemo(() => {
+    if (!root) return null
+    const entries = buildEntries([root], rowsByEntity, { facts: false })
+    const leaves = leafValues([root], rowsByEntity)
+    const models = foldModels(entries, leaves, finishLevels([root], leaves))
+    const mine = models.find((m) => m.offers.some((o) => o.entry.rowId === quote.rootRowId))
+    return mine && mine.offers.length > 1 ? mine : null
+  }, [root, rowsByEntity, quote.rootRowId])
+
   /* WHICH STOP IS OPEN IS THE ONE PIECE OF STATE THIS SCREEN OWNS,
      and it is a VIEW of the document rather than part of it: which
      decision you are looking at is not a fact about the quote. It
@@ -146,7 +174,12 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
       },
       { root: rail, rootMargin: '0px 0px -60% 0px', threshold: 0 },
     )
-    for (const sect of rail.querySelectorAll('.bs-sect')) io.observe(sect)
+    /* observed BY BAND, not by class, so a band that arrives or
+       leaves re-runs this and is watched from its first paint */
+    for (const id of [...bands.map((b) => b.id), HANDOVER_STEP]) {
+      const sect = rail.querySelector(`[data-band="${CSS.escape(id)}"]`)
+      if (sect) io.observe(sect)
+    }
     return () => io.disconnect()
   }, [bands])
   const { still } = useStillness()
@@ -369,6 +402,25 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
               aria-label={b.name}
             >
               <BandPane quote={quote} band={b} />
+              {finishes && b.tables.some((t) => t.step.subject) ? (
+                <div className="bs-finishes">
+                  <p className="t-small bs-finishes-head">
+                    <span className="bs-finishes-count">{finishes.offers.length} finishes</span>
+                    {finishes.materials.length > 1 ? (
+                      <span className="t-caption bs-finishes-mat">
+                        {finishes.materials.join(' / ')}
+                      </span>
+                    ) : null}
+                  </p>
+                  <Colourways
+                    offers={finishes.offers}
+                    chosenRowId={quote.rootRowId}
+                    material={finishes.materials.length > 1}
+                    label={`Finishes of ${finishes.name}`}
+                    onChoose={(offer) => refinish(quote.id, offer.entry.rowId)}
+                  />
+                </div>
+              ) : null}
             </section>
           ))}
           <section

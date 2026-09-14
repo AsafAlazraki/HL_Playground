@@ -304,3 +304,30 @@ has a Yamaha F90 and a Redco trailer paired.
 | `check-contrast` | 1,277 text nodes across 11 screens, all clear |
 | `qa-sweep` | clean; configurator 3.09× |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-15, later still — the finishes grid, only where there is one
+
+"Add the finishes swatch grid to the rail but only where appropriate."
+Porsche's rail opens on its swatches; ours now opens the hull section on
+a grid of every finish the model has — the SP560's fifteen — and the
+"where appropriate" is a fact `foldModels` and `finishLevels` already
+decide for the place screen: half a table's rows must carry a readable
+colourway for its last level to be a finish, and the model must have
+more than one row. A Yamaha F90 gets nothing.
+
+Pressing a swatch is a real act: `refinishSubject` (freeze.ts) re-roots
+the draft on the sibling row — subject line re-minted at the quote's
+rung, label, figures and picture re-frozen — and leaves every other
+line where it was; `refinish` (quotes.ts) is the undoable action. Driven
+at 1440: fifteen tiles; the fourth pressed took the subject from
+`W-W-WB` to `B-W-C`, the stage to the `B-W-C` render, the chip to
+`(PVC) B-W-C`, with the price, the total and the three lines unchanged;
+the toast said so with Undo; Undo brought all of it back.
+
+| ruler | result |
+|---|---|
+| `check:types` · `lint` · `vitest` | clean · 343/343 · 2,974 passed |
+| `check-collide` | nothing overlaps |
+| `check-contrast` | four swatch captions at 4.31:1 in quaternary on the tile's grey — lifted to tertiary; then 1,287 nodes clear |
+| `qa-sweep` | clean |
+| `check:shots --update` | 14 of 14 re-taken |

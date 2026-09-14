@@ -684,6 +684,45 @@ export const OFFER_CAP = 40
    falls silent on its own.
    ============================================================ */
 
+/* ============================================================
+   THE SAME BOAT IN ANOTHER FINISH.
+
+   Porsche's rail opens on a swatch grid, and the one thing a
+   configurator does when a swatch is pressed is change the colour
+   of the car without touching anything else on the build. Here the
+   finish is a ROW — the SP560 is fifteen rows of one model — so
+   changing it means re-rooting the quote on a sibling row: the
+   subject line re-minted from that row at the quote's own rung,
+   the label, the figures and the picture re-frozen from it, and
+   every other line left exactly where it was. Nothing about a
+   motor or a trailer is a fact about the hull's colour.
+
+   Returns null when the row is not on the sheet, and the quote
+   unchanged when it is already this row.
+   ============================================================ */
+export function refinishSubject(quote: QuoteDef, rowId: string): QuoteDef | null {
+  const { ctx, engine } = live()
+  const root = ctx.entities[quote.rootTableId]
+  const row = root ? rowOf(ctx, root.id, rowId) : undefined
+  if (!root || !row) return null
+  if (quote.rootRowId === rowId) return quote
+  const subjectLine = mintLine({ ctx, engine, entity: root, row, levelKey: quote.levelKey })
+  const was = new Set(quote.sections.find((s) => s.blockId === SUBJECT_BLOCK)?.lineIds ?? [])
+  const picture = pictureOf(root, row)
+  const { subjectImage: _dropped, ...rest } = quote
+  return {
+    ...rest,
+    rootRowId: row.id,
+    subjectLabel: rowLabel(root, row),
+    subjectSpecs: freezeSpecs(engine, root, row),
+    ...(picture ? { subjectImage: picture } : {}),
+    lines: [subjectLine, ...quote.lines.filter((l) => !was.has(l.id))],
+    sections: quote.sections.map((s) =>
+      s.blockId === SUBJECT_BLOCK ? { ...s, lineIds: [subjectLine.id] } : s,
+    ),
+  }
+}
+
 function viewForQuote(quote: QuoteDef): ViewDef | undefined {
   const stored = getViewDef(quote.viewId)
   if (stored) return stored
