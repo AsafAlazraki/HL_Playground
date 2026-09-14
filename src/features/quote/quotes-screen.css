@@ -465,11 +465,25 @@
   color: var(--accent);
 }
 
+/* THE HEADLINE FIGURE IS NOT MONO, for the reason the quotation's
+   own total gives: a monospace comma at 40px opens a full
+   character's gap, so "$33,013" reads as "$33 , 013" — and at a
+   168px track it also ran into the tile's right edge.
+
+   Mono is right for a COLUMN of money, where the fixed-width digit
+   is what makes the decimals line up. These figures sit in seven
+   separate tiles with nothing to line up with. The display face
+   sets it as a number a person reads aloud, tabular figures keep
+   the digits themselves even, and it fits the track. */
 .qz-stage-worth {
   color: var(--fg);
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
 }
 
 .qz-stage-n {

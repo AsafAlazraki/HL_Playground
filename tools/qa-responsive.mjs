@@ -239,7 +239,25 @@ async function pictures(page, root) {
       const hostBox = host ? host.getBoundingClientRect() : box
       const where = img.className || 'img'
 
-      if (cs.objectFit === 'cover') bad.push(`cropped · ${where}`)
+      /* `contain` IS THE RULE AND THERE IS ONE STATED EXCEPTION.
+         A cropped hull is a hull with its bow cut off, and the
+         shape of the hull is the thing being sold — so every
+         product picture in this app is `contain` and this catches
+         any that is not.
+
+         `.qp-img` is the picker's own, and `picker-screen.css`
+         argues it in full: those are LIFESTYLE photographs of open
+         water with people in them, not cut-out renders. There is
+         no bow to protect, the subject is the scene, and
+         letterboxing a horizon inside a card is what makes a
+         brochure look like a database.
+
+         The exception is named here, with its file, for the same
+         reason `check-styles` makes a literal colour cost a
+         sentence in `COLOUR_ALLOW`: an exemption nobody had to
+         write down is an exemption that grows. */
+      const CROP_OK = { 'qp-img': 'picker-screen.css — lifestyle water shots, no bow to protect' }
+      if (cs.objectFit === 'cover' && !CROP_OK[where]) bad.push(`cropped · ${where}`)
       if (box.width > hostBox.width + 1) {
         bad.push(`spilling · ${where} ${Math.round(box.width)}>${Math.round(hostBox.width)}`)
       }
