@@ -1449,3 +1449,31 @@
     gap: var(--s-3);
   }
 }
+
+/* ============================================================
+   AND WHEN THE CARD IS THE WHOLE PAGE, IT SITS IN THE MIDDLE OF
+   IT.
+
+   The rule above says exactly this — "a card alone on a page
+   belongs in the middle of it" — and then centres it on one axis.
+   Measured at 1440x900 on a project with no Customers table: the
+   card ran 24 to 272 and 628 pixels of floor sat under it, which
+   reads as a page that failed to finish loading rather than as a
+   register waiting to be made.
+
+   `:has(> .cx-empty:only-child)` IS the distinction, the same way
+   the sibling selector above is: the scroller holds the card and
+   nothing else in exactly the one case this is for. A register
+   that exists and is empty still draws its header, its toolbar and
+   its card in the normal order, and this does not reach it.
+   ============================================================ */
+.cx-scroll:has(> .cx-empty:only-child) {
+  display: grid;
+  place-items: center;
+  padding-block: var(--s-8);
+}
+
+.cx-scroll:has(> .cx-empty:only-child) > .cx-empty {
+  margin: 0;
+  width: min(680px, calc(100% - var(--page-gutter) * 2));
+}

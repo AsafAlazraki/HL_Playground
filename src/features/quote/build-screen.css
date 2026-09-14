@@ -889,3 +889,180 @@
     grid-template-rows: auto minmax(220px, 1fr) auto auto;
   }
 }
+
+/* ============================================================
+   THE WAY INTO THE BOOK, RESTORED.
+
+   `QuoteEditor` could file the person you had just typed and said
+   what happened if you did not; this screen replaced it and
+   offered only "somebody you have quoted before", which is a
+   closed loop — nothing files a customer, so the register stays
+   empty, so the picker stays empty, so nobody is ever quoted
+   before. BuildScreen.tsx carries the measurement.
+
+   IT IS A DOOR, NOT A BUTTON. Filing somebody is a quiet act on
+   the way past, and the primary action of this screen is on the
+   bar below it — two filled buttons in one pane is the rule-5
+   failure this app keeps finding in its own work.
+   ============================================================ */
+
+.bs-file {
+  align-self: flex-start;
+  margin-inline: var(--gutter);
+  padding: var(--s-2) var(--s-3);
+  border: var(--border) dashed var(--line);
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--fg-secondary);
+  font: inherit;
+  font-size: var(--t-small-size);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--d-press) var(--ease-out),
+    background var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bs-file:hover {
+    border-color: var(--accent-line);
+    background: var(--accent-wash);
+    color: var(--accent);
+  }
+}
+
+.bs-file:active {
+  transform: scale(0.98);
+}
+
+.bs-file:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* AND WHEN THERE IS NOWHERE TO FILE THEM, the sentence instead —
+   said once the field has been used and only then, because a
+   permanent instruction under an empty field is furniture nobody
+   reads. It names the place rather than offering to build a table
+   from inside a quote. */
+.bs-file-none {
+  margin: 0 var(--gutter);
+  max-width: 60ch;
+  color: var(--fg-tertiary);
+}
+
+.bs-file-none em {
+  color: var(--fg-secondary);
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* ============================================================
+   AND THE NAME STOPPED CROSSING THE HULL.
+
+   `.bs-lockup` sits OVER the stage at top-left, which reads well
+   on a photograph with sky in that corner and badly on a
+   manufacturer render — a cut-out hull centred in a white frame.
+   Measured at 1440 on Highfield RU230KAM: the marque ran x=283 to
+   x=706 and the hull's own dark strake passed straight through
+   "KAM". Dark ink on a light plate, so it clears contrast, and
+   still two things drawn on top of each other.
+
+   THE RULER COULD NOT SEE IT. `check-collide` skips
+   `pointer-events: none` elements on purpose — a thing that cannot
+   be hit cannot be said to be covering anything a person is trying
+   to reach — and a label over a picture is exactly what that
+   exemption lets through. Found by looking.
+
+   TWO WRONG TURNS, BOTH INSTRUCTIVE.
+
+   Insetting the picture alone half-worked: the hull moved right,
+   grew to fill the height it had been given back, and touched the
+   marque's last two letters instead of its middle three. Reserving
+   room for an overlay only works if the overlay is also told how
+   much room it has.
+
+   Making it two real grid columns was worse, and for a reason
+   worth recording: giving `.bs-lockup` `container-type` made IT
+   the nearest container, so the `@container (min-width: 880px)`
+   rule sizing the marque started asking a 380px box whether it was
+   880 wide, and stopped applying. It also stood the lockup off the
+   light plate and onto the dark ground, where ink meant for the
+   sweep is very nearly invisible.
+
+   SO: ONE TOKEN, READ BY BOTH SIDES. The frame insets by it, the
+   lockup is capped at it, and the marque is sized as a fraction of
+   it — so the picture and the name cannot disagree about where the
+   boundary is, because there is only one number.
+   ============================================================ */
+@container (min-width: 640px) {
+  .bs-product {
+    --bs-name: clamp(220px, 26cqi, 380px);
+  }
+
+  .bs-product .ui-stage-frame {
+    padding-left: var(--bs-name);
+  }
+
+  .bs-lockup {
+    max-width: var(--bs-name);
+  }
+
+  /* THE PADDING IS IN THE ARITHMETIC, because it was not and the
+     ruler caught it: at 834 the cap resolved to 220px, the lockup's
+     own `--s-5 --s-6` padding took 48 of that, and `RU230KAM` came
+     out 3px wider than the 172 it had left. Eight characters of the
+     display face at about 0.62em each, inside the column LESS its
+     padding, is the whole sum — and the code has nowhere to break,
+     so there is no wrap to fall back on. */
+  .bs-marque {
+    font-size: min(var(--t-marque-size), calc((var(--bs-name) - var(--s-12)) / 5.6));
+  }
+}
+
+/* ============================================================
+   AND ON A PHONE THE NAME STANDS ABOVE THE BOAT.
+
+   Below 640 there is no room for a column beside the picture —
+   400px of plate less a 220px name leaves 180 for a hull — so the
+   rule above steps back to the overlay, and measured at 430 the
+   overlay is exactly the fault it was at 1440: "RU230KAM" laid
+   across the bow.
+
+   A phone has no width and plenty of height, so the name takes a
+   row of its own. The picture loses about seventy pixels of the
+   band and keeps every one of them legible, which is the trade a
+   narrow window always makes.
+   ============================================================ */
+@container (max-width: 639px) {
+  .bs-product {
+    grid-template-areas:
+      'name'
+      'stage';
+    grid-template-rows: auto minmax(0, 1fr);
+    row-gap: var(--s-2);
+  }
+
+  .bs-product > .bs-lockup {
+    grid-area: name;
+    padding: 0;
+  }
+
+  .bs-product > .ui-stage {
+    grid-area: stage;
+  }
+
+  /* THE INK COMES OFF THE SWEEP WITH IT. `--sweep-ink` is meant for
+     the lit plate; standing on the room's own dark ground it is
+     very nearly invisible, which is the mistake the two-column
+     attempt made at full width and this must not repeat. */
+  .bs-marque {
+    color: var(--fg);
+    font-size: clamp(1.75rem, 11cqi, 2.75rem);
+  }
+
+  .bs-trim {
+    color: var(--fg-tertiary);
+  }
+}

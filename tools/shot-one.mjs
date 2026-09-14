@@ -171,6 +171,19 @@ const SCREENS = {
       await wait(p, 1600)
     },
   ],
+  /* THE REGISTER WITH SOMEBODY IN IT. `customers` opens a fresh
+     session's book, which is empty — a true state and worth its
+     picture, but it cannot show what the book DOES. Raising one
+     quote files the customer, which is the only way a person gets
+     into it. */
+  book: [
+    '.cx-root',
+    async (p) => {
+      await SCREENS.document[1](p)
+      await wait(p, 2200)
+      await rail(p, /^Customers/)
+    },
+  ],
   document: [
     '.qt-doc',
     async (p) => {

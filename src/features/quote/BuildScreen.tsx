@@ -51,7 +51,14 @@ import type { Step } from '@/ui'
 import { money } from '@/lib/money'
 import { QUOTE_LEVEL_ORDER, LEVEL_TITLE } from '@/types/model'
 import type { QuoteDef, QuoteLine } from '@/types/model'
-import { customerBook, freezeCustomer, hasCustomerRegister, sectionKinds, stepOffer } from './freeze'
+import {
+  customerBook,
+  fileCustomer,
+  freezeCustomer,
+  hasCustomerRegister,
+  sectionKinds,
+  stepOffer,
+} from './freeze'
 import type { Candidate } from './freeze'
 import { addLine, issueQuote, linkCustomer, patchQuote, removeLine, setLevel } from './quotes'
 import { orderBands } from './bands'
@@ -426,7 +433,8 @@ function Handover({
      undo then walks somebody backwards through their own typing one
      letter at a time. */
   const [typed, setTyped] = useState(quote.customer?.name ?? '')
-  const book = useMemo(() => (hasCustomerRegister() ? customerBook() : []), [])
+  const hasRegister = hasCustomerRegister()
+  const book = useMemo(() => (hasRegister ? customerBook() : []), [hasRegister])
 
   const commit = (name: string): void => {
     const clean = name.trim()
@@ -458,6 +466,50 @@ function Handover({
           placeholder="Their name, as it should read on the quote"
           autoComplete="off"
         />
+
+        {/* ============================================================
+            AND THE WAY INTO THE BOOK, WHICH THIS SCREEN HAD CLOSED.
+
+            `QuoteEditor` could file the person you had just typed —
+            "Add Mark McWilliams to your customers" — and said what
+            happened if you did not: "Their name and details print
+            either way. Customers keeps them for the next quote."
+            That screen has no door in the shipped build (see
+            quote.css), and this one, which replaced it, offered only
+            "somebody you have quoted before".
+
+            That is a closed loop. Nothing on the shipped path files
+            a customer, so the register stays empty, so the picker
+            below stays empty, so nobody is ever quoted before.
+            Measured: raise a quote to a named customer, open
+            Customers, and the book still says "no customer register
+            yet".
+
+            Both halves are restored here — the act, and the sentence
+            that says what happens without it. `fileCustomer` adds a
+            ROW and never a table: it returns null when there is no
+            register, and then the sentence is all there is to say,
+            which is rule 10 and exactly what the old screen did.
+            ============================================================ */}
+        {typed.trim() !== '' && quote.customerRef === undefined ? (
+          hasRegister ? (
+            <button
+              type="button"
+              className="bs-file"
+              onClick={() => {
+                const frozen = fileCustomer(typed, quote.customer?.contact ?? [])
+                if (frozen) linkCustomer(quote.id, frozen)
+              }}
+            >
+              Add {typed.trim()} to your customers
+            </button>
+          ) : (
+            <p className="t-caption bs-file-none">
+              Their name and details print either way. <em>Customers</em> keeps them for
+              the next quote.
+            </p>
+          )
+        ) : null}
 
         {book.length > 0 ? (
           <div className="bs-book">
