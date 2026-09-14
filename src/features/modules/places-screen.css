@@ -1,13 +1,31 @@
 /* ============================================================
-   EVERY PLACE (mo-) — SHOWROOM.
+   EVERY PLACE (mo-) — SHOWROOM, REBUILT AS SHELVES.
 
-   `mo-` was checked against every stylesheet in `src` before use.
+   WHAT IT WAS. One flat grid of twenty-five cards with a row of
+   filter chips over it, and a dark well behind every photograph.
+   Two things were wrong with that and neither was a detail:
 
-   The fifth screen on this skeleton: a port that scrolls, a column
-   on a measure, a marque, and a grid of equal photographic cards
-   with a fixed line budget. That it is the fifth is the point — a
-   register is only a register once the screens in it are built the
-   same way.
+   THE KINDS WERE HELD IN A FILTER. Boats, motors, trailers,
+   accessories, packages — that list IS the shape of the business,
+   and the only way to see it was to press a chip and count what
+   was left. So the places stand on shelves now, one band per kind,
+   in `TABLE_KINDS`' own order. A dealer reads the shape of their
+   own business down the page without pressing anything. The chips
+   stay, because pressing one is still the fastest way to see only
+   motors; what changed is that you no longer have to.
+
+   AND THE WELLS WERE DARK. Measured: the Highfield door is an
+   1100x619 render inside a 273x170 well, which `contain` fits to
+   255x170 with a nine-pixel bar down each side — and those bars
+   were a dark gradient, behind a white hull cut out on white. Every
+   other Showroom screen in this app moved to the lit sweep weeks
+   ago; this one did not, so the doors to a dealer's own brands were
+   the only pictures in the building still floating in a dark box.
+
+   THE SWEEP IS DECLARED HERE AND NOT IN `world.css`. A component
+   stylesheet is imported by its component and Vite emits it after
+   the global one, so at equal specificity the local rule wins.
+   Tokens belong there; the drawing belongs here.
    ============================================================ */
 
 .mo {
@@ -15,62 +33,98 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  background: var(--bg);
 }
 
-/* `.shell-stage` is `overflow: hidden` and hands every stage a box
-   of exactly the window's height. A screen that does not scroll
-   inside itself is not short — it is CUT. */
 .mo-port {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  scroll-padding-top: var(--s-4);
+  scroll-snap-type: y proximity;
 }
 
+/* THE COLUMN IS THE WINDOW, NOT A MEASURE. A shelf that stops
+   short of the edge looks like it has ended. Only the head keeps a
+   measure, because a marque and a search field want one. */
 .mo-col {
   display: flex;
   flex-direction: column;
   gap: var(--section-gap);
-  width: var(--measure);
-  margin: 0 auto;
-  padding: var(--section-gap) var(--gutter) var(--s-16);
+  padding: var(--section-gap) 0 var(--s-16);
   container-type: inline-size;
 }
 
-/* -- the marque ------------------------------------------------ */
-
-.mo-head {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-5);
+@media (prefers-reduced-motion: reduce) {
+  .mo-port {
+    scroll-snap-type: none;
+  }
 }
 
+/* -- the head --------------------------------------------------- */
+
+/* THE TOP OF THE PAGE IS A SNAP POSITION. `proximity` rests where
+   it can, and a page whose only snap positions are partway down has
+   no resting place at zero — every rebuilt screen in this app came
+   up already scrolled until its head became a position of its own.
+   See `home-screen.css`, which carries the measurement. */
+.mo-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-5) var(--s-8);
+  flex-wrap: wrap;
+  margin-inline: var(--gutter);
+  max-width: var(--measure);
+  scroll-snap-align: start none;
+}
+
+/* THE MARQUE YIELDS AND THE CONTROLS DO NOT. `space-between` alone
+   hands each side its content width, and a 96px marque asks for a
+   lot — so the search field was squeezed to 180px and its own
+   placeholder was cut. The words can wrap; a field that cannot show
+   what it is for cannot. */
 .mo-head-say {
   display: flex;
   flex-direction: column;
   gap: var(--s-1);
+  flex: 1 1 auto;
   min-width: 0;
 }
 
 .mo-marque {
   margin: 0;
   color: var(--fg);
+  overflow-wrap: normal;
+  word-break: keep-all;
 }
 
 .mo-sub {
   margin: 0;
   color: var(--fg-tertiary);
+  font-variant-numeric: tabular-nums;
 }
 
 .mo-head-do {
   display: flex;
   align-items: flex-end;
   gap: var(--s-3);
+  flex: 0 0 auto;
+  flex-wrap: wrap;
   min-width: 0;
 }
 
+/* THE FIELD SHRINKS AND THE BUTTON DOES NOT. `flex: 0 1 34ch` gave
+   the field a basis wider than the track the head had left it, so
+   `New module` wrapped onto its own line at 1440 — a control below
+   a field with nothing beside it, on the widest window this app
+   supports. Measured: the head's right track was 312px and the
+   field's basis 306. A basis it can actually grow FROM, with a cap,
+   keeps both on one line at every width that can hold them. */
 .mo-head-do > :first-child {
-  flex: 0 1 42ch;
+  flex: 1 1 16ch;
   min-width: 0;
+  max-width: 34ch;
 }
 
 .mo-new {
@@ -79,23 +133,27 @@
   padding: 0 var(--s-4);
   border: var(--border) solid var(--line);
   border-radius: var(--r-control);
-  background: var(--surface-1);
+  background: var(--surface-2);
   color: var(--fg-secondary);
   font: inherit;
   font-size: var(--t-small-size);
   cursor: pointer;
   transition:
-    background var(--d-press) var(--ease-out),
     border-color var(--d-press) var(--ease-out),
+    background var(--d-press) var(--ease-out),
     color var(--d-press) var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .mo-new:hover {
-    background: var(--surface-3);
-    border-color: var(--line-strong);
-    color: var(--fg);
+    border-color: var(--accent-line);
+    background: var(--accent-wash);
+    color: var(--accent);
   }
+}
+
+.mo-new:active {
+  transform: scale(0.98);
 }
 
 .mo-new:focus-visible {
@@ -103,38 +161,50 @@
   outline-offset: 2px;
 }
 
-/* -- the chips ------------------------------------------------- */
+/* -- the chips --------------------------------------------------
+   THEY CARRY THEIR OWN COUNTS, which is what makes a filter
+   answerable before it is pressed — and they are the same census
+   the band heads and the cards print, resolved by the same
+   function, so the three can never disagree.
+   -------------------------------------------------------------- */
 
 .mo-chips {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: var(--s-2);
+  flex-wrap: wrap;
+  margin-inline: var(--gutter);
 }
 
 .mo-chip {
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
-  height: var(--control-h-sm);
-  padding: 0 var(--s-3);
+  padding: var(--s-2) var(--s-3);
   border: var(--border) solid var(--line);
   border-radius: var(--r-chip);
   background: var(--surface-1);
   color: var(--fg-secondary);
   font: inherit;
   font-size: var(--t-small-size);
+  line-height: 1.2;
   cursor: pointer;
   transition:
-    background var(--d-press) var(--ease-out),
     border-color var(--d-press) var(--ease-out),
+    background var(--d-press) var(--ease-out),
     color var(--d-press) var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .mo-chip:hover {
-    background: var(--surface-3);
+    border-color: var(--line-strong);
+    background: var(--surface-2);
     color: var(--fg);
   }
+}
+
+.mo-chip:active {
+  transform: scale(0.97);
 }
 
 .mo-chip:focus-visible {
@@ -142,56 +212,109 @@
   outline-offset: 2px;
 }
 
-/* THE CHOSEN CHIP IS SOLID, NOT A WASH OF THE ACCENT. The accent on
-   its own wash is the pairing rule 4 exists to catch — system.css
-   measures it at 4.16:1 over `--surface-3`. `--accent-fg` is the ink
-   chosen per theme to sit ON the accent. */
 .mo-chip.is-on {
   border-color: var(--accent);
   background: var(--accent);
   color: var(--accent-fg);
 }
 
-/* A FIGURE IS NEVER A HUE, and it is always mono and tabular. */
 .mo-chip-n {
-  color: inherit;
+  color: var(--fg-quaternary);
   font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
   font-variant-numeric: tabular-nums;
-  font-size: var(--t-caption-size);
-  opacity: 0.75;
+}
+
+.mo-chip.is-on .mo-chip-n {
+  color: var(--accent-fg);
+  opacity: 0.72;
 }
 
 .mo-none {
-  margin: 0;
+  margin: 0 var(--gutter);
+  max-width: 68ch;
   color: var(--fg-secondary);
 }
 
-/* -- the grid -------------------------------------------------- */
+/* -- a band ------------------------------------------------------ */
+
+.mo-band {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  scroll-margin-top: var(--s-4);
+}
+
+/* EVERY BAND BELOW THE HEAD SNAPS, AND THE AXIS IS NAMED.
+   `scroll-snap-align: start` is shorthand for `start start` —
+   block then inline — and the snap container is resolved per axis,
+   so a card in a sideways deck written that way is also a vertical
+   snap target inside the page. That is what used to pull every one
+   of these screens down past its own greeting on load. */
+.mo-band ~ .mo-band {
+  scroll-snap-align: start none;
+}
+
+.mo-band-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin: 0 var(--gutter);
+  padding-bottom: var(--s-2);
+  border-bottom: var(--border) solid var(--line-subtle);
+}
+
+.mo-band-name {
+  color: var(--accent);
+}
+
+.mo-band-count {
+  color: var(--fg-tertiary);
+}
+
+/* -- the shelf --------------------------------------------------- */
 
 .mo-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(248px, 100%), 1fr));
-  grid-auto-rows: 1fr;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(246px, 292px);
+  align-items: stretch;
   gap: var(--s-4);
   margin: 0;
-  padding: 0;
+  padding: var(--s-1) var(--gutter) var(--s-4);
   list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: var(--gutter);
+  scrollbar-width: thin;
 }
 
 .mo-cell {
   display: flex;
   min-width: 0;
+  scroll-snap-align: none start;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .mo-grid {
+    scroll-snap-type: none;
+  }
+}
+
+/* THE TILE IS TWO CONTROLS IN ONE CARD — the door, and the way to
+   its settings. They are siblings and not nested, because a button
+   inside a button is not markup a browser will render. */
 .mo-tile {
-  position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
+  min-width: 0;
+  overflow: hidden;
   border: var(--border) solid var(--line);
   border-radius: var(--r-card);
   background: var(--surface-1);
-  overflow: hidden;
   box-shadow: var(--e-card);
   transition:
     box-shadow var(--d-press) var(--ease-out),
@@ -200,23 +323,20 @@
 
 @media (hover: hover) and (pointer: fine) {
   .mo-tile:hover {
-    box-shadow: var(--e-card-hover);
     border-color: var(--line-strong);
+    box-shadow: var(--e-card-hover);
   }
 }
 
-/* THE TILE IS A BOX AND THE FACE IS THE BUTTON, because a tile
-   carries a second act — its settings — and a button inside a
-   button is not a thing a browser will draw. */
 .mo-face {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  flex: 1;
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   padding: 0;
   border: 0;
-  background: transparent;
+  background: none;
   color: var(--fg);
   font: inherit;
   text-align: left;
@@ -228,18 +348,28 @@
   outline-offset: -2px;
 }
 
-/* -- the picture ----------------------------------------------- */
+/* -- the picture -------------------------------------------------- */
 
+/* THE WELL IS A LIT SWEEP. The seed is manufacturer renders of
+   white hulls on WHITE grounds, and `contain` inside a 16:10 box
+   leaves a bar down each side of most of them. On a dark gradient
+   those bars read as the picture failing; on a lit plate they read
+   as the sweep the boat was photographed on, which is what it
+   actually was. */
 .mo-well {
-  --mat: linear-gradient(180deg, var(--surface-3) 0%, var(--bg-sunken) 100%);
   position: relative;
   display: block;
   width: 100%;
   aspect-ratio: 16 / 10;
   flex: 0 0 auto;
-  background: var(--mat);
-  border-bottom: var(--border) solid var(--line-subtle);
   overflow: hidden;
+  background: radial-gradient(
+    86% 74% at 50% 24%,
+    var(--sweep-hi) 0%,
+    var(--sweep-mid) 54%,
+    var(--sweep-lo) 100%
+  );
+  box-shadow: inset 0 -1px 0 var(--sweep-seam);
 }
 
 .mo-plate {
@@ -247,11 +377,11 @@
   inset: 0;
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, var(--kind, transparent) 10%, var(--surface-2));
+  background: color-mix(in srgb, var(--kind, var(--accent)) 8%, var(--sweep-mid));
 }
 
 .mo-mono {
-  color: var(--fg-secondary);
+  color: color-mix(in srgb, var(--kind, var(--accent)) 60%, var(--sweep-ink));
   font-family: var(--font-display);
   letter-spacing: 0.04em;
 }
@@ -262,11 +392,61 @@
   display: block;
   width: 100%;
   height: 100%;
-  background: var(--mat);
-  /* CONTAIN. A cropped hull is a hull with its bow cut off. */
+  /* CONTAIN. A cropped hull is a hull with its bow cut off, and the
+     shape of the hull is the thing being sold. */
   object-fit: contain;
+  filter: saturate(1.03) contrast(1.01);
 }
 
+/* ============================================================
+   THE PLACE'S MARK, AND IT HAS TWO STATES.
+
+   `PlaceMark` resolves the module's own uploaded logo, then the
+   brand default, then the KIND symbol — never initials, which is
+   the thing that component exists to prevent.
+
+   WITH NO PHOTOGRAPH BEHIND IT, THE MARK IS THE FACE: centred on
+   the lit plate at the large size, because a place with no picture
+   should still be recognisable from across the room.
+
+   WITH A PHOTOGRAPH, IT STEPS INTO A CHIP. A wordmark laid
+   straight onto a yard shot is a wordmark nobody can read, and the
+   first wiring of this put it UNDER the picture, where every one of
+   the twenty-two photographed brands covered it completely.
+   ============================================================ */
+/* WITH NO PHOTOGRAPH IT FILLS THE PLATE. The first draft of this
+   pinned the mark to the bottom-left corner in both states, so a
+   place with no picture drew a 24px glyph in the corner of an empty
+   sweep — `ePropulsion Outboards` came out as a blank card with a
+   speck on it. */
+.mo-mark {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--sweep-ink);
+  pointer-events: none;
+}
+
+.mo-mark.is-over {
+  inset: auto auto var(--s-2) var(--s-2);
+}
+
+.mo-mark.is-over {
+  padding: var(--s-1) var(--s-2);
+  border: var(--border) solid var(--glass-edge);
+  border-radius: var(--r-control);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
+  color: var(--fg);
+  box-shadow: var(--e1);
+}
+
+/* the kind's own hairline down the leading edge of the picture —
+   the one place a hue appears on this screen, and it marks a thing
+   that HAS that kind */
 .mo-rail {
   position: absolute;
   inset: 0 auto 0 0;
@@ -275,16 +455,23 @@
   background: var(--kind, var(--line));
 }
 
-/* -- the words ------------------------------------------------- */
+/* -- the words ---------------------------------------------------- */
 
 .mo-say {
   display: flex;
   flex-direction: column;
   gap: var(--s-1);
-  padding: var(--s-3) var(--s-4);
+  flex: 1 1 auto;
+  padding: var(--s-4);
   min-width: 0;
 }
 
+/* TWO LINES, ALWAYS, WHETHER OR NOT THE NAME NEEDS THEM. A card
+   sized by its own string makes its neighbours lie about how much
+   room a picture gets — "Highfield Inflatables" wrapped and its
+   photograph came out shorter than every other card's in the row,
+   and the only thing deciding that was how long a brand's name
+   happens to be. */
 .mo-name {
   color: var(--fg);
   min-width: 0;
@@ -296,28 +483,23 @@
 }
 
 .mo-count {
-  color: var(--fg-secondary);
+  margin-top: auto;
+  color: var(--fg-tertiary);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  min-height: 1lh;
-  max-height: 1lh;
-  overflow: hidden;
 }
 
-/* -- the second act -------------------------------------------- */
-
-/* SETTINGS IS A WORD, NOT A COG IN A CORNER. It sits under the
-   card's own text rather than over the photograph, because a
-   control floated on a picture is a control a person has to find
-   twice — once to see it and once to be sure it is not part of the
-   picture. */
+/* THE SECOND DOOR, AND IT IS QUIET. Settings is not what a person
+   came here for; it is what they came here for on the one morning
+   in thirty that they did. A full-width strip at the foot of the
+   card, no fill at rest, brass when reached. */
 .mo-set {
   flex: 0 0 auto;
   padding: var(--s-2) var(--s-4);
   border: 0;
   border-top: var(--border) solid var(--line-subtle);
   background: none;
-  color: var(--fg-tertiary);
+  color: var(--fg-quaternary);
   font: inherit;
   font-size: var(--t-caption-size);
   text-align: left;
@@ -329,8 +511,8 @@
 
 @media (hover: hover) and (pointer: fine) {
   .mo-set:hover {
-    background: var(--surface-2);
-    color: var(--fg);
+    background: var(--accent-wash);
+    color: var(--accent);
   }
 }
 
@@ -339,82 +521,33 @@
   outline-offset: -2px;
 }
 
-/* -- narrow ---------------------------------------------------- */
+/* ============================================================
+   AND ON A SMALL WINDOW IT IS THE SAME SHELVES, one step narrower.
+   The shape does not change, at any width, because the gesture a
+   dealer learnt on a desk is the gesture their thumb already
+   knows.
+   ============================================================ */
+@container (max-width: 620px) {
+  .mo-grid {
+    grid-auto-columns: minmax(208px, 252px);
+  }
 
-@container (max-width: 640px) {
+  /* `flex: 0 0 auto` above keeps the controls off the marque's
+     track on a wide window; here it has to be undone, or the block
+     shrinks to its content and a full-width column ends up holding
+     a 192px field. */
   .mo-head-do {
-    flex-wrap: wrap;
+    flex: 1 1 100%;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .mo-head-do > :first-child {
-    flex: 1 1 100%;
+    flex: 1 1 auto;
+    max-width: none;
   }
-}
 
-
-/* ============================================================
-   THE LINE BUDGET IS OFF WHEN THE GRID IS ONE COLUMN.
-
-   Two reserved lines of name is what makes a ROW of cards equal,
-   and a row of one is already equal. Below the width where
-   `.mo-grid` folds to a single track, the reservation is just a
-   blank line under every name — which on a phone is the scarcest
-   space there is.
-   ============================================================ */
-@container (max-width: 520px) {
-  .mo-name {
-    min-height: 0;
-    max-height: none;
+  .mo-new {
+    width: 100%;
   }
-}
-
-/* ============================================================
-   THE MARK ON A PLACE CARD.
-
-   `PlaceMark` resolves it: the module's own uploaded logo first,
-   then the brand default, then the kind's symbol. This screen had
-   been drawing two letters instead — "HI", "PA", "MT" — which is
-   the one fallback that component's header argues against, because
-   initials say nothing the name under them has not already said.
-
-   TWO STATES, AND THEY ARE DIFFERENT OBJECTS. With no photograph
-   the mark IS the face of the card and takes the middle of the
-   well. Over a photograph it becomes a chip in the corner on the
-   app's own ground, because a wordmark laid straight onto a yard
-   shot is a wordmark nobody can read — the same argument
-   `modules.css` makes about the dashboard tiles, kept in step here
-   rather than re-decided.
-   ============================================================ */
-.mo-mark {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  padding: var(--s-5);
-  color: var(--kind, var(--fg-secondary));
-}
-
-/* the wordmark fits the slot rather than the slot cropping it */
-.mo-mark :is(img, svg) {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
-
-.mo-mark.is-over {
-  inset: auto auto var(--s-2) var(--s-2);
-  display: inline-flex;
-  align-items: center;
-  padding: var(--s-2) var(--s-3);
-  max-width: calc(100% - var(--s-4));
-  max-height: 34px;
-  border: var(--border) solid var(--glass-edge);
-  border-radius: var(--r-control);
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
-  -webkit-backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
-  box-shadow:
-    inset 0 1px 0 var(--edge-light),
-    var(--e2);
 }

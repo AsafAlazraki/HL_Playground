@@ -84,6 +84,22 @@ export function PlacesScreen({ onOpen, onSettings, onNew }: PlacesScreenProps): 
 
   const rows = places.reduce((n, p) => n + p.census.items, 0)
 
+  /* THE SHELVES. One band per kind that has anything in it, in the
+     order the chips are in — which is `TABLE_KINDS`' own order, so
+     the two can never disagree about what a kind is called or where
+     it comes. `placeFilters` already resolves every kind present
+     with its label and its count, and reusing it here is the reason
+     a band head and its chip always say the same number. */
+  const bands = useMemo(() => {
+    const out: { kind: string; label: string; places: Place[] }[] = []
+    for (const c of chips) {
+      if (c.kind === undefined) continue
+      const held = shown.filter((p) => p.kind === c.kind)
+      if (held.length > 0) out.push({ kind: c.kind, label: c.label, places: held })
+    }
+    return out
+  }, [chips, shown])
+
   return (
     <div className="mo" data-register="showroom">
       <div className="mo-port">
@@ -135,12 +151,38 @@ export function PlacesScreen({ onOpen, onSettings, onNew }: PlacesScreenProps): 
               Nothing here matches “{query}”. Clear the search to see all {places.length} places.
             </p>
           ) : (
-            <ul className="mo-grid">
-              {shown.map((place) => (
-                <Tile
-                  key={place.key}
-                  place={place}
-                  cover={covers.get(place.key)}
+            bands.map((band) => (
+              <section key={band.kind} className="mo-band" aria-label={band.label}>
+                {/* ============================================================
+                    THE SHELF HEAD, AND IT IS NOT THE CHIP SAID TWICE.
+
+                    This screen drew one flat grid of twenty-five cards
+                    with a row of filter chips over it, so the only way
+                    to answer "how many brands of boat do I carry" was
+                    to press a chip and count what was left. The kinds
+                    are the shape of the business and they were being
+                    held in a filter.
+
+                    So the places stand on shelves, one band per kind,
+                    in the order `TABLE_KINDS` declares — the same
+                    grammar as the catalogue, the picker, a place and
+                    the front door. The chips stay, because pressing
+                    one is still the fastest way to see only motors;
+                    what changes is that you no longer have to.
+                    ============================================================ */}
+                <p className="mo-band-head">
+                  <span className="t-label mo-band-name">{band.label}</span>
+                  <span className="t-label mo-band-count">
+                    {band.places.length}{' '}
+                    {band.places.length === 1 ? 'place' : 'places'}
+                  </span>
+                </p>
+                <ul className="mo-grid">
+                  {band.places.map((place) => (
+                    <Tile
+                      key={place.key}
+                      place={place}
+                      cover={covers.get(place.key)}
                   /* THE PLACE'S OWN MARK, which this screen had been
                      drawing initials in place of. `ModuleDef.logo`
                      is uploadable in module settings and
@@ -148,19 +190,21 @@ export function PlacesScreen({ onOpen, onSettings, onNew }: PlacesScreenProps): 
                      `PlaceMark` is the one implementation that
                      resolves the two and falls back to the KIND
                      rather than to letters. */
-                  logo={modules[place.moduleId]?.logo}
-                  master={
-                    place.tableId
-                      ? entities[place.tableId]
-                      : entities[
-                          modules[place.moduleId]?.tableIds.find((id) => entities[id]) ?? ''
-                        ]
-                  }
-                  onOpen={() => onOpen(place.moduleId)}
-                  onSettings={() => onSettings(place.moduleId)}
-                />
-              ))}
-            </ul>
+                      logo={modules[place.moduleId]?.logo}
+                      master={
+                        place.tableId
+                          ? entities[place.tableId]
+                          : entities[
+                              modules[place.moduleId]?.tableIds.find((id) => entities[id]) ?? ''
+                            ]
+                      }
+                      onOpen={() => onOpen(place.moduleId)}
+                      onSettings={() => onSettings(place.moduleId)}
+                    />
+                  ))}
+                </ul>
+              </section>
+            ))
           )}
         </div>
       </div>
@@ -190,7 +234,7 @@ function Tile({
     <li className="mo-cell">
       <div className="mo-tile" data-kind={place.kind}>
         <button type="button" className="mo-face" data-press="card" onClick={onOpen}>
-          <span className="mo-well m-lit m-grain">
+          <span className="mo-well">
             {/* ============================================================
                 THE PLACE'S MARK, NOT ITS INITIALS — AND IT SITS ON
                 THE PHOTOGRAPH RATHER THAN UNDER IT.
