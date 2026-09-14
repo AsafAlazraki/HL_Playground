@@ -1163,3 +1163,293 @@
 .bs-specs {
   background-color: var(--sweep-mid);
 }
+
+/* ============================================================
+   THE LAYOUT, REBUILT FROM WHAT ACTUALLY SHIPS.
+
+   Porsche's live configurator was driven and photographed rather
+   than remembered, and it is not the shape this screen had. What
+   it does, and what this now does:
+
+     THE PRODUCT IS ON THE LEFT AND IT STAYS THERE. Two thirds of
+     the width, the full height of the working area, and it does
+     not move while the options scroll. This screen had the product
+     as a BAND ACROSS THE TOP with the options in a tray beneath —
+     so the thing being sold slid off the screen the moment anybody
+     went looking at options.
+
+     THE OPTIONS ARE A COLUMN ON THE RIGHT. One scrolling rail, the
+     model's name at the head of it, everything else underneath.
+     Not a horizontal deck, not a tray.
+
+     THE PRICE AND THE ACT ARE IN THE TOP BAR. Always on screen,
+     right-aligned, the primary action beside the figure. This app
+     had them at the FOOT, which is the one place a person has to
+     look away from the product to find.
+
+   That is three structural facts, and none of them is a colour.
+   The palette and the type are this app's own and unchanged.
+   ============================================================ */
+
+.bs {
+  grid-template-columns: minmax(0, 1fr) clamp(360px, 30vw, 470px);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas:
+    'money money'
+    'rail  rail'
+    'stage side';
+  column-gap: 0;
+}
+
+.bs-bar {
+  grid-area: money;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.bs-rail {
+  grid-area: rail;
+}
+
+.bs-product {
+  grid-area: stage;
+  min-height: 0;
+  padding: var(--s-4) var(--s-4) var(--s-4) var(--gutter);
+}
+
+.bs-step {
+  grid-area: side;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: var(--s-5) var(--gutter) var(--s-12) var(--s-5);
+  border-left: var(--border) solid var(--line-subtle);
+  background: var(--surface-rest);
+}
+
+/* THE MONEY IS A BAR AGAIN, AT THE TOP, and it is the only place
+   on this screen that could be called chrome. The completion card
+   keeps its ring and its figure; what changes is that it sits in
+   the head rather than floating over the foot, so the product
+   below it is never partly covered by the thing that tells you
+   what the product costs. */
+.bs .ui-done {
+  margin: 0;
+  border-radius: 0;
+  border-inline: 0;
+  border-top: 0;
+  border-bottom: var(--border) solid var(--line);
+  background: var(--surface-1);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  padding-inline: var(--gutter);
+}
+
+/* the stage fills its column and stays put — the whole point */
+.bs-product .ui-stage-frame {
+  height: 100%;
+  padding-left: 0;
+  border-radius: var(--r-panel);
+}
+
+/* AND THE NAME COMES OFF THE PICTURE. With the boat in a tall
+   column of its own there is no left margin to put a marque in,
+   and laying it back over the hull is the fault that took three
+   attempts to fix. It heads the options rail instead — which is
+   where the live configurator puts it, above the search. */
+.bs-side-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: var(--s-4);
+  margin-bottom: var(--s-4);
+  border-bottom: var(--border) solid var(--line);
+}
+
+@container (min-width: 640px) {
+  .bs-product {
+    --bs-name: 0px;
+  }
+
+  .bs-lockup {
+    display: none;
+  }
+
+  .bs-marque {
+    font-size: var(--t-marque-size);
+  }
+}
+
+@container (max-width: 639px) {
+  .bs-lockup {
+    display: none;
+  }
+}
+
+/* ============================================================
+   AND BELOW 1000px THERE IS ONE COLUMN AGAIN.
+
+   A 360px options rail beside a boat needs about a thousand
+   pixels before either of them is worth looking at. Under that
+   the product takes a band and the options run beneath it — which
+   is the shape this screen had at every width, and is the right
+   answer at exactly one of them.
+   ============================================================ */
+@media (max-width: 1000px) {
+  .bs {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(240px, 0.9fr) minmax(0, 1fr);
+    grid-template-areas:
+      'money'
+      'rail'
+      'stage'
+      'side';
+  }
+
+  .bs-product {
+    padding: var(--s-3) var(--gutter) 0;
+  }
+
+  .bs-step {
+    border-left: 0;
+    border-top: var(--border) solid var(--line-subtle);
+    padding: var(--s-4) var(--gutter) var(--s-12);
+  }
+}
+
+.bs-side-name {
+  margin: 0;
+  color: var(--fg);
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+/* ============================================================
+   AND THE PANE'S CONTENTS WERE BUILT FOR A TRAY.
+
+   Everything inside the step was laid out for a band running the
+   full width of the window — a search field beside its own button,
+   a chosen line with three things on one row, offers as a deck
+   that scrolls sideways. In a 430px rail all three cramp: measured
+   at 1440, "Yamaha – F4SMHA" broke across three lines inside its
+   own chip and the search field came out 100px wide beside a
+   button that would not shrink.
+
+   THE RAIL IS ITS OWN CONTAINER and everything in it asks the RAIL
+   how wide it is, not the window. Below 560px of rail the rows
+   stack and the deck becomes a list — which is what a column of
+   options is, and what every configurator driven for this rebuild
+   draws.
+   ============================================================ */
+
+.bs-step {
+  container-type: inline-size;
+  container-name: side;
+}
+
+@container side (max-width: 560px) {
+  /* the chosen line: name, then price and the way out beneath it */
+  .bs-line {
+    flex-wrap: wrap;
+    row-gap: var(--s-2);
+  }
+
+  .bs-line-name {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  /* the finder and its escape hatch stack, and the field takes the
+     whole rail — a search field too narrow to show what was typed
+     into it is not a narrow field */
+  .bs-curate {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bs-curate > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .bs-showall {
+    width: 100%;
+  }
+
+  /* THE OFFERS BECOME A LIST. A sideways deck inside a column is
+     two scroll directions fighting over one gesture, and it puts
+     the second option off the edge of a rail that has room for it
+     underneath. One column, thumbnail left, words right. */
+  .bs-offer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+    overflow-x: visible;
+    scroll-snap-type: none;
+    padding-inline: 0;
+  }
+
+  .bs-offer > li {
+    width: 100%;
+  }
+
+  .bs-cand {
+    flex-direction: row;
+    align-items: stretch;
+    min-height: 0;
+  }
+
+  .bs-cand-well {
+    flex: 0 0 92px;
+    width: 92px;
+    aspect-ratio: auto;
+    border-bottom: 0;
+    border-right: var(--border) solid var(--line-subtle);
+  }
+
+  .bs-cand-say {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: var(--s-3);
+  }
+
+  .bs-cand-name {
+    min-height: 0;
+    max-height: none;
+  }
+
+  /* the facts under a candidate are a wrapped run, not a column of
+     one-per-line, or a motor with four of them is 120px tall */
+  .bs-cand-facts {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 2px var(--s-3);
+  }
+}
+
+/* THE STATE CHIP TAKES A LINE OF ITS OWN. Laid out as a third
+   track beside a 92px thumbnail it left the words about ninety
+   pixels, and a motor called "Yamaha - F4SMHA" with four pair
+   facts under it had nowhere to go — measured, every fact
+   truncated and the name broke across two lines inside a cell it
+   had already been given all of. */
+@container side (max-width: 560px) {
+  .bs-cand {
+    flex-wrap: wrap;
+  }
+
+  .bs-cand-say {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .bs-cand-state {
+    flex: 1 1 100%;
+    align-self: stretch;
+    padding: var(--s-2) var(--s-3);
+    border-top: var(--border) solid var(--line-subtle);
+    text-align: left;
+  }
+}

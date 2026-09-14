@@ -132,77 +132,6 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
 
   return (
     <div className="bs" data-register="showroom">
-      <header className="bs-rail">
-        {/* THE LAST STOP IS NOT A BAND. `steps.ts` declares
-            `HANDOVER_STEP` beside the subject for exactly this
-            reason: "who is it for" is the one question no table can
-            carry, and `CONFIGURATOR.md` calls its absence from the
-            build screen "the single biggest fault in the flow" —
-            it sends a person to the document to do something the
-            build should own. */}
-        <Stepper
-          steps={[...bands.map((b) => railStop(b, refusals)), handoverStop(quote)]}
-          currentId={openId}
-          doneIds={[
-            ...bands.filter((b) => b.amount !== null).map((b) => b.id),
-            ...(quote.customer?.name ? [HANDOVER_STEP] : []),
-          ]}
-          onGo={setOpenId}
-          label="Build steps"
-        />
-      </header>
-
-      <div className="bs-body">
-        <section className="bs-product" aria-label="What is being quoted">
-          {/* AN IDENTIFIER IS NOT A HEADLINE, and the first draft of
-              this screen proved `CONFIGURATOR.md`'s point by setting
-              `Highfield - ADV7 (HYP) B-G-B` at the marque step: three
-              lines, filling the column the product is supposed to be
-              in. `subjectLabel` is four facts welded together — a
-              maker, a model, a hull material, a colourway — and only
-              the model is a name. `marqueOf` takes them apart and
-              NOTHING IS DROPPED: all three parts are drawn, inside
-              one `h1`, in the order they were written. */}
-          <h1 className="bs-lockup">
-            {lockup.maker ? (
-              <span className="t-label bs-eyebrow">{lockup.maker}</span>
-            ) : (
-              <span className="t-label bs-eyebrow">{quote.organisation ?? 'Quoting'}</span>
-            )}
-            <span className={lockup.long ? 't-hero bs-marque' : 't-marque bs-marque'}>
-              {lockup.model}
-            </span>
-            {lockup.trim ? (
-              <span className="t-small bs-trim">{lockup.trim}</span>
-            ) : null}
-          </h1>
-
-          <ProductStage
-            pictures={subjectPictures(quote)}
-            emptyBecause={`No picture on ${quote.subjectLabel} yet. Add one on its row and it shows here.`}
-          />
-
-          {quote.subjectSpecs.length > 0 ? (
-            <dl className="bs-specs">
-              {quote.subjectSpecs.slice(0, 8).map((s) => (
-                <div className="bs-spec" key={s.label}>
-                  <dt className="t-caption bs-spec-lab">{s.label}</dt>
-                  <dd className="t-mono bs-spec-val">{s.value}</dd>
-                </div>
-              ))}
-            </dl>
-          ) : null}
-        </section>
-
-        <section className="bs-step" aria-label={openId === HANDOVER_STEP ? 'Who it is for' : (open?.name ?? 'This step')}>
-          {openId === HANDOVER_STEP ? (
-            <Handover quote={quote} refusals={refusals} />
-          ) : open ? (
-            <BandPane quote={quote} band={open} />
-          ) : null}
-        </section>
-      </div>
-
       <footer className="bs-bar">
         {/* ============================================================
             THE FOOT IS A CARD THAT FILLS UP, not a bar.
@@ -330,6 +259,95 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
              still standing between here and a document. */
         />
       </footer>
+
+      <header className="bs-rail">
+        {/* THE LAST STOP IS NOT A BAND. `steps.ts` declares
+            `HANDOVER_STEP` beside the subject for exactly this
+            reason: "who is it for" is the one question no table can
+            carry, and `CONFIGURATOR.md` calls its absence from the
+            build screen "the single biggest fault in the flow" —
+            it sends a person to the document to do something the
+            build should own. */}
+        <Stepper
+          steps={[...bands.map((b) => railStop(b, refusals)), handoverStop(quote)]}
+          currentId={openId}
+          doneIds={[
+            ...bands.filter((b) => b.amount !== null).map((b) => b.id),
+            ...(quote.customer?.name ? [HANDOVER_STEP] : []),
+          ]}
+          onGo={setOpenId}
+          label="Build steps"
+        />
+      </header>
+
+      <div className="bs-body">
+        <section className="bs-product" aria-label="What is being quoted">
+          {/* AN IDENTIFIER IS NOT A HEADLINE, and the first draft of
+              this screen proved `CONFIGURATOR.md`'s point by setting
+              `Highfield - ADV7 (HYP) B-G-B` at the marque step: three
+              lines, filling the column the product is supposed to be
+              in. `subjectLabel` is four facts welded together — a
+              maker, a model, a hull material, a colourway — and only
+              the model is a name. `marqueOf` takes them apart and
+              NOTHING IS DROPPED: all three parts are drawn, inside
+              one `h1`, in the order they were written. */}
+          <h1 className="bs-lockup">
+            {lockup.maker ? (
+              <span className="t-label bs-eyebrow">{lockup.maker}</span>
+            ) : (
+              <span className="t-label bs-eyebrow">{quote.organisation ?? 'Quoting'}</span>
+            )}
+            <span className={lockup.long ? 't-hero bs-marque' : 't-marque bs-marque'}>
+              {lockup.model}
+            </span>
+            {lockup.trim ? (
+              <span className="t-small bs-trim">{lockup.trim}</span>
+            ) : null}
+          </h1>
+
+          <ProductStage
+            pictures={subjectPictures(quote)}
+            emptyBecause={`No picture on ${quote.subjectLabel} yet. Add one on its row and it shows here.`}
+          />
+
+          {quote.subjectSpecs.length > 0 ? (
+            <dl className="bs-specs">
+              {quote.subjectSpecs.slice(0, 8).map((s) => (
+                <div className="bs-spec" key={s.label}>
+                  <dt className="t-caption bs-spec-lab">{s.label}</dt>
+                  <dd className="t-mono bs-spec-val">{s.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+        </section>
+
+        <section className="bs-step" aria-label={openId === HANDOVER_STEP ? 'Who it is for' : (open?.name ?? 'This step')}>
+          {/* ============================================================
+              THE NAME HEADS THE OPTIONS, not the photograph.
+
+              It was laid over the hull, and three separate attempts to
+              stop it crossing the boat all failed for the same reason:
+              a label over a picture has no column of its own. Every
+              shipping configurator driven for this rebuild puts the
+              model's name at the top of the options rail instead, above
+              the search — so it is beside what you are choosing rather
+              than on top of what you are choosing it for.
+              ============================================================ */}
+          <header className="bs-side-head">
+            <p className="t-label bs-eyebrow">{lockup.maker || (quote.organisation ?? 'Quoting')}</p>
+            <h1 className="t-title bs-side-name">{lockup.model}</h1>
+            {lockup.trim ? <p className="t-small bs-trim">{lockup.trim}</p> : null}
+          </header>
+
+          {openId === HANDOVER_STEP ? (
+            <Handover quote={quote} refusals={refusals} />
+          ) : open ? (
+            <BandPane quote={quote} band={open} />
+          ) : null}
+        </section>
+      </div>
+
 
       {/* THE SHEET, OVER A STAGE THAT IS STILL THERE AND FROZEN. The
           Porsche teardown found the blur is load-bearing: it says
