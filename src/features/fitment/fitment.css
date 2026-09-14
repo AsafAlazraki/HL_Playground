@@ -1130,3 +1130,43 @@
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
+
+/* ============================================================
+   THE HEAD SPENT A THIRD OF A COCKPIT SCREEN ON PROSE.
+
+   Measured at 1440x900: eyebrow, a 34px title wrapped to two lines,
+   a lede, and a four-figure ledger beside them — then a SECOND
+   heading block with its own eyebrow, title and lede — and only
+   then the search field and the list. Two hundred and sixty pixels
+   before anything a person came here to read, on a screen whose
+   register asks for eighteen rows.
+
+   `max-width: 22ch` is what wrapped the title: "What one boat can
+   be sold with" is thirty characters and it has a whole column. A
+   measure exists to stop a line running too long to track back
+   from; it is not a reason to break a line that fits.
+
+   Nothing is removed and no type step moves. The title gets the
+   measure it actually has, and the air between the parts comes
+   down one step each — which is the same call `constraints.css`
+   made when its cards became rows: spacing measured for one size
+   of thing is the loudest thing on the screen at another.
+   ============================================================ */
+
+.fo-title {
+  max-width: 34ch;
+}
+
+.fo-lede {
+  margin-top: var(--s-2);
+}
+
+.fo-page {
+  padding-top: var(--s-4);
+}
+
+@container (min-width: 900px) {
+  .fo-head {
+    align-items: center;
+  }
+}
