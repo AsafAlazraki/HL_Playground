@@ -74,7 +74,7 @@
    effect.
    ============================================================ */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { JSX, ReactNode } from 'react'
 import {
   CaretDoubleLeft,
@@ -82,11 +82,13 @@ import {
   FileText,
   GearSix,
   House,
+  List,
   MagnifyingGlass,
   Plus,
   SquaresFour,
   Stack,
   UsersThree,
+  X,
 } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { TableKindSymbol } from '@/features/tablekit'
@@ -116,6 +118,19 @@ const RAIL_KEY = 'hl.rail.collapsed'
  *  and both say 600. */
 const NARROW = '(max-width: 600px)'
 
+/** AND UNDER THIS THE RAIL IS NOT A RAIL AT ALL.
+ *
+ *  A column of navigation beside the content is a desktop idea: it
+ *  costs 64px of a 430px phone forever, to show five doors somebody
+ *  presses a handful of times a day. Tablet and mobile get the
+ *  hamburger instead — the rail leaves the layout, the stage takes
+ *  the whole window, and the doors arrive as a drawer over the top
+ *  when they are asked for.
+ *
+ *  1024 because that is an iPad in landscape: the largest thing
+ *  somebody holds rather than sits at. */
+const DRAWER = '(max-width: 1024px)'
+
 const readFlag = (key: string, fallback: boolean): boolean => {
   try {
     const raw = globalThis.localStorage?.getItem(key)
@@ -136,6 +151,19 @@ const mediaMatches = (query: string): boolean => {
 /** Whether the window is under the strip width. Read once at mount and
  *  then on every change, so resizing across 600 re-shapes the rail
  *  without a reload. */
+function useMedia(query: string): boolean {
+  const [on, setOn] = useState(() => mediaMatches(query))
+  useEffect(() => {
+    if (typeof globalThis.matchMedia !== 'function') return
+    const mq = globalThis.matchMedia(query)
+    const fire = (): void => setOn(mq.matches)
+    fire()
+    mq.addEventListener('change', fire)
+    return () => mq.removeEventListener('change', fire)
+  }, [query])
+  return on
+}
+
 function useNarrow(): boolean {
   const [narrow, setNarrow] = useState(() => mediaMatches(NARROW))
   useEffect(() => {
@@ -243,9 +271,68 @@ export function SideNav({
     }
   }, [collapsed])
   const narrow = useNarrow()
+  /* ============================================================
+     TABLET AND MOBILE DO NOT GET A RAIL, THEY GET A DRAWER.
+
+     `drawer` is the window saying the column has to go. When it is
+     true the nav leaves the layout entirely — `shell.css` drops
+     `--rail` to zero and the stage takes the whole width — and the
+     same markup slides in over the top when the hamburger is
+     pressed. One navigation, two shapes, no second component to
+     drift from this one.
+
+     AND IT IS NEVER TIGHT IN A DRAWER. `tight` is the answer to "a
+     column this narrow cannot hold words"; a drawer is as wide as
+     it likes, so the icons-only strip would be throwing away the
+     labels for nothing. The reader's own collapse is remembered and
+     comes back when the rail does.
+     ============================================================ */
+  const drawer = useMedia(DRAWER)
+  const [open, setOpen] = useState(false)
+
+  /* AND GOING SOMEWHERE CLOSES IT. A drawer still standing over the
+     screen a person just asked for is the commonest fault this
+     pattern has.
+
+     WRAPPED AT THE DOOR, NOT CAUGHT AT THE CONTAINER. One `onClick`
+     on the `<nav>` would have been a line instead of eight, and it
+     is a click handler on a non-interactive element: no keyboard
+     event, nothing in the tab order, and a person driving this with
+     a keyboard gets a drawer that never closes behind them. The
+     buttons are already buttons; this simply goes through them. */
+  const shut = useCallback(
+    (go: () => void) =>
+      () => {
+        setOpen(false)
+        go()
+      },
+    [],
+  )
+
+  /* A WINDOW GROWN BACK TO A DESKTOP HAS NO DRAWER TO LEAVE OPEN —
+     and it needs no effect to say so. Every use of this state is
+     already gated on `drawer`, so a remembered `open` from a narrow
+     window is unreachable the moment the rail returns, and it is
+     still there if the window narrows again. An effect that resets
+     state a render could simply not read is a second source of
+     truth; the linter is right about it. */
+  const showing = drawer && open
+
+  /* ESCAPE CLOSES IT, and only while it is open — a listener that
+     outlives the drawer is a key a person presses somewhere else
+     that does something here. */
+  useEffect(() => {
+    if (!showing) return
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    globalThis.addEventListener('keydown', onKey)
+    return () => globalThis.removeEventListener('keydown', onKey)
+  }, [showing])
+
   /* the one flag. `--rail` follows it in shell.css: the reader's
      collapse through `.is-tight`, the window's through the query. */
-  const tight = collapsed || narrow
+  const tight = drawer ? false : collapsed || narrow
 
   /* THE COUNT BESIDE "Modules" IS PLACES, NOT MODULES — see `placeCount`. */
   const entities = useProjectStore((s) => s.entities)
@@ -254,10 +341,58 @@ export function SideNav({
   const tableCount = useMemo(() => Object.keys(entities).length, [entities])
 
   return (
+    <>
+      {/* ============================================================
+          THE HAMBURGER, and it is a SIBLING of the nav rather than
+          a child of it.
+
+          The drawer slides by transform, and anything inside it
+          slides with it — a toggle that leaves with the thing it
+          toggles is a toggle you cannot use twice. So the button
+          lives outside, fixed to the top-left, and the nav it opens
+          knows nothing about it.
+
+          It is drawn ONLY in drawer mode. A hamburger beside a rail
+          that is already on screen is a control for something that
+          has not happened.
+          ============================================================ */}
+      {drawer ? (
+        <button
+          type="button"
+          className="sn-burger"
+          aria-label={open ? 'Close the menu' : 'Open the menu'}
+          aria-expanded={open}
+          aria-controls="sn-drawer"
+          onClick={() => setOpen((v) => !v)}
+        >
+          {open ? (
+            <X size={MARK} weight={MARK_WEIGHT} aria-hidden="true" />
+          ) : (
+            <List size={MARK} weight={MARK_WEIGHT} aria-hidden="true" />
+          )}
+        </button>
+      ) : null}
+
+      {/* THE SCRIM IS THE OTHER WAY OUT. Pressing away from a sheet
+          closes it — the gesture every drawer on every phone has —
+          and it is the reason the drawer needs no close button of
+          its own inside. */}
+      {showing ? (
+        <button
+          type="button"
+          className="sn-scrim"
+          aria-label="Close the menu"
+          onClick={() => setOpen(false)}
+        />
+      ) : null}
+
     <nav
+      id="sn-drawer"
       className={`sn${tight ? ' is-tight' : ''}`}
       aria-label="Navigation"
       data-collapsed={tight ? 'true' : 'false'}
+      data-drawer={drawer ? 'true' : undefined}
+      data-open={showing ? 'true' : undefined}
     >
       <div className="sn-head">
         <span className="sn-crest" aria-hidden="true">
@@ -271,7 +406,7 @@ export function SideNav({
         {tight ? null : <span className="sn-head-name">{org?.name ?? 'Your tables'}</span>}
         {/* the fold is the reader's; under 600 the window has already
             decided, so the control is not offered */}
-        {narrow ? null : (
+        {narrow || drawer ? null : (
           <Button
             tone="ghost"
             size="sm"
@@ -297,7 +432,7 @@ export function SideNav({
           block
           glyph={<MagnifyingGlass size={ICON_SIZE.small} weight={MARK_WEIGHT} />}
           aria-label={tight ? 'Find anything' : undefined}
-          onClick={onSearch}
+          onClick={shut(onSearch)}
         >
           {tight ? null : (
             <>
@@ -317,7 +452,7 @@ export function SideNav({
             on={current === 'home'}
             tight={tight}
             glyph={mark(House)}
-            onPick={onOpenHome}
+            onPick={shut(onOpenHome)}
           />
           <Door
             label="Modules"
@@ -325,7 +460,7 @@ export function SideNav({
             count={moduleCount}
             tight={tight}
             glyph={mark(SquaresFour)}
-            onPick={onOpenModules}
+            onPick={shut(onOpenModules)}
           />
           <Door
             label="Quotes"
@@ -333,7 +468,7 @@ export function SideNav({
             count={quoteCount}
             tight={tight}
             glyph={mark(FileText)}
-            onPick={onOpenQuotes}
+            onPick={shut(onOpenQuotes)}
           />
           {/* DATA IS A DOOR IN THE RAIL, for whoever owns the shape of
               the business. THE ROW IS ABSENT BELOW super-admin rather
@@ -347,7 +482,7 @@ export function SideNav({
               count={tableCount}
               tight={tight}
               glyph={mark(Stack)}
-              onPick={onOpenData}
+              onPick={shut(onOpenData)}
             />
           ) : null}
           <Door
@@ -356,7 +491,7 @@ export function SideNav({
             count={customerCount}
             tight={tight}
             glyph={mark(UsersThree)}
-            onPick={onOpenCustomers}
+            onPick={shut(onOpenCustomers)}
           />
         </div>
       </div>
@@ -371,7 +506,7 @@ export function SideNav({
           block
           glyph={<Plus size={ICON_SIZE.small} weight={MARK_WEIGHT} />}
           aria-label={tight ? 'New quote' : undefined}
-          onClick={onNewQuote}
+          onClick={shut(onNewQuote)}
         >
           {tight ? null : 'New quote'}
         </Button>
@@ -396,11 +531,12 @@ export function SideNav({
               on={current === 'admin'}
               tight={tight}
               glyph={<GearSix size={MARK} weight={MARK_WEIGHT} aria-hidden="true" />}
-              onPick={onOpenAdmin}
+              onPick={shut(onOpenAdmin)}
             />
           ) : null}
         </div>
       </div>
     </nav>
+    </>
   )
 }

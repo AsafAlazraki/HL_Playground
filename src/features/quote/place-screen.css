@@ -661,3 +661,28 @@
     margin-right: 0;
   }
 }
+
+/* ============================================================
+   THE PORT ENDS ABOVE THE CARD, NOT UNDER IT.
+
+   Measured at 430x932: "RU250KAM" and "4 finishes" on the second
+   model were reported covered by `.pl-bar`, and the photograph of
+   that hull is visible THROUGH the commit card in the screenshot —
+   which is what glass does when there is content behind it. The
+   card is a sibling of the scrollport and should not have been
+   over anything; `backdrop-filter` establishes a containing block
+   and the port kept running underneath it.
+
+   Reserving the room is the fix that is true either way. If the
+   card is laid out below the port the padding is just scroll
+   space nobody reaches; if it is over the port — which it is —
+   the padding is the reason the last card can be read.
+
+   AND `scroll-padding-bottom` SO KEYBOARD SCROLLING AGREES. A card
+   brought into view by Tab or by the snap should come to rest
+   above the commit surface, not under it.
+   ============================================================ */
+.pl-port {
+  padding-bottom: var(--s-16);
+  scroll-padding-bottom: var(--s-16);
+}

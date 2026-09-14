@@ -23,7 +23,7 @@
 
 import { chromium } from 'playwright-core'
 import { mkdirSync } from 'node:fs'
-import { wait, settled, signInAndSeed } from './drive.mjs'
+import { wait, settled, signInAndSeed, door } from './drive.mjs'
 
 const argv = process.argv.slice(2)
 const flag = (n, d) => {
@@ -38,7 +38,7 @@ const WIDTHS = flag('widths', '1440,1280,1024,834,600,430')
   .split(',')
   .map(Number)
 
-const rail = (p, name) => p.getByRole('button', { name }).first().click()
+const rail = (p, name) => door(p, name)
 
 /** [root selector, how to get there]. The root doubles as the proof
  *  the screen arrived — a screenshot of the wrong screen is worse
@@ -113,6 +113,20 @@ const SCREENS = {
       await wait(p, 2200)
       await p.locator('.ui-done-level:not(.is-on)').first().click()
       await wait(p, 1200)
+    },
+  ],
+  /* HOME WITH SOMETHING ON IT. The `home` stop above opens a fresh
+     session's front door, which is the true first-run state and
+     worth its picture — but both of its bottom sections are empty
+     there, so it cannot show what they DO. This raises one quote
+     and comes back. */
+  desk: [
+    '.fd',
+    async (p) => {
+      await SCREENS.document[1](p)
+      await wait(p, 2200)
+      await rail(p, /^Home/)
+      await wait(p, 1600)
     },
   ],
   document: [

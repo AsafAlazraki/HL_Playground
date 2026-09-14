@@ -1,0 +1,536 @@
+/* ============================================================
+   DEEP WATER — the world this app lives in.
+
+   Written from scratch, and it replaces a look rather than
+   adjusting one. What was here before was the palette every SaaS
+   product ships with: a white card on a pale grey ground, a blue
+   accent, grey secondary text, a 1px hairline, a soft drop shadow,
+   Archivo over Inter. Nothing in it was wrong and nothing in it
+   was anybody's. It could have been a payroll tool.
+
+   THIS IS A SHOWROOM FLOOR AT NIGHT. A dealer's floor is dark and
+   the hulls are lit, because that is how you make a white boat
+   look like ten thousand dollars. Every decision below follows
+   from that one:
+
+     THE GROUND IS DEEP AND IT IS NOT NAVY. Navy is blue and blue
+     is what was here. This is the colour of water with depth under
+     it — desaturated, green in the shadow, almost black but never
+     black. Black is a hole; this is a volume.
+
+     THE INK IS WARM AND NEVER WHITE. Pure white on a dark ground
+     buzzes. This is the off-white of chart paper, which is what a
+     dealer's other documents are printed on.
+
+     THE ACCENT IS BRASS. Cleats, bezels, port rings, the ring on a
+     depth sounder, the plate on a transom. It is the metal this
+     industry actually uses, it reads instantly as quality, and it
+     is not blue. The two signal hues are the two a boat carries:
+     starboard green and port red.
+
+     SURFACES ARE LIT FROM ABOVE, NOT DROPPED ON. A panel here is
+     not a white rectangle with a shadow under it — it is a darker
+     plate with a highlight along its top edge, the way any real
+     object looks under a ceiling light. That single line does more
+     than any shadow.
+
+     AND THE PHOTOGRAPHS FINALLY GLOW. `m-lit` has been in this
+     repo for weeks putting a kind-hued radial behind the product
+     stage, and on a white ground it was invisible — a 26% wash
+     over #FFFFFF is #FFFFFF. On this ground it is a boat under a
+     spotlight.
+
+   HOW IT IS BUILT. Every name below is one `system.css` already
+   declares, so this file changes the whole application at once
+   rather than after seventy stylesheets. It is the FOUNDATION of
+   the rebuild, not the whole of it: each screen's own layout is
+   rebuilt on top of this, and this is what makes the first of them
+   look like it belongs to the same app as the last.
+
+   It is loaded after `system.css` in `main.tsx` and overrides it.
+   Literal colours are the mechanism here, which is why the style
+   guard exempts `src/styles/` — a token has to be defined in terms
+   of something.
+   ============================================================ */
+
+:root {
+  /* ------------------------------------------------------------
+     TYPE — three faces, three jobs, and not one of them is Inter.
+
+     DISPLAY is Bricolage Grotesque. It carries an optical-size
+     axis, so `RU230KAM` at 88px is drawn with the tight spacing
+     and closed apertures that size wants, and the same family at
+     13px opens back up. A hull code is the loudest word on most of
+     these screens and it deserved a face with a point of view
+     rather than the default width of a workhorse.
+
+     BODY is Instrument Sans. Slightly warmer and narrower than the
+     usual, so a paragraph of refusal text sets denser without
+     reading as cramped.
+
+     FIGURES stay IBM Plex Mono. It was the right answer before and
+     changing it would trade legibility for novelty on the one
+     thing in this app nobody may misread: money.
+
+     They are LOADED now, not hoped for. Before this, the stack
+     named "Archivo Variable" with no `@font-face` and no link
+     anywhere — so the app drew Archivo on a machine that happened
+     to have it and something else everywhere else. The link is in
+     `index.html`.
+     ------------------------------------------------------------ */
+  --font-display: 'Bricolage Grotesque', 'Archivo', system-ui, sans-serif;
+  --font-sans: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* ------------------------------------------------------------
+     THE GROUND. Four depths, and they go DOWN from the page rather
+     than up from it: `--bg` is the floor, and a panel is a plate
+     resting on it catching the light. The old stack had this
+     backwards — a white card floating over grey — which is why
+     everything read as paper.
+     ------------------------------------------------------------ */
+  --bg: #071216;
+  --bg-canvas: #050E12;
+  --bg-sunken: #030A0D;
+  --stage-bg: #071216;
+
+  --surface-rest: #0C1A20;
+  --surface-1: #0E1D24;
+  --surface-2: #13262E;
+  --surface-3: #193039;
+  --surface-4: #1F3A44;
+
+  /* ------------------------------------------------------------
+     THE INK. Chart paper, not white. The tiers are spaced so the
+     third one still clears 4.5:1 on `--surface-1`; the fourth is
+     for marks that are never a word that matters, which is the
+     rule this repo already wrote about it.
+     ------------------------------------------------------------ */
+  --fg: #F1EDE3;
+  --fg-secondary: #C3C4BB;
+  --fg-tertiary: #949A94;
+  --fg-quaternary: #6E766F;
+  --fg-on-accent: #14100A;
+
+  /* ------------------------------------------------------------
+     BRASS. The accent this industry actually uses.
+
+     `--accent-fg` is a near-black with warmth in it, because ink
+     ON brass is engraved rather than printed — and because pure
+     black on a warm mid-tone is the one pairing that always looks
+     cheap.
+     ------------------------------------------------------------ */
+  --accent: #D8A441;
+  --accent-hover: #E9BA5D;
+  --accent-press: #BE8C2E;
+  --accent-fg: #14100A;
+  --accent-line: rgba(216, 164, 65, 0.46);
+  --accent-wash: rgba(216, 164, 65, 0.12);
+  --accent-wash-strong: rgba(216, 164, 65, 0.2);
+  --accent-glow: rgba(216, 164, 65, 0.3);
+
+  /* THE TWO A BOAT CARRIES, and one for caution. Starboard is
+     green, port is red, and every helm on the water agrees. */
+  --success: #46D6A0;
+  --success-wash: rgba(70, 214, 160, 0.14);
+  --danger: #FF7264;
+  --danger-solid: #E4503F;
+  --danger-wash: rgba(255, 114, 100, 0.14);
+  --warning: #F5C24B;
+  --warning-wash: rgba(245, 194, 75, 0.14);
+
+  /* ------------------------------------------------------------
+     EDGES — and this is the part that stops it looking like a
+     template.
+
+     A line here is not a hairline drawn in grey. It is the meeting
+     of two planes: light along the top where the ceiling catches
+     it, and a darker seam everywhere else. `--edge-light` is what
+     every panel puts on its first pixel row.
+     ------------------------------------------------------------ */
+  --line-subtle: rgba(241, 237, 227, 0.07);
+  --line: rgba(241, 237, 227, 0.12);
+  --line-strong: rgba(241, 237, 227, 0.22);
+  --edge-light: rgba(255, 252, 245, 0.11);
+  --canvas-dot: rgba(241, 237, 227, 0.08);
+  --canvas-edge: rgba(241, 237, 227, 0.14);
+  --canvas-edge-active: var(--accent);
+
+  --border: 1px;
+  --border-strong: 2px;
+  --focus: 0 0 0 3px rgba(216, 164, 65, 0.4);
+  --focus-inset: inset 0 0 0 2px var(--accent);
+
+  /* ------------------------------------------------------------
+     SHADOW, ON A DARK GROUND.
+
+     A drop shadow on dark is nearly invisible, which is why dark
+     interfaces that only darken look flat. Depth here is carried
+     by the pair: a real shadow underneath AND a lit edge on top.
+     Every elevation below ships both, so a card is separated from
+     its ground by light rather than by a grey box.
+     ------------------------------------------------------------ */
+  --e1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --e2:
+    0 2px 6px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 var(--edge-light);
+  --e3:
+    0 6px 18px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 var(--edge-light);
+  --e4:
+    0 14px 38px rgba(0, 0, 0, 0.56),
+    inset 0 1px 0 var(--edge-light);
+  --e-card:
+    0 2px 8px rgba(0, 0, 0, 0.44),
+    inset 0 1px 0 var(--edge-light);
+  --e-card-hover:
+    0 10px 26px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 252, 245, 0.16);
+  --e-float:
+    0 22px 60px rgba(0, 0, 0, 0.62),
+    inset 0 1px 0 var(--edge-light);
+  --e-hero:
+    0 36px 90px rgba(0, 0, 0, 0.66),
+    inset 0 1px 0 var(--edge-light);
+
+  /* brass glow, for the one thing on a screen that is happening */
+  --glow-sm: 0 0 0 1px var(--accent-line), 0 0 14px rgba(216, 164, 65, 0.22);
+  --glow-md: 0 0 0 1px var(--accent-line), 0 0 26px rgba(216, 164, 65, 0.28);
+  --glow-lg: 0 0 0 1px var(--accent-line), 0 0 46px rgba(216, 164, 65, 0.34);
+
+  /* ------------------------------------------------------------
+     GLASS, over a ground that finally makes it worth having. A
+     translucent panel over white is white; over this it is smoked
+     and the hull moves behind it.
+     ------------------------------------------------------------ */
+  --glass-bg: rgba(19, 38, 46, 0.72);
+  --glass-edge: rgba(241, 237, 227, 0.16);
+  --glass-sat: 1.4;
+  --mat-chip-blur: 10px;
+  --mat-panel-blur: 18px;
+  --mat-sheet-blur: 30px;
+  --scrim: rgba(3, 10, 13, 0.66);
+  --sheen: linear-gradient(180deg, rgba(255, 252, 245, 0.07) 0%, transparent 62%);
+  --grad-surface: linear-gradient(180deg, #162A33 0%, #0C1A20 100%);
+
+  /* the mark plate — a brass-tinted plate, not a grey square */
+  --mark-paper: #16272E;
+  --mark-ink: #D8A441;
+
+  /* ------------------------------------------------------------
+     THE NINE KINDS, re-pitched for a dark ground.
+
+     They were mid-tones chosen to sit on white and they go muddy
+     here. These are the same nine hues lifted in luminance and
+     dropped in saturation until each one clears 4.5:1 on
+     `--surface-1` and no two of them collide at a 3px rail.
+     ------------------------------------------------------------ */
+  --kind-indigo: #8FA6F5;
+  --kind-cyan: #5FC8DC;
+  --kind-teal: #4FC9AE;
+  --kind-green: #6FD08A;
+  --kind-amber: #E8B95C;
+  --kind-orange: #F0946A;
+  --kind-rose: #F0829A;
+  --kind-violet: #B694F0;
+  --kind-slate: #9AAAB4;
+
+  --kind-boat: var(--kind-indigo);
+  --kind-motor: var(--kind-amber);
+  --kind-trailer: var(--kind-slate);
+  --kind-accessory: var(--kind-violet);
+  --kind-package: var(--kind-teal);
+  --kind-dealer: var(--kind-cyan);
+  --kind-custom: var(--kind-rose);
+  --kind-join: var(--kind-green);
+
+  --chip-bg: rgba(241, 237, 227, 0.08);
+  --chip-fg: var(--fg-secondary);
+  --chip-linked-bg: rgba(95, 200, 220, 0.14);
+  --chip-linked-fg: var(--kind-cyan);
+  --chip-computed-bg: rgba(182, 148, 240, 0.14);
+  --chip-computed-fg: var(--kind-violet);
+
+  /* ------------------------------------------------------------
+     RADII. Tighter than before, and deliberately.
+
+     Everything was `rounded-lg`, which is the shape of a template.
+     A plate on a floor has a small radius; a glass sheet floating
+     over it has a large one. The difference between the two is
+     information — it says which things are objects and which are
+     surfaces — and a single radius everywhere throws that away.
+     ------------------------------------------------------------ */
+  --r-control: 7px;
+  --r-chip: 999px;
+  --r-card: 10px;
+  --r-panel: 16px;
+  --r-full: 999px;
+
+  /* ------------------------------------------------------------
+     THE TYPE SCALE — rebuilt, and the middle of it is the point.
+
+     The audit that started all of this measured eleven of twelve
+     screens between 2.36x and 3.96x of scale contrast with a 56px
+     hole in the ladder: a 30px title over 12px captions and
+     nothing carrying content between them. The rungs below are
+     spaced so that hole is filled and a Showroom screen can reach
+     6x WITHOUT the marque having to do all the work.
+
+     Every step is a clamp, so the ramp is the ramp at every width
+     rather than a set of numbers that only works at 1280. Tracking
+     goes negative as size grows and sits at zero at reading size,
+     which is the rule this repo already holds.
+     ------------------------------------------------------------ */
+  --t-marque-size: clamp(2.5rem, 1.6rem + 4.4vw, 6rem);
+  --t-marque-weight: 800;
+  --t-marque-lead: 0.92;
+  --t-marque-track: -0.045em;
+
+  --t-hero-size: clamp(2rem, 1.4rem + 2.4vw, 3.25rem);
+  --t-hero-weight: 800;
+  --t-hero-lead: 1;
+  --t-hero-track: -0.035em;
+
+  --t-display-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.125rem);
+  --t-display-weight: 700;
+  --t-display-lead: 1.08;
+  --t-display-track: -0.028em;
+
+  --t-stage-title: clamp(1.25rem, 1.05rem + 0.8vw, 1.625rem);
+  --t-stage-title-weight: 700;
+  --t-stage-title-lead: 1.14;
+  --t-stage-title-track: -0.022em;
+
+  --t-title-size: clamp(1.125rem, 1.02rem + 0.42vw, 1.375rem);
+  --t-title-weight: 650;
+  --t-title-lead: 1.2;
+  --t-title-track: -0.017em;
+
+  --t-subtitle-size: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
+  --t-subtitle-weight: 600;
+  --t-subtitle-lead: 1.3;
+  --t-subtitle-track: -0.011em;
+
+  --t-heading-size: 0.9375rem;
+  --t-heading-weight: 600;
+  --t-heading-lead: 1.35;
+  --t-heading-track: -0.006em;
+
+  --t-body-size: 0.9375rem;
+  --t-body-weight: 400;
+  --t-body-lead: 1.58;
+  --t-body-track: 0em;
+
+  --t-small-size: 0.8125rem;
+  --t-small-weight: 400;
+  --t-small-lead: 1.48;
+  --t-small-track: 0.002em;
+
+  --t-caption-size: 0.75rem;
+  --t-caption-weight: 400;
+  --t-caption-lead: 1.4;
+  --t-caption-track: 0.006em;
+
+  /* A LABEL IS THE ONE PLACE UPPERCASE IS ALLOWED, and it is
+     tracked wide because uppercase set tight is unreadable. Never
+     a name and never a value — that rule stands. */
+  --t-label-size: 0.6875rem;
+  --t-label-weight: 600;
+  --t-label-lead: 1.2;
+  --t-label-track: 0.14em;
+
+  /* FIGURES. Money is the second thing a person looks at on most
+     of these screens and the first on some, so the two large rungs
+     exist for it alone. */
+  --t-figure-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --t-figure-lg-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem);
+  --t-figure-xl-size: clamp(2.25rem, 1.6rem + 2.6vw, 3.5rem);
+  --t-figure-weight: 500;
+  --t-figure-lead: 1.02;
+  --t-figure-track: -0.028em;
+
+  --t-mono-size: 0.8125rem;
+  --t-mono-sm-size: 0.6875rem;
+  --t-mono-lg-size: 0.9375rem;
+  --t-mono-weight: 450;
+  --t-mono-lead: 1.45;
+}
+
+/* ============================================================
+   THE GROUND IS NOT FLAT.
+
+   A single dark fill over 1400px reads as a void and bands on any
+   8-bit display. Three things stop that, and none of them is a
+   decoration: a wide radial that puts the light source somewhere,
+   a second one in brass at the horizon, and a grain that gives the
+   whole thing tooth.
+
+   `background-attachment: fixed` so the light stays with the ROOM
+   while the content scrolls through it — the floor does not move
+   when you walk across it.
+   ============================================================ */
+body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 70% at 50% -12%, rgba(120, 170, 190, 0.1) 0%, transparent 62%),
+    radial-gradient(90% 60% at 88% 108%, rgba(216, 164, 65, 0.07) 0%, transparent 58%);
+  background-attachment: fixed;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  /* the app draws its own light; tell the browser so form controls,
+     scrollbars and the caret come dark rather than fighting it */
+  color-scheme: dark;
+}
+
+/* THE TOOTH. One SVG turbulence over everything, under all content,
+   at an opacity that is felt rather than seen. It costs one
+   composited layer and it is the difference between a gradient and
+   a surface. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.4;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================================
+   THE SWEEP — every photograph sits on a lit plate, and the room
+   around it is dark.
+
+   THIS IS NOT A THEME DECISION, IT IS WHAT THE PICTURES ARE. The
+   seed is 1,411 manufacturer renders and nearly all of them are a
+   white hull cut out on a WHITE ground — not transparent, white.
+   Dropped straight onto a deep floor they are bright rectangles
+   with a boat somewhere inside, and no amount of blending fixes
+   that: `multiply` makes the ground vanish and takes the hull with
+   it, because the hull is white too.
+
+   So the plate is lit. Which is how every one of these photographs
+   was taken in the first place — a boat on a lit sweep, in a dark
+   room — and how a dealer's floor actually works. A luminous plate
+   on a deep ground is the strongest contrast in this palette, and
+   it is pointed at the product.
+
+   IT GIVES EVERY CARD AN ANATOMY. Light above, dark below, one lit
+   seam between. A card is a thing with a top and a bottom rather
+   than a rectangle with a picture in it, and that reads from
+   across a room.
+   ============================================================ */
+.ui-stage-frame,
+.ct-well,
+.pl-well,
+.mo-well,
+.bs-cand-well,
+.qp-well {
+  --mat: none;
+  background: radial-gradient(86% 74% at 50% 24%, #ffffff 0%, #f2f0ea 54%, #dcdcd4 100%);
+  border-color: var(--line);
+  box-shadow:
+    inset 0 -1px 0 rgba(0, 0, 0, 0.14),
+    inset 0 0 44px rgba(20, 30, 34, 0.1);
+}
+
+/* THE STAGE IS THE SAME PLATE ONE SIZE UP, and it keeps the room's
+   shadow under it so it reads as lit rather than as a hole cut in
+   the floor. */
+.ui-stage-frame {
+  box-shadow:
+    inset 0 -1px 0 rgba(0, 0, 0, 0.14),
+    inset 0 0 70px rgba(20, 30, 34, 0.12),
+    0 26px 60px rgba(0, 0, 0, 0.6);
+}
+
+/* AND THE KIND'S LIGHT WASHES UP BEHIND IT. `m-lit` has been in
+   this repo for weeks and could never be seen: a 26% hue over a
+   white page is a white page. Behind a lit plate on a deep floor
+   it is the glow a spotlit hull throws onto the wall — and it is
+   the kind's own hue, a boat lit indigo and a motor amber, so it
+   is a fact about the thing rather than an effect. */
+.m-lit::before {
+  inset: -14% -8% -26%;
+  background: radial-gradient(
+    64% 58% at 50% 42%,
+    color-mix(in srgb, var(--kind, var(--accent)) 46%, transparent) 0%,
+    color-mix(in srgb, var(--kind, var(--accent)) 16%, transparent) 44%,
+    transparent 74%
+  );
+}
+
+/* The picture itself takes nothing but a touch of life. A
+   drop-shadow here would trace the white RECTANGLE and not the
+   hull, which is the mistake a dark theme usually makes with
+   cut-out product photography. */
+.ui-stage-img,
+.ct-img,
+.pl-img,
+.mo-img,
+.bs-cand-img,
+.qp-img {
+  filter: saturate(1.05) contrast(1.02);
+}
+
+/* ============================================================
+   AND A THING WITH NO PICTURE GETS THE SAME PLATE.
+
+   A dark plate beside a lit one would say the two cards are
+   different kinds of object, and they are not: one has been
+   photographed and one has not. Same sweep, and the mark set in
+   the kind's own ink on it — so a motor's plate and a trailer's
+   plate are still not the same object.
+   ============================================================ */
+.ct-plate,
+.pl-plate,
+.mo-plate,
+.bs-cand-plate {
+  background:
+    radial-gradient(86% 74% at 50% 24%, #ffffff 0%, #f2f0ea 54%, #dcdcd4 100%),
+    color-mix(in srgb, var(--kind, var(--accent)) 10%, #f2f0ea);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.14);
+}
+
+.ct-mono,
+.pl-mono,
+.mo-mono,
+.bs-cand-mono {
+  color: color-mix(in srgb, var(--kind, var(--accent)) 62%, #16272e);
+}
+
+/* ============================================================
+   SCROLLBARS, because a pale scrollbar on a dark app is the one
+   piece of chrome that gives away a theme applied late.
+   ============================================================ */
+* {
+  scrollbar-color: var(--line-strong) transparent;
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: var(--r-full);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--fg-quaternary);
+  background-clip: content-box;
+}
+
+::selection {
+  background: var(--accent-wash-strong);
+  color: var(--fg);
+}

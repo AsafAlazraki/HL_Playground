@@ -3274,3 +3274,242 @@
 .shell-review-well .rv-close {
   display: none;
 }
+
+/* ============================================================
+   THE SEARCH ROW HAD SIXTEEN PIXELS TOO FEW.
+
+   Measured at 1440: `.sn-find-say` is 79px wide holding 95px of
+   "Find anything", so the label ran out from under itself and
+   painted onto the key cap. Two mistakes are worth recording.
+
+   THE FIRST WAS MINE, AND IT WAS A GAP ON THE WRONG ELEMENT.
+   `.sn-find` is the WRAPPER and it is `display: block`; the flex
+   row is the `.ui-btn` inside it. A `gap` on a block does nothing
+   and fails silently, which is exactly why the first attempt at
+   this changed no pixels at all.
+
+   THE SECOND IS THAT THE LABEL IS CONTENT. `min-width: 0` lets it
+   shrink below its own text and nothing clips it, so it paints
+   past its box onto whatever is next. This button is the app's one
+   search; its name is not the thing that should give way. The
+   padding is, so the padding does — one step down on this button
+   alone returns the sixteen pixels the label was asking for.
+   ============================================================ */
+.sn-find .ui-btn {
+  padding-inline: var(--s-3);
+}
+
+.sn-find-say {
+  /* AND IT SETS AT THE CONTROL STEP, NOT THE BUTTON SIZE. A
+     large button sets its label at the heading step, which is
+     right for an action and wrong for this: the row is a label
+     AND a key cap AND a glyph in 224px of rail. One step down
+     buys the last twelve pixels, and a search control naming
+     itself is a small-step thing everywhere else in this app. */
+  font-size: var(--t-small-size);
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.sn-kbd {
+  padding: 1px 4px;
+}
+
+/* ============================================================
+   THE TOP BAR'S SUBTITLE SPILLED, AND NOTHING HAD EVER LOOKED.
+
+   Measured at 320x720 on a catalogue: `.shell-view-what-say` runs
+   28px past its box carrying "Highfield Inflatables · 588
+   variants", so the count was cut mid-word at the window's edge —
+   "588 varian". Every ruler in this repo starts at a stage root
+   and this is the SHELL, outside all of them; it took a guard
+   that walks the document to find it.
+
+   The name survives and the count gives way. A subtitle is two
+   facts joined by a dot and only one of them is what the screen
+   is: the title bar of a catalogue has to say which catalogue,
+   and how many rows it holds is on the page underneath it twice.
+   ============================================================ */
+.shell-view-what-say {
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+/* AND IT WRAPS, because `white-space: nowrap` above is what made
+   the spill possible at all: a string that may not wrap and is not
+   clipped has exactly one thing left to do, which is paint past its
+   box. `keep-all` still holds the rule that matters — no cut inside
+   a word — so "Highfield Inflatables" takes two lines at this width
+   rather than losing its second one. */
+@media (max-width: 420px) {
+  .shell-view-what-say {
+    white-space: normal;
+  }
+
+  .shell-view-what-sep,
+  .shell-view-what-n {
+    display: none;
+  }
+}
+
+/* ============================================================
+   TABLET AND MOBILE: THE RAIL BECOMES A DRAWER.
+
+   A column of navigation beside the content is a desktop idea. It
+   costs 64px of a 430px phone permanently — fourteen per cent of
+   the window, forever — to show five doors somebody presses a
+   handful of times a day. Under 1024, which is an iPad in
+   landscape and therefore the largest thing a person HOLDS rather
+   than sits at, the rail leaves the layout and the stage takes the
+   whole window.
+
+   IT IS THE SAME NAVIGATION, NOT A SECOND ONE. The nav keeps its
+   markup and its state and changes shape: off-canvas by transform,
+   back on when the hamburger asks. A separate mobile menu is two
+   things to keep in step and they never stay in step.
+
+   TRANSFORM AND NOT `left`, so the slide is on the compositor and
+   the drawer does not lay out the page every frame while it moves.
+   ============================================================ */
+@media (max-width: 1024px) {
+  .shell-body {
+    --rail: 0px;
+  }
+
+  .sn[data-drawer] {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: var(--z-dialog);
+    width: min(320px, 86vw);
+    transform: translate3d(-102%, 0, 0);
+    transition: transform var(--d-sheet) var(--ease-drawer);
+    box-shadow: var(--e-float);
+    /* it is over the page now, so it needs its own ground rather
+       than the shell's column colour */
+    background: var(--surface-1);
+    will-change: transform;
+  }
+
+  .sn[data-drawer][data-open] {
+    transform: translate3d(0, 0, 0);
+  }
+
+  /* ------------------------------------------------------------
+     THE HAMBURGER. Fixed, top-left, over everything but the drawer
+     itself — it has to stay pressable while the drawer is open so
+     the same control both opens and closes.
+
+     44px, which is the smallest a finger reliably hits, and it is
+     a real surface rather than a bare glyph: on a photographic
+     stage a dark icon on a light hull is a glyph nobody can find.
+     ------------------------------------------------------------ */
+  .sn-burger {
+    position: fixed;
+    top: var(--s-2);
+    left: var(--s-2);
+    z-index: calc(var(--z-dialog) + 2);
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: var(--border) solid var(--glass-edge);
+    border-radius: var(--r-control);
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+    color: var(--fg);
+    cursor: pointer;
+    box-shadow:
+      inset 0 1px 0 var(--edge-light),
+      var(--e3);
+    transition:
+      background var(--d-press) var(--ease-out),
+      transform var(--d-press) var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .sn-burger:hover {
+      background: var(--surface-3);
+    }
+  }
+
+  .sn-burger:active {
+    transform: scale(0.94);
+  }
+
+  .sn-burger:focus-visible {
+    outline: var(--border-strong) solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ------------------------------------------------------------
+     AND IT IS A BAND, NOT A BADGE ON TOP OF THINGS.
+
+     The first version padded `.shell-view-bar` so the stage's own
+     Back control stepped aside. That works on the six stages that
+     HAVE that bar and on none of the others. Measured: the button
+     covered "Good evening, Asaf" on the front door, "Quotes" on
+     the board and "Modules" on the places screen — all three open
+     with their own marque at the top left and nothing was
+     reserving the corner for a control they do not know about.
+
+     So the shell reserves it: a strip of empty height across the
+     top of the body with the button fixed inside it. That is what
+     a top-level menu bar IS, and it means no screen has to know
+     the button is there.
+     ------------------------------------------------------------ */
+  .shell-body {
+    padding-top: calc(44px + var(--s-4));
+  }
+
+  /* ------------------------------------------------------------
+     THE SCRIM. Pressing away closes it, which is the gesture every
+     drawer on every phone has — and it is why the drawer needs no
+     close control inside it.
+     ------------------------------------------------------------ */
+  .sn-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-dialog) - 1);
+    background: var(--scrim);
+    backdrop-filter: blur(var(--mat-chip-blur));
+    -webkit-backdrop-filter: blur(var(--mat-chip-blur));
+    animation: sn-scrim-in var(--d-med) var(--ease-out) both;
+  }
+
+  @keyframes sn-scrim-in {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+/* A DRAWER THAT SLIDES IS A DRAWER THAT MOVES; one that is asked
+   not to simply is or is not there. */
+@media (prefers-reduced-motion: reduce) {
+  .sn[data-drawer],
+  .sn-scrim {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* THE DRAWER'S HEAD CLEARS THE BUTTON THAT OPENED IT.
+
+   The hamburger is fixed at the top-left so it survives the
+   drawer's transform and the same control both opens and closes.
+   That puts it exactly where the business's name starts: measured
+   at 430 with the drawer open, "Northside Marine" read "side
+   Marine". The head steps aside by the width of the button and the
+   gap it sits in — 44 plus two eights — rather than the button
+   moving, because a control that moves depending on what is open
+   is a control a person has to look for twice. */
+@media (max-width: 1024px) {
+  .sn[data-drawer] .sn-head {
+    padding-left: calc(44px + var(--s-4));
+  }
+}

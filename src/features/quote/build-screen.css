@@ -836,3 +836,99 @@
   aspect-ratio: auto;
   height: 116px;
 }
+
+/* ============================================================
+   THE PRODUCT COLUMN MUST FIT THE ROW IT IS GIVEN.
+
+   `.bs` is a three-row grid — rail, body, the completion card —
+   and the body row is `minmax(0, 1fr)`. The product column inside
+   it is a marque, a stage at a fixed 16:10, and a spec strip, and
+   the three of them together are simply taller than that row at
+   1440x900. Nothing clips them, so the strip painted down under
+   the card: measured, `OA Length`, `2.3`, `Beam`, `1.37`, `Tube
+   Dia`, `Int Width` and `61 cm` all covered by `.ui-done`.
+
+   Every ruler in this repo reported that screen clean. The
+   contrast sweep measured the strip's ink against the ground it
+   was drawn on and it cleared; the overflow check asked whether
+   anything was wider than its box and nothing was. A thing hidden
+   under another thing is neither of those questions, which is why
+   `check-collide.mjs` now exists and why it starts at the document
+   rather than at a stage root.
+
+   THE STAGE IS WHAT GIVES WAY, and it is the right thing to: the
+   marque is a name and the strip is seven figures, both of them
+   as tall as their type and no taller. The photograph is the only
+   element on the column that can be any size at all, so it takes
+   the room the other two leave. That also makes the stage as large
+   as the window honestly allows, which on a Showroom screen is
+   what you want anyway.
+
+   `min-height: 0` on both, because a flex item will not shrink
+   below its content without it and the stage's content is an
+   image — the oldest reason a column like this refuses to fit.
+   ============================================================ */
+.bs-product {
+  height: 100%;
+  min-height: 0;
+}
+
+.bs-product .ui-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.bs-product .ui-stage-frame {
+  /* the ratio is a FLOOR here, not a fixed shape: it keeps the
+     frame from collapsing when the column is short, and lets it
+     grow into the column when there is room */
+  aspect-ratio: auto;
+  height: 100%;
+  min-height: 0;
+}
+
+
+/* ============================================================
+   AND WHEN IT STACKS IT STOPS BEING A GRID.
+
+   The narrow rule above folds `.bs-body` to one column and hands
+   the scroll to it. It stayed a GRID while doing that, and a grid
+   with a definite height divides it between its rows: measured at
+   430x932 the body was 528px and gave the product 232 and the step
+   232 — while the step held 357px of content with its overflow
+   visible. A hundred and twenty-five pixels of "Nothing from GFAB
+   Trailers was put in the list…" painted straight down through the
+   completion card and over "$4,706".
+
+   A FLEX COLUMN CANNOT DO THAT. Its children take their own
+   height, the box scrolls when they add up to more than it has,
+   and nothing is asked to divide anything. The grid earns its keep
+   at full width, where two columns is the whole point of the
+   screen; stacked, there is one column and a grid is a promise
+   about tracks that no longer exist.
+   ============================================================ */
+@container (max-width: 1000px) {
+  .bs-body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .bs-product,
+  .bs-step {
+    flex: 0 0 auto;
+    height: auto;
+    min-height: 0;
+  }
+
+  /* stacked, the stage is a picture between a marque and a strip,
+     and each of the three wants its own height — the flexing stage
+     is a full-width answer to a column with room left in it */
+  .bs-product .ui-stage {
+    flex: 0 0 auto;
+  }
+
+  .bs-product .ui-stage-frame {
+    aspect-ratio: 16 / 10;
+    height: auto;
+  }
+}

@@ -17,7 +17,8 @@
     "lint": "oxlint src tools --max-warnings 354",
     "lint:fix": "oxlint src tools --fix",
     "check:words": "node tools/check-words.mjs",
-    "check:stores": "node tools/check-stores.mjs"
+    "check:stores": "node tools/check-stores.mjs",
+    "check:collide": "node tools/check-collide.mjs"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",

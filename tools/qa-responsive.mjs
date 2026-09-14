@@ -39,7 +39,7 @@
    ============================================================ */
 
 import { chromium } from 'playwright-core'
-import { wait, settled, signInAndSeed, midWord, contrast } from './drive.mjs'
+import { wait, settled, signInAndSeed, midWord, contrast, door } from './drive.mjs'
 
 const argv = process.argv.slice(2)
 const only = argv.indexOf('--only') >= 0 ? argv[argv.indexOf('--only') + 1] : null
@@ -64,7 +64,7 @@ const WIDTHS = [
   [320, 720],
 ]
 
-const rail = (p, name) => p.getByRole('button', { name }).first().click()
+const rail = (p, name) => door(p, name)
 
 /* Every stop starts from Home: a stop that depends on where the
    last one finished fails for reasons that are not about it. */

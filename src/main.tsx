@@ -82,6 +82,16 @@ import './styles/response.css'
    moves to the top where it belongs.
    ============================================================ */
 import './styles/system.css'
+
+/* ============================================================
+   AND THEN THE WORLD IT LIVES IN.
+
+   `system.css` declares the token NAMES and what each one is for;
+   `world.css` decides what they are. It is last on purpose — it
+   redefines every visual token above it, so the whole application
+   changes at once rather than one stylesheet at a time.
+   ============================================================ */
+import './styles/world.css'
 import App from './App'
 
 createRoot(document.getElementById('root')!).render(

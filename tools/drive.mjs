@@ -357,3 +357,30 @@ export function sayContrast(found, where) {
   console.log(`every leaf clears 4.5:1 on ${where} · ${found.checked} checked, ${found.unread} unread`)
   return true
 }
+
+/* ============================================================
+   PRESS A DOOR IN THE RAIL — and open the drawer first if the
+   window is holding one.
+
+   Under 1024 the navigation is not a column any more, it is a
+   drawer behind a hamburger, and every driver in this repo
+   navigated by pressing a rail that is now translated off-canvas.
+   They all timed out at the same instant and for the same reason,
+   which is the argument for this living in one place: a harness
+   that reaches past the app's own chrome measures a route nobody
+   takes.
+
+   It presses the hamburger only when there IS one and it is
+   visible, so the same call is the desktop gesture at 1440 and the
+   phone gesture at 430 — which is exactly what a person does.
+   ============================================================ */
+export async function door(page, name) {
+  const burger = page.locator('.sn-burger')
+  if ((await burger.count()) > 0 && (await burger.first().isVisible())) {
+    await burger.first().click()
+    /* the drawer slides at --d-sheet; pressing into a moving sheet
+       is how a driver hits the wrong row */
+    await page.waitForTimeout(420)
+  }
+  await page.locator('nav.sn').getByRole('button', { name }).first().click()
+}
