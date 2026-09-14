@@ -54,6 +54,16 @@ const only = argv.indexOf('--only') >= 0 ? argv[argv.indexOf('--only') + 1] : nu
 
 const rail = (p, name) => door(p, name)
 
+/* THE FRONT DOOR'S OWN BUTTON, AND NOT THE RAIL'S. Both say "New
+   quote"; the rail's comes first in the document and `.first()` is
+   document order. At 1024 and under the rail is a closed drawer at
+   x = -318, `inert` and `visibility: hidden`, so every walk below
+   used to time out against `.shell-body` — which is to say this
+   ruler measured nothing at either of the two widths it was most
+   needed at. `shot-one.mjs` carries the same fix and the
+   measurement. */
+const newQuote = (p) => p.locator('.fd').getByRole('button', { name: /New quote/ }).first().click()
+
 const STOPS = [
   ['home', async (p) => rail(p, /^Home/)],
   ['modules', async (p) => rail(p, /^Modules/)],
@@ -74,7 +84,7 @@ const STOPS = [
     async (p) => {
       await rail(p, /^Home/)
       await wait(p, 1200)
-      await p.getByRole('button', { name: /New quote/ }).first().click()
+      await newQuote(p)
     },
   ],
   [
@@ -82,7 +92,7 @@ const STOPS = [
     async (p) => {
       await rail(p, /^Home/)
       await wait(p, 1200)
-      await p.getByRole('button', { name: /New quote/ }).first().click()
+      await newQuote(p)
       await wait(p, 2100)
       await p.locator('.qp-card').first().click()
     },
@@ -92,13 +102,42 @@ const STOPS = [
     async (p) => {
       await rail(p, /^Home/)
       await wait(p, 1200)
-      await p.getByRole('button', { name: /New quote/ }).first().click()
+      await newQuote(p)
       await wait(p, 2100)
       await p.locator('.qp-card').first().click()
       await wait(p, 2300)
       await p.locator('.pl-card').first().click()
       await wait(p, 600)
       await p.getByRole('button', { name: /Start the quote|Back to the quote/ }).click()
+    },
+  ],
+  /* THE ONE ARTEFACT THAT LEAVES THE BUILDING, and no ruler in this
+     repo had ever opened it. It is the only light ground in the app
+     and the only surface with a real table on it, which makes it
+     the likeliest place for two strings to land on each other — and
+     it is the surface where that matters most, because a customer
+     keeps it. */
+  [
+    'document',
+    async (p) => {
+      await rail(p, /^Home/)
+      await wait(p, 1200)
+      await newQuote(p)
+      await wait(p, 2100)
+      await p.locator('.qp-card').first().click()
+      await wait(p, 2300)
+      await p.locator('.pl-card').first().click()
+      await wait(p, 600)
+      await p.getByRole('button', { name: /Start the quote|Back to the quote/ }).click()
+      await wait(p, 2700)
+      const who = p.getByRole('button', { name: /Who it is for/ })
+      if (await who.count()) await who.first().click()
+      await wait(p, 1200)
+      const name = p.getByPlaceholder(/their name/i)
+      await name.fill('Mark McWilliams')
+      await name.press('Tab')
+      await wait(p, 1100)
+      await p.getByRole('button', { name: /Give it to the customer/ }).click()
     },
   ],
 ]

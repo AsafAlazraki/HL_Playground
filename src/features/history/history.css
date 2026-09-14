@@ -188,7 +188,7 @@
 }
 
 .hy-card {
-  scroll-snap-align: start;
+  scroll-snap-align: none start;
   flex: 0 0 auto;
   width: 268px;
   display: flex;

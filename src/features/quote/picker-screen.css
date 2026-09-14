@@ -46,7 +46,24 @@
 
 /* -- the question ---------------------------------------------- */
 
+/* AND THE TOP OF THE PAGE IS A SNAP POSITION, which is the half of
+   this that excluding the first band did not do.
+
+   `proximity` does not mean "only snap if you are close" — it means
+   the browser will rest at a snap position when one is within reach
+   and rest wherever it likes when none is. A page whose only snap
+   positions are partway down has NO resting place at zero, so
+   Chrome holds it at the nearest one it can find: measured at 834,
+   `scrollTop` came up at 162 on load and returned to 162 the
+   instant it was set to 0, with the greeting and the primary
+   action scrolled off the top. Switching the snap type off let 0
+   stick, which is the proof.
+
+   So the head snaps too, in BLOCK only. Now zero is somewhere the
+   page can sit, and every band below it is somewhere else it can
+   sit. */
 .qp-head {
+  scroll-snap-align: start none;
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
@@ -147,7 +164,7 @@
 }
 
 .qp-group ~ .qp-group {
-  scroll-snap-align: start;
+  scroll-snap-align: start none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -207,7 +224,7 @@
 .qp-cell {
   display: flex;
   min-width: 0;
-  scroll-snap-align: start;
+  scroll-snap-align: none start;
 }
 
 @media (prefers-reduced-motion: reduce) {

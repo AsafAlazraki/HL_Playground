@@ -62,8 +62,25 @@
 
 /* -- the hello -------------------------------------------------- */
 
+/* AND THE TOP OF THE PAGE IS A SNAP POSITION, which is the half of
+   this that excluding the first band did not do.
+
+   `proximity` does not mean "only snap if you are close" — it means
+   the browser will rest at a snap position when one is within reach
+   and rest wherever it likes when none is. A page whose only snap
+   positions are partway down has NO resting place at zero, so
+   Chrome holds it at the nearest one it can find: measured at 834,
+   `scrollTop` came up at 162 on load and returned to 162 the
+   instant it was set to 0, with the greeting and the primary
+   action scrolled off the top. Switching the snap type off let 0
+   stick, which is the proof.
+
+   So the head snaps too, in BLOCK only. Now zero is somewhere the
+   page can sit, and every band below it is somewhere else it can
+   sit. */
 .fd-head {
   display: flex;
+  scroll-snap-align: start none;
   flex-direction: column;
   gap: var(--s-4);
   margin-inline: var(--gutter);
@@ -105,14 +122,30 @@
   scroll-margin-top: var(--s-4);
 }
 
-/* EVERY BAND BUT THE FIRST SNAPS — the catalogue's own
-   measurement: a snap target a little way down a freshly-opened
-   page is inside the proximity threshold, and the browser scrolls
-   there before anybody touches the wheel, cutting the greeting in
-   half. The top of a document must always be somewhere it can
-   sit. */
+/* EVERY BAND BELOW THE HEAD SNAPS, AND THE AXIS IS NAMED, BECAUSE
+   ONE VALUE SETS BOTH.
+
+   `scroll-snap-align: start` is shorthand for `start start` —
+   BLOCK then INLINE — and an element's snap container is resolved
+   PER AXIS. So every card in every sideways deck on this screen
+   was also a vertical snap target, at its own y, inside `.fd-port`.
+
+   Measured before the fix: on a freshly-loaded front door,
+   `.fd-port` sat at `scrollTop` 155 at 1440 and 162 at 834 — the
+   browser had snapped to the first row of kind cards and scrolled
+   the greeting, the day and the New-quote button off the top of
+   the screen, with nobody touching the wheel. At 834 the primary
+   action of the whole application was at y = 39 inside a stage
+   that starts at y = 60, which is to say: not on the screen.
+
+   The band above was already excluded from snapping for this
+   exact reason and it did not help, because the thing snapping
+   was never the band. Two values, always, on both sides: a band
+   snaps in BLOCK and never inline, a cell snaps in INLINE and
+   never block. Every rebuilt screen in this app had the same
+   defect and all six are fixed in the same commit. */
 .fd-band ~ .fd-band {
-  scroll-snap-align: start;
+  scroll-snap-align: start none;
 }
 
 .fd-band-head {
@@ -194,7 +227,7 @@
 .fd-cell {
   display: flex;
   min-width: 0;
-  scroll-snap-align: start;
+  scroll-snap-align: none start;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -344,7 +377,7 @@
 .fd-brand-cell {
   display: flex;
   min-width: 0;
-  scroll-snap-align: start;
+  scroll-snap-align: none start;
 }
 
 .fd-brand,

@@ -488,7 +488,7 @@
 
 .bs-offer > li {
   display: flex;
-  scroll-snap-align: start;
+  scroll-snap-align: none start;
 }
 
 @media (prefers-reduced-motion: reduce) {

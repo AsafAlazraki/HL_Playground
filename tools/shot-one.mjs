@@ -40,6 +40,19 @@ const WIDTHS = flag('widths', '1440,1280,1024,834,600,430')
 
 const rail = (p, name) => door(p, name)
 
+/* THE FRONT DOOR'S OWN BUTTON, AND NOT THE RAIL'S.
+
+   Both say "New quote", the rail's comes first in the document,
+   and `.first()` is document order — so at 1024 and under, where
+   the rail is a closed drawer translated off-screen, `inert`, and
+   `visibility: hidden`, every walk in this file was pressing a
+   button at x=-318 and timing out against `.shell-body`.
+
+   Measured at 834: the rail's copy sits at x=-318, w=303, with the
+   nav reporting `inert=true` and `visibility: hidden`. The drawer
+   was right; the driver was reading past it. */
+const newQuote = (p) => p.locator('.fd').getByRole('button', { name: /New quote/ }).first().click()
+
 /** [root selector, how to get there]. The root doubles as the proof
  *  the screen arrived — a screenshot of the wrong screen is worse
  *  than no screenshot, because it looks like evidence. */
@@ -63,7 +76,7 @@ const SCREENS = {
     async (p) => {
       await rail(p, /^Home/)
       await wait(p, 1200)
-      await p.getByRole('button', { name: /New quote/ }).first().click()
+      await newQuote(p)
     },
   ],
   place: [
@@ -87,7 +100,7 @@ const SCREENS = {
       await wait(p, 2200)
       await rail(p, /^Home/)
       await wait(p, 1300)
-      await p.getByRole('button', { name: /New quote/ }).first().click()
+      await newQuote(p)
       await wait(p, 2100)
       await p.locator('.qp-card').nth(1).click()
       await wait(p, 2300)

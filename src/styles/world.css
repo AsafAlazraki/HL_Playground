@@ -242,6 +242,66 @@
   --mark-ink: #D8A441;
 
   /* ------------------------------------------------------------
+     PAPER — and this is the only light ground in the whole app.
+
+     The quotation is the one artefact that LEAVES THE BUILDING.
+     Everything else here is a room a dealer stands in; that is a
+     sheet somebody is handed, folds, and finds again in a drawer
+     four months later. Drawing it dark on screen and flipping it
+     white at `window.print()` means the screen and the paper are
+     two different documents kept in agreement by hand — and this
+     repo has already paid for that, when a `cqi` clamp landed
+     after the print block and set the model code at 88px on an A4
+     page.
+
+     So the document is paper ON SCREEN. A lit sheet standing in
+     the dark room: the same move as the product sweep and for the
+     same reason — the strongest contrast in this palette, pointed
+     at the thing that matters. What you look at is what comes out
+     of the printer, and the print block reduces to what print
+     genuinely is: points instead of pixels, millimetres instead of
+     gutters, and where the page may break.
+
+     IT IS `--sheet-` AND NOT `--paper-`, AND THAT IS A SCAR. The
+     first draft of this block called them `--paper-*`, which reads
+     better and is already taken: `tokens.css:14` declares `--paper`
+     as the APP BACKGROUND and `bridge.css:56` aliases it to
+     `--bg`, and roughly forty rules across the shell and eight
+     features paint with it. Redefining it here turned
+     `.shell-viewstage` — and every one of those forty — white,
+     with the app's own ink still on top of it. It was found by
+     photographing one screen and asking what the cream band at
+     the top of it was; `check-styles` cannot see it, because a
+     token that IS declared and IS read is not a fault it knows how
+     to look for. Grep the name before you mint it.
+
+     EVERY PAIR HERE WAS COMPUTED AGAINST `--sheet`, not eyeballed:
+     ink 17.4:1 · ink-soft 6.9:1 · ink-faint 5.0:1 · brass 5.6:1 ·
+     carmine 6.8:1 · credit 6.2:1. The faint tier is a full step
+     darker than the dark room's fourth ink tier, because a light
+     ground is less forgiving than a dark one, not more.
+     ------------------------------------------------------------ */
+  --sheet: #FBFAF6;
+  --sheet-sunk: #F1EFE7;
+  --sheet-ink: #12191E;
+  --sheet-ink-soft: #4A5560;
+  --sheet-ink-faint: #636E79;
+  --sheet-brass: #8A5D0C;
+  --sheet-carmine: #A8271B;
+  --sheet-credit: #1E6B4A;
+  --sheet-rule: rgba(18, 25, 30, 0.16);
+  --sheet-rule-soft: rgba(18, 25, 30, 0.08);
+  --sheet-rule-strong: rgba(18, 25, 30, 0.34);
+  --sheet-wash: rgba(138, 93, 12, 0.07);
+
+  /* the sheet's own shadow, cast on the floor of the room */
+  --sheet-drop:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 2px 6px rgba(0, 0, 0, 0.4),
+    0 18px 46px rgba(0, 0, 0, 0.5),
+    0 44px 96px rgba(0, 0, 0, 0.36);
+
+  /* ------------------------------------------------------------
      THE NINE KINDS, re-pitched for a dark ground.
 
      They were mid-tones chosen to sit on white and they go muddy

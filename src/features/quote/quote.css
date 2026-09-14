@@ -1,1007 +1,381 @@
 /* ============================================================
-   QUOTE (qt-) — the drawing office, at document scale.
+   THE QUOTE — four surfaces, rebuilt from nothing.
 
-   On screen: the deep navy field, ONE white sheet centred at
-   880px, generous margins. A screen that feels slightly too empty
-   is correct — ART_DIRECTION: "near-monochrome with one accent is
-   what will make it feel expensive."
+   This file was 3,577 lines, and it got there the way every file
+   in this repo that needed rewriting got there: by appending.
+   `.qt-doc-org` was declared five separate times in five
+   sections, each added AFTER the print block that was supposed to
+   answer it — and a media query adds no specificity, so the last
+   append quietly won on paper as well as on screen. That is not a
+   stylesheet, it is a sediment.
 
-   CARMINE APPEARS TWICE AND NOWHERE ELSE: an unpriced line, and a
-   credit. Every other mark is ink, hairline and paper.
+   FOUR SURFACES LIVE HERE, and only four:
 
-   On A4: the navy disappears and the sheet IS the page.
+     .qt-root--doc   the page a finished quote is read on
+     .qt-doc         THE DOCUMENT — the sheet a customer is handed
+     .qt-list        the register — every quote this dealer raised
+     .qt-edit        the workbench — a draft being built
 
-   There is not a raw hex in this file and every measurement is on
-   the --sp scale.
+   AND ONE OF THEM HAS NO DOOR IN THE SHIPPED BUILD. `.qt-edit` is
+   `QuoteEditor`, the Address moment of the flow, and the only way
+   into it is `onGo('address')` — which `QuotePage` hands to
+   `QuoteBuild` alone. `rebuiltBuild()` is true by default, so the
+   screen a dealer actually gets is `BuildScreen`, which answers
+   "who is it for" on its own rail as `HANDOVER_STEP` and never
+   calls `onGo`. The flow line names three moments and the
+   application can reach two.
+
+   That is not a styling fault and it is not fixed here — but it is
+   written down here rather than left in a session, because the
+   sheet is the only surface carrying a per-line price override and
+   the note that prints under the total, and neither of those has
+   anywhere else to live. It is drawn in this file to the same
+   standard as the rest, ready for the door.
+
+   AND THEY BELONG TO BOTH REGISTERS, which is why they read so
+   differently. The document and the empty register are SHOWROOM:
+   somebody is being sold to. The register's rows and the
+   workbench are COCKPIT: somebody is working, all day, and wants
+   twenty rows on the screen rather than six.
+
+   THE ONE IDEA THIS FILE IS BUILT ON: the document is PAPER, on
+   screen, standing in the dark room. `--sheet-*` in `world.css`
+   carries the reasoning and the measured contrast — briefly,
+   because a document drawn dark and flipped white at
+   `window.print()` is two documents kept in agreement by hand,
+   and this repo has already paid for that once when a `cqi` clamp
+   landed after the print block and set the model code at 88px on
+   an A4 page.
+
+   THE PRINT BLOCK IS AT THE FOOT OF THIS FILE AND THERE IS ONLY
+   ONE OF IT. Because the sheet is already paper, it no longer has
+   to re-colour anything: it converts pixels to points, gutters to
+   millimetres, and says where the page may break. That is all
+   print actually is.
    ============================================================ */
 
-/* THE SCROLLPORT HAS NO BOTTOM PADDING, AND THAT IS THE WHOLE FIX.
+/* ============================================================
+   THE PAGE.
 
-   This carried `padding-bottom: calc(var(--sp-6) * 3)` — 96px, left
-   over from the days when every surface padded itself to clear the
-   dock. DESIGN_CONTRACT §8.7 already rules that out, and this is the
-   defect it was written from: a `position: sticky; bottom: 0` box is
-   floored by its scroll container's CONTENT box, so 96px of padding
-   lifted the total bar 96px off the bottom edge — while the document
-   behind it went on painting through that padding. Measured at
-   1280×860 and 1920×860, scrollTop 0 and 481: `.qt-foot` bottom 686,
-   scrollport bottom 782, and `elementFromPoint` in the middle of the
-   gap returned `.qt-line-main` "Yamaha - F150XC". Content, then a
-   total, then more content. At the very end of the scroll the gap was
-   empty, which is why it survived being looked at.
+   Three states share one root and differ by what they hold
+   rather than by how they are laid out: a finished quote, an
+   empty register, a draft under construction.
+   ============================================================ */
 
-   So the DRAFT's scrollport has no bottom padding and the draft ends
-   on its total: the bar IS the last box in the flow, so where it
-   rests and where the document ends are one line, and it does not
-   lift off the bottom edge as you reach the end. The 78px the dock
-   needs is reserved once, on `.shell-stage`, and stays reserved.
-
-   THE PADDING IS SAFE EXACTLY WHERE NOTHING IS STICKY, which is why
-   the modifier below exists rather than a blanket rule. Measured
-   after: gap under the bar 0px at 1280×860 and 1920×860, at scrollTop
-   0, 417 and 833 — `elementFromPoint` has nowhere left to look.
-
-   AND NO TEST GUARDS THIS, so do not assume one does. A tripwire that
-   read this stylesheet was written and thrown away: vitest stubs a
-   `?raw` and a `?inline` stylesheet import to the empty string here
-   (measured, both), and the app project has no `@types/node` to read
-   the file with. The guard is this note, DESIGN_CONTRACT §8.7, and a
-   person measuring the gap in a browser. */
 .qt-root {
-  position: relative;
-  height: 100%;
-  overflow: auto;
-  background: var(--canvas-bg);
-  padding: var(--sp-5) var(--sp-5) 0;
-}
-
-/* AN ISSUED DOCUMENT HAS NO BAR TO END ON. Nothing in a finished
-   quote is sticky, so the scrollport may hand out its trailing air
-   again — and it has to be padding here, not a margin on `.qt-doc`:
-   a last child's bottom margin does not enter the scrollable overflow
-   region, so the sheet ended flush on the stage's edge (measured: 0px
-   after the document) with its rounded corner reading as a clip. */
-.qt-root--doc {
-  padding-bottom: calc(var(--sp-6) * 3);
-}
-
-/* ============================================================
-   THE DRAFT IS A COLUMN, AND THE TOTAL IS NOT IN THE SCROLL.
-
-   The note above solved half of a problem and left the other half
-   standing. The bar stopped floating 96px off the bottom edge, and it
-   went on being `position: sticky; bottom: 0` INSIDE the scrollport —
-   so at the top and the middle of the scroll it sat across the middle
-   of the quote with lines passing behind it. Measured again at
-   1280×860 and 1920×860, scrollTop 0 and mid-scroll: content above the
-   bar, content below it, and `elementFromPoint` under the bar
-   returning a `.qt-line-main`. Opaque, so nothing was hidden — and
-   still a total painted over its own document.
-
-   Padding the scrollport cannot fix that, and this is the file that
-   proves it: a sticky box is floored by its scroll container's CONTENT
-   box, so every pixel of bottom padding lifts the bar and hands the
-   document a strip to paint through. DESIGN_CONTRACT §8.7.
-
-   So the bar comes out of the scroll. This element is the COLUMN and
-   does not scroll; `.qt-edit` is the scrollport inside it; `.qt-foot`
-   is a sibling below the scrollport, where no line of the quote can
-   reach it. Nothing is sticky, nothing is padded to clear the dock —
-   the 78px is still reserved once, on `.shell-stage` — and the total
-   is where a total belongs: at the end, under the document.
-   ============================================================ */
-.qt-root--edit {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  padding: 0;
-}
-
-/* A SENTENCE TAKES THE SOFT INK, NOT THE FAINT ONE — and here that is
-   a contrast fix as well as a semantic one. This was
-   --canvas-ink-faint, which resolves to --fg-tertiary #6b7482: on the
-   canvas ground #f7f8fa that measures 4.36:1 and FAILS the 4.5 floor.
-   (It is the trap DESIGN_CONTRACT §1 names — the faint tier is 4.72:1
-   on pure white and less on anything at all darker.) --fg-secondary
-   #4b5462 on the same ground measures 6.80:1, and the contract already
-   reserves the faint tier for metadata and counts rather than for
-   prose. It matters more than it did: this is the screen a salesperson
-   now lands on before they have made anything. */
-.qt-void {
-  padding: var(--sp-6) 0;
-  text-align: center;
-  color: var(--canvas-ink-soft);
-}
-/* A CONTROL'S NAME IS ITS NAME. `<em>` here marks the three buttons a
-   person is being sent to press, and italic is the wrong mark for
-   that — it reads as emphasis on a word rather than as the word
-   written on the button. Weight and the full ink instead, matching
-   `.qt-issued-why em`. */
-.qt-void em {
-  font-style: normal;
-  font-weight: 560;
-  color: var(--canvas-ink);
-}
-
-/* ============================================================
-   THE DIARY WITH NOTHING IN IT — the house empty state, not a
-   sentence floating on a blank page.
-
-   `.qt-void` above is the terse form and stays where it belongs: one
-   line, for a document that is no longer here. This is the four-part
-   card DESIGN_CONTRACT §6 sets as the model — eyebrow, what the thing
-   IS, what you already have, one step — drawn in the same box as
-   `.md-empty` (560px, centred, hairline, --e2) so the two empty
-   screens in this app are recognisably one screen.
-
-   The measurements are `.md-empty`'s, deliberately copied rather than
-   invented: two empty states an eighth of an inch apart in padding is
-   two empty states.
-   ============================================================ */
-/* THE CARD IS NOT STRANDED AT THE TOP OF A BLANK PAGE. The diary's
-   empty state is the whole page, and left at the scrollport's top edge
-   it read as a notice somebody forgot to finish — the fault this pass
-   exists to answer. `safe center` and not `center`: the card is short
-   here, but at 800px of window with a wrapped route sentence it is not,
-   and plain `center` would push its top out of scroll reach. */
-.qt-root--none {
-  display: grid;
-  align-content: center;
-  align-content: safe center;
-}
-
-.qt-none {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-3);
-  max-width: 560px;
-  margin: 0 auto;
-  padding: var(--sp-6);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--e2);
-  text-align: left;
-}
-
-.qt-none-eyebrow {
-  color: var(--ink-faint);
-}
-
-.qt-none-say {
-  margin: 0;
-  font-size: var(--ui-l-size);
-  line-height: var(--ui-l-lead);
-  letter-spacing: var(--ui-l-track);
-  color: var(--ink-soft);
-}
-
-.qt-none-count {
-  margin: 0;
-  font-size: var(--ui-m-size);
-  line-height: var(--ui-m-lead);
-  color: var(--ink);
-}
-.qt-none-count strong {
-  font-family: var(--font-mono);
-  font-size: var(--data-l-size);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: var(--data-l-track);
-}
-
-/* the one step, and the controls it names. Same treatment as
-   `.qt-void em`: a control's name is its name, so weight and full ink
-   rather than italic, which reads as emphasis on a word instead. */
-.qt-none-do {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.65;
-  color: var(--ink-soft);
-}
-.qt-none-do em {
-  font-style: normal;
-  font-weight: 560;
-  color: var(--ink);
-}
-
-/* the white sheet, on both screens that have one */
-.qt-sheet,
-.qt-doc {
-  position: relative;
-  max-width: 880px;
-  margin: 0 auto;
-  padding: calc(var(--sp-6) + var(--sp-2)) var(--sp-6) var(--sp-6);
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sheet-raised);
-  color: var(--ink);
-}
-
-/* -- corner registration ticks ------------------------------ */
-.qt-tick {
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  pointer-events: none;
-}
-.qt-tick--tl {
-  top: -1px;
-  left: -1px;
-  border-top: 1.25px solid var(--hairline-strong);
-  border-left: 1.25px solid var(--hairline-strong);
-}
-.qt-tick--tr {
-  top: -1px;
-  right: -1px;
-  border-top: 1.25px solid var(--hairline-strong);
-  border-right: 1.25px solid var(--hairline-strong);
-}
-
-/* every number on a quote is mono and tabular, so columns of
-   figures line up on the decimal in every browser */
-.qt-num,
-.qt-total,
-.qt-foot-total {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-
-/* the two carmine marks */
-.qt-nil,
-.is-credit {
-  color: var(--red);
-}
-.qt-nil {
-  font-family: var(--font-mono);
-  font-size: 11px;
-}
-
-.qt-was {
-  margin-right: var(--sp-2);
-  color: var(--ink-faint);
-  text-decoration: line-through;
-}
-
-/* THE STAR IS A COLUMN, NOT AN ORNAMENT. Every `.qt-line-main` is its
-   own grid, so a row that omitted the star pulled the whole row one
-   track left: the boat line — never "recommended", because nothing
-   recommends the boat you started from — put its price in the 46px
-   QUANTITY track and its chevron in the 130px MONEY track. Measured on
-   the Stabicraft 1450 quote: "$20,900" wanted 58.6px in a 46px box and
-   sat 125px left of the "$3,806" below it. Money that does not line up
-   is the one thing mono type is here to prevent (DESIGN_PRINCIPLES §2).
-   So the cell is always drawn and always 11px — the icon's own size —
-   and the star inside it is what is conditional. */
-.qt-star {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 11px;
-  color: var(--accent-ochre);
-}
-
-.qt-linkbtn {
-  padding: 0 var(--sp-2);
-  border: 0;
-  background: none;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  cursor: pointer;
-}
-.qt-linkbtn:hover {
-  color: var(--blue);
-}
-
-.qt-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--ink-soft);
-  cursor: pointer;
-}
-.qt-icon-btn:hover {
-  border-color: var(--hairline-strong);
-  color: var(--ink);
-}
-
-/* ============================================================
-   THE DRAFT
-   ============================================================ */
-
-/* THE DRAFT'S SCROLLPORT. It holds the sheet and nothing else, which
-   is what makes the total unreachable by the document rather than
-   merely painted over it. The horizontal air the page used to get from
-   `.qt-root`'s padding is charged here instead, because this is the box
-   that scrolls now. See `.qt-root--edit`. */
-.qt-edit {
-  flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
-  /* BOTH EDGES, so the sheet and the total bar share a centre line.
-     The bar is outside this scrollport now, so a scrollbar on one side
-     of the sheet shifts the sheet's centre and not the bar's: measured
-     880px at left 515 against 880px at left 520, five pixels of
-     misalignment between a document and its own total. Reserving the
-     gutter on both edges puts the two centres back on one line. Where
-     the property is unsupported the five pixels come back and nothing
-     else changes. */
-  scrollbar-gutter: stable both-edges;
-  padding: var(--sp-5) var(--sp-5) var(--sp-4);
+  height: 100%;
+  background: var(--bg);
 }
 
-.qt-warn {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  margin-bottom: var(--sp-4);
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--red);
-  border-radius: var(--radius-sm);
-  background: var(--red-wash);
-  color: var(--red);
-  font-size: 12px;
+.qt-root--doc {
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
 }
 
-.qt-edit-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--sp-5);
-  padding-bottom: var(--sp-4);
-  border-bottom: 1px solid var(--hairline);
-}
-.qt-edit-for {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-.qt-edit-subject {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-3);
-  text-align: right;
-}
-.qt-edit-photo {
-  width: 120px;
-  height: 90px;
-  object-fit: cover;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-}
-/* the draft's subject name and the finished document's (`.qt-doc-name`
-   below) were 24px and 28px — the same line, in the same voice, four
-   pixels apart depending on whether you were editing it or reading
-   it. Both land on the 26px step, so the draft now shows the size
-   the customer will be handed. */
-.qt-edit-name {
-  margin-top: 2px;
-  font-family: var(--font-display);
-  font-size: var(--display-m-size);
-  font-weight: var(--display-weight);
-  line-height: var(--display-m-lead);
-  letter-spacing: var(--display-m-track);
+.qt-root--edit {
+  overflow: hidden;
 }
 
-.qt-field {
-  display: block;
-  margin-bottom: var(--sp-3);
-}
-.qt-field .mono-label {
-  display: block;
-  margin-bottom: 3px;
-}
-/* WHY A FIELD IS BEING ASKED FOR, under the field. Only ever drawn
-   when it is true (see `needsOverrideReason`), so it is a refusal in
-   place and not a permanent instruction nobody reads. --ink-soft on
-   the white sheet: 7.7:1. */
-.qt-field-why {
-  display: block;
-  margin-top: 4px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--ink-soft);
-}
-.qt-field--wide {
-  grid-column: 1 / -1;
-}
-.qt-input {
-  max-width: 420px;
-}
-.qt-input--name {
-  font-size: 16px;
-}
-.qt-input--qty {
-  width: 46px;
-  text-align: right;
-  font-family: var(--font-mono);
-}
-.qt-input--amount {
-  width: 120px;
-  text-align: right;
-  font-family: var(--font-mono);
-}
-
-.qt-levels {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-  margin-top: var(--sp-2);
-}
-.qt-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 9px;
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius-sm);
-  background: var(--paper-high);
-  font-size: 12px;
-  cursor: pointer;
-}
-.qt-chip.is-on {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--paper-high);
-}
-.qt-chip-num {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  opacity: 0.75;
-}
-
-.qt-disclose {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: var(--sp-3) 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  cursor: pointer;
-}
-.qt-disclose:hover {
-  color: var(--blue);
-}
-
-.qt-details {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--sp-3);
-  padding: var(--sp-3);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  background: var(--paper-sunken);
-}
-
-/* -- a section ---------------------------------------------- */
-
-.qt-section {
-  margin-top: var(--sp-5);
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--hairline);
-}
-.qt-section-head {
-  margin-bottom: var(--sp-2);
-}
-/* A SECTION WITH NOTHING ON IT — one row, and the row is the act.
-
-   Measured: a quote raised on a Highfield hull opens with eight
-   sections and two of them have a line. The other six each drew a
-   rule, a heading, a sentence and a button — six headings about
-   suppliers nobody had quoted, on the screen where a person came to
-   type a customer's name.
-
-   NO RULE ABOVE IT. The hairline is what separates parts of a
-   DOCUMENT, and a row offering to add something is not a part of the
-   document yet. */
-.qt-section--bare {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: 0;
-}
-
-/* CONSECUTIVE OFFERS ARE A LIST, and a list has list spacing. Each
-   bare section is its own <section>, so without this the document's
-   own section rhythm (--sp-5) sat between two one-line controls and
-   six offers took the height of six paragraphs. */
-.qt-section--bare + .qt-section--bare {
-  margin-top: calc(var(--sp-1) * -1);
-}
-
-/* AND THE RUN OF THEM IS SEPARATED FROM THE DOCUMENT ONCE. A hairline
-   above the first offer says "the quote ends here and these are
-   things you could add"; a hairline between each of them would be
-   claiming six documents. */
-.qt-section:not(.qt-section--bare) + .qt-section--bare {
-  margin-top: var(--sp-4);
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--hairline);
-}
-
-.qt-bare {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-2);
-  width: 100%;
-  padding: var(--sp-2);
-  border: 0;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--ink-soft);
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--t-fast) var(--ease-draft);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .qt-bare:hover {
-    background: var(--paper-high);
-    color: var(--ink);
-  }
-}
-
-.qt-bare:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 1px;
-}
-
-.qt-bare-say {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.qt-bare-name {
-  font-size: 13px;
-  font-weight: 500;
-}
-
-/* THE REASON, WHERE IT IS NEEDED. It was a paragraph in the document;
-   here it is the second line of the control it explains — read while
-   deciding whether to add, rather than while reading the quote. */
-.qt-bare-why {
-  color: var(--ink-faint);
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-.qt-section-empty {
-  padding: var(--sp-2) 0;
-  color: var(--ink-faint);
-  font-size: 12px;
-}
-
-.qt-line {
-  border-bottom: 1px solid var(--hairline);
-}
-.qt-line-main {
-  display: grid;
-  grid-template-columns: 11px minmax(160px, 1.4fr) minmax(0, 1fr) 46px 130px 22px 22px;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-2) 0;
-}
-.qt-line-name {
-  font-weight: 500;
-}
-.qt-line-detail,
-.qt-doc-detail {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-3);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-soft);
-}
-.qt-doc-fact-lab {
-  color: var(--ink-faint);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 11px;
-}
-.qt-line-amount {
-  text-align: right;
-}
-.qt-line-open {
-  padding: var(--sp-3) 0 var(--sp-4);
-  border-top: 1px dashed var(--hairline);
-}
-.qt-line-where {
-  margin-bottom: var(--sp-2);
-  color: var(--ink-faint);
-  text-transform: none;
-  letter-spacing: 0.06em;
-}
-.qt-override {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-4);
-  margin-top: var(--sp-3);
-}
-
-.qt-add,
-.qt-adj-door {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: var(--sp-2);
-  padding: 5px 10px;
-  border: 1px dashed var(--hairline-strong);
-  border-radius: var(--radius-sm);
-  background: none;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  cursor: pointer;
-}
-.qt-add:hover,
-.qt-adj-door:hover {
-  border-color: var(--blue);
-  color: var(--blue);
-}
-
-.qt-picker {
-  margin-top: var(--sp-2);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  background: var(--paper-sunken);
-}
-.qt-picker-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--sp-2) var(--sp-3);
-  border-bottom: 1px solid var(--hairline);
-}
-.qt-picker-list {
-  max-height: 320px;
-  margin: 0;
-  padding: 0;
-  overflow: auto;
-  list-style: none;
-}
-.qt-pick {
-  display: grid;
-  grid-template-columns: auto minmax(140px, 1fr) minmax(0, 1.2fr) 110px auto;
-  align-items: center;
-  gap: var(--sp-2);
-  width: 100%;
-  padding: var(--sp-2) var(--sp-3);
-  border: 0;
-  border-top: 1px solid var(--hairline);
-  background: none;
-  text-align: left;
-  cursor: pointer;
-}
-.qt-pick:hover:not([aria-disabled='true']) {
-  background: var(--blue-wash);
-}
-/* NO OPACITY, AND THE SELECTOR IS THE ATTRIBUTE. This was
-   `.qt-pick:disabled { opacity: 0.55 }`; the row is `aria-disabled`
-   now (see the note in QuoteEditor.tsx) and the dimming is gone
-   because it put the row's own explanation at 2.53:1. The state is
-   carried by the words in the row, the cursor, and the absence of
-   hover and press — base.css's global press already excludes
-   `[aria-disabled='true']`. Rewritten rather than appended: a dead
-   `:disabled` rule holding an `opacity` is an invitation to put the
-   attribute back. */
-.qt-pick[aria-disabled='true'] {
-  cursor: default;
-}
-.qt-pick-facts {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-faint);
-}
-.qt-pick .qt-num {
-  text-align: right;
-}
-
-/* -- adjustments -------------------------------------------- */
-
-.qt-adjustments {
-  margin-top: var(--sp-5);
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--hairline);
-}
-.qt-adj {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 120px 110px 22px;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-1) 0;
-}
-.qt-adj-sign {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-.qt-adj-doors {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-
-/* -- today's prices ----------------------------------------- */
-
-.qt-reread {
-  margin-top: var(--sp-5);
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--hairline);
-}
-.qt-reread-say {
-  font-size: 12px;
-  color: var(--ink-soft);
-}
-.qt-reread-list {
-  margin: var(--sp-2) 0;
-  padding: 0;
-  list-style: none;
-}
-.qt-reread-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  padding: 3px 0;
-  border-bottom: 1px solid var(--hairline);
-}
-.qt-reread-acts {
-  display: flex;
-  gap: var(--sp-2);
-  margin-top: var(--sp-3);
-}
-
-/* -- the foot bar: BELOW the document, not over it ------------
-   IT IS NOT STICKY AND IT IS NOT IN THE SCROLL. It was
-   `position: sticky; bottom: 0` inside the page's scrollport, which
-   put a total across the middle of its own document at every scroll
-   position but the last one. `.qt-root--edit` is the column now and
-   this is the row under the scrollport — read that note before
-   putting `position` back on this rule.
-
-   NO BACKDROP-FILTER ANY MORE, and nothing was lost with it: the
-   bridge already resolves --mat-heavy-blur to 0px (DESIGN_CONTRACT
-   §8.10 — glass as a look is retired) and --mat-heavy-bg to the
-   opaque paper, and nothing scrolls behind this bar to be seen
-   through. A translucent surface over a surface that never moves is
-   a look, not a function. The two ink remaps stay: they resolve to
-   the same values on the flat bridge, and they are what keeps this
-   bar honest if the material ever comes back.
-
-   MEASURED ON ITS GROUND — the opaque bar on --canvas-bg: --ink
-   11.52:1, --ink-soft 6.55:1. --ink-faint would be 4.12:1 and --red
-   3.97:1, which is why both are remapped and land at 6.55:1 and
-   5.13:1. Nothing on this bar is under 4.5:1. What has gone is the
-   SWING the old note was written about: its backdrop no longer
-   alternates between the white sheet and the navy field, because it
-   no longer has a backdrop.
-
-   --ec2 AND NOT --shadow-popover. This bar stands on the navy, and
-   --shadow-popover's darkest outer point measures 1.046:1 against
-   --canvas-bg — it is shadow-coloured light on shadow-coloured
-   ground, i.e. no shadow at all. --ec2 measures 1.299 on the same
-   field. At ~49k px² it takes the canvas ramp's second tier rather
-   than the material's default --ec3: bigger surfaces read as
-   thicker, and this one is not big.
-
-   THE WIDTH IS THE SHEET'S, and it is `width` rather than `max-width`
-   for a reason that was measured: this is now a flex ITEM in the
-   column, and an auto margin on the cross axis switches off
-   `align-items: stretch`, so a max-width alone left the bar at its own
-   content width — 570px under an 880px document at 1920, which reads
-   as two objects rather than a document and its total. With an
-   explicit width the auto margins only centre it. The second half of
-   the min() is the side air the scrollport above gets from its own
-   padding, so the two edges line up at every window width. */
-
-.qt-foot {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  width: min(880px, calc(100% - var(--sp-5) * 2));
-  margin: 0 auto var(--sp-5);
-  padding: var(--sp-3) var(--sp-4);
-  /* see [data-material] in base.css — the attribute belongs in the
-     markup and these two lines are the same remap by value */
-  --ink-faint: var(--ink-faint-material);
-  --red: var(--red-material);
-  border: 1px solid var(--mat-heavy-edge);
-  border-radius: var(--radius);
-  background: var(--mat-heavy-bg);
-  box-shadow: var(--ec2);
-}
-/* the total and the one action, on one line. A second row appears
-   under them only when the quote is refused (`.qt-foot-why`), so the
-   bar is 56px tall exactly as long as there is nothing to say. */
-.qt-foot-line {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-4);
-}
-.qt-foot-sum {
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-3);
-}
-.qt-foot-total {
-  font-size: 22px;
-}
-.qt-foot-unpriced {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--red);
-}
-/* WHY THE PRIMARY ACTION IS DISABLED, next to the disabled control.
-   --ink-soft and not --red: this is a sentence about work still to do,
-   not an error, and carmine on a quote means an unpriced line or a
-   credit and nothing else (see the head of this file). 6.55:1 on the
-   bar's own ground. */
-.qt-foot-why {
-  max-width: 68ch;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--ink-soft);
-}
-/* MORE THAN ONE THING CAN BE WRONG AT ONCE — a quote with no customer
-   on it and no price on any line is refused twice, and both sentences
-   are printed rather than the first one only. Stacked at --sp-1 so the
-   pair reads as one answer to one question and not as two alerts. */
-.qt-foot-whys {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-}
-.qt-foot-whys .qt-foot-why {
-  margin: 0;
+/* A QUOTE THAT IS NO LONGER THERE SAYS SO, in the middle of the
+   room, at reading size. It is not an error and it is not drawn
+   like one: a draft can be discarded, and arriving at the address
+   of one that was is an ordinary thing to have happen. */
+.qt-void {
+  margin: auto;
+  padding: var(--s-16) var(--gutter);
+  max-width: 46ch;
+  color: var(--fg-secondary);
+  font-size: var(--t-subtitle-size);
+  font-weight: var(--t-subtitle-weight);
+  line-height: var(--t-subtitle-lead);
+  letter-spacing: var(--t-subtitle-track);
+  text-align: center;
+  text-wrap: balance;
 }
 
 /* ============================================================
-   THE DOCUMENT
+   THE CONTROLS AROUND A GIVEN QUOTE — on the screen, never on
+   the paper.
+
+   They sit in a glass strip above the sheet rather than in a bar
+   bolted to the bottom of the window: this page scrolls, the
+   sheet is the subject, and a solid bar across the foot of a
+   document is the thing the owner of this app has asked twice to
+   be rid of.
    ============================================================ */
+
+.qt-issued-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  align-self: center;
+  width: 210mm;
+  max-width: 100%;
+  margin-inline: auto;
+  padding: var(--s-6) var(--gutter) 0;
+}
 
 .qt-issued-bar {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
-  max-width: 880px;
-  margin: 0 auto var(--sp-3);
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  padding: var(--s-3) var(--s-4);
+  border: var(--border) solid var(--glass-edge);
+  border-radius: var(--r-panel);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--e-float);
 }
+
+/* the state of the thing, first and quietest — a fact, not an
+   action, so it takes the label step and the label's ink */
 .qt-issued-say {
   flex: 1 1 auto;
-  color: var(--canvas-ink-soft);
+  margin: 0;
+  min-width: 0;
+  color: var(--fg-tertiary);
 }
 
-/* the controls and the sentence about them are one block, aligned
-   with the sheet below — so the note starts where the document starts
-   instead of being centred over it as a narrow column */
-.qt-issued-head {
-  max-width: 880px;
-  margin: 0 auto var(--sp-4);
-}
-
-/* WHY THIS PAGE HAS NOTHING TO TYPE ON — the sentence the read-only
-   document never had. It sits on the canvas above the sheet, in the
-   canvas ink ramp (--canvas-ink-soft is --fg-secondary over
-   --bg-canvas, 7.4:1), at a reading measure rather than the sheet's
-   full 880px. `<em>` names the control directly above it rather than
-   italicising for emphasis. */
 .qt-issued-why {
-  max-width: 62ch;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--canvas-ink-soft);
+  margin: 0;
+  max-width: 74ch;
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
 }
+
 .qt-issued-why em {
+  color: var(--fg-secondary);
   font-style: normal;
-  font-weight: 560;
-  color: var(--canvas-ink);
+  font-weight: 600;
 }
+
+/* ============================================================
+   THE SHEET, STANDING IN THE ROOM.
+
+   `.qt-doc` is the only light ground in this application. It is
+   210mm wide and it does not stretch: a document has a measure,
+   and the measure is the page it will be printed on. The room
+   runs to the edges of the window; the sheet floats in it, with
+   its own shadow on the floor.
+   ============================================================ */
+
+.qt-doc {
+  position: relative;
+  align-self: center;
+  width: 210mm;
+  max-width: 100%;
+  margin: clamp(20px, 3vw, 48px) auto var(--s-16);
+  padding: clamp(22px, 4.4cqi, 52px);
+  background: var(--sheet);
+  color: var(--sheet-ink);
+  box-shadow: var(--sheet-drop);
+  container-type: inline-size;
+  container-name: sheet;
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  line-height: var(--t-body-lead);
+  /* no radius. Paper does not have rounded corners, and the one
+     time this app draws a physical object it should draw it. */
+  border-radius: 0;
+}
+
+/* THE CROP MARKS. Two corner rules in the printer's own
+   convention — the smallest possible signal that this rectangle
+   is a SHEET and not a panel, and they cost two spans. */
+.qt-tick {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.qt-tick--tl {
+  top: 10px;
+  left: 10px;
+  border-top: var(--border) solid;
+  border-left: var(--border) solid;
+}
+
+.qt-tick--tr {
+  top: 10px;
+  right: 10px;
+  border-top: var(--border) solid;
+  border-right: var(--border) solid;
+}
+
+.qt-doc .qt-tick {
+  border-color: var(--sheet-rule-strong);
+}
+
+.qt-sheet .qt-tick {
+  border-color: var(--line-strong);
+}
+
+/* ------------------------------------------------------------
+   1. THE TITLE BLOCK.
+
+   What this document is and who wrote it, on the left; the facts
+   that identify it, on the right, as a plate. The rule under the
+   block is the heaviest on the page and it is brass — the one
+   colour this document is allowed beyond ink, and the first thing
+   a person's eye lands on.
+   ------------------------------------------------------------ */
 
 .qt-doc-head {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: var(--sp-5);
-  padding-bottom: var(--sp-4);
-  border-bottom: 1px solid var(--hairline);
-}
-.qt-doc-org {
-  font-family: var(--font-ui);
-  font-variation-settings: 'wdth' 118;
-  font-weight: 640;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.qt-plate {
-  display: grid;
-  gap: 2px;
-  min-width: 200px;
-  margin: 0;
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-}
-.qt-plate-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-3);
-}
-.qt-plate-val {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 12px;
+  gap: var(--s-6) var(--s-8);
+  flex-wrap: wrap;
+  padding-bottom: var(--s-5);
+  border-bottom: var(--border-strong) solid var(--sheet-brass);
 }
 
+.qt-doc-who {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+.qt-doc .mono-label {
+  color: var(--sheet-ink-faint);
+}
+
+/* THE BUSINESS'S NAME — the letterhead. Display face, tight,
+   full ink: the second-largest thing on the page after the boat,
+   which is the order the document reads in. */
+.qt-doc-org {
+  margin: 0;
+  color: var(--sheet-ink);
+  font-family: var(--font-display);
+  font-size: var(--t-stage-title);
+  font-weight: var(--t-stage-title-weight);
+  line-height: var(--t-stage-title-lead);
+  letter-spacing: var(--t-stage-title-track);
+}
+
+.qt-plate {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-5);
+  margin: 0;
+  text-align: right;
+}
+
+/* the row is two cells of the parent grid and nothing of its own */
+.qt-plate-row {
+  display: contents;
+}
+
+.qt-plate-val {
+  margin: 0;
+  color: var(--sheet-ink);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--t-mono-lead);
+}
+
+/* ------------------------------------------------------------
+   2. WHO IT IS FOR.
+
+   Nothing is drawn for an empty field — no "N/A", no dash, no
+   placeholder a customer could mistake for a value. What IS drawn
+   for a missing name is a sentence saying it is missing, aimed at
+   the dealer, who is the one who can fix it before pressing
+   print.
+   ------------------------------------------------------------ */
+
 .qt-doc-customer {
-  padding: var(--sp-4) 0;
+  padding: var(--s-6) 0 var(--s-5);
+  border-bottom: var(--border) solid var(--sheet-rule-soft);
 }
+
 .qt-doc-customer-name {
-  font-size: 16px;
-  font-weight: 500;
+  margin: var(--s-2) 0 0;
+  color: var(--sheet-ink);
+  font-family: var(--font-display);
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
 }
+
 .qt-doc-customer-line {
-  font-size: 13px;
-  color: var(--ink-soft);
+  margin: var(--s-1) 0 0;
+  color: var(--sheet-ink-soft);
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
 }
+
+/* the shape of a thing nobody has filled in — italic, so it can
+   never be read as a value, and soft, so it does not shout */
 .qt-doc-blank {
-  color: var(--ink-faint);
+  color: var(--sheet-ink-faint);
   font-style: italic;
 }
+
+/* ------------------------------------------------------------
+   3. THE SUBJECT — the boat, and the largest moment on the page.
+
+   Photograph left, lockup right. The lockup column carries its
+   OWN container, so the marque is sized by the column it sits in
+   rather than by the sheet: at 210mm those are three hundred
+   pixels apart, and a headline sized off the sheet ran out of its
+   own box by 140px at 834.
+   ------------------------------------------------------------ */
 
 .qt-doc-subject {
   display: flex;
   align-items: flex-start;
-  gap: var(--sp-5);
-  padding: var(--sp-4) 0;
-  border-top: 1px solid var(--hairline);
+  gap: clamp(16px, 4cqi, 40px);
+  padding: var(--s-8) 0 var(--s-6);
 }
+
+/* THE RIG, RESERVED BEFORE THE BYTES LAND. The box holds its size
+   whether or not the photograph arrives, so a picture fetched late
+   never re-paginates a document that is already printing.
+
+   The plate under it is the lit sweep in paper's key: these are
+   white hulls shot on white grounds, and on a white sheet they
+   need something under them or the hull has no bottom edge. */
 .qt-doc-photo {
-  width: 220px;
-  height: 165px;
-  object-fit: cover;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
+  flex: 0 0 auto;
+  width: min(300px, 38cqi);
+  aspect-ratio: 4 / 3;
+  height: auto;
+  object-fit: contain;
+  background: radial-gradient(
+    88% 76% at 50% 22%,
+    var(--sweep-hi) 0%,
+    var(--sheet) 54%,
+    var(--sheet-sunk) 100%
+  );
+  box-shadow: inset 0 0 0 1px var(--sheet-rule-soft);
 }
-/* ============================================================
-   THE <h1> OF THE DOCUMENT A CUSTOMER IS HANDED.
 
-   It printed one string — "Highfield - RU230KAM (PVC) WH" — at the
-   26px step, wrapping onto two lines. It is three facts and it is
-   now set as three: the maker as a label above, the MODEL at the
-   marque step, and the material and colourway under it, read out
-   of the map rather than left as a code.
+.qt-doc-subject-id {
+  flex: 1 1 auto;
+  min-width: 0;
+  container-type: inline-size;
+  container-name: lockup;
+}
 
-   THE MODEL IS THE MARQUE, which is the whole of the scale fix on
-   this page: SHOWROOM asks for >=6x contrast and the document
-   measured 2.91x with a 32px letterhead as its largest type. The
-   boat a person is buying should not be smaller than the name of
-   the yard selling it.
-
-   THE PRINT BLOCK IS NOT TOUCHED BY THIS. @page rules further down
-   this file set their own sizes for paper; this is the screen.
-   ============================================================ */
+/* THE LOCKUP. Maker over model over trim, three steps apart, and
+   the model is the biggest type in this application outside a
+   showroom marque. `marqueOf` takes the FROZEN label apart, so
+   the same three strings appear here and on the configurator's
+   stage: the screen a dealer built on and the page a customer is
+   handed name the boat identically. */
 .qt-doc-name {
   display: flex;
   flex-direction: column;
@@ -1010,215 +384,1817 @@
   min-width: 0;
 }
 
-/* ============================================================
-   THE PAPER'S OWN INK, NOT THE THEME'S — and these three used
-   `--fg`, `--fg-secondary` and `--fg-tertiary` for one commit.
-
-   `.qt-doc` carries its own ramp, scoped to the sheet, and the note
-   on it says exactly why: "a `var()` would follow the theme again
-   and that is the entire fault being fixed". The paper is #fff in
-   both themes because a document that changed colour with the
-   reader's preference would be two documents — so a theme ink on it
-   is light type on white.
-
-   MEASURED IN DARK BEFORE THE FIX, on the page a customer is
-   handed: the model 1.14:1, the maker 2.52:1, the trim 1.95:1. The
-   headline of the quotation was very nearly invisible, and it took
-   a two-theme sweep to see it because nothing had ever measured
-   this screen in dark.
-   ============================================================ */
 .qt-doc-marque-maker {
-  font-size: var(--t-label-size);
-  font-weight: var(--t-label-weight);
-  letter-spacing: var(--t-label-track);
-  line-height: var(--t-label-lead);
+  color: var(--sheet-brass);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--ink-faint);
 }
 
 .qt-doc-marque-model {
+  color: var(--sheet-ink);
   font-family: var(--font-display);
-  font-size: var(--t-marque-size);
-  font-weight: var(--t-marque-weight);
-  line-height: var(--t-marque-lead);
-  letter-spacing: var(--t-marque-track);
-  color: var(--ink);
-  /* Nothing truncates mid-word: a model code is one unbroken token
-     and a cut in it cannot be read through. */
+  font-size: clamp(2.125rem, 15cqi, 4.25rem);
+  font-weight: 800;
+  line-height: 0.94;
+  letter-spacing: -0.04em;
   overflow-wrap: normal;
   word-break: keep-all;
+  text-wrap: balance;
 }
 
+/* the material and the colourway, READ. `(PVC) WH` is the price
+   file's punctuation; `PVC · White` is what a person was sold. */
 .qt-doc-marque-trim {
-  font-size: var(--t-small-size);
-  line-height: var(--t-small-lead);
-  color: var(--ink-soft);
+  margin-top: var(--s-1);
+  color: var(--sheet-ink-soft);
+  font-size: var(--t-body-size);
+  font-weight: 500;
+  line-height: var(--t-body-lead);
 }
+
+/* THE SPEC STRIP — a grid and not a flex row, so eight specs make
+   two tidy rows rather than one ragged one. */
 .qt-doc-specs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2) var(--sp-5);
-  margin-top: var(--sp-3);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  gap: var(--s-4) var(--s-5);
+  margin: var(--s-6) 0 0;
+  padding-top: var(--s-4);
+  border-top: var(--border) solid var(--sheet-rule-soft);
 }
+
+.qt-doc-spec {
+  min-width: 0;
+}
+
 .qt-doc-spec-val {
-  margin: 0;
+  margin: 2px 0 0;
+  color: var(--sheet-ink);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--t-mono-size);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
 }
+
+/* ------------------------------------------------------------
+   4. THE RIG.
+
+   A real table with a real `thead`, so a long rig repeats its
+   column heads on page two and page breaks fall between rows for
+   free. Four columns: the thing, its name, how many, what it
+   costs.
+   ------------------------------------------------------------ */
 
 .qt-doc-lines {
   width: 100%;
-  margin-top: var(--sp-4);
+  margin-top: var(--s-8);
   border-collapse: collapse;
+  table-layout: auto;
 }
-.qt-doc-lines th,
-.qt-doc-lines td {
-  padding: var(--sp-2) var(--sp-2);
-  text-align: left;
-  vertical-align: top;
-}
+
 .qt-doc-lines thead th {
-  border-bottom: 1px solid var(--hairline-strong);
+  padding: 0 var(--s-2) var(--s-2);
+  border-bottom: var(--border) solid var(--sheet-rule);
+  color: var(--sheet-ink-faint);
+  text-align: left;
+  vertical-align: bottom;
 }
-.qt-doc-sec th {
-  padding-top: var(--sp-4);
-  color: var(--ink-soft);
+
+/* THE PICTURE COLUMN HAS NO HEADING — "Photo" over a column of
+   thumbnails labels something nobody needs told, and the cell is
+   its own legend. It is still a real `th` so the header row keeps
+   its column count and the rig repeats correctly on page two. */
+.qt-col-pic {
+  width: 104px;
+  padding-left: 0;
 }
-.qt-doc-line td {
-  border-bottom: 1px solid var(--hairline);
+
+.qt-col-desc {
+  width: auto;
 }
+
 .qt-col-qty,
 .qt-col-amt {
+  width: 1%;
+  white-space: nowrap;
   text-align: right;
+}
+
+/* THE AMOUNT COLUMN HAS A FLOOR, and it is not the width of a
+   price. `width: 1%` on a table cell means "as narrow as the
+   content allows", and the narrowest content in this column is
+   not `$150,000` — it is the sentence `not priced here`, which
+   wraps. Measured: it came out as three stacked words down the
+   right edge of the sheet, which reads as a layout that has
+   broken rather than as a line the price file cannot price. */
+.qt-col-amt {
+  min-width: 11ch;
+}
+
+.qt-doc-lines thead th.qt-col-qty,
+.qt-doc-lines thead th.qt-col-amt {
+  text-align: right;
+}
+
+.qt-col-amt {
+  padding-right: 0;
+}
+
+/* THE SECTION HEAD IS A BAND, not a row of bold text. Brass ink
+   on a brass wash with a rule over it: the rig reads as four or
+   five groups at a glance rather than as thirty rows. */
+.qt-doc-sec th {
+  padding: var(--s-5) var(--s-3) var(--s-2);
+  border-bottom: var(--border) solid var(--sheet-rule);
+  background: var(--sheet-wash);
+  color: var(--sheet-brass);
+  text-align: left;
+}
+
+.qt-doc-line td {
+  padding: var(--s-3) var(--s-2);
+  border-bottom: var(--border) solid var(--sheet-rule-soft);
+  vertical-align: top;
+}
+
+.qt-doc-line td.qt-col-pic {
+  padding-left: 0;
+}
+
+.qt-doc-line td.qt-col-amt {
+  padding-right: 0;
+}
+
+/* the lines no section claims get the air a section head would
+   have given them, so they read as their own block rather than as
+   more of the one above */
+.qt-doc-loose .qt-doc-line:first-child td {
+  padding-top: var(--s-6);
+}
+
+/* the thing itself, on the one Showroom surface that leaves the
+   building. `FrozenPhoto` draws a picture we cannot fetch as
+   NOTHING — never as a broken glyph — so this cell is often
+   empty, and it holds its width anyway, which is what puts every
+   description in the same place down the page. */
+.qt-doc-pic {
+  display: block;
+  width: 96px;
+  height: 60px;
+  object-fit: contain;
+  background: var(--sheet-sunk);
+}
+
+.qt-doc-line-name {
+  display: block;
+  color: var(--sheet-ink);
+  font-size: var(--t-small-size);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* NO STAR ON THE CUSTOMER'S COPY — an ochre glyph on a mono
+   printer is a grey dot with no legend on the page to read it by.
+   The word survives, because a word needs no key. */
+.qt-doc-tag {
+  color: var(--sheet-brass);
   white-space: nowrap;
 }
-.qt-doc-lines td.qt-col-qty,
-.qt-doc-lines td.qt-col-amt {
-  text-align: right;
-}
-.qt-doc-line-name {
+
+/* the join's own facts — rigging kit, prop, engine hole, slot.
+   True of THIS motor on THIS hull and of neither alone, which is
+   why they travel with the line. */
+.qt-doc-detail {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 2px var(--s-3);
+  margin-top: var(--s-1);
+  color: var(--sheet-ink-soft);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
 }
-.qt-doc-tag {
-  color: var(--ink-faint);
+
+.qt-doc-fact {
+  min-width: 0;
 }
+
+.qt-doc-fact-lab {
+  color: var(--sheet-ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------
+   THE FIGURES.
+
+   One rule for every number in this file, on paper and in the
+   dark alike: mono face, tabular, so a column of money lines up
+   on the decimal without a single alignment rule.
+   ------------------------------------------------------------ */
+
+.qt-num {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-size);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.qt-doc .qt-num {
+  color: var(--sheet-ink);
+}
+
+/* the price the file carried, when somebody charged a different
+   one. Struck, soft, and never the larger of the two. */
+.qt-was {
+  margin-right: var(--s-1);
+  color: var(--sheet-ink-faint);
+  text-decoration: line-through;
+}
+
+.qt-sheet .qt-was,
+.qt-list .qt-was {
+  color: var(--fg-quaternary);
+}
+
+/* the opposite of blank. The workbook's own `showZeros="0"` turns
+   an unmatched lookup into empty space, which reads as a free
+   inclusion; this says what it is. */
+.qt-nil {
+  color: var(--sheet-carmine);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.qt-sheet .qt-nil,
+.qt-edit .qt-nil {
+  color: var(--danger);
+}
+
+.qt-doc .is-credit {
+  color: var(--sheet-credit);
+}
+
 .qt-each {
   display: block;
-  color: var(--ink-faint);
+  margin-top: 2px;
+  color: var(--sheet-ink-faint);
 }
+
+/* A STRIKE-THROUGH IS A DRAWING, AND THIS PAGE IS ALSO READ ALOUD
+   AND PASTED INTO EMAIL. Two bare figures in one cell gave every
+   non-sighted reading "three hundred and ten dollars, two hundred
+   and forty dollars" with nothing to say which one is charged. The
+   words go in the row itself, clipped to a pixel rather than
+   `display: none`, which would take them out of the accessibility
+   tree — the one place they have to be. */
+.qt-aloud,
+.qt-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+/* ------------------------------------------------------------
+   5. THE MONEY BOX — where a customer's eye goes second, and
+   where it stays.
+
+   Right-hand block, brass rule over it, and a TOTAL that is the
+   third-largest thing on the page after the boat and the
+   letterhead. A quotation whose total is the same size as a
+   line item is a quotation nobody can read across a desk.
+   ------------------------------------------------------------ */
 
 .qt-money {
   display: flex;
   justify-content: flex-end;
-  margin-top: var(--sp-5);
+  margin-top: var(--s-8);
 }
+
 .qt-money-rows {
-  min-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   margin: 0;
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--hairline-strong);
+  width: min(420px, 56cqi);
+  padding-top: var(--s-3);
+  border-top: var(--border-strong) solid var(--sheet-brass);
 }
+
 .qt-money-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--sp-4);
-  padding: 3px 0;
-}
-.qt-money-row dd {
-  margin: 0;
-}
-.qt-money-row--total {
-  margin-top: var(--sp-2);
-  padding-top: var(--sp-2);
-  border-top: 1px solid var(--hairline-strong);
-  border-bottom: 3px double var(--hairline-strong);
-}
-.qt-total {
-  font-size: 20px;
-}
-.qt-money-note {
-  color: var(--ink-faint);
-  font-size: 12px;
-}
-.qt-money-say {
-  margin-top: var(--sp-2);
-  color: var(--ink-soft);
-  font-size: 11px;
+  gap: var(--s-5);
+  padding: var(--s-2) 0;
 }
 
+.qt-money-row dt {
+  color: var(--sheet-ink-soft);
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+}
+
+.qt-money-row dd {
+  margin: 0;
+  color: var(--sheet-ink);
+}
+
+.qt-money-note {
+  color: var(--sheet-ink-faint);
+  font-style: italic;
+}
+
+/* THE ONE MOMENT THE PAGE RAISES ITS VOICE. Written against
+   `.qt-money-row dd` and not `.qt-total` alone, because the row's
+   own dd rule would otherwise beat a single class. */
+.qt-money-row--total {
+  margin-top: var(--s-2);
+  padding-top: var(--s-3);
+  border-top: var(--border) solid var(--sheet-rule-strong);
+}
+
+.qt-money-row--total dt {
+  color: var(--sheet-ink);
+  font-family: var(--font-display);
+  font-size: var(--t-subtitle-size);
+  font-weight: 700;
+  letter-spacing: var(--t-subtitle-track);
+}
+
+/* THE ONE FIGURE ON THE PAGE THAT IS NOT MONO. Everywhere else a
+   fixed-width digit is what makes a column of money line up on the
+   decimal — but the total is alone on its row, right-aligned, with
+   nothing to line up WITH, and a monospace comma at 40px opens a
+   full character's gap: `$4 , 706`. The display face sets it as a
+   number a person reads aloud, and `tabular-nums` keeps the digits
+   themselves even. */
+.qt-money-row dd.qt-total {
+  color: var(--sheet-ink);
+  font-family: var(--font-display);
+  font-size: var(--t-figure-lg-size);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: var(--t-figure-lead);
+  letter-spacing: var(--t-figure-track);
+}
+
+.qt-money-row--tax {
+  padding-top: var(--s-3);
+  border-top: var(--border) solid var(--sheet-rule-soft);
+}
+
+.qt-money-row--tax dd {
+  font-size: var(--t-mono-sm-size);
+}
+
+.qt-money-say {
+  margin: var(--s-3) 0 0;
+  color: var(--sheet-ink-faint);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+}
+
+/* ------------------------------------------------------------
+   6. WHAT THE DOCUMENT ADMITS.
+
+   A line with no price in the price file is not in the total, and
+   that sentence is the only carmine on the page besides a credit.
+   It sits under the money box because that is where the number it
+   qualifies is.
+   ------------------------------------------------------------ */
+
 .qt-unpriced {
-  margin-top: var(--sp-4);
-  color: var(--red);
-  font-size: 12px;
+  margin: var(--s-5) 0 0;
+  padding: var(--s-3) var(--s-4);
+  border-left: var(--border-strong) solid var(--sheet-carmine);
+  background: var(--sheet-sunk);
+  color: var(--sheet-carmine);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
 }
+
+/* ------------------------------------------------------------
+   6b. WHAT THE DEALER WROTE ON IT.
+
+   The one place this document carries conditions. There are no
+   twenty-seven clauses here because writing plausible ones would
+   be fabricating a contract — but what the dealer TYPED is not
+   fabricated, and on a $150,000 quotation it is the sentence a
+   customer needs after the total. So it gets a rule, the caption
+   the field itself carries, and the reading size the rest of the
+   document uses.
+   ------------------------------------------------------------ */
+
 .qt-doc-note {
-  margin-top: var(--sp-4);
-  font-size: 12px;
-  color: var(--ink-soft);
+  margin-top: var(--s-8);
+  padding-top: var(--s-4);
+  border-top: var(--border) solid var(--sheet-rule);
 }
+
+.qt-doc-note-say {
+  margin: var(--s-2) 0 0;
+  max-width: 74ch;
+  color: var(--sheet-ink);
+  font-size: var(--t-small-size);
+  line-height: var(--t-body-lead);
+  white-space: pre-wrap;
+}
+
 .qt-doc-foot {
   display: flex;
   justify-content: space-between;
-  margin-top: var(--sp-6);
-  padding-top: var(--sp-2);
-  border-top: 1px solid var(--hairline);
+  gap: var(--s-4);
+  margin-top: var(--s-12);
+  padding-top: var(--s-3);
+  border-top: var(--border) solid var(--sheet-rule);
 }
 
 /* ============================================================
-   THE LIST
+   THE REGISTER — every quote this dealer ever raised.
+
+   COCKPIT. A dealer opens this twenty times a day looking for one
+   row, so it is a list of rows and not a deck of cards: a fixed
+   grid, tabular money, the boat's own photograph at thumbnail
+   size so the eye can find "the grey RIB" without reading.
    ============================================================ */
 
-.qt-list {
-  max-width: 880px;
-  margin: 0 auto;
-  padding: 0;
-  list-style: none;
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-}
-.qt-list-row {
+.qt-tools {
   display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--hairline);
+  gap: var(--s-4);
+  flex-wrap: wrap;
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: var(--section-gap) var(--gutter) var(--s-4);
 }
-.qt-list-row:last-child {
-  border-bottom: 0;
+
+.qt-find {
+  flex: 1 1 280px;
+  min-width: 0;
+  max-width: 42ch;
 }
+
+.qt-found {
+  margin: 0;
+  color: var(--fg-tertiary);
+}
+
+.qt-none-found {
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: var(--s-10) var(--gutter);
+  color: var(--fg-secondary);
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  text-align: center;
+}
+
+.qt-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: 0 var(--gutter) var(--s-16);
+  list-style: none;
+}
+
+.qt-list-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--s-2);
+  min-width: 0;
+  border: var(--border) solid var(--line-subtle);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  box-shadow: var(--e1);
+  transition:
+    border-color var(--d-fast) var(--ease-out),
+    background var(--d-fast) var(--ease-out),
+    box-shadow var(--d-fast) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qt-list-row:hover {
+    border-color: var(--line-strong);
+    background: var(--surface-2);
+    box-shadow: var(--e-card);
+  }
+}
+
+/* the row the sheet beside it is showing — a brass edge, because
+   an accent hue on a row in a register is a state and not a kind */
 .qt-list-row.is-open {
-  background: var(--blue-wash);
+  border-color: var(--accent-line);
+  background: var(--surface-2);
+  box-shadow: var(--glow-sm);
 }
+
+/* THE WHOLE ROW OPENS. Five columns on one grid so every row's
+   date, state and total land on the same vertical, which is the
+   single thing that makes a register scannable. */
 .qt-list-open {
   display: grid;
-  grid-template-columns: 90px minmax(120px, 1fr) minmax(120px, 1.4fr) 120px 120px;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--s-4);
   flex: 1 1 auto;
-  padding: var(--sp-3) var(--sp-4);
+  min-width: 0;
+  padding: var(--s-3) var(--s-4);
   border: 0;
+  border-radius: var(--r-card);
   background: none;
+  color: inherit;
+  font: inherit;
   text-align: left;
   cursor: pointer;
 }
-.qt-list-open:hover {
-  background: var(--blue-wash);
+
+.qt-list-open:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: -2px;
 }
+
+/* the boat, at the size the eye needs and no larger. The lit
+   plate again, because the renders are white on white. */
+.qt-list-shot {
+  display: grid;
+  place-items: center;
+  width: 78px;
+  height: 50px;
+  overflow: hidden;
+  border-radius: var(--r-control);
+  background: radial-gradient(
+    92% 80% at 50% 22%,
+    var(--sweep-hi) 0%,
+    var(--sweep-mid) 58%,
+    var(--sweep-lo) 100%
+  );
+  box-shadow: inset 0 0 0 1px var(--sweep-seam);
+}
+
+.qt-list-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* a quote whose picture we hold only as a link says so, in the
+   plate, rather than showing an empty box that reads as broken */
+.qt-list-held {
+  padding: 0 var(--s-1);
+  color: var(--sweep-ink-soft);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  line-height: 1.2;
+  text-align: center;
+}
+
+.qt-list-say {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.qt-list-who {
+  color: var(--fg);
+  font-size: var(--t-small-size);
+  font-weight: 600;
+  line-height: 1.3;
+  /* A PERSON'S NAME NEVER BREAKS MID-WORD. `Alazr | aki` shipped
+     on the board for weeks; the fix is the same everywhere. */
+  overflow: hidden;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qt-list-who .qt-doc-blank {
+  color: var(--fg-quaternary);
+}
+
+.qt-list-what {
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qt-list-when {
+  color: var(--fg-quaternary);
+  white-space: nowrap;
+}
+
+/* draft or given, as a chip. Given is brass — it is the state
+   that means a customer is holding a copy. */
+.qt-list-state {
+  padding: 3px var(--s-2);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-chip);
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
+
+.qt-list-state.is-given {
+  border-color: var(--accent-line);
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+
 .qt-list-total {
+  color: var(--fg);
+  font-size: var(--t-mono-lg-size);
   text-align: right;
 }
-.qt-list-state {
-  color: var(--ink-faint);
+
+/* the quiet word-shaped control: discard, undo, clear. Never a
+   button-looking thing beside a row it can destroy. */
+.qt-linkbtn {
+  flex: 0 0 auto;
+  align-self: center;
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--fg-tertiary);
+  font: inherit;
+  font-size: var(--t-caption-size);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qt-linkbtn:hover {
+    color: var(--danger);
+  }
+}
+
+.qt-linkbtn:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ============================================================
-   A4 — the navy disappears and the sheet IS the page.
+   AND WHEN THE REGISTER IS EMPTY.
 
-   `visibility` rather than `display` so the document keeps its
-   layout while everything around it stops printing: the stage, the
-   left panel and the canvas are all ancestors of this element, and
+   SHOWROOM. This is the first thing a new dealer sees of the
+   quoting side of the app, and an empty list with an "Add" button
+   tells them nothing about what a quote in this app IS. So it
+   says the one true sentence that makes the rest make sense — a
+   quote freezes its prices the day you hand it over — over the
+   room's own light.
+   ============================================================ */
+
+.qt-root--none {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+/* the light behind it. `ds-aurora` and `ds-grain` carry the
+   drawing; this places it and keeps it under the words. */
+.qt-sky {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.qt-none {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-4);
+  max-width: 62ch;
+  padding: var(--s-16) var(--gutter);
+  text-align: center;
+}
+
+.qt-none-eyebrow {
+  color: var(--accent);
+}
+
+/* THE SENTENCE, AND IT IS THE BIGGEST TYPE ON THE SCREEN. Six
+   times the label under it, which is the Showroom floor. */
+.qt-none-title {
+  margin: 0;
+  color: var(--fg);
+  font-family: var(--font-display);
+  font-size: var(--t-hero-size);
+  font-weight: var(--t-hero-weight);
+  line-height: var(--t-hero-lead);
+  letter-spacing: var(--t-hero-track);
+  text-wrap: balance;
+}
+
+.qt-none-say {
+  margin: 0;
+  max-width: 56ch;
+  color: var(--fg-secondary);
+  font-size: var(--t-subtitle-size);
+  font-weight: 400;
+  line-height: var(--t-subtitle-lead);
+  text-wrap: pretty;
+}
+
+.qt-none-count {
+  margin: 0;
+  color: var(--fg-tertiary);
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+}
+
+.qt-none-do {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  margin: var(--s-2) 0 0;
+  color: var(--fg-secondary);
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+}
+
+/* ============================================================
+   THE WORKBENCH — a draft being built.
+
+   COCKPIT, and the densest surface in this feature. It is a
+   scrolling sheet of sections, each a group of lines with a
+   picker inside it, and the price bar the build screen owns
+   (`qb-price-bar`, build.css) is what sits under it.
+   ============================================================ */
+
+.qt-edit {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: var(--s-6) var(--gutter) var(--s-12);
+}
+
+/* THE DRAFT IS A PANEL, NOT A SHEET OF PAPER. It is the only
+   surface in this file that could be mistaken for the document
+   and must not be: what a dealer is editing is a working copy,
+   and it is drawn in the room's own materials. */
+.qt-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  width: min(980px, 100%);
+  margin: 0 auto;
+  padding: var(--s-8);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface-1);
+  box-shadow: var(--e-card);
+  container-type: inline-size;
+  container-name: draft;
+}
+
+/* something that is true and worth saying before anything else on
+   the sheet — an amber notice, never a modal */
+.qt-warn {
+  margin: 0;
+  padding: var(--s-3) var(--s-4);
+  border-left: var(--border-strong) solid var(--warning);
+  border-radius: var(--r-control);
+  background: var(--warning-wash);
+  color: var(--fg-secondary);
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+}
+
+.qt-edit-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  padding-bottom: var(--s-5);
+  border-bottom: var(--border) solid var(--line);
+}
+
+.qt-edit-for {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+
+.qt-edit-subject {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  min-width: 0;
+}
+
+.qt-edit-photo {
+  flex: 0 0 auto;
+  width: 96px;
+  height: 68px;
+  object-fit: contain;
+  border-radius: var(--r-control);
+  background: radial-gradient(
+    92% 80% at 50% 22%,
+    var(--sweep-hi) 0%,
+    var(--sweep-mid) 58%,
+    var(--sweep-lo) 100%
+  );
+  box-shadow: inset 0 0 0 1px var(--sweep-seam);
+}
+
+.qt-edit-name {
+  margin: var(--s-1) 0 0;
+  color: var(--fg);
+  font-family: var(--font-display);
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+/* ------------------------------------------------------------
+   THE PRICE LEVEL, as a row of chips rather than a select.
+
+   There are two to five rungs and every one of them carries a
+   figure. A `<select>` hides four of them behind a click and
+   shows none of the numbers; five chips show the ladder.
+   ------------------------------------------------------------ */
+
+.qt-levels {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.qt-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: var(--s-2) var(--s-3);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+  color: var(--fg-secondary);
+  font: inherit;
+  font-size: var(--t-caption-size);
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    border-color var(--d-press) var(--ease-out),
+    background var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qt-chip:hover {
+    border-color: var(--line-strong);
+    background: var(--surface-3);
+    color: var(--fg);
+  }
+}
+
+.qt-chip:active {
+  transform: scale(0.97);
+}
+
+.qt-chip:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+.qt-chip.is-on {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.qt-chip-num {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.86;
+}
+
+/* ------------------------------------------------------------
+   A DISCLOSURE — the sheet's own way of holding a block of fields
+   out of the way without hiding that they exist.
+   ------------------------------------------------------------ */
+
+.qt-disclose {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  align-self: flex-start;
+  padding: var(--s-2) var(--s-3);
+  border: var(--border) solid var(--line-subtle);
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--fg-secondary);
+  font: inherit;
+  font-size: var(--t-small-size);
+  cursor: pointer;
+  transition:
+    border-color var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qt-disclose:hover {
+    border-color: var(--line-strong);
+    color: var(--fg);
+  }
+}
+
+.qt-disclose:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+.qt-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--s-4);
+}
+
+/* ------------------------------------------------------------
+   FIELDS.
+   ------------------------------------------------------------ */
+
+.qt-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+.qt-field--wide {
+  grid-column: 1 / -1;
+}
+
+.qt-field-why {
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+}
+
+.qt-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.qt-input--name {
+  font-size: var(--t-body-size);
+}
+
+.qt-input--qty {
+  width: 5ch;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.qt-input--amount {
+  width: 12ch;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------
+   A SECTION OF THE QUOTE.
+   ------------------------------------------------------------ */
+
+.qt-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.qt-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding-bottom: var(--s-2);
+  border-bottom: var(--border) solid var(--line-subtle);
+}
+
+.qt-section-head h2 {
+  margin: 0;
+  color: var(--accent);
+}
+
+.qt-section-empty {
+  margin: 0;
+  padding: var(--s-2) 0;
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+}
+
+/* A SECTION THAT HOLDS NOTHING IS A DOOR, not a heading over
+   empty space — one control that says what is behind it and why
+   it is empty, so the sheet does not fill with headings for
+   groups nobody has used. */
+.qt-section--bare {
+  gap: 0;
+}
+
+.qt-bare {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-3) var(--s-4);
+  border: var(--border) dashed var(--line);
+  border-radius: var(--r-card);
+  background: none;
+  color: var(--fg-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--d-fast) var(--ease-out),
+    background var(--d-fast) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qt-bare:hover {
+    border-color: var(--accent-line);
+    background: var(--accent-wash);
+  }
+}
+
+.qt-bare:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+.qt-bare-say {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.qt-bare-name {
+  color: var(--fg);
+  font-size: var(--t-small-size);
+  font-weight: 600;
+}
+
+.qt-bare-why {
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+}
+
+/* ------------------------------------------------------------
+   A LINE ON THE QUOTE.
+
+   One grid row: star, name, qty, amount, two icon buttons. The
+   detail opens underneath it, inside the same card, so a line
+   being edited never moves the lines around it.
+   ------------------------------------------------------------ */
+
+.qt-line {
+  border: var(--border) solid transparent;
+  border-radius: var(--r-control);
+  transition:
+    border-color var(--d-fast) var(--ease-out),
+    background var(--d-fast) var(--ease-out);
+}
+
+.qt-line.is-open {
+  border-color: var(--line);
+  background: var(--surface-2);
+}
+
+.qt-line-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto auto;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  min-width: 0;
+}
+
+/* the recommended mark, holding its column whether or not it has
+   a glyph in it, so every name starts on the same vertical */
+.qt-star {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  color: var(--accent);
+  font-size: var(--t-caption-size);
+  line-height: 1;
+}
+
+.qt-line-name {
+  grid-column: 2;
+  color: var(--fg);
+  font-size: var(--t-small-size);
+  line-height: 1.35;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.qt-line-detail {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px var(--s-3);
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+}
+
+.qt-sheet .qt-doc-fact-lab {
+  color: var(--fg-quaternary);
+}
+
+.qt-sheet .qt-doc-detail {
+  color: var(--fg-tertiary);
+}
+
+.qt-line-amount {
+  color: var(--fg);
+  text-align: right;
+}
+
+.qt-line-open {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  border-top: var(--border) solid var(--line-subtle);
+}
+
+.qt-line-where {
+  margin: 0;
+  color: var(--fg-tertiary);
+}
+
+.qt-override {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--s-3);
+}
+
+/* where a line came from, when it came from somewhere — the rule
+   or the join that put it there, named, because a line a dealer
+   did not pick is a line they will ask about */
+.qt-line-holds,
+.qt-adj-already {
+  margin: 0;
+  padding: var(--s-2) var(--s-3);
+  border-left: var(--border-strong) solid var(--kind-join);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+}
+
+.qt-line-holds-src,
+.qt-adj-already-src {
+  color: var(--fg-quaternary);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+}
+
+/* ------------------------------------------------------------
+   THE ICON CONTROLS — 32px, square, no fill at rest.
+   ------------------------------------------------------------ */
+
+.qt-icon-btn {
+  display: grid;
+  place-items: center;
+  width: var(--control-h-md);
+  height: var(--control-h-md);
+  border: var(--border) solid transparent;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--fg-tertiary);
+  cursor: pointer;
+  transition:
+    border-color var(--d-press) var(--ease-out),
+    background var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qt-icon-btn:hover {
+    border-color: var(--line);
+    background: var(--surface-3);
+    color: var(--fg);
+  }
+}
+
+.qt-icon-btn:active {
+  transform: scale(0.94);
+}
+
+.qt-icon-btn:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------
+   THE PICKER — what can go into this section.
+
+   It opens INSIDE the section it adds to, not in a dialog: a
+   dealer picking a motor wants the boat's other lines still on
+   the screen beside it.
+   ------------------------------------------------------------ */
+
+.qt-add {
+  align-self: flex-start;
+  padding: var(--s-2) var(--s-3);
+  border: var(--border) dashed var(--line);
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--fg-secondary);
+  font: inherit;
+  font-size: var(--t-small-size);
+  cursor: pointer;
+  transition:
+    border-color var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qt-add:hover {
+    border-color: var(--accent-line);
+    color: var(--accent);
+  }
+}
+
+.qt-add:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+.qt-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-2);
+  box-shadow: var(--e2);
+}
+
+.qt-picker-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+/* the list scrolls, and it scrolls at a height a person can
+   actually reach the bottom of with one flick */
+.qt-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  max-height: min(52vh, 460px);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  list-style: none;
+  scrollbar-width: thin;
+}
+
+.qt-pick {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  border-radius: var(--r-control);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qt-pick:hover {
+    background: var(--surface-3);
+  }
+}
+
+.qt-pick:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: -2px;
+}
+
+.qt-pick-name {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+  min-width: 0;
+  color: var(--fg);
+  font-size: var(--t-small-size);
+  line-height: 1.35;
+}
+
+.qt-pick-facts {
+  grid-column: 2;
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+}
+
+/* already on the quote, and outside the narrowing — two states a
+   row can be in that a person has to be told about before they
+   press it, so they are words and not a shade of grey */
+.qt-pick-on {
+  padding: 1px var(--s-2);
+  border-radius: var(--r-chip);
+  background: var(--success-wash);
+  color: var(--success);
+  font-size: var(--t-mono-sm-size);
+  white-space: nowrap;
+}
+
+.qt-pick-outside {
+  padding: 1px var(--s-2);
+  border-radius: var(--r-chip);
+  background: var(--warning-wash);
+  color: var(--warning);
+  font-size: var(--t-mono-sm-size);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------
+   ADJUSTMENTS — the signed rows that are not lines.
+
+   A discount, a rebate, a trade-in. Every one of them is a
+   VISIBLE signed row and never folded into a subtotal, which is
+   the one thing this app does better than the original.
+   ------------------------------------------------------------ */
+
+.qt-adjustments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-top: var(--s-4);
+  border-top: var(--border) solid var(--line-subtle);
+}
+
+.qt-adj {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.qt-adj-sign {
+  display: grid;
+  place-items: center;
+  width: var(--control-h-md);
+  height: var(--control-h-md);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+  color: var(--fg-tertiary);
+  font-family: var(--font-mono);
+}
+
+.qt-adj-sign.is-credit {
+  background: var(--success-wash);
+  color: var(--success);
+}
+
+.qt-adj-doors {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.qt-adj-door {
+  padding: var(--s-2) var(--s-3);
+  border: var(--border) dashed var(--line);
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--fg-secondary);
+  font: inherit;
+  font-size: var(--t-caption-size);
+  cursor: pointer;
+  transition:
+    border-color var(--d-press) var(--ease-out),
+    color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qt-adj-door:hover {
+    border-color: var(--accent-line);
+    color: var(--accent);
+  }
+}
+
+.qt-adj-door:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------
+   RE-READ THE PRICE FILE — what would change, before it changes.
+
+   The import-diff discipline the original HelmLogic got right and
+   this app has owed since: say what will move, and by how much,
+   and let a person decline it.
+   ------------------------------------------------------------ */
+
+.qt-reread {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding-top: var(--s-4);
+  border-top: var(--border) solid var(--line-subtle);
+}
+
+.qt-reread-say {
+  margin: 0;
+  color: var(--fg-secondary);
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+}
+
+.qt-reread-diff {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-2);
+}
+
+.qt-reread-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin: 0;
+  padding: 0;
+  max-height: min(40vh, 320px);
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-width: thin;
+}
+
+.qt-reread-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  min-width: 0;
+}
+
+.qt-reread-name {
+  min-width: 0;
+  color: var(--fg-secondary);
+  font-size: var(--t-caption-size);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qt-reread-acts {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------
+   THE FOOT OF THE SHEET — the reasons a draft cannot be given
+   yet, each one a sentence with the fix in it.
+   ------------------------------------------------------------ */
+
+.qt-foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  width: min(980px, 100%);
+  margin: var(--s-4) auto 0;
+}
+
+.qt-foot-whys {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-3) var(--s-4);
+  border-left: var(--border-strong) solid var(--warning);
+  border-radius: var(--r-control);
+  background: var(--warning-wash);
+}
+
+.qt-foot-why {
+  margin: 0;
+  color: var(--fg-secondary);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+}
+
+/* ============================================================
+   THE CUSTOMER SHEET — who this quote is for.
+
+   It is a combobox over the register's own people plus a way to
+   file a new one, and it opens in place rather than in a dialog
+   because naming the customer is a step in building the quote and
+   not an errand away from it.
+   ============================================================ */
+
+.qt-who {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.qt-who-act {
+  padding: var(--s-1) var(--s-2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--t-caption-size);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.qt-who-act:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: 2px;
+}
+
+.qt-who-file {
+  color: var(--fg-secondary);
+}
+
+.qt-who-link {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+  margin: 0;
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+}
+
+.qt-who-link-say {
+  min-width: 0;
+}
+
+/* the options, floating over the sheet rather than pushing it
+   down — a list that reflows the form under it as you type is a
+   list that makes you lose your place */
+.qt-who-list {
+  position: absolute;
+  z-index: 4;
+  top: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: var(--s-1) 0 0;
+  padding: var(--s-1);
+  max-height: 44vh;
+  overflow-y: auto;
+  border: var(--border) solid var(--glass-edge);
+  border-radius: var(--r-card);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--e-float);
+  list-style: none;
+  scrollbar-width: thin;
+}
+
+.qt-who-opt {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  border-radius: var(--r-control);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qt-who-opt:hover {
+    background: var(--surface-3);
+  }
+}
+
+.qt-who-opt:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: -2px;
+}
+
+.qt-who-opt-name {
+  color: var(--fg);
+  font-size: var(--t-small-size);
+  font-weight: 600;
+}
+
+.qt-who-opt-say {
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+}
+
+.qt-who-none {
+  margin: 0;
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+}
+
+/* ============================================================
+   THE WINDOW GETS SMALLER AND THE SHAPE DOES NOT CHANGE.
+
+   Every one of these is a container query, not a media query,
+   because three of these four surfaces can be inside a panel that
+   is narrower than the window — and a rule that asks the WINDOW
+   how wide the SHEET is will be wrong in exactly that case.
+   ============================================================ */
+
+/* the document, on a phone. The sheet keeps its structure; what
+   gives way is the two-column subject block and the plate. */
+@container sheet (max-width: 520px) {
+  .qt-doc-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .qt-plate {
+    text-align: left;
+  }
+
+  .qt-doc-subject {
+    flex-direction: column;
+  }
+
+  .qt-doc-photo {
+    width: 100%;
+  }
+
+  .qt-doc-marque-model {
+    font-size: clamp(1.75rem, 11cqi, 2.75rem);
+  }
+
+  .qt-money-rows {
+    width: 100%;
+  }
+
+  /* THE PICTURE COLUMN GOES, AND NOTHING ELSE DOES. At 430px the
+     rig has four columns inside 340 of measure, and the 104px
+     thumbnail was taking a third of it — so the description wrapped
+     to four lines and the amount lost its own column. A photograph
+     is the first thing a narrow page can afford to lose; a price
+     is the last. */
+  .qt-doc-lines .qt-col-pic {
+    display: none;
+  }
+}
+
+/* the workbench, in a narrow panel */
+@container draft (max-width: 680px) {
+  .qt-sheet {
+    padding: var(--s-5);
+  }
+
+  .qt-edit-for {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .qt-line-main {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+  }
+
+  .qt-line-amount {
+    grid-column: 2;
+    grid-row: 3;
+    text-align: left;
+  }
+
+  .qt-details,
+  .qt-override {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* the register. It is the window's own width, so this one is a
+   media query and correctly so. */
+@media (max-width: 780px) {
+  .qt-list-open {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    row-gap: var(--s-1);
+  }
+
+  .qt-list-when {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .qt-list-state {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .qt-list-total {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .qt-list-shot {
+    grid-row: 1 / span 2;
+  }
+}
+
+@media (max-width: 560px) {
+  .qt-issued-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .qt-issued-say {
+    flex: 0 0 auto;
+  }
+}
+
+/* ============================================================
+   AND THEN IT IS PRINTED.
+
+   ONE BLOCK, at the foot of the file, and it changes no colour.
+   Because the sheet is already paper, everything print has to do
+   here is what print actually is:
+
+     · put ink only where the document is
+     · say the page size and its margin
+     · convert the screen's pixels into the page's points
+     · say where the paper may break
+
+   `visibility` and not `display`, so the document keeps its
+   layout while everything around it stops printing: the stage,
+   the shell and the canvas are all ancestors of this element, and
    none of them may put ink on the page.
    ============================================================ */
 
@@ -1232,7 +2208,7 @@
   body {
     height: auto !important;
     overflow: visible !important;
-    background: #fff !important;
+    background: var(--sheet) !important;
   }
 
   body * {
@@ -1255,48 +2231,28 @@
     max-width: none;
     margin: 0;
     padding: 0;
-    border: 0;
-    border-radius: 0;
     box-shadow: none;
     font-size: 10pt;
   }
 
-  /* hairlines survive a laser printer at half a point */
-  .qt-doc *,
-  .qt-doc {
-    /* neutral ink, not the outgoing navy. Print has no theme, so
-       this stays a literal — it is the one place that is correct. */
-    border-color: rgba(14, 17, 22, 0.45) !important;
-  }
-  .qt-doc-head,
-  .qt-doc-subject,
-  .qt-doc-line td,
-  .qt-doc-lines thead th,
-  .qt-money-rows {
-    border-width: 0.5pt !important;
-  }
-
+  /* the crop marks are the app's, not the printer's — a real page
+     is trimmed by the printer's own marks or not at all */
   .qt-tick {
     display: none;
   }
 
-  .qt-doc-name {
-    /* the ≥22px floor holds, in points */
-    font-size: 22pt;
+  /* THE TYPE, IN POINTS. Every step the screen sets in `rem` or
+     `cqi` is restated here in the page's own unit, because a
+     container query on a printed sheet measures a box the printer
+     has already decided the size of. */
+  .qt-doc-org {
+    font-size: 18pt;
   }
 
-  /* ============================================================
-     AND THE LOCKUP TAKES POINTS ON PAPER.
+  .qt-doc-customer-name {
+    font-size: 12pt;
+  }
 
-     `.qt-doc-name` is the flex COLUMN now, not the type — the
-     model, the maker and the trim each set their own step — so a
-     print rule that sizes only the container sizes nothing a person
-     reads. Left alone, the model printed at `--t-marque-size`,
-     which is 75px of screen type on an A4 page.
-
-     22pt is the floor this file already held the document's name
-     to, kept.
-     ============================================================ */
   .qt-doc-marque-maker {
     font-size: 9pt;
   }
@@ -1313,2265 +2269,151 @@
   .qt-doc-specs,
   .qt-plate-val,
   .qt-doc-detail,
+  .qt-doc-spec-val,
   .qt-num {
     font-size: 9pt;
   }
-  .qt-doc .mono-label {
-    font-size: 7.5pt;
-  }
-  .qt-doc-photo {
-    /* capped so the whole rig reaches page 1 */
-    width: 55mm;
-    height: 41mm;
-  }
 
-  /* a total orphaned onto its own page is how a document stops
-     looking like a document */
-  .qt-doc-line,
-  .qt-money,
-  .qt-doc-head,
-  .qt-doc-subject,
-  .qt-unpriced {
-    break-inside: avoid;
-  }
-  .qt-doc-lines thead {
-    display: table-header-group;
-  }
-
-  /* the one accent that must survive a colour-managed printer */
-  .qt-nil,
-  .is-credit,
-  .qt-unpriced {
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
-}
-
-/* ============================================================
-   QUIET PRECISION - the quote document
-
-   Appended, not rewritten. Every rule above still applies; these
-   override APPEARANCE only. Nothing here changes a selector's
-   meaning, a layout mode, or a behaviour - which is why it could
-   be done without reading the interaction code.
-   ============================================================ */
-
-/* A QUOTE IS PAPER. It is the only thing in this product that a
-   customer ever sees, and it prints - so it gets document
-   proportions, not form proportions.
-
-   AND THE PAPER IS WHITE IN BOTH THEMES, which is why this is a
-   literal rather than `--surface-1` — the one deliberate exception on
-   this surface besides the print block below. A dark-mode quote is
-   still a sheet handed to a customer: the same document, read on a
-   screen at night and printed in the morning, and a document that
-   changed colour with the reader's UI preference would be two
-   documents. Rule 1 is about a colour DECISION being made twice;
-   this is one decision, made once, and stated. */
-.qt-doc {
-  background: #fff;
-  border-radius: var(--radius);
-  box-shadow: var(--e3);
-}
-.qt-doc-org {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--ink-faint);
-}
-.qt-doc-name {
-  font-family: var(--font-ui);
-  font-size: 30px;
-  font-weight: 620;
-  line-height: 1.12;
-  letter-spacing: -0.024em;
-  color: var(--ink);
-}
-.qt-doc-head {
-  border-bottom: 1px solid var(--hairline-strong);
-}
-.qt-doc-sec {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--ink-faint);
-}
-.qt-doc-line-name {
-  font-size: 14px;
-  color: var(--ink);
-}
-
-/* every figure is mono and tabular, so a column of money lines up
-   on the decimal - which is the entire reason a quote is legible */
-.qt-col-amt,
-.qt-col-qty,
-.qt-doc-spec-val {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-/* THE MONEY STEP BELONGS TO THE CELLS, NOT TO THE COLUMN HEAD.
-   Measured on the issued document: the head row read DESCRIPTION and
-   QTY at the sanctioned 11px/0.06em label step and AMOUNT at 15px in
-   the full-strength ink tier — two uppercase sizes in a row of three
-   words, and 15px uppercase is not a step DESIGN_CONTRACT §3 has. All
-   three `<th>`s wear `.mono-label`; `.qt-col-amt` is on the head and
-   the cells alike, and at equal specificity the later rule won.
-
-   Scoped to `td` the whole head row goes back to one label step, and
-   the fix stays out of the print block's way: an override on
-   `.qt-doc-lines thead th` (0,2,1) would have beaten
-   `.qt-doc .mono-label` (0,2,0) and set the head at 11px on paper,
-   where 7.5pt is the measured value. `text-align: right` stays on the
-   shared selector, because the head is right-aligned over its column
-   too. */
-.qt-col-amt {
-  text-align: right;
-}
-.qt-doc-lines td.qt-col-amt {
-  font-size: 15px;
-  color: var(--ink);
-}
-
-/* THE TOTAL is the one moment on the page that raises its voice */
-.qt-doc-foot {
-  border-top: 2px solid var(--ink);
-}
-
-/* ============================================================
-   A NAME IS A NAME, AND A BUTTON IS NOT A LABEL — the uppercase
-   pass, quote side.
-
-   A quote is the one thing in this app that leaves the building with
-   the dealer's name on it, so it is the worst place to be flattening
-   their own words.
-
-     .qt-doc-org    THE ORGANISATION'S NAME on the document's title
-                    block. It was `text-transform: uppercase` at
-                    +0.06em, so a dealer who typed "Northside Marine"
-                    got "NORTHSIDE MARINE" on a customer's quotation.
-                    DESIGN_PRINCIPLES rule 3: uppercase is a label
-                    style, NEVER a name. The eyebrow above it —
-                    `.mono-label` reading "Quotation" — is a caption
-                    and stays uppercase; that is the sanctioned use,
-                    and the pair now reads as caption-then-name rather
-                    than as two stamps.
-     .qt-linkbtn    "Clear" / "Open"  — buttons.
-     .qt-disclose   "Show the working" — a button.
-     .qt-add        "Add a line"       — a button.
-     .qt-adj-door   an adjustment door — a button.
-
-   `.qt-doc-fact-lab` and `.qt-plate`'s labels are KEPT uppercase:
-   "DATE", "REFERENCE", "OVERRIDE" are captions naming the field
-   beside them, not the value in it.
-
-   Weight and 'wdth' stay on the org name — it is still the largest
-   thing in the title block. Only the transform and the caption
-   tracking go, because +0.06em is the uppercase label's tracking and
-   DESIGN_CONTRACT §3 gives display text negative tracking, never
-   positive.
-   ============================================================ */
-.qt-doc-org {
-  letter-spacing: -0.006em;
-  text-transform: none;
-}
-.qt-linkbtn,
-.qt-disclose,
-.qt-add,
-.qt-adj-door {
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-/* ============================================================
-   THE OVERRIDE FIELD WAS SIZED BY AN <input>'s DEFAULT, WHICH IS NOT A
-   DECISION ANYBODY MADE.
-
-   THE SYMPTOM: the placeholder "leave blank to use the price file" was
-   cut off by its own field's right edge, at every window width.
-
-   THE CONSTRAINT, WHICH IS NOT THE PLACEHOLDER'S LENGTH. `.qt-override`
-   is a flex row and `.qt-field` is `display: block`, so as a flex item
-   its base size is its content's INTRINSIC width — and an `<input>`'s
-   intrinsic width is its `size` attribute, twenty characters, about
-   180px. `.field-input` is `width: 100%`, and a percentage resolves to
-   auto for intrinsic sizing, so it never widens the field it is in.
-   `.qt-input`'s `max-width: 420px` could therefore never engage: there
-   was nothing over 180px for it to cap. Raising the max-width — the
-   obvious fix — changes nothing at all, which is how the real
-   constraint was found.
-
-   THE FIX: give the fields a flex basis wide enough for the longer of
-   the two placeholders (about 215px of 12.5px Inter plus 18px of
-   padding) and let them grow into the row, capped at the 420px the
-   stylesheet already chose. `flex-wrap` was already there and puts the
-   second field on its own line when the row cannot hold two, so the
-   basis is honoured rather than shrunk away; `min-width: 0` keeps a
-   squeezed line inside the card instead of overflowing it.
-   ============================================================ */
-.qt-override .qt-field {
-  flex: 1 1 260px;
-  min-width: 0;
-  max-width: 420px;
-}
-
-/* ============================================================
-   A NAME IS A NAME — the uppercase pass, quote editor.
-
-   This page had more of the fault left in it than any other, and it is
-   the one a salesperson has open in front of a customer. Enumerated
-   live, with the verdict for each:
-
-     .qt-section-head h2   FIX — the TABLE NAME, once per section, five
-                           to six a quote: "HIGHFIELD INFLATABLES",
-                           "NSM CUSTOM TRAILERS", "YAMAHA OUTBOARDS",
-                           "PARTS & ACCESSORIES", "DEALER FIT PACKAGES".
-                           These are the dealer's own file names and
-                           `.mono-label` was stamping them. table.css
-                           settled the identical case for
-                           `.shell-tbl-name` and `.tb-node-name`.
-     .qt-doc-fact-lab      FIX — ×11 on one quote. The dealer's COLUMN
-                           names used as captions: "Rigging Kit Option",
-                           "Prop Part No.", "Engine Hole". table.css's
-                           own note is the calibration — "COLUMN
-                           HEADINGS read as words, not stamps" — and a
-                           part number's label is exactly that.
-     .qt-reread .btn       FIX — "RE-READ TODAY'S PRICES", a button.
-     .qt-foot-line .btn    FIX — "GIVE IT TO THE CUSTOMER", a button,
-                           and the single most important press on the
-                           page.
-
-   KEPT UPPERCASE, every one a caption or a mono stamp: the `.mono-label`
-   eyebrows "CUSTOMER", "PRICED AT", "ADJUSTMENTS", "TOTAL", and the
-   quote number "20260817-01", which is a stamp and is already mono.
-
-   The section heading keeps the mono face — a quote is a document and
-   its section rules are typeset, not chrome — and gives up only the
-   capitals and the label's tracking.
-   ============================================================ */
-.qt-section-head h2 {
-  letter-spacing: 0.01em;
-  text-transform: none;
-}
-.qt-doc-fact-lab {
-  letter-spacing: 0.01em;
-  text-transform: none;
-}
-.qt-reread .btn,
-.qt-foot-line .btn {
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-/* AND THE REFUSED PRIMARY HAS TO BE READ. `.btn:disabled` is
-   `opacity: 0.45` in the shared foundation, and 45% of white-on-`--ink`
-   over this foot bar is not a tier — the reason is already printed one
-   line down in `.qt-foot-why`, exactly as §6.5 asks, so the button
-   itself only has to stay legible while it waits. Flat plate, ink one
-   tier down, no press: the same treatment table.css gives the
-   register's actions and modules.css gives its stub. */
-.qt-foot-line .btn:disabled {
-  opacity: 1;
-  color: var(--ink-soft);
-  background: var(--paper-high);
-  border-color: var(--hairline);
-}
-
-/* ============================================================
-   AND THE ISSUED DOCUMENT, which is the page a customer sees.
-
-   Found by looking at the live issued quote rather than the draft: the
-   document is typeset in the quotation idiom, where uppercase captions
-   are correct and are kept — but three of its stamps are not captions.
-
-     .qt-doc-sec th        FIX — the TABLE NAME heading each block of the
-                           rig: "STACER", "YAMAHA OUTBOARDS". The same
-                           string, and the same fault, as
-                           `.qt-section-head h2` in the draft above.
-     .qt-doc-spec dt       FIX — the dealer's COLUMN names under the
-                           subject: "HP", "HULL LENGTH (MTR)", "BEAM
-                           (MTR)", "BOTTOMSIDES". Column headings read as
-                           words, not stamps.
-     .qt-issued-bar .btn   FIX — "PRINT" and "MAKE A NEW VERSION", the
-                           only two controls left on an issued quote.
-
-   KEPT UPPERCASE, and deliberately, because a quotation's field captions
-   ARE labels and this is the one surface in the app that is a printed
-   form: "QUOTATION", "DATE", "REFERENCE", "PREPARED FOR", the line
-   table's "DESCRIPTION / QTY / AMOUNT", the money rows' captions,
-   `.qt-doc-tag` ("RECOMMENDED", a stamp) and `.qt-issued-say` ("GIVEN TO
-   THE CUSTOMER · 2026-08-17", a status stamp with its date).
-   ============================================================ */
-.qt-doc-sec th,
-.qt-doc-spec dt {
-  letter-spacing: 0.01em;
-  text-transform: none;
-}
-.qt-issued-bar .btn {
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-/* ============================================================
-   WHO IT IS FOR — the customer field, and the register under it.
-
-   THE INPUT DID NOT MOVE. It is the same `.qt-input--name` in the
-   same place at the same size; everything below is drawn UNDER it
-   and only while it is being used, so a quote to a walk-in looks
-   exactly as it always did and costs the page nothing.
-
-   THE LIST IS IN FLOW, NOT FLOATING. A popover over a document
-   would need a third translucent surface and a z-index conversation
-   the design has already had (DESIGN_CONTRACT §8.10). The sheet is
-   long, the field is at the top of it, and pushing three rows down
-   is cheaper than a layer.
-   ============================================================ */
-
-.qt-who {
-  position: relative;
-  margin-bottom: var(--sp-3);
-}
-/* the field's own bottom margin belongs to the group now, so the
-   two do not stack into a gap twice the size */
-.qt-who > .qt-field {
-  margin-bottom: 0;
-}
-
-/* A CONTROL BESIDE A SENTENCE, in sentence case. Deliberately NOT
-   `.qt-linkbtn`, which stamps 11px uppercase mono: uppercase is a
-   label style and never a button (DESIGN_CONTRACT §3). */
-.qt-who-act {
-  padding: 0;
-  border: 0;
-  background: none;
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0;
-  color: var(--ink-soft);
-  cursor: pointer;
-  text-decoration: underline;
-  text-decoration-color: var(--hairline-strong);
-  text-underline-offset: 3px;
-  transition: color var(--t-fast) var(--ease-draft);
-}
-.qt-who-act:hover {
-  color: var(--blue);
-  text-decoration-color: var(--blue);
-}
-.qt-who-act:active {
-  color: var(--blue-deep);
-}
-.qt-who-act:focus-visible {
-  outline: none;
-  color: var(--blue);
-  text-decoration-color: var(--blue);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 0 0 3px var(--blue-wash);
-}
-
-/* the "file this typed name" offer sits on its own line under the
-   field rather than in the sentence row, because it appears and
-   disappears as somebody types and must not reflow a row of text */
-.qt-who-file {
-  display: inline-block;
-  margin-top: 6px;
-}
-
-/* -- what this document is filed under ----------------------- */
-
-.qt-who-link {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--sp-2);
-  margin: 6px 0 0;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--ink-soft);
-}
-.qt-who-link-say strong {
-  font-weight: 600;
-  color: var(--ink);
-}
-
-/* -- the register, matched against what has been typed -------- */
-
-.qt-who-list {
-  margin: 6px 0 0;
-  padding: 0;
-  list-style: none;
-  max-width: 420px;
-  background: var(--paper-high);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-.qt-who-list li + li {
-  border-top: 1px solid var(--hairline);
-}
-
-.qt-who-opt {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  width: 100%;
-  padding: 7px 10px;
-  text-align: left;
-  background: transparent;
-  border: 0;
-  border-left: 2px solid transparent;
-  cursor: pointer;
-  transition: background var(--t-fast) var(--ease-draft);
-}
-.qt-who-opt:hover {
-  background: var(--paper-sunken);
-}
-/* a list row darkens on press; it never scales, so its neighbours
-   cannot look as though they moved */
-.qt-who-opt:active {
-  background: var(--blue-wash);
-}
-.qt-who-opt:focus-visible {
-  outline: none;
-  background: var(--blue-wash);
-  border-left-color: var(--blue);
-}
-
-.qt-who-opt-name {
-  font-size: var(--ui-size);
-  font-weight: 560;
-  letter-spacing: var(--ui-track);
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-
-.qt-who-opt-say {
-  font-size: var(--ui-s-size);
-  letter-spacing: var(--ui-s-track);
-  color: var(--ink-soft);
-  overflow-wrap: anywhere;
-}
-
-/* THERE IS NOWHERE TO FILE THEM YET — a fact, in the app's voice,
-   naming the place where a register is made. `--ink-soft` on the
-   white sheet: 7.7:1. */
-.qt-who-none {
-  margin: 6px 0 0;
-  max-width: 60ch;
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--ink-soft);
-}
-.qt-who-none em {
-  font-style: normal;
-  font-weight: 560;
-  color: var(--ink);
-}
-
-/* ============================================================
-   WHAT A PRICE ALREADY HAS IN IT — the rung flags, drawn.
-
-   `SERVICE_AND_THEMES.md` §3.2 theme 5 turned four sentences about
-   what a price column contains into data; these are the two places
-   a person reads them. Both are prose about the thing beside them,
-   so both are `--ink-soft` (7.7:1 on the white sheet) with the cell
-   reference under them in `--ink-faint`. NEITHER sits on a tint —
-   §1 of the design contract records that `--ink-faint` is 4.72:1 on
-   white and 4.26:1 over a 3.5% tint, which fails, so the surface
-   under both of these is left as it is.
-
-   NO ACCENT, NO HUE, NO ICON. This is a fact about a number, not an
-   alarm: the app has one accent and it is spent on the primary
-   action, the current dock item, the focused control and a computed
-   column. A fifth appearance here would take the eye off the button
-   the person came to press.
-   ============================================================ */
-
-/* on the open line panel, under "read from Cash · Boat Module!R282" */
-.qt-line-holds {
-  margin: 0 0 var(--sp-2);
-  max-width: 60ch;
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--ink-soft);
-}
-.qt-line-holds b {
-  font-weight: 560;
-  color: var(--ink);
-}
-.qt-line-holds-src {
-  display: block;
-  margin-top: 2px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.45;
-  color: var(--ink-faint);
-  overflow-wrap: anywhere;
-}
-
-/* under the free line whose typed label names a charge a line on
-   this quote is already carrying. It spans the adjustment row's own
-   four-column grid rather than living outside it: the sentence
-   belongs to THAT adjustment and moves with it when one above is
-   removed. */
-.qt-adj-already {
-  grid-column: 1 / -1;
-  margin: 2px 0 var(--sp-2);
-  max-width: 68ch;
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--ink-soft);
-}
-.qt-adj-already-src {
-  display: block;
-  margin-top: 2px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.45;
-  color: var(--ink-faint);
-  overflow-wrap: anywhere;
-}
-
-/* ============================================================
-   REACHED PAST THE NARROWING — the tag on a picker row the
-   search or the SHOW EVERYTHING switch fetched from the rest of
-   the table.
-
-   IT IS A SENTENCE, so it is sentence case and Inter. `.mono-label`
-   would have been the quickest thing to reach for and it uppercases
-   — DESIGN_CONTRACT §3 names a sentence outright as one of the four
-   things uppercase may never be. It sits on the card's own opaque
-   paper, so `--ink-faint` clears 4.7:1; it would not over a tint.
-   ============================================================ */
-.qt-pick-outside {
-  flex: 0 0 auto;
-  font-family: var(--font-ui);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0;
-  line-height: 1.4;
-  color: var(--ink-faint);
-  white-space: nowrap;
-}
-
-/* ============================================================
-   THE QUOTE, FINISHED — a document, a diary and a total bar.
-
-   Appended, not rewritten. Every rule above still applies and
-   nothing here changes a selector's meaning, a layout mode or a
-   behaviour: this pass is appearance, and it is the last one.
-
-   THREE SURFACES, AND THEY ARE NOT THE SAME KIND OF THING:
-
-     THE DOCUMENT (`.qt-doc`) is PAPER. It is the only artefact in
-     this product that leaves the building, and it prints. It is
-     white in both themes and on paper, deliberately, and below it
-     is given the ink to go with that — see the block immediately
-     following, which is the one place in this feature a literal
-     colour is correct.
-
-     THE DIARY (`.qt-list`) is a screen. It follows the theme, it
-     shows the boat that was quoted, and it is the one place a
-     person can see every deal they have written down.
-
-     THE TOTAL BAR (`.qt-foot`) is a floating instrument under
-     both draft readings. It is the ONLY running total on the
-     build now, so it is drawn as the thing it is.
-   ============================================================ */
-
-/* ============================================================
-   THE PAPER'S OWN INK — the fix that had to come first.
-
-   `.qt-doc` has forced `background: #fff` since the redesign,
-   because a quotation is paper in both themes; its INK went on
-   being the theme's. In light that is right by coincidence. In
-   dark it is #eaf1f8 on white — a document a customer is handed,
-   printed in invisible ink — and nothing in this file said so.
-
-   So the paper carries its own ramp, scoped to the sheet, and the
-   theme cannot reach inside it. Every value is the light palette's
-   own measured figure, re-stated here rather than referenced,
-   because a `var()` would follow the theme again and that is the
-   entire fault being fixed. DESIGN_PRINCIPLES §1 names exactly two
-   places a literal colour is correct — print, and this sheet.
-
-   MEASURED ON #ffffff, which is the only ground any of these ever
-   sits on:
-     --ink        #081b2e   17.4 : 1
-     --ink-soft   #3d5266    8.1 : 1   (`.mono-label` takes this)
-     --ink-faint  #5a6b7c    5.5 : 1   the floor, and it clears it
-     --red        #b3261e    6.5 : 1   unpriced, and a credit
-     --blue       #0a5fc2    6.1 : 1
-   ============================================================ */
-.qt-doc {
-  --paper-high: #ffffff;
-  --paper-sunken: #f4f7fa;
-  --ink: #081b2e;
-  --ink-soft: #3d5266;
-  --ink-faint: #5a6b7c;
-  --hairline: rgba(8, 27, 46, 0.14);
-  --hairline-strong: rgba(8, 27, 46, 0.3);
-  --red: #b3261e;
-  --blue: #0a5fc2;
-  color: var(--ink);
-}
-
-/* ------------------------------------------------------------
-   THE SHEET
-
-   Document proportions, not form proportions: a wider margin than
-   a screen would take, and a shadow deep enough that the page
-   reads as a sheet lying on the field rather than as a panel
-   painted on it. All three go away in the print block above, which
-   is where the sheet stops being an object and becomes the page.
-   ------------------------------------------------------------ */
-.qt-doc {
-  padding: var(--s-12) var(--s-12) var(--s-10);
-  border-radius: var(--r-panel);
-  border-color: var(--hairline);
-  box-shadow: var(--e-hero);
-}
-
-/* the registration ticks are the drawing office's mark and the one
-   piece of chrome the document keeps. They sit on the strong
-   hairline so they survive on paper as well as on screen. */
-.qt-tick {
-  width: 12px;
-  height: 12px;
-}
-
-/* ------------------------------------------------------------
-   THE TITLE BLOCK — a letterhead, and it was a caption.
-
-   `.qt-doc-org` was 11px in the faint tier: the dealership's own
-   name, on their own quotation, set smaller than the word
-   "Quotation" above it and two ink tiers down. It is the second
-   thing a customer reads after their own name. The title step,
-   full ink, its own case (rule 3), and the caption above it stays
-   a caption — that pair now reads as letterhead rather than as two
-   stamps of the same weight.
-   ------------------------------------------------------------ */
-.qt-doc-head {
-  align-items: flex-end;
-  padding-bottom: var(--s-5);
-  border-bottom: 1px solid var(--hairline-strong);
-}
-
-.qt-doc-who {
-  min-width: 0;
-}
-
-.qt-doc-org {
-  margin-top: var(--s-2);
-  font-size: var(--t-title-size);
-  font-weight: var(--t-title-weight);
-  line-height: var(--t-title-lead);
-  letter-spacing: var(--t-title-track);
-  font-variation-settings: normal;
-  color: var(--ink);
-}
-
-.qt-plate {
-  gap: 3px;
-  min-width: 236px;
-  padding: var(--s-3) var(--s-4);
-  border-radius: var(--r-control);
-  border-color: var(--hairline-strong);
-}
-
-.qt-plate-val {
-  font-size: var(--t-mono-size);
-  color: var(--ink);
-}
-
-/* ------------------------------------------------------------
-   PREPARED FOR — the addressee
-   ------------------------------------------------------------ */
-.qt-doc-customer {
-  padding: var(--s-6) 0 var(--s-5);
-}
-
-.qt-doc-customer-name {
-  margin-top: var(--s-2);
-  font-size: var(--t-title-size);
-  font-weight: 560;
-  letter-spacing: var(--t-title-track);
-  color: var(--ink);
-}
-
-.qt-doc-customer-line {
-  font-size: var(--t-small-size);
-  line-height: 1.5;
-}
-
-/* ------------------------------------------------------------
-   THE SUBJECT — the one photograph on the page
-
-   The picture and the name sit on one baseline block with the spec
-   strip under the name, so the eye lands on the boat, reads the
-   model, and finds the numbers without moving back up.
-   ------------------------------------------------------------ */
-.qt-doc-subject {
-  align-items: center;
-  gap: var(--s-8);
-  padding: var(--s-6) 0;
-}
-
-.qt-doc-photo {
-  width: 300px;
-  height: 225px;
-  flex: none;
-  border-radius: var(--r-card);
-  border-color: var(--hairline);
-}
-
-/* THE ONE HEADLINE ON THE PAPER. The display face is reachable only
-   at 26px and above, which is the floor that makes it safe to have
-   at all; this is 32px on screen and 22pt on paper, so both sides of
-   the document clear it. Nothing else on the page changes face: the
-   customer's name, the lines, the money box and every caption stay
-   Inter and mono, which is what stops a quotation looking typeset by
-   somebody who enjoyed themselves. */
-.qt-doc-name {
-  font-family: var(--font-hero);
-  font-variation-settings: 'wdth' 103;
-  font-size: 32px;
-  line-height: 1.1;
-  letter-spacing: -0.028em;
-  color: var(--ink);
-}
-
-/* THE SPEC STRIP reads as an instrument row: the column's name over
-   the figure, mono and tabular so a length and a beam line up. These
-   are the dealer's own column headings and they read as words, not
-   stamps — the transform came off in the uppercase pass above and
-   only the arrangement changes here.
-
-   AIR IS THE DIVIDER. The strip wraps, because how many specs a hull
-   carries is the price file's business; a rule between items would
-   put a stray hairline at the head of the second row on any rig that
-   has one, and this is a document that gets printed and handed over.
-   ------------------------------------------------------------ */
-.qt-doc-specs {
-  gap: var(--s-4) var(--s-8);
-  margin-top: var(--s-5);
-}
-
-.qt-doc-spec-val {
-  margin-top: 2px;
-  font-size: var(--t-mono-lg-size);
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-}
-
-/* ------------------------------------------------------------
-   THE RIG — one row per line
-
-   More air per row and a heavier rule under the column heads: this
-   is the part of the document a customer reads line by line with a
-   finger, and 8px rows made a nine-line rig look like a receipt.
-   ------------------------------------------------------------ */
-.qt-doc-lines {
-  margin-top: var(--s-6);
-}
-
-.qt-doc-lines th,
-.qt-doc-lines td {
-  padding: var(--s-3) var(--s-2);
-}
-
-.qt-doc-lines thead th {
-  padding-bottom: var(--s-2);
-  border-bottom-width: 1.5px;
-}
-
-/* the table name over each block of the rig — a caption, at the
-   caption's size, with air above it so a block reads as a block */
-.qt-doc-sec th {
-  padding-top: var(--s-6);
-  padding-bottom: var(--s-1);
-  font-size: var(--t-caption-size);
-  color: var(--ink-faint);
-}
-
-.qt-doc-line-name {
-  font-size: var(--t-body-size);
-  font-weight: 500;
-}
-
-.qt-doc-detail {
-  margin-top: 3px;
-}
-
-.qt-doc-lines td.qt-col-amt {
-  font-size: var(--t-mono-lg-size);
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-
-/* ------------------------------------------------------------
-   THE MONEY BOX — the one place the document raises its voice
-
-   It has to be unambiguous at a glance: the package, then every
-   adjustment on its own signed row with the label somebody typed,
-   then the total, ruled above and double-ruled below, in the
-   largest mono on the page. Nothing is ever folded into a subtotal
-   — that is the whole reason a discount is a row.
-   ------------------------------------------------------------ */
-.qt-money {
-  margin-top: var(--s-8);
-}
-
-.qt-money-rows {
-  min-width: 380px;
-  padding-top: var(--s-4);
-  border-top-width: 1.5px;
-}
-
-.qt-money-row {
-  padding: var(--s-2) 0;
-  font-size: var(--t-body-size);
-}
-
-/* NO COLOUR ON THIS SELECTOR, AND IT IS NOT AN OVERSIGHT.
-   `.qt-money-row dd` measures (0,1,1) and `.is-credit` — the carmine
-   that marks a discount, a rebate or a trade-in — measures (0,1,0),
-   so an ink declared here would win and every credit on the money
-   box would print black. Carmine appears in exactly two places on
-   this document and a credit is one of them. The cell inherits
-   `--ink` from the sheet, which is the value this rule would have
-   set anyway. */
-.qt-money-row dd {
-  font-size: var(--t-mono-lg-size);
-}
-
-.qt-money-row--total {
-  margin-top: var(--s-3);
-  padding-top: var(--s-3);
-  padding-bottom: var(--s-2);
-}
-
-.qt-money-row--total dt {
-  font-weight: 560;
-}
-
-/* AND THE TOTAL HAS TO OUT-SPECIFY THE ROW IT SITS IN. `.qt-total`
-   alone is (0,1,0) against the (0,1,1) above, so the one figure the
-   whole document exists to state would have been set at the same
-   size as the package line under a rule two lines up. */
-.qt-money-row dd.qt-total {
-  font-size: 26px;
-  font-weight: 500;
-  letter-spacing: -0.022em;
-}
-
-.qt-money-say {
-  margin-top: var(--s-3);
-  font-size: var(--t-caption-size);
-  line-height: 1.5;
-}
-
-.qt-unpriced {
-  margin-top: var(--s-5);
-  font-size: var(--t-small-size);
-  line-height: 1.55;
-}
-
-.qt-doc-foot {
-  margin-top: var(--s-12);
-  padding-top: var(--s-3);
-  border-top-width: 1.5px;
-  border-top-color: var(--ink);
-}
-
-/* ------------------------------------------------------------
-   THE PAGE THE DOCUMENT SITS ON, and the controls above it
-
-   The atmosphere is mounted on ONE branch only — the diary with
-   nothing in it — so the stacking context is scoped to that
-   branch and the issued document's own layer is untouched. The
-   print block repositions `.qt-doc` against `.qt-root`, and a
-   stacking context that did not need to exist over it is not
-   worth the risk.
-   ------------------------------------------------------------ */
-.qt-root--none {
-  isolation: isolate;
-}
-
-.qt-sky {
-  z-index: 0;
-}
-
-.qt-none {
-  position: relative;
-  z-index: 1;
-}
-
-/* THE CONTROLS OVER THE DOCUMENT WRAP RATHER THAN PUSHING THE PAGE
-   SIDEWAYS. `.qt-issued-bar` is a flex row of a status stamp and up
-   to three buttons with no wrap; measured at 320px of window,
-   "Make a new version" ran 6px past `.qt-root` and the whole stage
-   scrolled horizontally — with the sheet itself, measured in the
-   same sweep, entirely inside its own edges. The scroll was the
-   chrome, not the quote. */
-.qt-issued-bar {
-  flex-wrap: wrap;
-  gap: var(--s-2);
-}
-
-.qt-issued-say {
-  color: var(--canvas-ink-soft);
-}
-
-/* ------------------------------------------------------------
-   NARROW WINDOWS — the sheet keeps its margins in proportion
-   rather than crushing the line table against its own edge.
-
-   `screen and`, AND THAT WORD IS A PRINT FIX, NOT A TIDY-UP. A
-   printed A4 page at the @page margin of 14mm is 182mm of measure,
-   which is 688 CSS px — under this breakpoint — so every rule in
-   here was applying to the PAPER as well as to a narrow window.
-   Measured with `emulateMedia({media:'print'})` at 688 × 1017 (A4
-   less its margins, at 96dpi): the subject stacked, and
-   `flex-direction: column` from this block survived into print
-   because the print block only ever answered the photograph's SIZE
-   — so the 55mm cap it sets was applied to a photo that had already
-   been sent below the boat's name, and the rig ran to 1247.6px,
-   1.23 of a page, to say what fits on one. The document's whole
-   printed layout was being chosen by a screen breakpoint.
-   ------------------------------------------------------------ */
-@media screen and (max-width: 820px) {
-  .qt-doc {
-    padding: var(--s-8) var(--s-6) var(--s-8);
-  }
-  .qt-doc-subject {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--s-5);
-  }
-  .qt-doc-photo {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 4 / 3;
-  }
-  .qt-doc-specs {
-    gap: var(--s-4) var(--s-6);
-  }
-  .qt-money-rows {
-    min-width: 0;
-    width: 100%;
-  }
-}
-
-/* ============================================================
-   THE TOTAL BAR — the one running figure on a draft
-
-   It is the only place the package is drawn on the build now (see
-   `RigPlate` in QuoteBuild.tsx), and it is a SIBLING of the
-   scrollport rather than sticky inside it, so no line of the quote
-   can pass behind it. What changes here is that it now reads as an
-   instrument floating under the document: a lit top edge, the
-   float elevation, and a figure big enough to be read without
-   looking down.
-   ============================================================ */
-.qt-foot {
-  padding: var(--s-4) var(--s-5);
-  border-radius: var(--r-panel);
-  background: var(--grad-surface);
-  box-shadow: var(--e-float), inset 0 1px 0 var(--edge-light);
-}
-
-.qt-foot-sum {
-  gap: var(--s-3);
-}
-
-.qt-foot-total {
-  font-size: 28px;
-  font-weight: 500;
-  letter-spacing: -0.024em;
-  color: var(--ink);
-}
-
-.qt-foot-unpriced {
-  font-size: var(--t-caption-size);
-}
-
-.qt-foot-why {
-  font-size: var(--t-small-size);
-}
-
-/* ============================================================
-   THE DIARY — every quote we have made
-
-   IT WAS FIVE COLUMNS OF TEXT. Date, customer, subject, state,
-   total, all at one weight, in a bordered box: a table pretending
-   not to be one, and the least readable list in the app. It is a
-   row of OBJECTS now — the boat that was quoted, then who it is
-   for with the rig under their name, then when, what state it is
-   in, and the money.
-
-   THE ROW DARKENS ON PRESS RATHER THAN SCALING, which is the rule
-   for a list row: a neighbour that appears to move is worse than
-   no feedback at all.
-   ============================================================ */
-.qt-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-  max-width: 940px;
-  border: 0;
-  border-radius: 0;
-  background: none;
-}
-
-.qt-list-row {
-  gap: var(--s-2);
-  padding-right: var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-  overflow: hidden;
-  transition:
-    transform var(--d-med) var(--ease-out-expo),
-    box-shadow var(--d-med) var(--ease),
-    border-color var(--d-fast) var(--ease);
-}
-.qt-list-row:last-child {
-  border-bottom: 1px solid var(--line);
-}
-.qt-list-row:hover {
-  transform: translateY(-2px);
-  border-color: var(--line-strong);
-  box-shadow: var(--e4), inset 0 1px 0 var(--edge-light);
-}
-.qt-list-row:has(.qt-list-open:active) {
-  transform: translateY(0);
-  box-shadow: var(--e1);
-  transition-duration: var(--d-press);
-}
-.qt-list-row.is-open {
-  border-color: var(--accent);
-  box-shadow: var(--glow-sm), var(--e-card);
-  background: var(--grad-surface);
-}
-
-.qt-list-open {
-  grid-template-columns: 128px minmax(0, 1.7fr) 104px minmax(0, 128px) minmax(112px, auto);
-  gap: var(--s-4);
-  padding: 0 0 0 0;
-  align-items: center;
-}
-.qt-list-open:hover {
-  background: none;
-}
-.qt-list-open:active {
-  background: var(--surface-3);
-}
-/* THE RING IS INSET, because the row clips: `.qt-list-row` sets
-   `overflow: hidden` so the photograph can take the rounded corner,
-   and any outer half of a focus ring drawn on this button would be
-   cut off by it. Two pixels of the accent, inside the edge. */
-.qt-list-open:focus-visible {
-  outline: none;
-  box-shadow: inset 0 0 0 2px var(--accent);
-}
-
-/* THE PHOTOGRAPH. Full-bleed on the row's leading edge, so a
-   scanning eye meets the boat before it meets any words. */
-.qt-list-shot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch;
-  min-height: 88px;
-  background: var(--grad-sunken);
-  border-right: 1px solid var(--line-subtle);
-  overflow: hidden;
-}
-
-.qt-list-img {
-  width: 100%;
-  height: 100%;
-  min-height: 88px;
-  object-fit: cover;
-  display: block;
-}
-
-/* the one wording the app uses for a picture it may not fetch */
-.qt-list-held {
-  padding: var(--s-2);
-  text-align: center;
-  color: var(--fg-tertiary);
-  line-height: 1.35;
-}
-
-.qt-list-say {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  padding: var(--s-3) 0;
-}
-
-/* the customer is what the row is FOR, so it is the row's heading */
-.qt-list-who {
-  font-size: var(--t-heading-size);
-  font-weight: var(--t-heading-weight);
-  letter-spacing: var(--t-heading-track);
-  color: var(--fg);
-}
-
-/* and the rig is what it is ABOUT. It wraps to two lines rather
-   than truncating: nothing in this app cuts a name mid-word. */
-.qt-list-what {
-  font-size: var(--t-small-size);
-  line-height: 1.4;
-  color: var(--fg-secondary);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.qt-list-when {
-  color: var(--fg-tertiary);
-}
-
-/* A STAMP, AND IT SAYS WHICH OF THE TWO STATES A QUOTE HAS. Given
-   is the settled one and takes the ink; a draft is still being
-   worked on and stays a tier down. Neither is a fill behind text. */
-.qt-list-state {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--fg-tertiary);
-}
-.qt-list-state.is-given::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  flex: none;
-  border-radius: var(--r-full);
-  background: var(--success);
-}
-.qt-list-state.is-given {
-  color: var(--fg-secondary);
-}
-
-.qt-list-total {
-  font-size: var(--t-mono-lg-size);
-  font-weight: 500;
-  letter-spacing: -0.012em;
-  color: var(--fg);
-}
-
-@media (max-width: 860px) {
-  .qt-list-open {
-    grid-template-columns: 96px minmax(0, 1fr) minmax(96px, auto);
-    gap: var(--s-3);
-  }
-  .qt-list-when,
-  .qt-list-state {
-    display: none;
-  }
-  .qt-list-shot {
-    min-height: 72px;
-  }
-}
-
-/* ============================================================
-   THE FIRST MONDAY SCREEN — nothing made yet
-
-   The four parts were all present and all set as paragraphs, so
-   the card read as a notice. What it needed was a title: the one
-   sentence that says what this place IS, at a size that says it is
-   a screen and not an error.
-   ============================================================ */
-.qt-none {
-  gap: var(--s-4);
-  max-width: 620px;
-  padding: var(--s-10);
-  border-radius: var(--r-panel);
-  background: var(--grad-surface);
-  box-shadow: var(--e4), inset 0 1px 0 var(--edge-light);
-  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
-}
-
-.qt-none-eyebrow {
-  color: var(--fg-tertiary);
-}
-
-.qt-none-title {
-  margin: 0;
-  max-width: 18ch;
-  font-family: var(--font-sans);
-  font-size: var(--t-display-lg-size);
-  font-weight: var(--t-display-lg-weight);
-  line-height: var(--t-display-lg-lead);
-  letter-spacing: var(--t-display-lg-track);
-  color: var(--fg);
-}
-
-.qt-none-say {
-  max-width: 52ch;
-  font-size: var(--t-body-size);
-  line-height: 1.6;
-}
-
-.qt-none-do {
-  font-size: var(--t-small-size);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .qt-none {
-    animation: ds-fade var(--d-med) var(--ease) backwards;
-  }
-  .qt-list-row {
-    transition: box-shadow var(--d-med) var(--ease);
-  }
-  .qt-list-row:hover {
-    transform: none;
-  }
-}
-
-/* ============================================================
-   THE DRAFT SHEET — the working document
-
-   It follows the theme, because it is a screen and not paper: the
-   paper ink above is scoped to `.qt-doc` for exactly that reason.
-   All it takes here is the same lit surface every other panel in
-   the app now has, so the draft and the build read as one feature.
-   ============================================================ */
-.qt-sheet {
-  padding: var(--s-10) var(--s-10) var(--s-8);
-  border-radius: var(--r-panel);
-  background: var(--grad-surface);
-  box-shadow: var(--e4), inset 0 1px 0 var(--edge-light);
-}
-
-.qt-edit-photo {
-  width: 160px;
-  height: 120px;
-  border-radius: var(--r-card);
-}
-
-.qt-section {
-  margin-top: var(--s-8);
-  padding-top: var(--s-4);
-}
-
-.qt-chip {
-  background: var(--grad-surface);
-  border-radius: var(--r-control);
-  transition:
-    transform var(--d-fast) var(--ease),
-    background var(--d-fast) var(--ease),
-    border-color var(--d-fast) var(--ease);
-}
-.qt-chip:hover {
-  border-color: var(--ink);
-}
-.qt-chip:active {
-  transform: scale(0.97);
-  transition-duration: var(--d-press);
-}
-.qt-chip:focus-visible {
-  outline: none;
-  box-shadow: var(--glow-sm);
-}
-
-/* ============================================================
-   A4 — RESTATED, BECAUSE THIS FILE IS APPENDED.
-
-   THE TRAP, AND IT WAS ALREADY SPRUNG BEFORE THIS PASS. The print
-   block lives in the middle of this stylesheet, and every
-   appearance section since has been appended AFTER it. A media
-   query adds no specificity, so a later rule on the same selector
-   beats the printed one at equal weight: the pre-existing
-   appended block handed the printed sheet back its 10px radius
-   and its drop shadow, and handed the printed AMOUNT column back
-   15px where 9pt had been measured.
-
-   So every screen value above that print already had an answer
-   for is answered again here, LAST, where nothing can come after
-   it. The figures are the ones the print block already chose —
-   10pt body, 9pt data, 7.5pt labels, 22pt subject, 55mm
-   photograph — and the two the screen has newly grown, the
-   letterhead and the total, are given their own point sizes
-   rather than being left at 32px and 26px on paper.
-
-   Nothing below sets a colour: print's ink is settled in the
-   block above and the paper carries its own ramp.
-   ============================================================ */
-@media print {
-  .qt-doc {
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-  }
-
-  /* the letterhead: the caption stays a caption, the business's
-     name is the largest thing in the block and still under the rig */
-  .qt-doc-org {
-    margin-top: 1.5mm;
-    font-size: 13pt;
-  }
-  .qt-doc-customer-name {
-    margin-top: 1.5mm;
-    font-size: 12pt;
-  }
-  .qt-doc-name {
-    font-size: 22pt;
-    line-height: 1.1;
-  }
-
-  /* ============================================================
-     AND THE LOCKUP TAKES POINTS ON PAPER.
-
-     `.qt-doc-name` is the flex COLUMN now, not the type — the
-     model, the maker and the trim each set their own step — so a
-     print rule that sizes only the container sizes nothing a person
-     reads. Left alone, the model printed at `--t-marque-size`,
-     which is 75px of screen type on an A4 page.
-
-     22pt is the floor this file already held the document's name
-     to, kept.
-     ============================================================ */
-  .qt-doc-marque-maker {
-    font-size: 9pt;
-  }
-
-  .qt-doc-marque-model {
-    font-size: 22pt;
-    line-height: 1.1;
-  }
-
-  .qt-doc-marque-trim {
+  .qt-doc-line-name {
     font-size: 10pt;
   }
 
+  .qt-doc .mono-label {
+    font-size: 7.5pt;
+  }
+
+  .qt-money-row {
+    font-size: 10pt;
+  }
+
+  /* 26px on paper would set the total larger than the boat is
+     named. Written against the row's own dd for the same
+     specificity reason as on screen. */
+  .qt-money-row dd.qt-total {
+    font-size: 15pt;
+  }
+
+  .qt-money-say,
+  .qt-doc-sec th {
+    font-size: 7.5pt;
+  }
+
+  .qt-unpriced,
+  .qt-doc-note-say {
+    font-size: 9pt;
+  }
+
+  /* THE MEASURES, IN MILLIMETRES. 98mm is 54% of the 182mm an A4
+     page has inside a 14mm margin — the same 54% the money box
+     takes of the sheet on screen, so the rules start in the same
+     place on paper as they do in the window. */
+  .qt-money-rows {
+    width: 98mm;
+    max-width: 100%;
+    padding-top: 3mm;
+  }
+
+  .qt-doc-photo {
+    /* capped so the whole rig reaches page 1 */
+    width: 55mm;
+  }
 
   .qt-doc-head {
     padding-bottom: 4mm;
   }
+
   .qt-doc-customer {
     padding: 5mm 0 4mm;
   }
+
   .qt-doc-subject {
     gap: 7mm;
     padding: 5mm 0;
   }
-  .qt-doc-photo {
-    width: 55mm;
-    height: 41mm;
-  }
+
   .qt-doc-specs {
     margin-top: 4mm;
     gap: 3mm 7mm;
-  }
-  .qt-doc-spec-val {
-    margin-top: 0.5mm;
-    font-size: 9pt;
   }
 
   .qt-doc-lines {
     margin-top: 5mm;
   }
+
   .qt-doc-lines th,
   .qt-doc-lines td {
     padding: 2mm 1.5mm;
   }
+
   .qt-doc-sec th {
     padding-top: 5mm;
     padding-bottom: 0.5mm;
-    font-size: 7.5pt;
-  }
-  .qt-doc-line-name {
-    font-size: 10pt;
-  }
-  .qt-doc-lines td.qt-col-amt {
-    font-size: 9pt;
   }
 
   .qt-money {
     margin-top: 6mm;
   }
-  .qt-money-rows {
-    min-width: 72mm;
-    padding-top: 3mm;
-  }
+
   .qt-money-row {
     padding: 1.2mm 0;
-    font-size: 10pt;
   }
-  .qt-money-row dd {
-    font-size: 9pt;
-  }
+
   .qt-money-row--total {
     margin-top: 2mm;
     padding-top: 2mm;
-    padding-bottom: 1.5mm;
   }
-  /* THE ONE MOMENT THE PAGE RAISES ITS VOICE, in points. 26px on
-     paper would set the total larger than the boat is named — and
-     it is written against `.qt-money-row dd` here for the same
-     specificity reason as on screen. */
-  .qt-money-row dd.qt-total {
-    font-size: 15pt;
-  }
-  .qt-money-say {
-    margin-top: 2mm;
-    font-size: 7.5pt;
-  }
+
   .qt-unpriced {
     margin-top: 4mm;
-    font-size: 9pt;
-  }
-  .qt-doc-foot {
-    margin-top: 10mm;
-    padding-top: 2mm;
-  }
-}
-
-/* ============================================================
-   THE DOCUMENT, FINISHED — the letterhead, the columns, the
-   money box and the note the dealer typed.
-
-   Appended LAST, and in this file that word is load-bearing
-   twice. Every appearance pass here has been appended AFTER the
-   print block that answered it, and a media query adds no
-   specificity, so at equal weight the later rule wins on paper as
-   well as on screen — the trap the "A4 — RESTATED" note above was
-   written from. This section obeys the rule it inherits: the
-   screen values first, then one print block at the very foot of
-   the file restating every one of them that paper had already
-   chosen a different answer for. Nothing may be appended after it
-   without doing the same.
-
-   Nothing here changes a selector's meaning or a layout mode
-   except where the comment says the layout mode WAS the defect.
-   ============================================================ */
-
-/* ------------------------------------------------------------
-   THE COLUMN HEAD SITS OVER ITS COLUMN, WHICH IT DID NOT.
-
-   `.qt-doc-lines th, .qt-doc-lines td { text-align: left }` is
-   (0,1,1). `.qt-col-qty, .qt-col-amt { text-align: right }` is
-   (0,1,0). So the CELLS took their right alignment from
-   `.qt-doc-lines td.qt-col-*` at (0,2,1) and won it, and the HEADS
-   had nothing at that weight and stayed left.
-
-   Measured at 1600 × 1400 on an issued quote, ink boxes taken with
-   a Range rather than the cell: "AMOUNT" ran 1198.3 → 1241.8 while
-   the figures it names ended at 1295 — the head 53.2px to the left
-   of its own column, on the one document a customer reads a column
-   of money down. "QTY" lined up, and by arithmetic rather than by
-   rule: 21.8px of ink in a 37.8px cell less its 16px of padding is
-   21.8px, so it filled its box exactly. One column right by
-   accident is not a column that is right.
-
-   Written at (0,2,1) on the head only, so the print block's
-   `.qt-doc .mono-label { font-size: 7.5pt }` (0,2,0) keeps every
-   size it measured — the specificity trap the note beside
-   `.qt-doc-lines td.qt-col-amt` above already paid for once.
-   ------------------------------------------------------------ */
-.qt-doc-lines thead th.qt-col-qty,
-.qt-doc-lines thead th.qt-col-amt {
-  text-align: right;
-}
-
-/* A LINE'S NAME IS TEXT, NOT A ROW OF BOXES. `.qt-doc-line-name`
-   was `display: flex` with no wrap, so as soon as the description
-   column was narrow enough to break a name, the name took one
-   column and the RECOMMENDED stamp took another beside it and the
-   pair read as two fields. Measured at 640px of window: "Yamaha -
-   F4SMHA" broke after "Yamaha -" with the stamp sitting to the
-   right of the break on its own baseline.
-
-   Block, and the stamp flows after the last word like the word it
-   is. The star that used to hold the first flex slot is off this
-   document entirely — see `DocLine` in QuoteDocument.tsx. */
-.qt-doc-line-name {
-  display: block;
-}
-.qt-doc-tag {
-  /* `DocLine` now writes a word space before this, which is where
-     the break opportunity the narrow layout needs comes from — see
-     the note there. Measured in the sheet, IBM Plex Mono at 11px
-     advances 6.57px per character, space included, so 4px on top of
-     it puts the stamp clear of the name without reading as a gap. */
-  margin-left: var(--s-1);
-  white-space: nowrap;
-}
-
-/* ------------------------------------------------------------
-   THE LETTERHEAD OUTRANKS THE ADDRESSEE, AND IT DID NOT.
-
-   Measured on the issued document at 1600px of window:
-   `.qt-doc-org` "Northside Marine" at 20px/600,
-   `.qt-doc-customer-name` "Margaret & Dean Whitlock" at 20px/560. The business whose paper this is
-   and the person it is addressed to were set at one size, one tier
-   apart in weight, in two stacked blocks of identical shape — and
-   the plate in the opposite corner is the only bordered object in
-   the title area, so the heaviest mark at the top of the quotation
-   was the reference number.
-
-   The org takes the display step (28px), the one step between title
-   and the 32px the subject holds, so the reading order down the
-   page is now boat 32 → letterhead 28 → addressee 20 → contact 13.
-   It stays Inter: the note on `.qt-doc-name` rules that exactly one
-   headline changes face and the rest of the page does not, and a
-   second display face in the title block is the thing that note
-   exists to prevent.
-   ------------------------------------------------------------ */
-.qt-doc-org {
-  font-size: var(--t-display-size);
-  font-weight: var(--t-display-weight);
-  line-height: var(--t-display-lead);
-  letter-spacing: var(--t-display-track);
-}
-
-/* AND THE TITLE BLOCK WRAPS BEFORE IT COLLIDES. `.qt-doc-head` is a
-   flex row of the letterhead and the plate, and `.qt-doc-who` had
-   `min-width: 0` against a plate with `min-width: 236px` — so the
-   letterhead shrank to nothing and the plate PAINTED OVER IT.
-   Measured at 420px of window: the sheet's content column is 258px,
-   "QUOTATION" and "Northside Marine" sat at x 113 with the plate's
-   own box starting at 137, the words interleaved.
-
-   A basis of 240px is the letterhead's floor rather than its wish,
-   so the letterhead can no longer be squeezed to nothing and the
-   plate drops beneath the name instead of into it.
-
-   THE FLEX ARITHMETIC IS NOT WHAT TRIPS IT, and it is worth saying
-   so rather than leaving a number here that never fires: 240 + a
-   24px column gap + the plate's 236 is 500px of content, but the
-   820px breakpoint below sets `.qt-plate { width: 100% }`, which
-   wraps the line first. Stepping the window 900 → 340 in 4px, the
-   plate drops at 820px of window — 556px of content. The basis is
-   the floor that makes the drop safe, not the trigger for it. */
-.qt-doc-head {
-  flex-wrap: wrap;
-  row-gap: var(--s-5);
-}
-.qt-doc-who {
-  flex: 1 1 240px;
-}
-.qt-plate {
-  flex: 0 1 auto;
-}
-
-/* ------------------------------------------------------------
-   THE MONEY BOX HAS A MEASURE, AND IT WAS TAKING WHATEVER THE
-   LONGEST LABEL ASKED FOR.
-
-   `min-width: 380px` under `justify-content: flex-end` sets a floor
-   and no ceiling, and `.qt-money-row` is a flex row whose `dt` is
-   the label somebody typed. Measured with a real trade-in on it
-   ("2016 Quintrex 420 Renegade with Mercury 40 — subject to final
-   inspection"): the box was 546px of a 782px measure on screen and
-   the FULL 688px on A4, where the rule above "Package" and the
-   double rule under "Total" ran the whole width of the page and the
-   money box stopped reading as a box at all. The document's spine
-   moved with the wording of a discount.
-
-   420px is a fixed measure — 54% of the sheet's 782 — so the rules
-   start in the same place on every quote in the drawer. The label
-   wraps inside it, which is what a trade-in description does on
-   paper anyway; `align-items: baseline` was already on the row, so
-   a wrapped label still sets its first line against its figure.
-   ------------------------------------------------------------ */
-.qt-money-rows {
-  flex: 0 1 auto;
-  width: 420px;
-  min-width: 0;
-  max-width: 100%;
-}
-
-/* AND GIVING THE BOX A MEASURE PUT A FIGURE AT RISK, which is the
-   one thing it may never be. `.qt-money-row` is a flex row and its
-   `dd` had no floor, so inside 420px a long trade-in description
-   squeezed the amount until it broke: measured on the first pass of
-   this change, "−$8,200" wrapped after the minus sign, the sign on
-   one line and the figure on the next. A figure is atomic. */
-.qt-money-row dd {
-  flex: none;
-  white-space: nowrap;
-}
-
-/* THE EX-TAX LINE IS A FOOTNOTE TO THE TOTAL, not another
-   adjustment. It sits below the double rule and was drawn at the
-   package row's own size and ink, so the page ended on two figures
-   of equal voice one line apart. A tier down in ink (--ink-soft,
-   8.1:1 on this sheet's white — the paper ramp above carries the
-   measurement) and the ordinary mono size, which is what every
-   other derived figure in the app gets. `.qt-money-row dd` is
-   (0,1,1); this is (0,2,1) and wins without touching the credit's
-   carmine, which is (0,1,0) and lives on rows this cannot reach. */
-.qt-money-row--tax {
-  padding-top: var(--s-3);
-}
-.qt-money-row--tax dt {
-  color: var(--ink-soft);
-}
-.qt-money-row--tax dd {
-  font-size: var(--t-mono-size);
-  color: var(--ink-soft);
-}
-
-/* ------------------------------------------------------------
-   THE NOTE THE DEALER TYPED — the only conditions this document
-   carries, and it was the smallest reading text on it.
-
-   Measured before: 12px, `--ink-soft`, no caption, no rule, sitting
-   between a carmine warning and the closing hairline with nothing
-   to say it was part of the document rather than a stray line of
-   chrome. It is where a dealer writes how long the price holds; on
-   a $150,000 quotation that is the sentence a customer looks for
-   after the total.
-
-   A rule, the caption the field already carries ("Note on the
-   quote"), and the document's small step. The measure is capped at
-   68ch because it is a paragraph: 782px of 13px Inter runs to about
-   a hundred characters, half again the line prose is read at.
-   ------------------------------------------------------------ */
-.qt-doc-note {
-  margin-top: var(--s-6);
-  padding-top: var(--s-4);
-  border-top: 1px solid var(--hairline);
-  font-size: var(--t-small-size);
-}
-.qt-doc-note .mono-label {
-  display: block;
-}
-.qt-doc-note-say {
-  margin: var(--s-2) 0 0;
-  max-width: 68ch;
-  font-size: var(--t-small-size);
-  line-height: 1.55;
-  color: var(--ink-soft);
-}
-
-/* THE JOIN'S FACTS ARE PAIRS AND WERE READING AS A PARAGRAPH. The
-   strip under a line carries "Prop Part No. 6FP-45943-00", "Engine
-   Hole TBA", "Slot 1" and the rigging kit's whole name, and the gap
-   BETWEEN pairs was --sp-3 (12px) — a word space at 11px mono is
-   about 6.6px, so two facts were separated by less than two spaces
-   and the row read as one sentence in two ink tiers. Measured on
-   the Yamaha F90XB line: five pairs across two wrapped rows, no
-   break a reader could find. 20px between pairs and 8px between
-   rows is the smallest gap that reads as a list, and the strip
-   still wraps rather than truncating. */
-.qt-doc-detail {
-  gap: var(--s-2) var(--s-5);
-}
-
-/* THE LINES NO SECTION CLAIMS get the air a section head would have
-   given them, and no heading — see the note in QuoteDocument.tsx
-   for why inventing one would be a claim. Without this they run on
-   from the block above and are read as part of it, which is the
-   same misattribution one step quieter than not printing them. */
-.qt-doc-loose .qt-doc-line:first-child td {
-  padding-top: var(--s-6);
-}
-
-/* ------------------------------------------------------------
-   NARROW WINDOWS, CONTINUED — the photograph stops growing, and
-   the plate takes the width it wrapped onto.
-
-   The stacked layout hands the photograph `width: 100%` in a 4/3
-   box, and the sheet is still 880px wide until 1024px of window:
-   measured at 760px of window the picture was 494 × 370, a hull
-   twice the size of the one the wide layout prints and the whole of
-   the first screen. 360px is the wide layout's 300 and a little, so
-   the document reads at one scale however the window is dragged.
-   ------------------------------------------------------------ */
-@media screen and (max-width: 820px) {
-  .qt-doc-photo {
-    max-width: 360px;
-  }
-  .qt-plate {
-    width: 100%;
-    min-width: 0;
-  }
-
-  /* MONEY NEVER BREAKS; A SENTENCE MAY, AND ONLY WHERE IT MUST.
-     `white-space: nowrap` on the amount cell is right for "$53,720"
-     and wrong for "not priced here", which is fifteen characters of
-     11px mono — 99px of ink the column had to hold in one piece.
-     Measured at 420px of window: the amount column's min-content was
-     113px, the table 329px inside a 258px sheet, and `.qt-root` grew
-     a horizontal scrollbar — a customer's document scrolling
-     sideways.
-
-     It is inside the breakpoint because letting it wrap everywhere
-     broke the WIDE layout instead, and the mechanism is the cell's
-     min-content rather than a shortfall in the column. With nowrap
-     the phrase pins the column at 112.8px and its ink measures
-     96.8px inside 16px of padding — no slack, but no shortfall
-     either. Drop the nowrap and the column loses the floor it was
-     holding, auto table layout reclaims 8.6px of it (112.8 →
-     104.2), and an 880px sheet with room to spare prints "not
-     priced / here" over two lines. The wording is untouched either way — `.qt-nil` is the
-     app's own phrase in four other places. */
-  .qt-doc .qt-nil {
-    white-space: normal;
-  }
-
-  /* AND THE TABLE ITSELF STOPS OVERFLOWING ITS OWN PAPER. Three
-     columns of a money table have a floor, and on a phone the sheet
-     is under it. Measured at 420px of window — sheet 308px, content
-     column 258px — the rig laid out at 329px: 46px past the sheet's
-     own right edge, painting onto the canvas outside the white, with
-     `.qt-root` scrolling sideways under it. Letting "not priced
-     here" wrap took it to 270.2px, still 12.2px into the sheet's
-     margin; on a quote carrying "$198,610" it was 302px, 19px
-     outside the paper.
-
-     Two economies, in the order that costs the least. The cell's
-     side padding goes from 8px to 4px, which is 24px across three
-     columns and touches nothing a person reads. The amount drops
-     from the large mono step to the ordinary one, 15px to 13px,
-     which is still two steps above the 11px floor. Both together,
-     and the break opportunity `DocLine` now writes before the
-     RECOMMENDED stamp, put the table back inside the paper:
-     measured after, 258px in a 258px column at 420 of window and
-     213px in 213px at 375, and nothing inside `.qt-doc` past the
-     sheet's edge at any width swept from 1600 down to 320.
-
-     The detail strip may break inside a token — and only it. It is
-     mono metadata (a part number, an engine hole, a slot), the one
-     thing on the page that is read a character at a time rather
-     than as a word, and its longest unbreakable run was setting the
-     description column's floor. A NAME never breaks: `.qt-doc-line-
-     name` is untouched, which is the whole of the rule. */
-  .qt-doc-lines th,
-  .qt-doc-lines td {
-    padding: var(--s-3) var(--s-1);
-  }
-  .qt-doc-lines td.qt-col-amt {
-    font-size: var(--t-mono-size);
-  }
-  .qt-doc-detail {
-    overflow-wrap: anywhere;
-  }
-}
-
-/* ============================================================
-   A4 — RESTATED AGAIN, AND THIS BLOCK IS NOW THE LAST ONE.
-
-   Everything above that paper had already answered differently is
-   answered here, after it, where nothing wins by source order. The
-   figures are this file's own printed scale — 10pt body, 9pt data,
-   7.5pt labels, 22pt subject, 55mm photograph — carried on to the
-   two things the screen has newly changed, the letterhead and the
-   note. Nothing below sets a colour.
-   ============================================================ */
-@media print {
-  /* the letterhead, in points. 28px on screen is 20pt at this
-     document's 10pt/14px scale; 18pt keeps it clearly under the
-     22pt the boat is named at, which is the order the page reads
-     in. */
-  .qt-doc-org {
-    font-size: 18pt;
-  }
-
-  /* the money box's measure in the page's own unit. 420px is 54% of
-     the screen sheet's 782px measure; 98mm is 54% of the 182mm an
-     A4 page has left inside a 14mm margin, so the rules start in
-     the same place on paper as on screen. */
-  .qt-money-rows {
-    width: 98mm;
-    max-width: 100%;
-  }
-  .qt-money-row--tax {
-    padding-top: 2mm;
-  }
-  .qt-money-row--tax dd {
-    font-size: 8.5pt;
+    padding: 2mm 3mm;
   }
 
   .qt-doc-note {
     margin-top: 5mm;
     padding-top: 3mm;
-    font-size: 9pt;
   }
-  .qt-doc-note-say {
-    margin-top: 1.5mm;
-    font-size: 9pt;
+
+  .qt-doc-foot {
+    margin-top: 10mm;
+    padding-top: 2mm;
   }
 
   .qt-doc-loose .qt-doc-line:first-child td {
     padding-top: 5mm;
   }
 
-  /* A DOCUMENT DOES NOT END ON ITS OWN SECOND PAGE. The rig, the
-     money box, the title block and the subject were already held
-     together; the note and the closing rule were not, so a quote
-     that broke near the foot could put the dealer's conditions on
-     one page and the date and reference that identify them on the
-     next. Three lines is the smallest fragment worth a page
+  /* WHERE THE PAPER MAY BREAK. A total orphaned onto its own page
+     is how a document stops looking like a document — and a
+     document does not end on its own second page either, which is
+     why the note and the closing rule are held together with the
+     rest. Three lines is the smallest fragment worth a page
      anywhere on it. */
+  .qt-doc-line,
+  .qt-money,
+  .qt-doc-head,
+  .qt-doc-subject,
+  .qt-unpriced,
   .qt-doc-note,
   .qt-doc-foot {
     break-inside: avoid;
   }
+
+  .qt-doc-lines thead {
+    display: table-header-group;
+  }
+
   .qt-doc {
     orphans: 3;
     widows: 3;
   }
-}
 
-/* ============================================================
-   WHAT THE PAGE SAYS WHEN NOBODY IS LOOKING AT IT — and the
-   picker row that could not be read at all.
-
-   Appended, and this block obeys the rule the two above it set:
-   the screen values first, then ONE print block at the very foot
-   of the file restating every one of them that paper had already
-   chosen a different answer for. Nothing may be appended after
-   that block without doing the same.
-   ============================================================ */
-
-/* ------------------------------------------------------------
-   SAID, NOT DRAWN.
-
-   A strike-through is a picture of a fact. `.qt-was` draws it on
-   three surfaces — the document, the line row and the re-read diff
-   — and every reading that is not a sighted reading got two bare
-   figures in one cell: "$310, $240", with nothing to say which one
-   is being charged. On a quotation that is two prices.
-
-   Commit ce85394 answered the identical failure one screen over
-   ("The refusal was invisible to anyone who could not see the
-   strike-through") and this is the same remedy in the same shape:
-   the words go in the row, clipped off-screen by the standard clip
-   rather than `display:none` or `visibility:hidden`, both of which
-   would take them out of the accessibility tree — the one place
-   they have to be. Sighted readers lose nothing; the strike, the
-   ink tier and the layout are untouched, because the span is out of
-   flow and one pixel wide.
-
-   It is also what a copy-paste into an email carries, which on this
-   feature is not a hypothetical audience.
-   ------------------------------------------------------------ */
-.qt-aloud {
-  position: absolute;
-  /* AND IT IS PINNED, WHICH THE STANDARD CLIP IS NOT. Left at its
-     static position the box sits where the words would have been —
-     which for these three sites is the right edge of a right-aligned
-     money column at the right edge of the sheet. Measured under print
-     emulation, where `.qt-doc` is itself `position: absolute` and is
-     therefore the containing block: `scrollWidth` went 688 → 717
-     against a 688px page, at 420, 688, 880 and 1280 of window alike —
-     29px of a customer's document hanging off the side of the paper,
-     from two spans nobody can see. On screen it measured 0 at all four
-     widths, which is exactly why it would have shipped. `left: 0`
-     keeps the vertical static position and takes the horizontal one
-     to the sheet's own edge. */
-  left: 0;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  border: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
-
-/* ------------------------------------------------------------
-   THE TITLE BLOCK'S FIGURES WERE THE ONLY ONES ON THE DOCUMENT
-   THAT WERE NOT TABULAR.
-
-   Measured under print emulation at A4 less its margins:
-   `.qt-plate-val` computed `font-variant-numeric: normal`. Every
-   other figure on the page carries `tabular-nums` — `.qt-num` and
-   `.qt-total` from the base, `.qt-col-amt`, `.qt-col-qty` and
-   `.qt-doc-spec-val` from the first appearance pass — and the two
-   values in the plate, a date and a quote number, are the pair the
-   reader's eye runs down first. DESIGN_CONTRACT §11: every figure
-   is `var(--font-mono)` with `tabular-nums`. It already had the
-   face; it did not have the figures.
-
-   AND THE PLATE PRINTED AT THE WRONG SIZE, by the trap this file
-   has now paid for three times. The print block chose 9pt for
-   `.qt-plate-val`; the appearance pass that followed it wrote
-   `font-size: var(--t-mono-size)` at equal specificity and later in
-   source, so on paper the plate set at 13px — 9.75pt — beside a 9pt
-   line table. Restated in the print block at the foot of this file,
-   where nothing can come after it.
-   ------------------------------------------------------------ */
-.qt-plate-val {
-  font-variant-numeric: tabular-nums;
-}
-
-/* ------------------------------------------------------------
-   THE PICKER'S MONEY COLUMN DID NOT HOLD ITS PLACE.
-
-   `.qt-pick` is a five-track grid drawn once per candidate, and two
-   of its cells were conditional: the star, and the mark on a row
-   that is already on the quote or was reached past the narrowing.
-   Every row therefore sized its own tracks from its own content.
-
-   MEASURED at 1100px of window, two candidates in one list:
-   with a mark on one row and not the other, the two prices sat at
-   x 731 and x 818 — 87px apart in a column of money. With the star
-   cell dropped on an un-starred row, the name fell into the star's
-   own track and that row's price moved 298px, to x 520. The
-   stylesheet already carries the argument, on `.qt-star`, for the
-   sibling grid `.qt-line-main`: "Money that does not line up is the
-   one thing mono type is here to prevent (DESIGN_PRINCIPLES §2)."
-
-   THE FIX IS THAT EVERY ROW IS NOW FOUR CELLS WIDE. The star cell
-   is always drawn at its icon's own 11px and the star inside it is
-   what is conditional; the two marks moved into the name's cell,
-   where they belong anyway — they are facts about the candidate,
-   and CONFIGURATOR_PLAYBOOK §5 puts a reason in the row beside the
-   thing it is about. The two `fr` tracks then resolve from the same
-   free space on every row, so the prices line up whatever a row has
-   to say.
-   ------------------------------------------------------------ */
-.qt-pick {
-  grid-template-columns: 11px minmax(140px, 1fr) minmax(0, 1.2fr) 110px;
-}
-
-/* both are shrinkable children of a grid track that will not grow
-   for them — DESIGN_CONTRACT §11, "every shrinkable child carrying
-   `min-width: 0`". Without it a long model name overflows its own
-   cell and paints across the facts beside it. */
-.qt-pick-name,
-.qt-pick-facts {
-  min-width: 0;
-}
-
-/* IT IS A SENTENCE, so it is sentence case and Inter — the argument
-   `.qt-pick-outside` above already makes for its neighbour, and
-   this tag was wearing `mono-label` and being stamped
-   "ON THE QUOTE". DESIGN_CONTRACT §3 names a sentence as one of the
-   four things uppercase may never be.
-
-   `--ink-soft` rather than the faint tier, because this is the
-   sentence that explains why the row will not act, and
-   CONFIGURATOR_PLAYBOOK §5 puts a refusal's reason at `--ink-soft`
-   on the plain surface. Measured over the picker's own composited
-   ground (233,239,246): 6.99:1. */
-.qt-pick-on {
-  margin-left: var(--sp-2);
-  font-family: var(--font-ui);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-  white-space: nowrap;
-  color: var(--ink-soft);
-}
-
-/* ============================================================
-   A4 — RESTATED, AND THIS BLOCK IS NOW THE LAST ONE.
-
-   One value: the plate, which paper had already measured at 9pt
-   and which the appearance pass above the print blocks had taken
-   back to 13px. Nothing here sets a colour.
-   ============================================================ */
-@media print {
-  .qt-plate-val {
-    font-size: 9pt;
-  }
-}
-
-/* ============================================================
-   NARROWING THE LIST — the diary's own toolbar.
-
-   It is the width of the list it narrows, not the width of the
-   page: a field floating at the left margin of a 1440px window
-   over a centred 880px list reads as belonging to the chrome
-   rather than to the rows, and the board next door gets away with
-   a full-bleed toolbar only because its columns are full-bleed
-   too.
-   ============================================================ */
-
-.qt-tools {
-  display: flex;
-  /* the search is a labelled `Field` — a label over a box — and the
-     count beside it lines up with the BOX, which is the bottom of
-     the row. The board's own toolbar argues the same thing. */
-  align-items: flex-end;
-  gap: var(--sp-3);
-  max-width: 880px;
-  margin: 0 auto var(--sp-3);
-}
-
-.qt-find {
-  width: 280px;
-}
-
-.qt-found {
-  margin: 0;
-  padding-bottom: var(--sp-2);
-  color: var(--ink-soft);
-  font-variant-numeric: tabular-nums;
-}
-
-/* THE REFUSAL TAKES THE LIST'S OWN PLACE, not a corner of it — a
-   sentence explaining an empty list belongs where the list was. */
-.qt-none-found {
-  max-width: 880px;
-  margin: 0 auto;
-  padding: var(--sp-6) var(--sp-4);
-  color: var(--ink-soft);
-  text-align: center;
-}
-
-@media (max-width: 720px) {
-  .qt-find {
-    flex: 1 1 auto;
-    width: auto;
-    min-width: 140px;
-  }
-}
-
-/* ============================================================
-   THE PICTURE COLUMN ON THE QUOTATION.
-
-   A fixed track, so a line with a photograph and a line without
-   put their descriptions in the same place down the page —
-   `FrozenPhoto` returns null for any address it cannot fetch, and
-   on a real quote that is most accessory lines. A column that
-   sized to its content would set the description's left edge from
-   whichever rows happened to have pictures.
-
-   THE MAT IS THE PAPER, NOT A PLATE. Every other well in this app
-   draws a deliberate surface under a missing picture; this
-   document does not, and that is `photo.tsx`'s rule rather than an
-   omission: on the page a customer is handed, an absent picture is
-   absent. Nothing hatched, nothing grey, nothing to explain.
-   ============================================================ */
-.qt-col-pic {
-  width: 108px;
-  padding-right: var(--sp-3);
-}
-
-.qt-doc-pic {
-  display: block;
-  width: 96px;
-  height: 60px;
-  /* CONTAIN, as everywhere. A cropped hull is a hull with its bow
-     cut off, and this is the copy the bow gets looked at on. */
-  object-fit: contain;
-  object-position: left center;
-  border-radius: 3px;
-}
-
-/* the heading over it is for a screen reader only — a column of
-   thumbnails needs no label, and "Photo" printed over them is a
-   word on a quotation doing nothing */
-.qt-sr {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-/* ON A NARROW PAGE THE PICTURE GOES BEFORE THE WORDS DO. At 430px
-   the rig has four columns in about 330px of paper; a 108px track
-   is a third of it, and the description — which carries the name,
-   the join's facts and any override — is what a customer reads.
-   The photograph is the first thing that can be spent.
-
-   A NAMED CONTAINER ON THE SHEET, which is the right question to
-   ask: this document is 880px of paper centred in whatever the
-   window is, so it is the PAPER's width that decides whether a
-   108px track is affordable, not the window's. On a wide screen
-   with a narrow stage they are not the same number. */
-.qt-doc {
-  container: sheet / inline-size;
-}
-
-@container sheet (max-width: 560px) {
-  .qt-col-pic {
-    display: none;
-  }
-}
-
-/* ============================================================
-   THE HERO ON THE CUSTOMER'S COPY WAS CROPPED.
-
-   `object-fit: cover` on `.qt-doc-photo`, in a 300x225 frame — a
-   4:3 box holding a library measured at 1.33 to 1.90. Every other
-   well in this app carries the same sentence and obeys it: a
-   cropped hull is a hull with its bow cut off, and the shape of
-   the hull is the thing a dealer turns the screen around for. The
-   one page a customer keeps was the one place that did not.
-
-   It went unfound for a simple reason: `qa-responsive` never
-   opened this screen. The picture audit that catches exactly this
-   — `cropped · <class>` — has existed since the sweep was written
-   and had ten screens to walk, and the quotation was not one of
-   them. It is now, and it found this at all eight widths.
-
-   SO: CONTAIN, and the frame keeps its own ground, because a
-   contained picture in a 4:3 frame always leaves a mat and a mat
-   that matches the paper reads as the photograph failing to fill.
-   ============================================================ */
-.qt-doc-photo {
-  object-fit: contain;
-  background: var(--paper-sunken);
-}
-
-/* AND THE MAT DOES NOT PRINT. On a screen a contained picture in a
-   4:3 frame needs a ground under its letterbox or the bars read as
-   the image failing to fill. On paper the mat is the paper: a grey
-   panel behind a photograph is ink a dealer is paying for, and it
-   is the first thing their print dialog turns off anyway. */
-@media print {
-  .qt-doc-photo {
-    background: none;
-  }
-}
-
-/* ============================================================
-   AND THE SUBJECT LOCKUP RAN PAST ITS OWN BOX.
-
-   Measured: 695 wide inside 678 at 1024, and 660 inside 520 at
-   834 — so a hundred and forty pixels of the model name, the
-   material and the spec strip were cut off the right of the
-   paper, at the two widths where a dealer most often turns a
-   laptop around.
-
-   The row is `display: flex` with a fixed 300px photograph and a
-   words column beside it, and the words column had no `min-width:
-   0`. A flex item's default `min-width: auto` refuses to shrink
-   below its content, and the content here includes `RU230KAM` set
-   at the marque step and a spec strip of six figures — so the
-   column pushed the row wider than the sheet instead of wrapping
-   inside it. The oldest flexbox fault there is, on the newest
-   part of this page.
-   ============================================================ */
-.qt-doc-subject > * {
-  min-width: 0;
-}
-
-.qt-doc-subject {
-  /* AND IT MAY WRAP, because at 1024 and 834 a 300px photograph and
-     an unbreakable model code genuinely do not share a line. The
-     model is sized against its own column above, so wrapping gives
-     it more room rather than a bigger problem. */
-  flex-wrap: wrap;
-}
-
-/* ============================================================
-   AND THE MODEL CODE IS SIZED BY THE PAPER, NOT THE WINDOW.
-
-   Measured at 390x844: `RU230KAM` set at the marque step came out
-   45.26px and 246px wide inside a 228px sheet — eighteen pixels of
-   the model name off the right of the page a customer is handed.
-   `--t-marque-size` is a `vw` clamp, and `vw` is the window; this
-   document is a fixed sheet centred in whatever the window is, so
-   the two are never the same number and on a phone the sheet is
-   the smaller one.
-
-   A model code is ONE UNBREAKABLE TOKEN — `word-break: keep-all`
-   above says so, and it is right: a cut inside `RU230KAM` cannot
-   be read through. So nothing here can wrap its way out of the
-   problem; the size has to come down.
-
-   `cqi` IS THE RIGHT UNIT AND THE ONLY ONE. One per cent of the
-   sheet's inline size. The clamp keeps both ends on the ramp — its
-   floor is `--t-display-size`'s floor and its ceiling is
-   `--t-marque-size`'s at a laptop — so this is the same ladder
-   read against the right ruler, not a new size invented for a
-   breakpoint. At 390 it resolves to about 31px and the code lays
-   out at 168px inside 228.
-   ============================================================ */
-.qt-doc-subject-id {
-  /* THE COLUMN THE NAME IS ACTUALLY SET IN, which is not the sheet:
-     beside a 300px photograph it is about half of it, and on its own
-     line after a wrap it is all of it. Sizing the model against the
-     SHEET gave it 88px in a 440px column and pushed the whole lockup
-     under the picture at a laptop.
-
-     AND IT MUST GROW INTO WHAT IS LEFT. A zero min-width alone let
-     it shrink to its minimum and stay there: the spec strip came out
-     one figure per line — "OA / Length / 2.3" — beside a third of
-     a page of white. The basis is what decides wrapping: 320px of
-     words earns a line beside the picture, and below that the row
-     wraps and the column takes the whole sheet. */
-  flex: 1 1 320px;
-  min-width: 0;
-  container: idcol / inline-size;
-}
-
-/* SCREEN ONLY, AND THAT WORD IS LOAD-BEARING. This rule was
-   appended to the end of the file, which puts it AFTER the print
-   block — same selector, same specificity, later in source — so it
-   won the cascade on PAPER too and set the model code to 88px
-   where this file intends 22pt.
-
-   Found by rendering the page in print media — which this file has
-   been measured in before (the note at the 688px breakpoint above
-   is from one such run) but which no GUARD does: every automated
-   ruler in this repo walks the screen, so a print regression can
-   only ever be caught by somebody deciding to look.
-
-   The unit is the reason it can only be a screen rule. A `cqi` is
-   one per cent of a container whose width is decided by a window; a
-   sheet of A4 has a width decided by A4, and points are what that
-   asks for. */
-@media screen {
-  .qt-doc-marque-model {
-    font-size: clamp(1.75rem, 17cqi, 5.5rem);
-  }
-}
-
-/* ============================================================
-   THE LETTERHEAD ON A 320px WINDOW.
-
-   `.qt-plate` — the box carrying the date, the reference and who
-   prepared it — holds `min-width: 236px` so its three rows of
-   mono never re-wrap and the quotation always looks the same width
-   across the top. At 320 the sheet is about 158px inside its own
-   padding, so that minimum simply ran past it: measured
-   `qt-doc-head 164>158` and `qt-plate 163>156`.
-
-   The minimum goes below the width where it cannot be honoured.
-   The plate then sizes to its own content, which at this width is
-   the whole column anyway, so the three rows still do not re-wrap
-   — the thing the minimum was protecting survives without it.
-   ============================================================ */
-@container sheet (max-width: 300px) {
-  .qt-plate {
-    min-width: 0;
-    width: 100%;
-  }
-
-  /* AND ITS ROWS STACK. Dropping the minimum gave the plate the
-     column, and the head still ran six pixels over: a row of this
-     plate is a label and a value on one line, and 'PREPARED BY'
-     beside 'Asaf Alazraki' in mono does not fit in 158px however
-     the box around it is sized. The label goes above the value —
-     which is what a label does everywhere else in this app, and
-     only ever sat beside it here because there was room. */
-  .qt-plate-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1px;
+  /* the four places this page carries a colour that means
+     something, told to survive a colour-managed printer */
+  .qt-nil,
+  .is-credit,
+  .qt-unpriced,
+  .qt-doc-sec th {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }
