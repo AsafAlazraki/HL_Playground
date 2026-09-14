@@ -29,10 +29,12 @@ import { useMemo, useState } from 'react'
 import type { ReactElement } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { Field, Marque } from '@/ui'
-import { markOf } from '@/lib/mark'
 import { FrozenPhoto } from '@/features/quote/photo'
 import { doorPicture } from '@/features/dashboard/doors'
+import { ICON_SIZE } from '@/lib/icons'
 import { usePlaces } from '@/features/dashboard/usePlaces'
+import { PlaceMark } from './PlaceMark'
+import type { EntityDef, ImageRef } from '@/types/model'
 import type { Place } from './places'
 import { placeFilters, placesUnder } from './places'
 import './places-screen.css'
@@ -139,6 +141,21 @@ export function PlacesScreen({ onOpen, onSettings, onNew }: PlacesScreenProps): 
                   key={place.key}
                   place={place}
                   cover={covers.get(place.key)}
+                  /* THE PLACE'S OWN MARK, which this screen had been
+                     drawing initials in place of. `ModuleDef.logo`
+                     is uploadable in module settings and
+                     `brandLogos` carries a default per brand;
+                     `PlaceMark` is the one implementation that
+                     resolves the two and falls back to the KIND
+                     rather than to letters. */
+                  logo={modules[place.moduleId]?.logo}
+                  master={
+                    place.tableId
+                      ? entities[place.tableId]
+                      : entities[
+                          modules[place.moduleId]?.tableIds.find((id) => entities[id]) ?? ''
+                        ]
+                  }
                   onOpen={() => onOpen(place.moduleId)}
                   onSettings={() => onSettings(place.moduleId)}
                 />
@@ -154,11 +171,18 @@ export function PlacesScreen({ onOpen, onSettings, onNew }: PlacesScreenProps): 
 function Tile({
   place,
   cover,
+  logo,
+  master,
   onOpen,
   onSettings,
 }: {
   place: Place
   cover: ReturnType<typeof doorPicture>
+  /** the module's own uploaded mark, if it has one */
+  logo: ImageRef | undefined
+  /** the table this card stands for, so the kind fallback is the
+   *  right kind rather than a guess */
+  master: EntityDef | undefined
   onOpen: () => void
   onSettings: () => void
 }): ReactElement {
@@ -167,12 +191,34 @@ function Tile({
       <div className="mo-tile" data-kind={place.kind}>
         <button type="button" className="mo-face" data-press="card" onClick={onOpen}>
           <span className="mo-well m-lit m-grain">
-            {/* The plate is under every tile and the photograph covers
-                it: `FrozenPhoto` draws nothing rather than a broken
-                image, and asking a second time whether it will is a
-                second verdict that can disagree with the first. */}
-            <span className="mo-plate" aria-hidden="true">
-              <span className="t-display mo-mono">{markOf(place.name)}</span>
+            {/* ============================================================
+                THE PLACE'S MARK, NOT ITS INITIALS — AND IT SITS ON
+                THE PHOTOGRAPH RATHER THAN UNDER IT.
+
+                This drew `markOf(place.name)` — "HI" over Highfield
+                Inflatables, "PA" over Parts & Accessories — which is
+                the exact thing `PlaceMark` exists to replace. Its
+                own header says why: initials are a mark that says
+                nothing the name beside it has not already said, while
+                the kind symbol says what SORT of place this is.
+
+                THE FIRST WIRING PUT IT UNDER THE PICTURE, where the
+                plate goes, and every photographed brand covered it —
+                which is to say it drew nothing on the twenty-two
+                places that have a yard shot. The shipped dashboard
+                had this right all along: over the photograph it
+                steps into a chip on the app's own surface, because a
+                wordmark laid straight onto a yard shot is a wordmark
+                nobody can read; with no photograph behind it, it IS
+                the face.
+                ============================================================ */}
+            <span className={cover ? 'mo-mark is-over' : 'mo-mark'}>
+              <PlaceMark
+                logo={logo}
+                name={place.name}
+                master={master}
+                size={cover ? ICON_SIZE.medium : ICON_SIZE.large}
+              />
             </span>
             <FrozenPhoto img={cover} fallbackAlt={place.name} className="mo-img" w={480} h={300} />
             <span className="k-rail mo-rail" aria-hidden="true" />

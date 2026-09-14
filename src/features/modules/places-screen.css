@@ -367,3 +367,54 @@
     max-height: none;
   }
 }
+
+/* ============================================================
+   THE MARK ON A PLACE CARD.
+
+   `PlaceMark` resolves it: the module's own uploaded logo first,
+   then the brand default, then the kind's symbol. This screen had
+   been drawing two letters instead — "HI", "PA", "MT" — which is
+   the one fallback that component's header argues against, because
+   initials say nothing the name under them has not already said.
+
+   TWO STATES, AND THEY ARE DIFFERENT OBJECTS. With no photograph
+   the mark IS the face of the card and takes the middle of the
+   well. Over a photograph it becomes a chip in the corner on the
+   app's own ground, because a wordmark laid straight onto a yard
+   shot is a wordmark nobody can read — the same argument
+   `modules.css` makes about the dashboard tiles, kept in step here
+   rather than re-decided.
+   ============================================================ */
+.mo-mark {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding: var(--s-5);
+  color: var(--kind, var(--fg-secondary));
+}
+
+/* the wordmark fits the slot rather than the slot cropping it */
+.mo-mark :is(img, svg) {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.mo-mark.is-over {
+  inset: auto auto var(--s-2) var(--s-2);
+  display: inline-flex;
+  align-items: center;
+  padding: var(--s-2) var(--s-3);
+  max-width: calc(100% - var(--s-4));
+  max-height: 34px;
+  border: var(--border) solid var(--glass-edge);
+  border-radius: var(--r-control);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
+  box-shadow:
+    inset 0 1px 0 var(--edge-light),
+    var(--e2);
+}

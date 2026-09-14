@@ -44,6 +44,7 @@ import type { ReactElement } from 'react'
 import { MagnifyingGlass, Plus, Receipt } from '@phosphor-icons/react'
 import { ICON_SIZE } from '@/lib/icons'
 import { markOf } from '@/lib/mark'
+import { PlaceMark } from '@/features/modules'
 import { marqueOf } from '@/features/quote/marque'
 import { useProjectStore } from '@/store/useProjectStore'
 import { Button, Marque } from '@/ui'
@@ -123,7 +124,15 @@ export function HomeScreen({ user, ...acts }: HomeScreenProps): ReactElement {
     const withCover = live.map((place) => {
       const module = modules[place.moduleId]
       const ids = place.tableId ? [place.tableId] : (module?.tableIds ?? [])
-      return { place, cover: doorPicture(ids, entities, rowsByEntity) }
+      return {
+        place,
+        cover: doorPicture(ids, entities, rowsByEntity),
+        /* the brand's own mark and the table it stands for, so the
+           band can draw what `PlaceMark` resolves rather than the
+           two letters this screen had been settling for */
+        logo: module?.logo,
+        master: entities[ids.find((id) => entities[id]) ?? ''],
+      }
     })
     return withCover
       .sort((a, b) => {
@@ -262,8 +271,20 @@ export function HomeScreen({ user, ...acts }: HomeScreenProps): ReactElement {
                           carry no photograph at all, and a lit well
                           with nothing in it is a coloured smear. */}
                       <span className="fd-brand-well m-lit">
-                        <span className="fd-brand-plate" aria-hidden="true">
-                          <span className="t-title fd-brand-mark">{markOf(b.place.name)}</span>
+                        {/* THE BRAND'S MARK, ON the photograph. This drew
+                            `markOf` — "HI", "YO", "DT" — while the app
+                            has had `ModuleDef.logo`, a per-brand default
+                            table and one component to resolve them the
+                            whole time. Over a yard shot it steps into a
+                            chip on the app's own surface; with nothing
+                            behind it, it is the face. */}
+                        <span className={b.cover ? 'fd-brand-mark is-over' : 'fd-brand-mark'}>
+                          <PlaceMark
+                            logo={b.logo}
+                            name={b.place.name}
+                            master={b.master}
+                            size={ICON_SIZE.medium}
+                          />
                         </span>
                         <FrozenPhoto
                           img={b.cover}
