@@ -242,7 +242,15 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
                  configured, not a choice anybody can make, so leaving
                  it unlit would be the arc asking for something that
                  cannot be given. */
-              done: !b.decides || b.tables.some((t) => t.step.lines.length > 0),
+              /* A DECISION WITH NOTHING TO DECIDE IS SETTLED. `!b.offers`
+                 is the new clause and `bands.ts` carries the argument:
+                 measured on the seed's first boat, two of five stops had
+                 nothing paired to that hull, so the ring read "4 of 5"
+                 for ever and the complete state could not be reached on
+                 that boat at all. The screen was already saying it in
+                 words at the stop itself; the ring was counting it as
+                 outstanding anyway. */
+              done: !b.decides || !b.offers || b.tables.some((t) => t.step.lines.length > 0),
             })),
             {
               id: HANDOVER_STEP,

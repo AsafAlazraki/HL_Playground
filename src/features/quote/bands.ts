@@ -226,6 +226,22 @@ export interface Band extends BandSpec {
    *  — and opening it would put a read-only line where the first
    *  choice should be. */
   decides: boolean
+  /** WHETHER THERE IS ANYTHING LEFT TO CHOOSE FROM, which is not the
+   *  same question as `decides` and was being answered with it.
+   *
+   *  `decides` asks whether this band is a DECISION at all — a band
+   *  holding only the subject is not. This asks whether the decision
+   *  can still be made: a trailer band on a hull that no trailer is
+   *  paired to is a real decision with an empty list, and the screen
+   *  already says so in words ("this stop has nothing to offer yet").
+   *
+   *  It matters because the completion ring counts outstanding
+   *  decisions. Measured on the seed's first boat: two of the five
+   *  stops offer nothing, so the ring read "4 of 5" for ever, the
+   *  fifth segment implying a choice that does not exist, and the
+   *  complete state — the one moment this screen performs — could
+   *  never be reached on that hull at all. */
+  offers: boolean
   /** where the whole decision stands, in one clause. Never '' */
   fact: string
   /** the head's figure, or null when this band has put no priced
@@ -360,6 +376,16 @@ export function orderBands(
       ...spec,
       tables: placed.map(({ step, kind }) => ({ step, kind })),
       decides: inside.some((step) => !step.subject),
+      /* ALREADY CHOSEN COUNTS AS OFFERED. A band whose only line is
+         the one on the quote still offers something — it offers the
+         chance to change it — so this is `lines OR offered`, not
+         `offered` alone. `unknown` counts too: a section minted
+         before the counts existed cannot be said to offer nothing,
+         and this app does not turn a "cannot tell" into a zero. */
+      offers: (() => {
+        const t = tally(inside)
+        return t.lines.length > 0 || t.offered > 0 || t.unknown > 0
+      })(),
       fact: stateSay(inside),
       amount,
     })

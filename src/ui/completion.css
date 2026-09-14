@@ -172,14 +172,24 @@
   color: var(--fg-tertiary);
 }
 
+/* THE RUNNING TOTAL IS NOT MONO, and this is the third place in
+   the app that has made the same call for the same reason: a
+   monospace comma at 56px opens a full character of gap, so
+   "$4,706" reads as "$4 , 706" — which is what a dealer says it
+   aloud from.
+
+   Mono earns its keep in a COLUMN of money, where the fixed-width
+   digit is what lines the decimals up. This figure is alone on its
+   row with nothing to line up with. `tabular-nums` stays, so the
+   digits themselves stay even as the number ticks. */
 .ui-done-now {
   margin: 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
   font-size: var(--t-figure-xl-size);
-  font-weight: 500;
+  font-weight: 700;
   line-height: 1.02;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.035em;
   color: var(--fg);
 }
 
