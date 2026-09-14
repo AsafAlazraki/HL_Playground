@@ -422,3 +422,51 @@
     border-color: var(--line-strong);
   }
 }
+
+/* ============================================================
+   THE PRIMARY ACTION IS INK, NOT BRASS.
+
+   Driven and photographed rather than remembered: Porsche's
+   "Select a dealer", Polestar's "Return Home", Axopar's whole
+   navigation — every primary control on every premium marine and
+   automotive surface looked at for this rebuild is NEAR-BLACK on
+   white. Not one of them is a brand-coloured block.
+
+   The reason is visible the moment the world turns light: a warm
+   metal at button size is a brown rectangle, and a brown rectangle
+   is the single cheapest-looking object an interface can put on a
+   white page. Brass survives the change — it is still the accent
+   on an eyebrow, an active stop, a mark, a rail — but it is a
+   HAIRLINE metal now rather than a fill.
+
+   `--accent-*` keeps its meaning everywhere else, so nothing
+   downstream has to know. This is the one control that opts out.
+
+   AND IT LIVES HERE, NOT IN `world.css`, for the reason that file
+   states in its own header: a component stylesheet is imported by
+   its component and Vite emits it AFTER the global one, so at
+   equal specificity the local rule wins. Written there first, this
+   never applied — the button stayed brass and the screenshot said
+   so.
+   ============================================================ */
+.ui-btn--primary {
+  background: var(--fg);
+  color: var(--surface-1);
+  box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-btn--primary:hover {
+    background: var(--ink-press-hover);
+  }
+}
+
+.ui-btn--primary:active {
+  background: var(--ink-press-down);
+}
+
+/* and a refused primary stays ink, at the weight a refusal has */
+.ui-btn--primary[aria-disabled='true'] {
+  background: var(--surface-4);
+  color: var(--fg-tertiary);
+}
