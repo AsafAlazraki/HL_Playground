@@ -1,58 +1,57 @@
 /* ============================================================
-   THE PICKER (qp-) — SHOWROOM.
+   THE PICKER (qp-) — SHOWROOM, REBUILT AS A FLOOR.
 
-   EVERY CARD IS THE SAME HEIGHT. The screen this replaces sized
-   each card to its own text and produced six heights in one view —
-   72, 108, 134, 144, 170 and 207px — so a two-line brand name made
-   its whole row taller and a one-line name left a hole under it.
-   The grid rows are `1fr` and the card is a fixed picture over a
-   fixed line budget; nothing here can be sized by its own string.
+   `qp-` was checked against every stylesheet in `src` before use,
+   after `.pk` turned out to have belonged to the app's dropdown
+   since it replaced its two native `<select>`s. A prefix collision
+   does not announce itself; it just draws wrong.
 
-   `qp-` AND NOT `pk-`, WHICH IS NOT A STYLE PREFERENCE. The first
-   draft used `pk-`, and `src/features/picker/picker.css:11` has
-   owned `.pk` since the app replaced its two native `<select>`s:
-   `display: inline-flex`, `align-items: center`, `height:
-   var(--h-md)`, a border and a background. This screen inherited
-   every one of those it did not restate — which is why its groups
-   were shrink-to-fit and its cards came out at nine heights. Two
-   stylesheets fighting over one class is the thing CLAUDE.md warns
-   about, and it does not announce itself; it just draws wrong.
+   THE FIRST SCREEN OF EVERY QUOTE, and the one place in this app
+   where a photograph is doing sales work rather than identifying a
+   part: eighteen places a dealer can start from, each a brand with
+   a boat on the water behind it.
+
+   IT IS SHELVES, like the catalogue and the place screen it leads
+   to. Boats, Motors, Trailers, Accessories — four groups, each a
+   row that scrolls sideways. One grammar across the three Showroom
+   browse screens, so a dealer learns the gesture once.
+
+   AND WHAT CANNOT BE QUOTED IS STILL DRAWN. `qp-offs` is the list
+   of places that refuse, each with the reason beside it. A door
+   that is missing tells a person nothing; a door with a reason on
+   it tells them what to fix. Rule 10: anything that cannot be done
+   says why, where it is.
    ============================================================ */
 
-/* THE PORT. `.surface` is a flex column at inset 0 and `.shell-stage`
-   clips; a screen that does not take `flex: 1 / min-height: 0 /
-   overflow: auto` for itself is not short, it is CUT. */
 .qp {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   min-height: 0;
+  background: var(--bg);
   overflow-y: auto;
+  scroll-padding-top: var(--s-4);
 }
 
-/* The column inside it, so the scrollbar rides the window edge. */
+/* THE COLUMN IS THE WINDOW, NOT A MEASURE. A shelf that stops
+   short of the edge looks like it has ended. The head keeps a
+   measure, because a marque and a search field want one. */
 .qp-col {
   display: flex;
   flex-direction: column;
   gap: var(--section-gap);
-  width: var(--measure);
-  margin: 0 auto;
-  padding: var(--section-gap) var(--gutter) var(--s-16);
+  padding: var(--section-gap) 0 var(--s-16);
   container-type: inline-size;
 }
 
-/* -- the ask --------------------------------------------------- */
+/* -- the question ---------------------------------------------- */
 
-/* THE QUESTION IS THE MARQUE, and that is the whole reason this
-   header is a column and not a row. Showroom asks for >=6x scale
-   contrast; the screen this replaces measured 3.68x with a 40px
-   hero over 11px captions, and a 40px heading cannot reach 6x over
-   an 11px floor at any width. At the marque step it is 75.5px at
-   1280 — 6.9x — and at that size a search field cannot sit beside
-   it without one of the two being squeezed. So the ask has the row
-   to itself and the finding tool has the next one. */
 .qp-head {
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
+  margin-inline: var(--gutter);
+  max-width: var(--measure);
 }
 
 .qp-head-say {
@@ -62,9 +61,15 @@
   min-width: 0;
 }
 
+/* THE SCREEN ASKS A QUESTION AND THE QUESTION IS THE MARQUE. "What
+   are you quoting?" is the only heading in this app that is a
+   sentence, and it earns it: this is the one screen where the app
+   speaks first. */
 .qp-ask {
   margin: 0;
   color: var(--fg);
+  overflow-wrap: normal;
+  word-break: keep-all;
 }
 
 .qp-sub {
@@ -76,15 +81,16 @@
   display: flex;
   align-items: flex-end;
   gap: var(--s-3);
-  width: min(100%, 42ch);
   min-width: 0;
 }
 
 .qp-head-do > :first-child {
-  flex: 1 1 auto;
+  flex: 0 1 42ch;
   min-width: 0;
 }
 
+/* the control that clears the search — quiet, square, and only
+   ever beside a field with something in it */
 .qp-shut {
   flex: 0 0 auto;
   display: grid;
@@ -93,7 +99,7 @@
   height: var(--input-h);
   border: var(--border) solid var(--line);
   border-radius: var(--r-control);
-  background: var(--surface-1);
+  background: var(--surface-2);
   color: var(--fg-secondary);
   cursor: pointer;
   transition:
@@ -101,20 +107,15 @@
     color var(--d-press) var(--ease-out);
 }
 
-.qp-shut svg {
-  width: 16px;
-  height: 16px;
-}
-
 @media (hover: hover) and (pointer: fine) {
   .qp-shut:hover {
-    background: var(--surface-3);
+    background: var(--surface-4);
     color: var(--fg);
   }
 }
 
 .qp-shut:active {
-  transform: scale(0.97);
+  transform: scale(0.94);
 }
 
 .qp-shut:focus-visible {
@@ -123,68 +124,103 @@
 }
 
 .qp-none {
-  margin: 0;
+  margin: 0 var(--gutter);
   color: var(--fg-secondary);
 }
 
-/* -- a group --------------------------------------------------- */
+/* -- a group ---------------------------------------------------- */
 
 .qp-group {
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
+  gap: var(--s-3);
+  scroll-margin-top: var(--s-4);
 }
 
-/* The module's own name, as a group caption — which is one of the
-   three places rule 3 allows uppercase. */
+/* EVERY GROUP BUT THE FIRST SNAPS — the catalogue's own
+   measurement: a snap target a little way down a freshly-opened
+   page is inside the proximity threshold and the browser scrolls
+   there before anybody touches the wheel. The top of a document
+   must always be somewhere it can sit. */
+.qp {
+  scroll-snap-type: y proximity;
+}
+
+.qp-group ~ .qp-group {
+  scroll-snap-align: start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qp {
+    scroll-snap-type: none;
+  }
+}
+
 .qp-group-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   align-items: baseline;
   gap: var(--s-3);
-  margin: 0;
-  padding-bottom: var(--s-2);
+  margin: 0 var(--gutter);
+  padding: var(--s-3) 0 var(--s-2);
   border-bottom: var(--border) solid var(--line-subtle);
+  background: var(--bg);
+  backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
 }
 
 .qp-group-name {
-  color: var(--fg-tertiary);
+  color: var(--accent);
 }
 
-/* --fg-tertiary AND NOT --fg-quaternary, which this was, and it
-   measured 2.44:1 in the app. system.css says it outright at the
-   ink table: quaternary "does NOT clear 4.5 ... never a word that
-   matters". A count of places is a word that matters. */
+/* --fg-tertiary and not quaternary: quaternary measured 2.44:1
+   here, and a count is a word that matters. */
 .qp-group-count {
   color: var(--fg-tertiary);
 }
 
-/* -- the grid -------------------------------------------------- */
+/* -- the shelf --------------------------------------------------- */
 
+/* WIDER CARDS THAN THE CATALOGUE'S, and deliberately. These are
+   lifestyle photographs — a boat on the water with people on it —
+   rather than a cut-out hull, and a 16:10 crop of open water at
+   248px is a blue rectangle. This is the one screen whose pictures
+   are selling rather than identifying. */
 .qp-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(248px, 100%), 1fr));
-  /* EQUAL HEIGHT, and this is the line that does it. */
-  grid-auto-rows: 1fr;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(300px, 360px);
+  align-items: stretch;
   gap: var(--s-4);
   margin: 0;
-  padding: 0;
+  padding: var(--s-1) var(--gutter) var(--s-4);
   list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: var(--gutter);
+  scrollbar-width: thin;
 }
 
 .qp-cell {
   display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
   min-width: 0;
+  scroll-snap-align: start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qp-grid {
+    scroll-snap-type: none;
+  }
 }
 
 .qp-card {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 0;
   width: 100%;
-  height: 100%;
   padding: 0;
   border: var(--border) solid var(--line);
   border-radius: var(--r-card);
@@ -207,73 +243,69 @@
   }
 }
 
-/* A card presses at 0.994 and loses its lift — 0.97 on a 248px card
-   is a 7px shrink and reads as a glitch. The scale is the system's
-   own `[data-press="card"]` rule; this drops the shadow with it. */
-.qp-card:active {
-  box-shadow: var(--e1);
-}
-
 .qp-card:focus-visible {
   outline: var(--border-strong) solid var(--accent);
   outline-offset: 2px;
 }
 
-/* -- the picture ----------------------------------------------- */
+/* -- the picture -------------------------------------------------- */
 
-/* THE WELL IS A MAT, and it is what shows through when a place has
-   no stock with a photograph. The same argument the product stage
-   makes: `FrozenPhoto` draws nothing rather than a broken image, so
-   the ground under it has to be a surface and not a hole. */
+/* THE WELL IS A LIT SWEEP, declared here rather than in
+   `world.css`: a component stylesheet is emitted after the global
+   one and beats it at equal specificity. Tokens belong there, the
+   drawing belongs here.
+
+   A LIFESTYLE SHOT FILLS IT AND A CUT-OUT DOES NOT, which is why
+   the sweep matters on this screen too: half these doors have a
+   boat on the water and half have a hull on white, and the plate
+   underneath makes them the same kind of object. */
 .qp-well {
-  --mat: linear-gradient(180deg, var(--surface-3) 0%, var(--bg-sunken) 100%);
   position: relative;
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 9;
   flex: 0 0 auto;
-  background: var(--mat);
-  border-bottom: var(--border) solid var(--line-subtle);
   overflow: hidden;
+  background: radial-gradient(
+    86% 74% at 50% 24%,
+    var(--sweep-hi) 0%,
+    var(--sweep-mid) 54%,
+    var(--sweep-lo) 100%
+  );
+  box-shadow: inset 0 -1px 0 var(--sweep-seam);
 }
 
-/* THE PLATE — the well when there is nothing to photograph. A tint
-   of the place's OWN kind, which §3 allows because the plate is the
-   place and the place has that kind. The mark on it is ink, not
-   hue: a figure or a name is never a colour. */
 .qp-plate {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, var(--kind, transparent) 10%, var(--surface-2));
+  background: color-mix(in srgb, var(--kind, var(--accent)) 8%, var(--sweep-mid));
 }
 
 .qp-mono {
-  color: var(--fg-secondary);
+  color: color-mix(in srgb, var(--kind, var(--accent)) 60%, var(--sweep-ink));
   font-family: var(--font-display);
   letter-spacing: 0.04em;
 }
 
-/* THE PHOTOGRAPH COVERS THE PLATE — which is why it carries the mat
-   as its own background rather than letting the plate show through
-   the letterbox `contain` leaves above and below a wide hull. */
+/* COVER, AND THIS IS THE ONE PLACE IT IS RIGHT. Everywhere else in
+   this app `contain` is the rule, because a cropped hull is a hull
+   with its bow cut off and the shape of the hull is the thing
+   being sold. These are lifestyle photographs of open water: there
+   is no bow to protect, the subject is the scene, and letterboxing
+   a horizon inside a card is what makes a brochure look like a
+   database. */
 .qp-img {
   position: absolute;
   inset: 0;
   display: block;
   width: 100%;
   height: 100%;
-  background: var(--mat);
-  /* CONTAIN. A cropped hull is a hull with its bow cut off. */
-  object-fit: contain;
+  object-fit: cover;
+  filter: saturate(1.04) contrast(1.02);
 }
 
-/* THE KIND, AS IDENTITY. A full-height rail on the picture's own
-   edge — §3 lets a hue carry a surface, and this one is on a thing
-   that HAS that kind rather than on a heading it sits under. The
-   screen this replaces washed whole cards blue, cream and pink by
-   the module above them, which is decoration keyed to a category. */
 .qp-rail {
   position: absolute;
   inset: 0 auto 0 0;
@@ -282,38 +314,20 @@
   background: var(--kind, var(--line));
 }
 
-/* -- the words ------------------------------------------------- */
+/* -- the words ---------------------------------------------------- */
 
-/* ============================================================
-   A FIXED LINE BUDGET, WHICH IS WHAT MAKES THE GRID A GRID.
-
-   `grid-auto-rows: 1fr` equalises the cards in ONE grid, and every
-   module heading starts a new one — so with the text block sized by
-   its own string, the screen measured NINE card heights across nine
-   groups: 257 · 266 · 269 · 270 · 280 · 304 · 310 · 321 · 378.
-
-   The budget is two lines of name and two of census. The census is
-   two because it wraps at the narrow end of the column, and a slot
-   sized for the wide end hides the second half of a sentence with
-   no ellipsis to say it did — a silent truncation is worse than a
-   line of air. `lh` is the element's own line box, so the reservation
-   moves with the type step rather than restating it in pixels, and
-   the well above is a ratio of a column that is the same width in
-   every group. Four lines and a ratio is one height, everywhere.
-   ============================================================ */
 .qp-say {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--s-1);
   flex: 1 1 auto;
-  padding: var(--s-3) var(--s-4);
+  padding: var(--s-4);
   min-width: 0;
 }
 
 .qp-name {
   color: var(--fg);
   min-width: 0;
-  /* Nothing truncates mid-word: a brand is a proper noun. */
   overflow-wrap: normal;
   word-break: keep-all;
   min-height: 2lh;
@@ -321,42 +335,29 @@
   overflow: hidden;
 }
 
-/* A REFUSAL IS NOT DRAWN ON A CARD: those places are not cards at
-   all, they are the rows at the foot of the screen, where a
-   two-sentence reason has room to be a reason. */
 .qp-say-count {
   margin-top: auto;
-  padding-top: var(--s-2);
-  min-height: calc(2lh + var(--s-2));
-  max-height: calc(2lh + var(--s-2));
-  overflow: hidden;
   color: var(--fg-tertiary);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
 /* ============================================================
-   THE PLACES THAT CANNOT START A QUOTE.
+   AND THE PLACES THAT REFUSE.
 
-   Five of the nine modules are browse-only and one table is
-   history, and every one of their reasons is two sentences: "Parts
-   & Accessories is for browse, search and open one. Turn Quote on
-   in its settings and anything in it can start one." That is a
-   good refusal — it names the setting — and it cannot live in a
-   card's one-line slot without being cut in half.
-
-   So they are rows. A row is a fact about the business; a card at
-   320px with a photograph is an offer, and drawing an offer that
-   refuses the click is the dead control the UX audit names. The
-   kind rail is still on them: they are still boats and trailers.
+   Not hidden, and not greyed out with no explanation: each one
+   carries the reason it cannot start a quote, in the operator's
+   own words, beside its own name. A door that is simply absent
+   tells a person nothing — this tells them what to fix, which is
+   rule 10 and the thing `LeftOutList` does for the configurator.
    ============================================================ */
-
 .qp-offs {
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
-  margin: 0;
+  margin: 0 var(--gutter);
   padding: 0;
+  max-width: var(--measure);
   list-style: none;
 }
 
@@ -364,71 +365,70 @@
   position: relative;
   display: flex;
   align-items: baseline;
-  gap: var(--s-5);
+  gap: var(--s-4);
   padding: var(--s-3) var(--s-4) var(--s-3) var(--s-5);
   border: var(--border) solid var(--line-subtle);
   border-radius: var(--r-card);
-  background: var(--surface-2);
+  background: var(--surface-rest);
+  overflow: hidden;
 }
 
 .qp-off-rail {
   position: absolute;
-  inset: var(--s-2) auto var(--s-2) 0;
+  inset: 0 auto 0 0;
   width: 3px;
   border: 0;
   background: var(--kind, var(--line));
+  opacity: 0.5;
 }
 
 .qp-off-say {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
+  gap: 1px;
   flex: 1 1 auto;
   min-width: 0;
 }
 
 .qp-off-name {
   color: var(--fg-secondary);
+  overflow-wrap: normal;
+  word-break: keep-all;
 }
 
+/* THE REASON KEEPS ITS OWN CASE. Uppercasing content is lossy and
+   a refusal is content. */
 .qp-off-why {
   color: var(--fg-tertiary);
-  max-width: 78ch;
+  max-width: 68ch;
 }
 
 .qp-off-count {
   flex: 0 0 auto;
-  /* 2.58:1 on --fg-quaternary over this row's own surface. */
-  color: var(--fg-tertiary);
+  color: var(--fg-quaternary);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
-/* -- narrow ---------------------------------------------------- */
+/* ============================================================
+   AND ON A SMALL WINDOW IT IS THE SAME SHELVES, one step narrower.
+   ============================================================ */
+@container (max-width: 620px) {
+  .qp-grid {
+    grid-auto-columns: minmax(260px, 300px);
+  }
 
-@container (max-width: 640px) {
-  /* The census leaves the row rather than squeezing the reason —
-     a count is the least of what a refusal has to say. */
+  .qp-head-do {
+    flex-wrap: wrap;
+  }
+
+  .qp-head-do > :first-child {
+    flex: 1 1 100%;
+  }
+
   .qp-off {
     flex-direction: column;
-    align-items: stretch;
-    gap: var(--s-2);
-  }
-}
-
-
-/* ============================================================
-   THE LINE BUDGET IS OFF WHEN THE GRID IS ONE COLUMN.
-
-   Two reserved lines of name is what makes a ROW of cards equal,
-   and a row of one is already equal. Below the width where
-   `.qp-grid` folds to a single track, the reservation is just a
-   blank line under every name — which on a phone is the scarcest
-   space there is.
-   ============================================================ */
-@container (max-width: 520px) {
-  .qp-name {
-    min-height: 0;
-    max-height: none;
+    align-items: flex-start;
+    gap: var(--s-1);
   }
 }

@@ -1,15 +1,27 @@
 /* ============================================================
-   ONE PLACE, OPEN (pl-) — SHOWROOM.
+   ONE PLACE, OPEN (pl-) — SHOWROOM, REBUILT AS A FLOOR.
 
-   `pl-` was checked against every stylesheet in `src` before it was
-   used, and so was `qp-` after `.pk` turned out to have belonged to
-   the app's dropdown since it replaced its two native `<select>`s.
-   A prefix collision does not announce itself; it just draws wrong.
+   `pl-` was checked against every stylesheet in `src` before it
+   was used, and so was `qp-` after `.pk` turned out to have
+   belonged to the app's dropdown since it replaced its two native
+   `<select>`s. A prefix collision does not announce itself; it
+   just draws wrong.
 
-   THE COLUMN IS THE SAME SHAPE AS THE PICKER'S because it is the
-   same act one step further in: a port that scrolls, a column with
-   a measure inside it, a marque, and a grid of equal cards. What is
-   different is the bar at the foot, which is outside the port.
+   THIS IS THE CATALOGUE'S SHAPE, one step further in, because it
+   is the same act: a dealer looking along a brand's range. Seven
+   series are seven SHELVES that scroll sideways, so the shape of
+   the brand is visible at a glance rather than nine screens apart.
+   The difference is the foot — this screen commits to something
+   and the catalogue does not.
+
+   THE COMMIT SURFACE IS A CARD, NOT A BAR. The owner's words:
+   "I don't like the solid bar at the bottom of the quote, let's
+   use cards and shadows". It keeps the one good argument the bar
+   had — a sibling of the scrollport rather than an overlay, so
+   nothing scrolls behind the control a person is reaching for —
+   and it takes the accent on its edge the moment something is
+   picked, which is the same signal the completion card gives one
+   screen later. Two surfaces, one idea.
    ============================================================ */
 
 .pl {
@@ -17,30 +29,33 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  background: var(--bg);
   /* NAMED, because the commit card is a sibling of the scrollport
-     and not inside `.pl-col` — so the column container that every
-     other narrow rule on this screen uses cannot reach it. An
-     unnamed container here would also be the nearest ancestor for
-     rules meant for the column. */
+     and not inside `.pl-col` — so the column container every other
+     narrow rule on this screen uses cannot reach it, and an
+     unnamed one here would become the nearest ancestor for those
+     rules too. */
   container: place / inline-size;
 }
 
-/* THE PORT. `.shell-stage` is `overflow: hidden` and hands every
-   stage a box of exactly the window's height, so a screen that does
-   not scroll inside itself is not short — it is CUT. */
+/* `.shell-stage` is `overflow: hidden` and hands every stage a box
+   of exactly the window's height, so a screen that does not scroll
+   inside itself is not short — it is CUT. */
 .pl-port {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  scroll-padding-top: var(--s-4);
 }
 
+/* THE COLUMN IS THE WINDOW, NOT A MEASURE. A shelf that stops
+   short of the edge looks like it has ended. The head keeps a
+   measure, because a marque and a search field want one. */
 .pl-col {
   display: flex;
   flex-direction: column;
   gap: var(--section-gap);
-  width: var(--measure);
-  margin: 0 auto;
-  padding: var(--section-gap) var(--gutter) var(--s-10);
+  padding: var(--section-gap) 0 var(--s-10);
   container-type: inline-size;
 }
 
@@ -50,6 +65,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
+  margin-inline: var(--gutter);
+  max-width: var(--measure);
 }
 
 .pl-head-say {
@@ -96,6 +113,8 @@
 .pl-marque {
   margin: 0;
   color: var(--fg);
+  overflow-wrap: normal;
+  word-break: keep-all;
 }
 
 .pl-sub {
@@ -109,59 +128,98 @@
 }
 
 .pl-none {
-  margin: 0;
+  margin: 0 var(--gutter);
   color: var(--fg-secondary);
 }
 
-/* -- a series -------------------------------------------------- */
+/* -- a series --------------------------------------------------- */
 
 .pl-series {
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
+  gap: var(--s-3);
+  scroll-margin-top: var(--s-4);
+}
+
+/* EVERY SERIES BUT THE FIRST SNAPS — the catalogue's own
+   measurement: a snap target 83px down a freshly-opened page is
+   inside the proximity threshold and the browser scrolls there
+   before anybody touches the wheel, cutting the marque in half.
+   The top of a document must always be somewhere it can sit. */
+.pl-port {
+  scroll-snap-type: y proximity;
+}
+
+.pl-series ~ .pl-series {
+  scroll-snap-align: start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pl-port {
+    scroll-snap-type: none;
+  }
 }
 
 .pl-series-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   align-items: baseline;
   gap: var(--s-3);
-  margin: 0;
-  padding-bottom: var(--s-2);
+  margin: 0 var(--gutter);
+  padding: var(--s-3) 0 var(--s-2);
   border-bottom: var(--border) solid var(--line-subtle);
+  background: var(--bg);
+  backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
 }
 
 .pl-series-name {
-  color: var(--fg-tertiary);
+  color: var(--accent);
 }
 
-/* --fg-tertiary, for the reason picker-screen.css records on its
+/* --fg-tertiary, for the reason `picker-screen.css` records on its
    own group count: quaternary measured 2.44:1 here. */
 .pl-series-count {
   color: var(--fg-tertiary);
 }
 
-/* -- the grid -------------------------------------------------- */
+/* -- the shelf --------------------------------------------------- */
 
 .pl-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(236px, 100%), 1fr));
-  grid-auto-rows: 1fr;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(248px, 288px);
+  align-items: stretch;
   gap: var(--s-4);
   margin: 0;
-  padding: 0;
+  padding: var(--s-1) var(--gutter) var(--s-4);
   list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: var(--gutter);
+  scrollbar-width: thin;
 }
 
 .pl-cell {
   display: flex;
   min-width: 0;
+  scroll-snap-align: start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pl-grid {
+    scroll-snap-type: none;
+  }
 }
 
 /* THE CARD IS THE BUTTON. It held its own colourway chips for one
    draft, which forced it to be a box with a button inside it — and
    measured 295, 452, 483, 514 and 734px in one view, because seven
    chips reading "Dark Grey / Grey / White/Blue" wrap to five rows.
-   The finishes are in the bar now and the card is one control
+   The finishes are in the commit card now and this is one control
    again. */
 .pl-card {
   display: flex;
@@ -190,15 +248,14 @@
   }
 }
 
-/* CHOSEN IS UNMISTAKABLE, which the shipped screen's subtle tint is
-   not — the teardown of the original HelmLogic put its blue border,
-   its tint and its "CLICK TO REMOVE" caption in the column the
-   Playground lost. The ring is the accent and it is two pixels; the
-   card also carries `aria-pressed` on its face, so the state is not
-   colour alone. */
+/* CHOSEN IS UNMISTAKABLE, which the shipped screen's subtle tint
+   was not — the teardown of the original HelmLogic put its blue
+   border, its tint and its "CLICK TO REMOVE" caption in the column
+   the Playground lost. The card also carries `aria-pressed`, so
+   the state is never colour alone. */
 .pl-card.is-mine {
   border-color: var(--accent);
-  box-shadow: 0 0 0 var(--border-strong) var(--accent);
+  box-shadow: var(--glow-sm);
 }
 
 .pl-card:focus-visible {
@@ -206,34 +263,45 @@
   outline-offset: 2px;
 }
 
-/* -- the picture ----------------------------------------------- */
+/* -- the picture -------------------------------------------------- */
 
+/* THE WELL IS A LIT SWEEP, declared here rather than in
+   `world.css`: a component stylesheet is emitted after the global
+   one and beats it at equal specificity. Tokens belong there, the
+   drawing belongs here. It is lit because the seed is white hulls
+   photographed on WHITE, which on a deep floor are bright
+   rectangles — and no blend fixes that, because the hull is white
+   too. */
 .pl-well {
-  --mat: linear-gradient(180deg, var(--surface-3) 0%, var(--bg-sunken) 100%);
   position: relative;
   display: block;
   width: 100%;
   aspect-ratio: 16 / 10;
   flex: 0 0 auto;
-  background: var(--mat);
-  border-bottom: var(--border) solid var(--line-subtle);
   overflow: hidden;
+  background: radial-gradient(
+    86% 74% at 50% 24%,
+    var(--sweep-hi) 0%,
+    var(--sweep-mid) 54%,
+    var(--sweep-lo) 100%
+  );
+  box-shadow: inset 0 -1px 0 var(--sweep-seam);
 }
 
 /* The plate is under every card and the photograph covers it —
-   `FrozenPhoto` draws nothing rather than a broken image, and asking
-   a second time whether it will is a second verdict that can
-   disagree with the first. */
+   `FrozenPhoto` draws nothing rather than a broken image, and
+   asking a second time whether it will is a second verdict that
+   can disagree with the first. */
 .pl-plate {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, var(--kind, transparent) 10%, var(--surface-2));
+  background: color-mix(in srgb, var(--kind, var(--accent)) 8%, var(--sweep-mid));
 }
 
 .pl-mono {
-  color: var(--fg-secondary);
+  color: color-mix(in srgb, var(--kind, var(--accent)) 60%, var(--sweep-ink));
   font-family: var(--font-display);
   letter-spacing: 0.04em;
 }
@@ -244,9 +312,9 @@
   display: block;
   width: 100%;
   height: 100%;
-  background: var(--mat);
   /* CONTAIN. A cropped hull is a hull with its bow cut off. */
   object-fit: contain;
+  filter: saturate(1.05) contrast(1.02);
 }
 
 .pl-rail {
@@ -257,16 +325,16 @@
   background: var(--kind, var(--line));
 }
 
-/* -- the words ------------------------------------------------- */
+/* -- the words ---------------------------------------------------- */
 
-/* A FIXED LINE BUDGET, for the reason the picker's carries one: the
-   grid rows equalise within one grid and every series heading starts
-   another, so a card sized by its own string gives a screen as many
-   heights as it has series. Two lines of name, one of price. */
+/* A FIXED LINE BUDGET, because the cards in one shelf equalise
+   against each other and a card sized by its own string gives a
+   shelf as many heights as it has names. */
 .pl-say {
   display: flex;
   flex-direction: column;
   gap: var(--s-1);
+  flex: 1 1 auto;
   padding: var(--s-3) var(--s-4);
   min-width: 0;
 }
@@ -291,101 +359,77 @@
   overflow: hidden;
 }
 
-/* HOW MANY FINISHES THIS ONE COMES IN — the line that says the card
-   stands for more than one row. Always drawn, empty when it stands
-   for exactly one, because a slot that appears and disappears is a
-   second card height. */
+/* HOW MANY FINISHES THIS ONE COMES IN — the line that says the
+   card stands for more than one row. Always drawn, empty when it
+   stands for exactly one, because a slot that appears and
+   disappears is a second card height. */
 .pl-count {
+  margin-top: auto;
   color: var(--fg-tertiary);
   min-height: 1lh;
   max-height: 1lh;
   overflow: hidden;
 }
 
-/* -- the colourways -------------------------------------------- */
+/* ============================================================
+   THE COMMIT CARD.
 
-.pl-ways {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-1);
-  margin: 0;
-  padding: 0 var(--s-4) var(--s-4);
-  list-style: none;
-}
-
-.pl-way {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--s-1) var(--s-2);
-  border: var(--border) solid var(--line);
-  border-radius: var(--r-chip);
-  background: var(--surface-2);
-  color: var(--fg-secondary);
-  font: inherit;
-  font-size: var(--t-caption-size);
-  cursor: pointer;
-  transition:
-    background var(--d-press) var(--ease-out),
-    border-color var(--d-press) var(--ease-out),
-    color var(--d-press) var(--ease-out);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .pl-way:hover {
-    background: var(--surface-3);
-    color: var(--fg);
-  }
-}
-
-.pl-way:active {
-  transform: scale(0.97);
-}
-
-.pl-way:focus-visible {
-  outline: var(--border-strong) solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* THE CHOSEN FINISH IS SOLID, NOT A WASH OF THE ACCENT. The accent
-   on its own wash is the pairing rule 4 exists to catch — measured
-   in this file's own palette note at 4.16:1 over `--surface-3` and
-   4.41:1 on the strong wash over `--surface-1`. `--accent-fg` is
-   the ink chosen per theme to sit ON the accent (6.12:1 light), so
-   the selected chip takes the accent as a ground and that ink. */
-.pl-way.is-on {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-fg);
-}
-
-/* -- the bar --------------------------------------------------- */
-
-/* OUTSIDE THE PORT, as a sibling of it, so no card can pass behind
-   it. The alternative — padding the scrollport so sticky content
-   clears the bar — is the trap `quote.css` records on `.qt-root`. */
+   Outside the port, as a sibling of it, so no card can pass behind
+   the control a person is reaching for — `quote.css` records what
+   the overlay version costs. What it has that a bar did not is
+   edges, a ground of its own and air around it, with the page
+   ground running past on three sides.
+   ============================================================ */
 .pl-bar {
   display: flex;
   align-items: center;
-  gap: var(--s-6);
+  gap: var(--s-5);
   flex: 0 0 auto;
-  padding: var(--s-4) var(--gutter);
-  border-top: var(--border) solid var(--line);
-  background: var(--surface-1);
+  margin: 0 var(--gutter) var(--s-4);
+  padding: var(--s-4) var(--s-5);
+  border: var(--border) solid var(--glass-edge);
+  border-radius: 18px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
+  box-shadow:
+    inset 0 1px 0 var(--edge-light),
+    var(--e4);
+  transition:
+    border-color var(--d-slow) var(--ease-out),
+    box-shadow var(--d-slow) var(--ease-out);
+}
+
+.pl-bar[data-picked] {
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 1px 0 var(--edge-light),
+    0 0 0 1px var(--accent-line),
+    var(--e4);
+}
+
+/* THE ACTION SITS AT THE END, ALWAYS. This card is three things in
+   a row and the middle one — the strip of colourway renders — only
+   exists once a model with more than one finish is picked. So with
+   nothing picked the button sat in the middle with half the width
+   empty beside it, and then MOVED when a pick arrived. A commit
+   surface must never move the control being reached for; the same
+   argument this file already makes about a second row of chips,
+   along the other axis. */
+.pl-bar > :last-child {
+  margin-left: auto;
+  flex: 0 0 auto;
 }
 
 /* THE CHIPS TAKE THE ROOM LEFT OVER and scroll rather than wrap: a
-   bar that grows a second row of finishes moves the button a person
-   is reaching for, which is the one thing a fixed bar must not do. */
+   card that grows a second row of finishes moves the button. */
 .pl-bar .pl-ways {
   flex: 1 1 auto;
   flex-wrap: nowrap;
   overflow-x: auto;
+  margin-right: var(--s-4);
   padding: var(--s-1) 0;
   min-width: 0;
-}
-
-.pl-bar .pl-way {
-  white-space: nowrap;
 }
 
 .pl-bar-say {
@@ -414,79 +458,6 @@
   color: var(--fg-tertiary);
 }
 
-/* -- narrow ---------------------------------------------------- */
-
-@container (max-width: 640px) {
-  .pl-head-do {
-    width: 100%;
-  }
-}
-
-
-/* ============================================================
-   THE LINE BUDGET IS OFF WHEN THE GRID IS ONE COLUMN.
-
-   Two reserved lines of name is what makes a ROW of cards equal,
-   and a row of one is already equal. Below the width where
-   `.pl-grid` folds to a single track, the reservation is just a
-   blank line under every name — which on a phone is the scarcest
-   space there is.
-   ============================================================ */
-@container (max-width: 520px) {
-  .pl-name {
-    min-height: 0;
-    max-height: none;
-  }
-}
-
-/* ============================================================
-   THE BAR IS A CARD NOW.
-
-   The owner's words about the configurator's foot — "I don't like
-   the solid bar at the bottom of the quote, let's use cards and
-   shadows" — were answered on the configurator and not here, and
-   this is the same strip doing the same job one screen earlier: a
-   full-bleed panel welded to the bottom edge with a 1px rule on
-   top, which reads as chrome the app grew rather than as the thing
-   being committed to.
-
-   IT KEEPS ITS ONE GOOD ARGUMENT. It is still a sibling of the
-   scrollport rather than an overlay on it, so nothing scrolls
-   behind the control a person is reaching for — `quote.css`
-   records what the overlay version costs. What changes is that it
-   now has edges, a ground of its own and air around it, and the
-   page ground runs past it on three sides.
-
-   AND THE EDGE ANSWERS THE PICK. Nothing chosen: a quiet card.
-   Something chosen: the accent on the edge and a ring outside it,
-   which is the same signal the completion card uses one screen
-   later, so the two read as one idea rather than two treatments.
-   ============================================================ */
-.pl-bar {
-  margin: 0 var(--gutter) var(--s-4);
-  padding: var(--s-4) var(--s-5);
-  border: var(--border) solid var(--glass-edge);
-  border-top: var(--border) solid var(--glass-edge);
-  border-radius: 18px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
-  -webkit-backdrop-filter: blur(var(--mat-panel-blur)) saturate(var(--glass-sat));
-  box-shadow:
-    inset 0 1px 0 var(--edge-light),
-    var(--e4);
-  transition:
-    border-color var(--d-slow) var(--ease-out),
-    box-shadow var(--d-slow) var(--ease-out);
-}
-
-.pl-bar[data-picked] {
-  border-color: var(--accent);
-  box-shadow:
-    inset 0 1px 0 var(--edge-light),
-    0 0 0 1px color-mix(in srgb, var(--accent) 34%, transparent),
-    var(--e4);
-}
-
 @media (prefers-reduced-transparency: reduce) {
   .pl-bar {
     background: var(--surface-1);
@@ -502,142 +473,18 @@
 }
 
 /* ============================================================
-   AND THE SERIES SNAP, WITH THEIR NAMES STICKING.
+   AND ON A SMALL WINDOW.
 
-   Seven series of near-identical hulls is the same scroll the
-   catalogue has and the same help it wanted: proximity so a dealer
-   scanning past four series to reach the fifth is never fought,
-   and a heading that stays so they always know which bay they are
-   in. Every series BUT THE FIRST asks — the catalogue's own
-   measurement: a snap target 83px down a freshly-opened page is
-   inside the proximity threshold, and the browser scrolls there
-   before anybody touches the wheel.
-   ============================================================ */
-.pl-port {
-  scroll-snap-type: y proximity;
-  scroll-padding-top: var(--s-4);
-}
+   The shelves keep their shape — the card narrows one step and
+   the window shows fewer. Only the commit card changes, because
+   three things on one row at 366px folded the subject label to
+   five lines about nine characters wide: "Highfield / - /
+   RU230K… / (PVC) / WH", beside one colourway chip and a button.
+   The name of the thing being committed to was the least legible
+   string on the screen.
 
-.pl-series ~ .pl-series {
-  scroll-snap-align: start;
-  scroll-margin-top: var(--s-4);
-}
-
-.pl-series-head {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: var(--bg);
-  backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
-  -webkit-backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
-  padding-top: var(--s-3);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pl-port {
-    scroll-snap-type: none;
-  }
-}
-
-/* ============================================================
-   THE FIRST MODEL OF A SERIES LEADS.
-
-   Same argument as the catalogue's, and the same measured shape:
-   two tracks wide, one row tall, because every render here is a
-   wide top-down hull and `object-fit` is `contain` for a rule
-   nothing overrides. A 2x2 lead letterboxes forty-five per cent of
-   the largest card on the screen.
-
-   `grid-auto-rows: 1fr` is why this one does NOT need
-   `align-self: stretch` and the catalogue's does: these cards are
-   already equal-height by declaration, because nothing on a place
-   card can open underneath itself.
-   ============================================================ */
-.pl-grid {
-  /* DENSE, because the lead spans two tracks and a sparse flow
-     would leave the hole it steps over unfilled. Safe here for the
-     usual reason: these are a SET being browsed, not a sequence
-     being read. */
-  grid-auto-flow: dense;
-}
-
-@container (min-width: 700px) {
-  .pl-cell--lead {
-    grid-column: span 2;
-  }
-
-  .pl-cell--lead .pl-card {
-    position: relative;
-  }
-
-  .pl-cell--lead .pl-well {
-    border-bottom: 0;
-  }
-
-  /* THE NAME ON THE PHOTOGRAPH, opaque where the words are and
-     fading only above them — the catalogue's correction, taken
-     first time here. A hull is white and a scrim that merely
-     tints cannot promise a ratio. */
-  .pl-cell--lead .pl-say {
-    position: absolute;
-    inset: auto 0 0 0;
-    padding: var(--s-12) var(--s-4) var(--s-4);
-    background: linear-gradient(
-      to top,
-      var(--surface-1) 0%,
-      var(--surface-1) 42%,
-      color-mix(in srgb, var(--surface-1) 72%, transparent) 70%,
-      transparent 100%
-    );
-  }
-
-  .pl-cell--lead .pl-name {
-    font-size: var(--t-display-size);
-    font-weight: var(--t-display-weight);
-    line-height: var(--t-display-lead);
-    letter-spacing: var(--t-display-track);
-    min-height: 1lh;
-    max-height: 2lh;
-  }
-}
-
-/* THE ACTION SITS AT THE END OF THE CARD, ALWAYS.
-
-   `.pl-bar` is a flex row of three things and the middle one — the
-   strip of colourways — only exists once a model with more than one
-   finish is picked. So with nothing picked the button landed in the
-   middle of the card with half the width empty beside it, and then
-   MOVED when a pick arrived. A commit surface must never move the
-   control a person is reaching for; that argument is already
-   written above about a second row of chips, and this is the same
-   fault along the other axis.
-
-   The button is the last child, so the auto margin holds it against
-   the right edge whether the strip is there or not. */
-.pl-bar > :last-child {
-  margin-left: auto;
-  flex: 0 0 auto;
-}
-
-/* and it keeps a real gap from the strip even when the strip has
-   run out of room to scroll in */
-.pl-bar .pl-ways {
-  margin-right: var(--s-4);
-}
-
-/* ============================================================
-   AND THE CARD STACKS ON A PHONE.
-
-   Measured at 430x932 with a model picked: three things on one row
-   folded the subject label to five lines about nine characters
-   wide — "Highfield / - / RU230K... / (PVC) / WH" — beside one
-   colourway chip and a button. The name of the thing being
-   committed to was the least legible string on the screen.
-
-   Three rows, in the order a person answers them: WHAT this is,
-   WHICH finish, and then the one action. The strip keeps its own
-   sideways scroll — the sanctioned kind, declared — so the rows
-   above the action never change count and the button never moves.
+   Three rows, in the order a person answers them: what this is,
+   which finish, then the one action.
    ============================================================ */
 @container place (max-width: 680px) {
   .pl-bar {
@@ -662,27 +509,8 @@
   }
 }
 
-/* ============================================================
-   THE PORT ENDS ABOVE THE CARD, NOT UNDER IT.
-
-   Measured at 430x932: "RU250KAM" and "4 finishes" on the second
-   model were reported covered by `.pl-bar`, and the photograph of
-   that hull is visible THROUGH the commit card in the screenshot —
-   which is what glass does when there is content behind it. The
-   card is a sibling of the scrollport and should not have been
-   over anything; `backdrop-filter` establishes a containing block
-   and the port kept running underneath it.
-
-   Reserving the room is the fix that is true either way. If the
-   card is laid out below the port the padding is just scroll
-   space nobody reaches; if it is over the port — which it is —
-   the padding is the reason the last card can be read.
-
-   AND `scroll-padding-bottom` SO KEYBOARD SCROLLING AGREES. A card
-   brought into view by Tab or by the snap should come to rest
-   above the commit surface, not under it.
-   ============================================================ */
-.pl-port {
-  padding-bottom: var(--s-16);
-  scroll-padding-bottom: var(--s-16);
+@container (max-width: 620px) {
+  .pl-grid {
+    grid-auto-columns: minmax(214px, 244px);
+  }
 }

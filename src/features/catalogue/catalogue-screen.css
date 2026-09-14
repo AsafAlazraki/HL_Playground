@@ -1,13 +1,39 @@
 /* ============================================================
-   A CATALOGUE (ct-) — SHOWROOM.
+   A CATALOGUE (ct-) — SHOWROOM, REBUILT AS A FLOOR.
 
    `ct-` was checked against every stylesheet in `src` before use.
 
-   The skeleton is the picker's and the place screen's, because it
-   is the same register doing the same thing one step along: a port
-   that scrolls, a column on a measure, a marque, bands, and a grid
-   of equal photographic cards. Four screens with one skeleton is
-   the point of having a register at all.
+   WHAT IT WAS: one long vertical scroll. Seven series, each a grid
+   of cards, stacked — so Highfield's sixty-seven models were about
+   nine screens of scrolling and you could see one series at a
+   time. To compare the Roll-Ups against the Classics a dealer
+   scrolled past eight cards, read a heading, and tried to remember
+   what the last shelf looked like.
+
+   WHAT IT IS NOW: SEVEN BAYS, AND YOU WALK PAST THEM.
+
+   Each series is a SHELF — one row, scrolling sideways, snapping
+   to a card. The seven headings are three screens apart instead of
+   nine, so the shape of the brand is visible: a dealer sees that
+   there are Roll-Ups and Ultralites and Classics and Sports at a
+   glance, and pushes into whichever one they want. That is a
+   showroom floor rather than a results page, and it is what this
+   screen is for.
+
+   IT IS THE CONFIGURATOR'S OWN LANGUAGE, deliberately. That screen
+   is bands stacked with a deck that scrolls sideways; so is this.
+   Two Showroom screens with one grammar means a dealer who has
+   learnt to push through the motors has learnt to push through the
+   Classics.
+
+   AND THE SHAPE DOES NOT CHANGE WITH THE WINDOW. A shelf shows
+   five cards at 1440 and one and a half at 390 — the card keeps
+   its size and the window shows fewer. Nothing folds, so there is
+   no fold to break. The grid this replaced had a two-track lead
+   card that had to be switched off under 700px, a dense flow that
+   had to backfill the hole it left, and a scrim that had to be
+   opaque because the name sat on a white hull; none of that
+   exists any more.
    ============================================================ */
 
 .ct {
@@ -15,6 +41,7 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  background: var(--bg);
 }
 
 /* `.shell-stage` is `overflow: hidden` and hands every stage a box
@@ -24,15 +51,18 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  scroll-padding-top: var(--s-4);
 }
 
+/* THE COLUMN IS THE WINDOW, NOT A MEASURE. A shelf that stops
+   short of the edge looks like it has ended; the point of a shelf
+   is that it runs off the side and there is more. The HEAD keeps a
+   measure, because a marque and a search field want one. */
 .ct-col {
   display: flex;
   flex-direction: column;
   gap: var(--section-gap);
-  width: var(--measure);
-  margin: 0 auto;
-  padding: var(--section-gap) var(--gutter) var(--s-16);
+  padding: var(--section-gap) 0 var(--s-16);
   container-type: inline-size;
 }
 
@@ -42,6 +72,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
+  margin-inline: var(--gutter);
+  max-width: var(--measure);
 }
 
 .ct-head-say {
@@ -54,6 +86,8 @@
 .ct-marque {
   margin: 0;
   color: var(--fg);
+  overflow-wrap: normal;
+  word-break: keep-all;
 }
 
 .ct-sub {
@@ -74,19 +108,20 @@
 }
 
 /* THE SPREADSHEET IS LAST AND PLAINLY LABELLED, which is UX_PASS
-   §12's own requirement and the reason it is a quiet control beside
-   the search rather than a card in the middle of the page. */
+   §12's own requirement and the reason it is a quiet control
+   beside the search rather than a card in the middle of the page. */
 .ct-sheet {
   flex: 0 0 auto;
   height: var(--input-h);
   padding: 0 var(--s-4);
   border: var(--border) solid var(--line);
   border-radius: var(--r-control);
-  background: var(--surface-1);
+  background: var(--surface-2);
   color: var(--fg-secondary);
   font: inherit;
   font-size: var(--t-small-size);
   cursor: pointer;
+  white-space: nowrap;
   transition:
     background var(--d-press) var(--ease-out),
     border-color var(--d-press) var(--ease-out),
@@ -95,10 +130,14 @@
 
 @media (hover: hover) and (pointer: fine) {
   .ct-sheet:hover {
-    background: var(--surface-3);
+    background: var(--surface-4);
     border-color: var(--line-strong);
     color: var(--fg);
   }
+}
+
+.ct-sheet:active {
+  transform: scale(0.97);
 }
 
 .ct-sheet:focus-visible {
@@ -107,169 +146,111 @@
 }
 
 .ct-none {
-  margin: 0;
-  padding: var(--s-6) var(--gutter);
+  margin: 0 var(--gutter);
   color: var(--fg-secondary);
 }
 
-/* -- a band ---------------------------------------------------- */
+/* -- a bay ------------------------------------------------------ */
 
 .ct-band {
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
+  gap: var(--s-3);
+  scroll-margin-top: var(--s-4);
 }
 
+/* EVERY BAY BUT THE FIRST SNAPS. A snap target 83px down a
+   freshly-opened document is inside the proximity threshold, so
+   the browser scrolled there by itself and cut the marque, the
+   search field and the sheet link in half before anybody touched
+   the wheel. The top of a document must always be somewhere the
+   document can sit. */
+.ct-port {
+  scroll-snap-type: y proximity;
+}
+
+.ct-band ~ .ct-band {
+  scroll-snap-align: start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-port {
+    scroll-snap-type: none;
+  }
+}
+
+/* THE BAY'S NAME STAYS while its boats go past. Seven bands of
+   near-identical hulls is precisely the case where scrolling loses
+   you, and the rule costs nothing the heading was not drawing. */
 .ct-band-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   align-items: baseline;
   gap: var(--s-3);
-  margin: 0;
-  padding-bottom: var(--s-2);
+  margin: 0 var(--gutter);
+  padding: var(--s-3) 0 var(--s-2);
   border-bottom: var(--border) solid var(--line-subtle);
+  background: var(--bg);
+  backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
 }
 
 .ct-band-name {
-  color: var(--fg-tertiary);
+  color: var(--accent);
 }
 
-/* --fg-tertiary, not --fg-quaternary: the ink table in system.css
+/* --fg-tertiary, not quaternary: the ink table in `system.css`
    measures quaternary at 3.21:1 and says it is never a word that
    matters. A count is. */
 .ct-band-count {
   color: var(--fg-tertiary);
 }
 
-/* -- the grid -------------------------------------------------- */
+/* ============================================================
+   THE SHELF.
 
+   One row, scrolling sideways, snapping to a card.
+   `scroll-padding-left` so a snapped card comes to rest inside the
+   gutter rather than against the window, and the row carries its
+   own vertical padding so a card's shadow is not clipped by its
+   own scroller.
+
+   `proximity` and not `mandatory`: a dealer flicking past six
+   hulls to reach the seventh should never be fought, and proximity
+   only takes over once they have nearly stopped — which is the
+   moment the help is wanted.
+   ============================================================ */
 .ct-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(236px, 100%), 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(248px, 288px);
+  align-items: stretch;
   gap: var(--s-4);
   margin: 0;
-  padding: 0;
+  padding: var(--s-1) var(--gutter) var(--s-4);
   list-style: none;
-  /* NOT `grid-auto-rows: 1fr` HERE, and that is the one difference
-     from the other three grids. A card in this one can open its
-     finishes underneath itself, and an equal-row rule would stretch
-     every sibling in that row to match the open one — a grid that
-     jumps a hundred pixels because somebody pressed one card. The
-     card's own budget is what makes the closed ones equal; the open
-     one is deliberately taller, because it is showing more. */
-  align-items: start;
-  /* DENSE, because the lead card below spans two tracks and a
-     sparse flow would leave the hole it steps over unfilled. Dense
-     is safe here for the reason it usually is not: these cards are
-     a SET being browsed, not a sequence being read, so a card
-     backfilling an earlier gap is not out of order — it is the
-     grid doing what a masonry wall does. */
-  grid-auto-flow: dense;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: var(--gutter);
+  scrollbar-width: thin;
 }
 
 .ct-cell {
   display: flex;
   min-width: 0;
+  scroll-snap-align: start;
 }
 
-/* ============================================================
-   THE LEAD — the first model of a band, at twice the size.
-
-   A grid of forty identical cards has no focal point and nothing
-   to enter by, which is the fault a uniform grid always has: it
-   reads as a result set rather than as a showroom floor. The lead
-   takes two tracks and two rows, its render fills the card, and
-   the model's name sits ON the photograph rather than under it.
-
-   ONLY WHERE THERE IS ROOM FOR IT. Below 700px of column the span
-   is dropped entirely — a "lead" that is the same width as every
-   other card is just a taller card, and on a phone it would push
-   the second model off the first screen.
-
-   THE BAND'S OWN FIRST CARD, not the page's: every series gets an
-   entry point, which is what makes scrolling through seven of them
-   feel like walking past seven bays rather than reading one list.
-   ============================================================ */
-@container (min-width: 700px) {
-  .ct-cell--lead {
-    /* TWO TRACKS WIDE, ONE ROW TALL — because of what the
-       photographs ARE. Every render in this catalogue is a top-down
-       hull, roughly 16:9, and `object-fit` is `contain` here for a
-       reason nothing overrides: a cropped hull is a hull with its
-       bow cut off. A 2x2 lead was measured at 490x600 holding a
-       490x276 photograph — forty-five per cent of the biggest card
-       on the screen was empty gradient. Twice the width and the
-       same height fits the picture almost exactly, and still reads
-       as the lead: it is the only card whose name is set at display
-       size, on the photograph, rather than under it. */
-    grid-column: span 2;
-    /* AND IT MUST STRETCH, or the span is two rows of nothing.
-       `.ct-grid` is `align-items: start` on purpose — a card that
-       opens its finishes must not drag its row-mates taller — and
-       that default reached this one too: the lead reserved a 600px
-       hole and then drew itself flat at the top of it, which is
-       exactly what the first photograph of this showed. The lead is
-       the one cell that wants its row's whole height, so it is the
-       one cell that overrides the rule. */
-    align-self: stretch;
-  }
-
-  .ct-cell--lead .ct-well {
-    /* NO RATIO. The height comes from the two rows it spans, and a
-       ratio fighting that is how a 2x2 cell ends up 16/10 with a
-       band of dead card underneath. */
-    aspect-ratio: auto;
-    flex: 1 1 auto;
-    min-height: 0;
-    /* the words sit ON the well now, so the rule that separated
-       them has nothing left to separate */
-    border-bottom: 0;
-  }
-
-  .ct-cell--lead .ct-card {
-    height: 100%;
-  }
-
-  .ct-cell--lead .ct-face {
-    height: 100%;
-  }
-
-  /* THE NAME SITS ON THE PHOTOGRAPH, and the scrim is what makes
-     that legible rather than lucky.
-
-     THE FIRST VERSION FADED TO 94%, AND THE NAME LANDED ON THE
-     HULL. Once the lead went one row tall the photograph filled the
-     card, so the bottom third of it is boat — a white boat, which
-     is the worst case for ink that assumes a surface. This is
-     opaque where the words are and only fades ABOVE them, so the
-     ratio is the ratio of `--fg` on `--surface-1`: measured, not
-     hoped for. The fade still reads as a photograph running under
-     the words rather than a panel sitting on top of one. */
-  .ct-cell--lead .ct-say {
-    position: absolute;
-    inset: auto 0 0 0;
-    padding: var(--s-12) var(--s-4) var(--s-4);
-    background: linear-gradient(
-      to top,
-      var(--surface-1) 0%,
-      var(--surface-1) 42%,
-      color-mix(in srgb, var(--surface-1) 72%, transparent) 70%,
-      transparent 100%
-    );
-  }
-
-  .ct-cell--lead .ct-name {
-    font-size: var(--t-display-size);
-    font-weight: var(--t-display-weight);
-    line-height: var(--t-display-lead);
-    letter-spacing: var(--t-display-track);
-    min-height: 1lh;
-    max-height: 2lh;
-  }
-
-  .ct-cell--lead .ct-card {
-    position: relative;
+@media (prefers-reduced-motion: reduce) {
+  .ct-grid {
+    scroll-snap-type: none;
   }
 }
+
+/* -- a model ---------------------------------------------------- */
 
 .ct-card {
   display: flex;
@@ -282,7 +263,8 @@
   box-shadow: var(--e-card);
   transition:
     box-shadow var(--d-press) var(--ease-out),
-    border-color var(--d-press) var(--ease-out);
+    border-color var(--d-press) var(--ease-out),
+    transform var(--d-press) var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -296,6 +278,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  flex: 1 1 auto;
   width: 100%;
   padding: 0;
   border: 0;
@@ -311,30 +294,56 @@
   outline-offset: -2px;
 }
 
-/* -- the picture ----------------------------------------------- */
+/* ============================================================
+   THE WELL IS A LIT SWEEP, and it is declared here rather than in
+   `world.css`.
 
+   A component stylesheet is imported by its component and Vite
+   emits it after the global sheet, so at equal specificity the
+   local rule wins. The sweep was written once against `.ct-well`
+   in `world.css` and this file quietly beat it — the change was in
+   the repository and never on the screen. Tokens belong there;
+   the drawing belongs here.
+
+   AND IT IS LIT BECAUSE OF WHAT THE PICTURES ARE. The seed is
+   1,411 manufacturer renders of white hulls on WHITE grounds —
+   not transparent, white. On a deep floor they are bright
+   rectangles with a boat somewhere inside, and no blend fixes it,
+   because the hull is white too. A lit plate is how these
+   photographs were taken and how a dealer's floor works: the boat
+   in the light, the room dark around it.
+   ============================================================ */
 .ct-well {
-  --mat: linear-gradient(180deg, var(--surface-3) 0%, var(--bg-sunken) 100%);
   position: relative;
   display: block;
   width: 100%;
   aspect-ratio: 16 / 10;
   flex: 0 0 auto;
-  background: var(--mat);
-  border-bottom: var(--border) solid var(--line-subtle);
   overflow: hidden;
+  background: radial-gradient(
+    86% 74% at 50% 24%,
+    var(--sweep-hi) 0%,
+    var(--sweep-mid) 54%,
+    var(--sweep-lo) 100%
+  );
+  box-shadow: inset 0 -1px 0 var(--sweep-seam);
 }
 
+/* The plate is under every card and the photograph covers it.
+   `FrozenPhoto` draws nothing rather than a broken image, so the
+   ground below it has to be a deliberate surface rather than a
+   hole — and it is the same sweep, so a photographed model and an
+   unphotographed one are the same kind of object. */
 .ct-plate {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, var(--kind, transparent) 10%, var(--surface-2));
+  background: color-mix(in srgb, var(--kind, var(--accent)) 8%, var(--sweep-mid));
 }
 
 .ct-mono {
-  color: var(--fg-secondary);
+  color: color-mix(in srgb, var(--kind, var(--accent)) 60%, var(--sweep-ink));
   font-family: var(--font-display);
   letter-spacing: 0.04em;
 }
@@ -345,11 +354,13 @@
   display: block;
   width: 100%;
   height: 100%;
-  background: var(--mat);
   /* CONTAIN. A cropped hull is a hull with its bow cut off. */
   object-fit: contain;
+  filter: saturate(1.05) contrast(1.02);
 }
 
+/* the kind's own hue, down the lit edge of the card — the one
+   place a kind colour touches the sweep */
 .ct-rail {
   position: absolute;
   inset: 0 auto 0 0;
@@ -358,12 +369,17 @@
   background: var(--kind, var(--line));
 }
 
-/* -- the words ------------------------------------------------- */
+/* -- the words -------------------------------------------------- */
 
+/* A FIXED LINE BUDGET, because the cards in one shelf equalise
+   against each other and a card sized by its own string gives a
+   shelf as many heights as it has names. Two lines of name, one of
+   price, one of count. */
 .ct-say {
   display: flex;
   flex-direction: column;
   gap: var(--s-1);
+  flex: 1 1 auto;
   padding: var(--s-3) var(--s-4);
   min-width: 0;
 }
@@ -389,6 +405,7 @@
 }
 
 .ct-count {
+  margin-top: auto;
   color: var(--fg-tertiary);
   min-height: 1lh;
   max-height: 1lh;
@@ -396,108 +413,24 @@
 }
 
 /* ============================================================
-   THE FINISHES USED TO BE A LIST OF WORDS HERE, AND ARE NOT.
+   AND ON A SMALL WINDOW IT IS THE SAME SHELVES.
 
-   Six rules — .ct-ways, .ct-way, its hover, its focus,
-   .ct-way-say and .ct-way-n — drew a stack of text rows reading
-   "Light Grey · PVC   $2,770" under an open card. They were
-   replaced by <Colourways>, which puts the actual hull in front
-   of a person instead of a code to decode, and nothing deleted
-   them: check-styles has been printing them in its dead-rule
-   list ever since, where a number that only ever goes up stops
-   being read.
-
-   A dead rule is not inert. It is a name a future session will
-   find, assume is live, and style against — which is how a
-   prefix collision starts, and this file already carries one of
-   those in its header.
+   The card narrows one step and the window shows fewer of them.
+   There is no fold: the lead card that had to be switched off
+   under 700px, the dense flow that had to backfill the hole it
+   left, and the scrim that had to be opaque over a white hull are
+   all gone with the grid they belonged to.
    ============================================================ */
-
-/* ============================================================
-   THE LINE BUDGET IS OFF WHEN THE GRID IS ONE COLUMN.
-
-   Two reserved lines of name is what makes a ROW of cards equal,
-   and a row of one is already equal. Below the width where
-   `.ct-grid` folds to a single track, the reservation is just a
-   blank line under every name — which on a phone is the scarcest
-   space there is.
-   ============================================================ */
-@container (max-width: 520px) {
-  .ct-name {
-    min-height: 0;
-    max-height: none;
+@container (max-width: 620px) {
+  .ct-grid {
+    grid-auto-columns: minmax(214px, 244px);
   }
-}
 
-/* ============================================================
-   IT SNAPS TO THE BAND, AND THE BAND'S NAME STAYS.
-
-   Seven series and sixty-seven models is a long scroll, and a long
-   scroll that stops wherever the finger left it always leaves a
-   row of cards half off the top. `proximity` and not `mandatory`:
-   mandatory fights a person who is scanning past four series to
-   reach the fifth, which is exactly what a dealer does. Proximity
-   only takes over once they have nearly stopped, which is the
-   moment the help is wanted.
-
-   THE HEADING STICKS so you always know which bay you are in.
-   Seven bands of near-identical hulls is precisely the case where
-   scrolling loses you, and the sticky rule costs nothing that the
-   band head was not already drawing.
-   ============================================================ */
-.ct-port {
-  scroll-snap-type: y proximity;
-  scroll-padding-top: var(--s-4);
-}
-
-/* EVERY BAND BUT THE FIRST, and the reason is a real defect this
-   shipped with for one photograph. `scroll-snap-align: start` on
-   `.ct-band` made the FIRST band a snap target 83px down the
-   document, and proximity is measured from where you are: at rest
-   on a freshly-opened page that is 83px away, inside the threshold,
-   so the browser scrolled there by itself. The marque, the search
-   field and the sheet link were cut in half before anybody touched
-   the wheel. The top of a document must always be somewhere the
-   document can sit, so the band already at the top does not ask. */
-.ct-band ~ .ct-band {
-  scroll-snap-align: start;
-  scroll-margin-top: var(--s-4);
-}
-
-.ct-band-head {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  /* the ground travels with it, or the cards scroll THROUGH the
-     heading — the fault a sticky header has when it is transparent */
-  background: var(--bg);
-  backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
-  -webkit-backdrop-filter: blur(var(--mat-chip-blur)) saturate(var(--glass-sat));
-  padding-top: var(--s-3);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ct-port {
-    scroll-snap-type: none;
-  }
-}
-
-/* ============================================================
-   THE FIND FIELD AND THE SHEET LINK STACK BEFORE THEY SQUASH.
-
-   `.ct-head-do` is a row: a field that may take up to 42ch, and a
-   button whose label is four words and cannot shrink. Measured at
-   320px — a window dragged narrower than any phone, which is a
-   size a person can produce and therefore a size this has to work
-   at — the button held its 140px and the field was left about
-   eighty: "A mode" and then nothing. A search field too narrow to
-   show what was typed into it is not a narrow search field, it is
-   a broken one.
-
-   The button goes under it rather than beside it, and takes the
-   full width, because at this size everything does.
-   ============================================================ */
-@container (max-width: 420px) {
+  /* THE FIELD AND THE SHEET LINK STACK BEFORE THEY SQUASH.
+     Measured at 320: the button held its 140px and the field was
+     left about eighty — "A mode" and then nothing. A search field
+     too narrow to show what was typed into it is not a narrow
+     field, it is a broken one. */
   .ct-head-do {
     flex-direction: column;
     align-items: stretch;
