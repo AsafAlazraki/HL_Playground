@@ -211,7 +211,7 @@
 .fd-grid {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(240px, 300px);
+  grid-auto-columns: minmax(300px, 400px);
   align-items: stretch;
   gap: var(--s-4);
   margin: 0;
@@ -361,7 +361,7 @@
 .fd-quotes {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(220px, 268px);
+  grid-auto-columns: minmax(260px, 330px);
   align-items: stretch;
   gap: var(--s-4);
   margin: 0;
@@ -597,16 +597,169 @@
    ============================================================ */
 @container (max-width: 620px) {
   .fd-grid {
-    grid-auto-columns: minmax(208px, 252px);
+    grid-auto-columns: minmax(240px, 300px);
   }
 
   .fd-brands,
   .fd-quotes {
-    grid-auto-columns: minmax(196px, 232px);
+    grid-auto-columns: minmax(220px, 272px);
   }
 
   .fd-acts {
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+
+/* ============================================================
+   THE CARD IS GONE HERE TOO.
+
+   `catalogue-screen.css` carries the argument in full: this repo's
+   one visual idea was a bordered card with a radius, a shadow and
+   a small picture inside it, on sixteen screens. Every reference
+   driven for this rebuild — Polestar, Porsche, Axopar — has almost
+   no cards at all: the product is the biggest thing on the screen
+   by a factor of four and nothing is drawn around it.
+
+   Four things go: the box, the kind-hued plate behind the photo
+   (which letterboxing turned into a pale band above and below
+   EVERY product), the kind rail down its edge, and the glow the
+   dark room needed. What replaces them is a shadow under the hull
+   and air around it.
+   ============================================================ */
+
+.fd {
+  background: var(--surface-1);
+}
+
+.fd-tile {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .fd-tile:hover {
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .fd-tile:hover .fd-well {
+    transform: scale(1.012);
+  }
+}
+
+.fd-well {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  transition: transform var(--d-slow) var(--ease-out);
+}
+
+/* white behind a white cut-out is invisible, and the initials stay
+   for the rows that have no photograph */
+.fd-plate {
+  background: var(--surface-1);
+}
+
+.fd-mono {
+  color: var(--fg-quaternary);
+}
+
+.fd-img {
+  filter: var(--photo-drop);
+}
+
+/* rule 5: a hue marks a thing that HAS that kind. Down the edge of
+   a photograph it is a frame by another name. */
+.fd-rail {
+  display: none;
+}
+
+.fd-say {
+  padding-inline: 0;
+}
+
+/* ============================================================
+   THE SAME FOUR THINGS THE CATALOGUE HAD, photographed 2026-09-14.
+
+   The greeting at the marque step was a 90px slab over a page of
+   photographs; the head steps down to hero in `HomeScreen.tsx`
+   with the same reasoning `CatalogueScreen.tsx` carries. The
+   brand shelf was still a row of bordered, rounded, shadowed
+   cards under a band that had just had all of that removed. The
+   kind glyph on each was a bordered glass chip — a frame on a
+   frame. And the band names were brass, which on white reads as
+   a link that does not go anywhere.
+   ============================================================ */
+
+.fd-brand,
+.fd-quote {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .fd-brand:hover,
+  .fd-quote:hover {
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+}
+
+.fd-brand-mark.is-over {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
+.fd-band-name {
+  color: var(--fg);
+}
+
+.fd-band-count,
+.fd-more {
+  color: var(--fg-quaternary);
+}
+
+/* THE SWEEP CAME OFF THE BRAND SHELF TOO. `.fd-brand-well` and
+   `.fd-quote-well` still carried the dark room's radial gradient
+   and its seam — photographed 2026-09-14, Mackay Trailers (no
+   photograph) was a grey box on a white page and the Yamaha motor
+   had grey bands either side of it. The plate under a missing
+   photo was tinted in the kind's hue at 8%, which on white is a
+   pale coloured rectangle: a frame. */
+.fd-brand-well,
+.fd-quote-well {
+  background: none;
+  box-shadow: none;
+}
+
+.fd-brand-plate,
+.fd-quote-plate {
+  background: var(--surface-1);
+}
+
+/* AND THE TWO PANES AT THE FOOT — the open quotes and where you
+   have been — were the last bordered cards on the screen. A list
+   under a band head is a list; the band head is the frame. */
+.fd-pane {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  padding-inline: 0;
 }

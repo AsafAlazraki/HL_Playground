@@ -161,7 +161,7 @@ export function HomeScreen({ user, ...acts }: HomeScreenProps): ReactElement {
                 WORDS, never glyphs, because §4 forbids a cut inside
                 one and a per-letter animation is that cut made
                 visible forty times. */}
-            <Marque as="h1" className="t-marque fd-hello">
+            <Marque as="h1" className="t-hero fd-hello">
               {`${greeting(now)}${name === '' ? '' : `, ${name}`}`}
             </Marque>
             {/* THE DAY AND THE FILE, as two facts under the marque
@@ -270,7 +270,7 @@ export function HomeScreen({ user, ...acts }: HomeScreenProps): ReactElement {
                           biggest places sell parts and rigging and
                           carry no photograph at all, and a lit well
                           with nothing in it is a coloured smear. */}
-                      <span className="fd-brand-well m-lit">
+                      <span className="fd-brand-well">
                         {/* THE BRAND'S MARK, ON the photograph. This drew
                             `markOf` — "HI", "YO", "DT" — while the app
                             has had `ModuleDef.logo`, a per-brand default
@@ -355,7 +355,7 @@ export function HomeScreen({ user, ...acts }: HomeScreenProps): ReactElement {
                           data-press="card"
                           onClick={() => acts.onOpenQuote(q.id)}
                         >
-                          <span className="fd-quote-well m-lit">
+                          <span className="fd-quote-well">
                             <FrozenPhoto
                               img={q.subjectImage}
                               fallbackAlt={q.subjectLabel}
@@ -434,7 +434,7 @@ function DoorTile({
         data-press="card"
         onClick={() => onOpen(door.moduleId)}
       >
-        <span className="fd-well m-lit m-grain">
+        <span className="fd-well">
           {/* The plate is under every tile and the photograph covers
               it. Accessories carries no picture on this sheet, and an
               empty well on a quarter of the grid reads as a screen
@@ -449,7 +449,6 @@ function DoorTile({
             w={420}
             h={264}
           />
-          <span className="k-rail fd-rail" aria-hidden="true" />
         </span>
         <span className="fd-say">
           <span className="t-title fd-name">{door.label}</span>

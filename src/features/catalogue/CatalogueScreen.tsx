@@ -103,7 +103,13 @@ export function CatalogueScreen({
         <div className="ct-col">
           <header className="ct-head">
             <div className="ct-head-say">
-              <Marque as="h1" className="t-marque ct-marque">{entity.name}</Marque>
+              {/* THE HERO STEP, NOT THE MARQUE. The owner's word for the
+                  64px version, photographed on 2026-09-14 under a grey
+                  bar with "Back" in it, was "awful". The marque step is
+                  the name of the thing being SOLD; a catalogue is the
+                  shelf it sits on, and a shelf is labelled one step
+                  down. Rule 6: a whole step, never a size on its own. */}
+              <Marque as="h1" className="t-hero ct-marque">{entity.name}</Marque>
               <p className="t-small ct-sub">
                 {models.length} {models.length === 1 ? 'model' : 'models'} ·{' '}
                 {rows.toLocaleString('en-AU')} {rows === 1 ? 'row' : 'rows'} ·{' '}
@@ -201,7 +207,14 @@ function Card({
             else if (first) onOpenRow(first.entry.rowId)
           }}
         >
-          <span className="ct-well m-lit m-grain">
+          {/* NO GLOW AND NO GRAIN. `m-lit` throws the kind's hue behind
+              the product and `m-grain` gives it tooth — both were
+              written for a dark room, where a boat needs a light
+              behind it to separate from the floor. On white they are
+              a pale coloured band above and below every hull: a
+              frame, on the one screen this pass exists to unframe.
+              The shadow under the hull does the separating now. */}
+          <span className="ct-well">
             <span className="ct-plate" aria-hidden="true">
               <span className="t-display ct-mono">{markOf(model.name)}</span>
             </span>
@@ -212,7 +225,10 @@ function Card({
               w={480}
               h={300}
             />
-            <span className="k-rail ct-rail" aria-hidden="true" />
+            {/* AND NO KIND RAIL. Rule 5 says a hue marks a thing that
+                HAS that kind — on a catalogue where every card is the
+                same kind it marks nothing, and a 3px indigo bar down
+                the edge of a photograph is a frame by another name. */}
           </span>
 
           {/* The same fixed line budget every Showroom grid takes:

@@ -2252,7 +2252,7 @@
   padding: 9px var(--s-5);
   border: 1px solid var(--accent);
   border-radius: var(--r-control);
-  background: var(--accent);
+  background: var(--action);
   color: var(--accent-fg);
   font-size: var(--t-small-size);
   font-weight: 620;
@@ -2264,7 +2264,7 @@
 }
 
 .qb-give:hover {
-  background: var(--accent-hover);
+  background: var(--action-hover);
 }
 
 .qb-give:active {

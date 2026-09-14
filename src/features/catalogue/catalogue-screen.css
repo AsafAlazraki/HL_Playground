@@ -461,3 +461,397 @@
     width: 100%;
   }
 }
+
+/* ============================================================
+   THE CARD IS GONE.
+
+   This repo has one visual idea and it is on every screen: a
+   bordered card with a radius and a shadow, and inside it a small
+   picture. Sixteen screens of it. The owner's word for the result
+   is the right one — it is a mould, and no amount of re-colouring
+   or re-arranging inside it produces something else.
+
+   THE REFERENCES HAVE ALMOST NO CARDS. Driven and photographed:
+   Polestar's configure page is four products on plain white,
+   separated by a single hairline cross and nothing else — no
+   border, no radius, no shadow, no fill. Porsche's model page has
+   a card, and it is invisible: white on near-white with a 1px edge
+   you have to look for, and the car inside it is enormous. Axopar
+   is three hulls on white with a rule above them.
+
+   What makes those pages beautiful is not their palette. It is
+   that the PRODUCT is the biggest thing on the screen by a factor
+   of four, and that nothing is drawn around it.
+
+   SO: the boat doubles, the box disappears, and what is left to
+   separate one from the next is air and a hairline. Three across
+   instead of five, because a 470px hull reads as a boat and a
+   248px hull reads as a thumbnail.
+
+   The name sits under it in plain ink at reading size, the way a
+   caption sits under a photograph in print. The price is one grey
+   line under that. Nothing else.
+   ============================================================ */
+
+.ct-grid {
+  grid-auto-columns: minmax(320px, 470px);
+  gap: var(--s-10) var(--s-8);
+  padding: var(--s-6) var(--gutter) var(--s-12);
+}
+
+.ct-card {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ct-card:hover {
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  /* the hover is on the PICTURE, not on a box around it — the one
+     move a photograph on white can make without drawing a frame */
+  .ct-card:hover .ct-well {
+    transform: scale(1.012);
+  }
+}
+
+.ct-card:focus-visible {
+  outline: var(--border-strong) solid var(--action);
+  outline-offset: 6px;
+}
+
+/* THE WELL IS NOT A PLATE ANY MORE. On a white room a lit sweep
+   behind a white hull is a grey rectangle behind a white hull —
+   which is the frame this section exists to remove. What a
+   cut-out needs on white is a shadow under it, not a box around
+   it, and that is what every reference gives its product. */
+.ct-well {
+  aspect-ratio: 4 / 3;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  transition: transform var(--d-slow) var(--ease-out);
+}
+
+.ct-img {
+  filter: var(--photo-drop);
+}
+
+.ct-say {
+  padding: var(--s-4) 0 0;
+  gap: 2px;
+}
+
+.ct-name {
+  font-size: var(--t-subtitle-size);
+  font-weight: 600;
+  letter-spacing: var(--t-subtitle-track);
+}
+
+/* AND THE BAND HEAD IS A RULE, not a sticky tinted strip. A bay of
+   boats on white wants the same thing a magazine spread wants: a
+   line, a word, and then the pictures. */
+.ct-band-head {
+  position: static;
+  padding: 0 0 var(--s-3);
+  border-bottom: var(--border) solid var(--line);
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.ct-band-name {
+  color: var(--fg);
+}
+
+.ct-band {
+  gap: var(--s-5);
+}
+
+/* ============================================================
+   AND THE FLOOR IS WHITE, because the photographs are.
+
+   Every render in this seed is a cut-out hull on a WHITE ground —
+   not transparent, white. On a light-grey page that white is a
+   rectangle: the boat floats in a box whether or not anything
+   draws one, and removing the card only made the box more obvious.
+   Measured on the first pass of this section: a pale band above
+   and below every hull, on every card, in every bay.
+
+   Polestar's configure page is the same material — cut-out cars —
+   and its ground is PURE WHITE for exactly this reason. Nothing
+   separates one product from the next but air.
+
+   So the Showroom's product screens stand on white and the
+   Cockpit's registers keep the light grey, which is what gives a
+   white table something to sit on. That is the two registers
+   doing their job at the level of the ground itself.
+   ============================================================ */
+.ct {
+  background: var(--surface-1);
+}
+
+/* THE FALLBACK PLATE IS WHITE, NOT A KIND TINT. It sits behind
+   every photograph so a model with no picture still shows its
+   initials — and `contain` letterboxes almost every render, so an
+   8% indigo wash on that plate came out as a pale band above and
+   below EVERY hull in the bay. Measured: it survived removing the
+   card, the glow and the rail, because it was never any of them.
+
+   White behind a white cut-out is invisible, which is the whole
+   point; the initials stay, in ink, for the models that need it. */
+.ct-plate {
+  background: var(--surface-1);
+}
+
+.ct-mono {
+  color: var(--fg-quaternary);
+}
+
+/* ============================================================
+   THE MASTHEAD PASS — what the photograph of 2026-09-14 showed.
+
+   Four things were wrong in one frame and none of them was
+   subtle:
+
+   1. THE NAME WAS DRAWN TWICE. `TableStage` set "Highfield
+      Inflatables" in the window bar at 30px and this screen set it
+      again at 64px sixty pixels below. Fixed in `TableStage.tsx`:
+      a Showroom page with a masthead IS its own title, and the bar
+      keeps only the way back — which is what the top bar of every
+      reference configurator holds.
+
+   2. THE MARQUE WAS A BLACK SLAB. 800 weight at 64px with -0.045em
+      tracking is the heaviest object on a page whose subject is a
+      white boat. `world.css` takes it to 560 and says why.
+
+   3. EVERY PHOTOGRAPH HAD A GREY BAND ON IT — the drop-shadow,
+      tracing the opaque rectangle of a studio photo rather than
+      the hull of a cut-out. `world.css` carries that autopsy.
+
+   4. AND THE HEAD WAS A STACK OF BOXES. A marque, then a census,
+      then a bordered search field with a grey pill beside it,
+      inside 620px, with the whole page's air below it. A masthead
+      is a RULE and what sits on it — the name on the left, the way
+      in on the right, one hairline under both — and nothing in a
+      reference configurator's head has a border except the field
+      you type in, and that one has a single line under it.
+   ============================================================ */
+
+.ct-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--s-6) var(--s-8);
+  margin-inline: var(--gutter);
+  padding-bottom: var(--s-5);
+  border-bottom: var(--border) solid var(--line);
+  max-width: none;
+}
+
+.ct-head-say {
+  gap: var(--s-2);
+}
+
+/* THE CENSUS IS A FACT ROW, NOT A SENTENCE. Same three facts, but
+   the figures line up because a catalogue's head is read by
+   somebody checking whether the file is right. */
+.ct-sub {
+  color: var(--fg-quaternary);
+  font-variant-numeric: tabular-nums;
+}
+
+.ct-head-do {
+  align-items: end;
+  gap: var(--s-5);
+}
+
+.ct-head-do > :first-child {
+  flex: 0 1 30ch;
+}
+
+/* THE SHEET IS A WORD, NOT A PILL. It is the quietest door on the
+   screen and it was wearing a border, a radius, a fill and a
+   hover fill — four of the five things this pass spent a day
+   taking off the cards. */
+.ct-sheet {
+  height: auto;
+  padding: 0 0 var(--s-1);
+  border: 0;
+  border-bottom: var(--border-strong) solid var(--line-strong);
+  border-radius: 0;
+  background: none;
+  color: var(--fg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ct-sheet:hover {
+    border-bottom-color: var(--fg);
+    background: none;
+    color: var(--fg);
+  }
+}
+
+.ct-sheet:active {
+  transform: none;
+  border-bottom-color: var(--fg);
+}
+
+/* ============================================================
+   THE BAY, AND THE PRODUCT'S REAL SIZE.
+
+   At 1440 the old shelf put three and a half 470px cards in the
+   window and letterboxed each 16:9 photograph into a 4:3 well —
+   so a third of every card was white margin the picture could
+   have been using. Sixty-seven models of near-identical RIB is
+   exactly the catalogue where a small picture tells you nothing:
+   the difference between an RU230 and an RU250 is twenty
+   centimetres of tube, and you cannot see twenty centimetres at
+   320 pixels.
+
+   The well takes the shape of the art it holds, and the shelf
+   holds two and a half of them.
+   ============================================================ */
+
+.ct-grid {
+  grid-auto-columns: minmax(360px, 520px);
+  gap: var(--s-12) var(--s-8);
+  padding: var(--s-8) var(--gutter) var(--s-16);
+}
+
+.ct-well {
+  aspect-ratio: 16 / 10;
+}
+
+.ct-band {
+  gap: var(--s-6);
+}
+
+.ct-band-head {
+  padding: 0 0 var(--s-3);
+}
+
+/* THE CAPTION IS ONE BASELINE, NOT THREE LINES.
+
+   It was name / price / finishes stacked, three left-aligned
+   fragments of small grey type under every photograph, which at
+   four cards across is twelve lines of grey. A product caption is
+   a NAME and then, quieter and on one line, what it costs and
+   what it comes in. */
+.ct-say {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--s-2);
+  padding: var(--s-5) 0 0;
+}
+
+.ct-name {
+  flex: 1 0 100%;
+  margin-bottom: var(--s-1);
+  font-size: var(--t-subtitle-size);
+  font-weight: 600;
+  letter-spacing: var(--t-subtitle-track);
+}
+
+.ct-price {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.ct-count {
+  color: var(--fg-quaternary);
+}
+
+/* AND THE SEPARATOR ONLY EXISTS WHEN THERE ARE TWO THINGS. A
+   model with one finish renders `.ct-count` empty — a leading
+   middot under a third of the cards is the sort of detail that
+   reads as an app that was not looked at. */
+.ct-count:not(:empty)::before {
+  content: '·';
+  margin-right: var(--s-2);
+  color: var(--line-strong);
+}
+
+/* ONE COLUMN OF CARDS IS NOT A SHELF. Under 640 the sideways
+   deck becomes a single stack, because a 360px minimum inside a
+   430px window leaves no shelf to push. */
+@container (max-width: 640px) {
+  .ct-grid {
+    grid-auto-columns: minmax(0, 1fr);
+    gap: var(--s-10) var(--s-5);
+    padding-inline: var(--gutter);
+  }
+}
+
+
+/* THE CAPTION WAS STILL A COLUMN. `.ct-say` is declared twice in
+   this file and the second rule set `flex-wrap` without setting
+   `flex-direction`, so the first rule's `column` survived and the
+   price and the finishes stacked with the separator leading the
+   second line — "· 4 finishes" under "from $2,770", which is
+   worse than what it replaced. A shorthand is not a reset. */
+.ct-say {
+  flex-direction: row;
+}
+
+/* AND THE BAY HAD A HOLE IN IT. `--s-16` under a shelf plus
+   `--section-gap` between bands plus the band's own `--s-6` put
+   140px of nothing between the last boat of ROLL-UP and the word
+   ULTRALITE. Air is what this pass is for; a hole is not air. */
+.ct-grid {
+  padding-bottom: var(--s-6);
+}
+
+.ct-col {
+  gap: var(--s-10);
+}
+
+/* THE SEARCH IS A LINE, NOT A BOX. Every other frame on this
+   screen came off; the one that was left is the one the eye goes
+   to first, which is precisely backwards — the thing you look at
+   first on a catalogue is the boats. */
+.ct-head-do .ui-field-input {
+  border: 0;
+  border-bottom: var(--border) solid var(--line-strong);
+  border-radius: 0;
+  background: none;
+  padding-inline: 0;
+}
+
+.ct-head-do .ui-field-input:focus {
+  border-bottom-color: var(--fg);
+  box-shadow: none;
+}
+
+.ct-head-do .ui-field-label {
+  color: var(--fg-quaternary);
+}
+
+
+/* AND THE HEAD SITS UNDER "BACK", NOT A SECTION BELOW IT. The
+   column's top padding was `--section-gap` — right when the bar
+   above was a band of its own, wrong now that it is a margin. */
+.ct-col {
+  padding-top: var(--s-3);
+}
+
+.ct-head {
+  gap: var(--s-4) var(--s-8);
+  padding-bottom: var(--s-6);
+}
+
+.ct-head-say {
+  gap: var(--s-3);
+}
+
+.ct-sub {
+  color: var(--fg-tertiary);
+}

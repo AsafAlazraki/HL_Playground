@@ -208,7 +208,7 @@
 .qp-grid {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(300px, 360px);
+  grid-auto-columns: minmax(330px, 440px);
   align-items: stretch;
   gap: var(--s-4);
   margin: 0;
@@ -436,7 +436,7 @@
    ============================================================ */
 @container (max-width: 620px) {
   .qp-grid {
-    grid-auto-columns: minmax(260px, 300px);
+    grid-auto-columns: minmax(280px, 340px);
   }
 
   .qp-head-do {
@@ -452,4 +452,139 @@
     align-items: flex-start;
     gap: var(--s-1);
   }
+}
+
+
+/* ============================================================
+   THE CARD IS GONE HERE TOO.
+
+   `catalogue-screen.css` carries the argument in full: this repo's
+   one visual idea was a bordered card with a radius, a shadow and
+   a small picture inside it, on sixteen screens. Every reference
+   driven for this rebuild — Polestar, Porsche, Axopar — has almost
+   no cards at all: the product is the biggest thing on the screen
+   by a factor of four and nothing is drawn around it.
+
+   Four things go: the box, the kind-hued plate behind the photo
+   (which letterboxing turned into a pale band above and below
+   EVERY product), the kind rail down its edge, and the glow the
+   dark room needed. What replaces them is a shadow under the hull
+   and air around it.
+   ============================================================ */
+
+.qp {
+  background: var(--surface-1);
+}
+
+.qp-card,
+.qp-tile {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qp-card:hover,
+  .qp-tile:hover {
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .qp-card:hover .qp-well,
+  .qp-tile:hover .qp-well {
+    transform: scale(1.012);
+  }
+}
+
+.qp-well {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  transition: transform var(--d-slow) var(--ease-out);
+}
+
+/* white behind a white cut-out is invisible, and the initials stay
+   for the rows that have no photograph */
+.qp-plate {
+  background: var(--surface-1);
+}
+
+.qp-mono {
+  color: var(--fg-quaternary);
+}
+
+.qp-img {
+  filter: var(--photo-drop);
+}
+
+/* rule 5: a hue marks a thing that HAS that kind. Down the edge of
+   a photograph it is a frame by another name. */
+.qp-rail {
+  display: none;
+}
+
+.qp-say {
+  padding-inline: 0;
+}
+
+/* ============================================================
+   UNFRAMED THE REST OF THE WAY, photographed 2026-09-14: the
+   question at the marque step was a 90px slab; each group sat
+   under a grey filled strip; the search was a bordered box with a
+   bordered button beside it. Same reasoning as the catalogue's
+   masthead pass, same answer: a hairline, a line under the field,
+   a word for the way in.
+   ============================================================ */
+
+.qp-group-head {
+  padding-inline: 0;
+  border: 0;
+  border-bottom: var(--border) solid var(--line);
+  border-radius: 0;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.qp-group-head .t-label {
+  color: var(--fg);
+}
+
+.qp-group-head .t-caption {
+  color: var(--fg-quaternary);
+}
+
+.qp-head-do .ui-field-input {
+  border: 0;
+  border-bottom: var(--border) solid var(--line-strong);
+  border-radius: 0;
+  background: none;
+  padding-inline: 0;
+}
+
+.qp-head-do .ui-field-input:focus {
+  border-bottom-color: var(--fg);
+  box-shadow: none;
+}
+
+.qp-head-do .ui-field-label {
+  color: var(--fg-quaternary);
+}
+
+.qp-head-do .ui-btn {
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+}
+
+/* THE CLOSE IS A GLYPH, NOT A BOXED BUTTON — the one bordered
+   square left beside a field that had just lost its border. */
+.qp-shut {
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
 }

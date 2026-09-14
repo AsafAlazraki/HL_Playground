@@ -89,21 +89,21 @@
 /* ONE PRIMARY ACTION PER SCREEN — rule 5 — and on a register of
    quotes it is raising another one. */
 .qz-way--go {
-  border-color: var(--accent);
-  background: var(--accent);
+  border-color: var(--action);
+  background: var(--action);
   color: var(--accent-fg);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .qz-way--go:hover {
-    background: var(--accent-hover);
-    border-color: var(--accent-hover);
+    background: var(--action-hover);
+    border-color: var(--action-hover);
     color: var(--accent-fg);
   }
 }
 
 .qz-way--go:active {
-  background: var(--accent-press);
+  background: var(--action-press);
 }
 
 /* -- the tools ------------------------------------------------- */

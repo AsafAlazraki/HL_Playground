@@ -106,7 +106,7 @@ export function PlacesScreen({ onOpen, onSettings, onNew }: PlacesScreenProps): 
         <div className="mo-col">
           <header className="mo-head">
             <div className="mo-head-say">
-              <Marque as="h1" className="t-marque mo-marque">Modules</Marque>
+              <Marque as="h1" className="t-hero mo-marque">Modules</Marque>
               <p className="t-small mo-sub">
                 {places.length} {places.length === 1 ? 'place' : 'places'} ·{' '}
                 {rows.toLocaleString('en-AU')} {rows === 1 ? 'row' : 'rows'} in them
@@ -265,7 +265,6 @@ function Tile({
               />
             </span>
             <FrozenPhoto img={cover} fallbackAlt={place.name} className="mo-img" w={480} h={300} />
-            <span className="k-rail mo-rail" aria-hidden="true" />
           </span>
           <span className="mo-say">
             <span className="t-title mo-name">{place.name}</span>

@@ -117,7 +117,7 @@
   padding: 0 var(--s-5);
   border: 0;
   border-radius: var(--r-control);
-  background: var(--accent);
+  background: var(--action);
   color: var(--accent-fg);
   font-family: var(--font-sans);
   font-size: var(--t-body-size);
@@ -128,11 +128,11 @@
     transform var(--d-press) var(--ease);
 }
 .tn-go:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: var(--action-hover);
 }
 /* press lands on pointer-down, which is what :active is */
 .tn-go:active:not(:disabled) {
-  background: var(--accent-press);
+  background: var(--action-press);
   transform: scale(0.97);
 }
 .tn-go:focus-visible {

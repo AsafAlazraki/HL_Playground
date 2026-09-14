@@ -213,8 +213,8 @@
 }
 
 .mo-chip.is-on {
-  border-color: var(--accent);
-  background: var(--accent);
+  border-color: var(--action);
+  background: var(--action);
   color: var(--accent-fg);
 }
 
@@ -284,7 +284,7 @@
 .mo-grid {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(246px, 292px);
+  grid-auto-columns: minmax(300px, 400px);
   align-items: stretch;
   gap: var(--s-4);
   margin: 0;
@@ -541,7 +541,7 @@
    ============================================================ */
 @container (max-width: 620px) {
   .mo-grid {
-    grid-auto-columns: minmax(208px, 252px);
+    grid-auto-columns: minmax(250px, 300px);
   }
 
   /* `flex: 0 0 auto` above keeps the controls off the marque's
@@ -562,4 +562,149 @@
   .mo-new {
     width: 100%;
   }
+}
+
+
+/* ============================================================
+   THE CARD IS GONE HERE TOO.
+
+   `catalogue-screen.css` carries the argument in full: this repo's
+   one visual idea was a bordered card with a radius, a shadow and
+   a small picture inside it, on sixteen screens. Every reference
+   driven for this rebuild — Polestar, Porsche, Axopar — has almost
+   no cards at all: the product is the biggest thing on the screen
+   by a factor of four and nothing is drawn around it.
+
+   Four things go: the box, the kind-hued plate behind the photo
+   (which letterboxing turned into a pale band above and below
+   EVERY product), the kind rail down its edge, and the glow the
+   dark room needed. What replaces them is a shadow under the hull
+   and air around it.
+   ============================================================ */
+
+.mo {
+  background: var(--surface-1);
+}
+
+.mo-card,
+.mo-tile {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mo-card:hover,
+  .mo-tile:hover {
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .mo-card:hover .mo-well,
+  .mo-tile:hover .mo-well {
+    transform: scale(1.012);
+  }
+}
+
+.mo-well {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  transition: transform var(--d-slow) var(--ease-out);
+}
+
+/* white behind a white cut-out is invisible, and the initials stay
+   for the rows that have no photograph */
+.mo-plate {
+  background: var(--surface-1);
+}
+
+.mo-mono {
+  color: var(--fg-quaternary);
+}
+
+.mo-img {
+  filter: var(--photo-drop);
+}
+
+/* rule 5: a hue marks a thing that HAS that kind. Down the edge of
+   a photograph it is a frame by another name. */
+.mo-rail {
+  display: none;
+}
+
+.mo-say {
+  padding-inline: 0;
+}
+
+/* ============================================================
+   UNFRAMED THE REST OF THE WAY, photographed 2026-09-14. "Modules"
+   at the marque step; a bordered glass chip carrying the kind
+   glyph over every photograph; band names in brass with the
+   count in uppercase — rule 3, a count is a value; a boxed search
+   with a boxed "New module" beside it.
+   ============================================================ */
+
+.mo-mark.is-over {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
+.mo-band-name {
+  color: var(--fg);
+}
+
+.mo-band-count {
+  color: var(--fg-quaternary);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.mo-head-do .ui-field-input {
+  border: 0;
+  border-bottom: var(--border) solid var(--line-strong);
+  border-radius: 0;
+  background: none;
+  padding-inline: 0;
+}
+
+.mo-head-do .ui-field-input:focus {
+  border-bottom-color: var(--fg);
+  box-shadow: none;
+}
+
+.mo-head-do .ui-field-label {
+  color: var(--fg-quaternary);
+}
+
+.mo-new {
+  height: auto;
+  padding: 0 0 var(--s-1);
+  border: 0;
+  border-bottom: var(--border-strong) solid var(--line-strong);
+  border-radius: 0;
+  background: none;
+  color: var(--fg);
+  box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mo-new:hover {
+    border-bottom-color: var(--fg);
+    background: none;
+    color: var(--fg);
+  }
+}
+
+.mo-new:active {
+  transform: none;
 }

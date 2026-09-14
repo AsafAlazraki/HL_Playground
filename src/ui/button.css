@@ -143,11 +143,11 @@
    it, so an ungated hover state is a state that never leaves. */
 @media (hover: hover) and (pointer: fine) {
   .ui-btn--primary:hover {
-    background: var(--accent-hover);
+    background: var(--action-hover);
   }
 }
 .ui-btn--primary:active {
-  background: var(--accent-press);
+  background: var(--action-press);
 }
 
 .ui-btn--neutral {

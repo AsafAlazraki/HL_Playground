@@ -642,7 +642,7 @@
 }
 
 .lv-toggle--on .lv-toggle-box {
-  background: var(--accent);
+  background: var(--action);
   border-color: var(--accent);
 }
 

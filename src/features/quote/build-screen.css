@@ -684,7 +684,7 @@
 }
 
 .bs-cand[data-on] .bs-cand-state {
-  background: var(--accent);
+  background: var(--action);
   color: var(--accent-fg);
   border-top-color: var(--accent);
 }
@@ -1452,4 +1452,33 @@
     border-top: var(--border) solid var(--line-subtle);
     text-align: left;
   }
+}
+
+/* ============================================================
+   THE LAST CARD ON THE CONFIGURATOR, photographed 2026-09-14.
+
+   Every product shelf in the app had its box taken off and the
+   configurator's stage — the one place a boat is drawn largest —
+   still sat in a bordered, radiused, grey `.ui-stage-frame` with
+   a gradient strip of figures along its foot. Porsche's stage is
+   the hull on white with the figures in plain type under it, and
+   nothing drawn around either. Same here.
+   ============================================================ */
+
+.bs-product .ui-stage-frame {
+  border: 0;
+  border-radius: 0;
+  background: var(--surface-1);
+  box-shadow: none;
+}
+
+.bs-product {
+  background: var(--surface-1);
+}
+
+.bs-specs {
+  padding-inline: 0;
+  border-top: var(--border) solid var(--line);
+  border-radius: 0;
+  background: none;
 }

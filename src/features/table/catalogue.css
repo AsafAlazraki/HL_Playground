@@ -182,11 +182,11 @@
   outline-offset: 1px;
 }
 .cat-lens-btn[aria-pressed='true'] {
-  background: var(--accent);
+  background: var(--action);
   color: var(--accent-fg);
 }
 .cat-lens-btn[aria-pressed='true']:hover {
-  background: var(--accent-hover);
+  background: var(--action-hover);
   color: var(--accent-fg);
 }
 

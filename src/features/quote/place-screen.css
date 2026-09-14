@@ -207,7 +207,7 @@
 .pl-grid {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(248px, 288px);
+  grid-auto-columns: minmax(300px, 400px);
   align-items: stretch;
   gap: var(--s-4);
   margin: 0;
@@ -528,6 +528,156 @@
 
 @container (max-width: 620px) {
   .pl-grid {
-    grid-auto-columns: minmax(214px, 244px);
+    grid-auto-columns: minmax(250px, 300px);
   }
+}
+
+
+/* ============================================================
+   THE CARD IS GONE HERE TOO.
+
+   `catalogue-screen.css` carries the argument in full: this repo's
+   one visual idea was a bordered card with a radius, a shadow and
+   a small picture inside it, on sixteen screens. Every reference
+   driven for this rebuild — Polestar, Porsche, Axopar — has almost
+   no cards at all: the product is the biggest thing on the screen
+   by a factor of four and nothing is drawn around it.
+
+   Four things go: the box, the kind-hued plate behind the photo
+   (which letterboxing turned into a pale band above and below
+   EVERY product), the kind rail down its edge, and the glow the
+   dark room needed. What replaces them is a shadow under the hull
+   and air around it.
+   ============================================================ */
+
+.pl {
+  background: var(--surface-1);
+}
+
+.pl-card,
+.pl-tile {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pl-card:hover,
+  .pl-tile:hover {
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .pl-card:hover .pl-well,
+  .pl-tile:hover .pl-well {
+    transform: scale(1.012);
+  }
+}
+
+.pl-well {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  transition: transform var(--d-slow) var(--ease-out);
+}
+
+/* white behind a white cut-out is invisible, and the initials stay
+   for the rows that have no photograph */
+.pl-plate {
+  background: var(--surface-1);
+}
+
+.pl-mono {
+  color: var(--fg-quaternary);
+}
+
+.pl-img {
+  filter: var(--photo-drop);
+}
+
+/* rule 5: a hue marks a thing that HAS that kind. Down the edge of
+   a photograph it is a frame by another name. */
+.pl-rail {
+  display: none;
+}
+
+.pl-say {
+  padding-inline: 0;
+}
+
+/* ============================================================
+   UNFRAMED THE REST OF THE WAY, photographed 2026-09-14. The
+   marque at 90px, the grey series strips, the boxed search, and a
+   caption stacked three lines deep under every hull — the same
+   four the catalogue had, fixed the same way.
+   ============================================================ */
+
+.pl-series-head {
+  padding-inline: 0;
+  border: 0;
+  border-bottom: var(--border) solid var(--line);
+  border-radius: 0;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.pl-series-head .t-label {
+  color: var(--fg);
+}
+
+.pl-series-head .t-caption {
+  color: var(--fg-quaternary);
+}
+
+.pl-head-do .ui-field-input {
+  border: 0;
+  border-bottom: var(--border) solid var(--line-strong);
+  border-radius: 0;
+  background: none;
+  padding-inline: 0;
+}
+
+.pl-head-do .ui-field-input:focus {
+  border-bottom-color: var(--fg);
+  box-shadow: none;
+}
+
+.pl-head-do .ui-field-label {
+  color: var(--fg-quaternary);
+}
+
+/* ONE BASELINE under the name — price, then a middot, then the
+   finishes, and the middot only when there are two things. */
+.pl-say {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--s-2);
+}
+
+.pl-say > .t-title,
+.pl-name {
+  flex: 1 0 100%;
+  margin-bottom: var(--s-1);
+}
+
+.pl-price {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.pl-count {
+  color: var(--fg-quaternary);
+}
+
+.pl-count:not(:empty)::before {
+  content: '·';
+  margin-right: var(--s-2);
+  color: var(--line-strong);
 }

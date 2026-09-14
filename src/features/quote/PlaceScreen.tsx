@@ -145,7 +145,7 @@ export function PlaceScreen({ door, onBack, onStarted }: PlaceScreenProps): Reac
                 <ArrowLeft size={ICON_SIZE.tiny} weight="bold" aria-hidden="true" />
                 Every place
               </button>
-              <Marque as="h1" className="t-marque pl-marque">{lockup.model || door.name}</Marque>
+              <Marque as="h1" className="t-hero pl-marque">{lockup.model || door.name}</Marque>
               <p className="t-small pl-sub">
                 {models.length} {models.length === 1 ? 'model' : 'models'} · {door.say}
               </p>
@@ -303,7 +303,7 @@ function ModelCard({
           if (first) onChoose(first)
         }}
       >
-        <span className="pl-well m-lit m-grain">
+        <span className="pl-well">
           <span className="pl-plate" aria-hidden="true">
             <span className="t-display pl-mono">{markOf(model.name)}</span>
           </span>
@@ -314,7 +314,6 @@ function ModelCard({
             w={420}
             h={264}
           />
-          <span className="k-rail pl-rail" aria-hidden="true" />
         </span>
 
         {/* THE SAME FIXED LINE BUDGET THE PICKER'S CARDS TAKE, for

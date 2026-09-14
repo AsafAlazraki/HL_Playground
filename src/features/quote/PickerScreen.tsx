@@ -132,7 +132,7 @@ export function PickerScreen({ onOpen, onClose }: PickerScreenProps): ReactEleme
       <div className="qp-col">
         <header className="qp-head">
           <div className="qp-head-say">
-            <Marque as="h1" className="t-marque qp-ask">What are you quoting?</Marque>
+            <Marque as="h1" className="t-hero qp-ask">What are you quoting?</Marque>
             <p className="t-small qp-sub">
               {openTotal} {openTotal === 1 ? 'place' : 'places'} you can start from.
             </p>
@@ -206,7 +206,6 @@ export function PickerScreen({ onOpen, onClose }: PickerScreenProps): ReactEleme
             <ul className="qp-offs">
               {closed.map((door) => (
                 <li className="qp-off" key={door.key} data-kind={door.kind}>
-                  <span className="k-rail qp-off-rail" aria-hidden="true" />
                   <span className="qp-off-say">
                     <span className="t-heading qp-off-name">{door.name}</span>
                     <span className="t-small qp-off-why">{door.refusal}</span>
@@ -246,7 +245,7 @@ function DoorCard({
         data-press="card"
         onClick={onOpen}
       >
-        <span className="qp-well m-lit m-grain">
+        <span className="qp-well">
           {/* ============================================================
               THE PLATE IS ALWAYS DRAWN, AND THE PHOTOGRAPH COVERS IT.
 
@@ -276,7 +275,6 @@ function DoorCard({
             w={420}
             h={264}
           />
-          <span className="k-rail qp-rail" aria-hidden="true" />
         </span>
 
         {/* THE TEXT BLOCK IS A FIXED BUDGET — two lines of name, one

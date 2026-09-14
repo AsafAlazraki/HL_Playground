@@ -3357,3 +3357,56 @@
     padding-left: calc(44px + var(--s-4));
   }
 }
+
+
+/* THE `hidden` ATTRIBUTE IS NOT STRONGER THAN A CLASS.
+
+   `.shell-view-what` sets `display: flex`, and the user-agent rule
+   for `[hidden]` is `display: none` at the SAME specificity and
+   lower origin — so `hidden={catalogue}` in `TableStage.tsx`
+   rendered the attribute, passed the typecheck, and changed
+   nothing at all: photographed at 1440 with the attribute present
+   in the DOM and the title still on the screen.
+
+   This is the same class of defect as the one `world.css` opens
+   with — a rule written where it cannot win. Every element that
+   sets `display` and can be hidden by attribute needs this line. */
+.shell-view-what[hidden] {
+  display: none;
+}
+
+
+/* WHEN A MASTHEAD IS UNDER THE BAR, THE BAR IS A MARGIN.
+
+   Photographed at 1440, 2026-09-14: the table stage's ground is
+   `--bg`, the rebuilt catalogue paints itself `--surface-1`, and
+   the bar between them is transparent — so what the eye saw was a
+   44px GREY STRIP with one word in it, sitting on top of a white
+   page with a 64px name on it. Two headers' worth of chrome for
+   one page, and the owner's word for it was "awful".
+
+   The stage takes the page's ground, so the bar dissolves into it
+   and "Back" is a word floating at the top left of a white page —
+   which is what the top of Porsche's configurator is. */
+.shell-tablestage[data-lens='catalogue'] {
+  background: var(--surface-1);
+}
+
+.shell-tablestage[data-lens='catalogue'] .shell-view-bar:not(:empty) {
+  min-height: 0;
+  padding-block: var(--s-3) 0;
+}
+
+/* AND THE STRIP THE BURGER STANDS IN TAKES THE PAGE'S GROUND.
+
+   At 834 the reserve above is painted in the body's `--bg`, the
+   catalogue below it in `--surface-1` — so the top of the screen
+   was a 60px grey band over a white page, with a menu button in it
+   and nothing else. The same defect as the view bar at 1440, one
+   layer up. The body is the only element that spans both, so the
+   body asks what is under it. */
+@media (max-width: 1024px) {
+  .shell-body:has(.shell-tablestage[data-lens='catalogue']) {
+    background: var(--surface-1);
+  }
+}

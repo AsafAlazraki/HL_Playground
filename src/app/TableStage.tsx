@@ -74,6 +74,8 @@ import { countLabel, leafNoun } from '@/features/table/grouping'
 import type { ActionItem } from '@/lib/actions'
 import { ICON_SIZE } from '@/lib/icons'
 import { Button } from '@/ui'
+import { useCatalogueLens } from '@/features/table/catalogueLens'
+import { rebuiltPicker } from '@/features/quote/rebuilt'
 import { stageKeys, useStageEscape } from './stageKeys'
 import { useStageEntry } from './stageEntry'
 
@@ -105,6 +107,11 @@ export function TableStage({
   onQuote,
 }: TableStageProps) {
   const entity = useProjectStore((s) => s.entities[entityId])
+  /* IS THE REBUILT CATALOGUE THE THING UNDER THIS BAR? The same
+     question `Catalogue.tsx:643` asks to decide whether to mount it,
+     asked here for the opposite reason: to get out of its way. */
+  const lens = useCatalogueLens(entityId)
+  const catalogue = rebuiltPicker() && lens !== 'list'
   const rows = useProjectStore((s) => s.rowsByEntity[entityId])
   const rowCount = rows ? rows.length : 0
 
@@ -193,6 +200,10 @@ export function TableStage({
   return (
     <div
       className="shell-viewstage shell-tablestage"
+      /* the stylesheet needs to know too — the bar's ground and
+         height change when a masthead is under it, and a component
+         never branches on register in TSX (CLAUDE.md) */
+      data-lens={catalogue ? 'catalogue' : undefined}
       role="region"
       {...stage}
       style={{ '--view-accent': accentVar(entity.accent) } as CSSProperties}
@@ -216,7 +227,16 @@ export function TableStage({
             39 models" — the table and what it holds, which is what the
             eye is being given here too. The `·` is already
             `aria-hidden`. */}
-        <p className="shell-view-what" role="heading" aria-level={1}>
+        {/* AND IT IS DRAWN ONCE. Photographed at 1440 on 2026-09-14:
+            "Highfield Inflatables" at 30px in this bar and
+            "Highfield Inflatables" at 64px in the catalogue's own
+            masthead, 60 pixels apart, the same eleven characters
+            twice. A register needs a title because a wall of rows
+            has no other name; a SHOWROOM page has a masthead, and a
+            masthead is the title. So when the rebuilt catalogue owns
+            the page this bar keeps only the way back — which is
+            every reference configurator's top bar exactly. */}
+        <p className="shell-view-what" role="heading" aria-level={1} hidden={catalogue}>
           <span className="shell-view-what-mark">
             <TableKindSymbol kind={kindOf(entity.kind)} size={ICON_SIZE.small} />
           </span>

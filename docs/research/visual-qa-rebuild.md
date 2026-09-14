@@ -198,3 +198,39 @@ were unreachable — no scrollbar, no wheel, nothing.
 - **The 121 Highfield rows whose colourway code is `I`, `O`, `R` or `WH`**
   print their code verbatim, because no production map carries those
   tokens. That is a question for the dealer, not a gap to guess at.
+
+## 2026-09-14 — the card comes off
+
+Re-measured after the unframing pass. The owner's finding, from one
+photograph of the catalogue at 1440: **"why are there two Highfield
+headers"** — `TableStage` set the entity name in the window bar at 30px
+and `CatalogueScreen` set it again 60px below at 64px. The bar now hides
+its title and takes the page's ground when the rebuilt catalogue is under
+it (`data-lens="catalogue"`); `[hidden]` needed its own rule because the
+bar's `display: flex` outranked the user-agent's `display: none`.
+
+The second finding was mine and worse: every photograph had a grey band
+under it. `--photo-drop` traced the opaque rectangle of a studio photo,
+not a hull — measured by sampling the screenshot down the middle of a
+card, rgb(232,232,233) at y=560 fading to rgb(245,246,246) at y=585.
+The token is `none` until the art is cut out; `world.css` carries it.
+
+What moved, on every Showroom product screen: the box, the sweep
+gradient, the kind rail, the glass chip and the seam are gone; the page
+name stepped down from marque to hero; the display face is the body face
+(Instrument Sans, one voice); band strips are hairlines; search fields
+are a line; the caption is one baseline.
+
+| ruler | result |
+|---|---|
+| `npm test` | seven green, lint 343/343, 2,974 tests |
+| `check-collide` 1440×900 | nothing overlaps, 11 screens |
+| `check-contrast` | 1,375 text nodes across 11 screens, all clear |
+| `qa-sweep` | clean in both themes; **Showroom scale ratio 4.73×** |
+| `check:shots --update` | 14 of 14 re-taken |
+
+**Flagged, not fixed:** `DESIGN_SYSTEM.md` asks Showroom for ≥6× scale
+contrast and the hero step gives 4.73×. The 6× head is the one the owner
+called "awful" in the same session. The number is recorded here so the
+spec and the screen do not disagree in silence; which one moves is the
+owner's call.

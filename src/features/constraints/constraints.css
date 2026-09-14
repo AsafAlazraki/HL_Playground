@@ -3111,12 +3111,12 @@
     transform var(--d-fast) var(--ease);
 }
 .cn-add:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: var(--action-hover);
   border-color: transparent;
   box-shadow: var(--e2), var(--glow-md);
 }
 .cn-add:active:not(:disabled) {
-  background: var(--accent-press);
+  background: var(--action-press);
   box-shadow: var(--e1);
   transform: scale(0.97);
   transition-duration: var(--d-press);
