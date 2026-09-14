@@ -234,3 +234,34 @@ contrast and the hero step gives 4.73×. The 6× head is the one the owner
 called "awful" in the same session. The number is recorded here so the
 spec and the screen do not disagree in silence; which one moves is the
 owner's call.
+
+## 2026-09-15 — the configurator re-cut
+
+"Configurator still sucks." Photographed on the hull step at 1440 and
+read against Porsche's: **290 of 900 pixels were chrome before the
+boat** — a grey Back strip, a glass money card with a ring, a caption, a
+56px figure, a tax sentence, a level toggle, a refused button and its
+paragraph, then a stepper with pills, circles, ticks and a "chosen: …"
+caption under every stop. The name was on the rail three times. And the
+hull sat in a grey smudge that `elementsFromPoint` could not find,
+because it was `m-lit::before` — the dark room's spotlight, painted by
+the shared stage on its own frame as a pseudo-element.
+
+Nothing in the markup moved. The money card's grid area went from the
+top of the page to the foot of the right column, where every reference
+keeps its summary; the stepper is a line of words with the current one
+underlined; the spotlight is off under `.bs-product`; under 1000 the
+spec figures get their own row instead of lying across the transom.
+
+| ruler | result |
+|---|---|
+| `npm test` | seven green, 2,974 tests |
+| `check-collide` | nothing overlaps, 11 screens |
+| `check-contrast` | 1,369 text nodes, all clear |
+| `qa-sweep` | clean; configurator scale ratio **3.09×** |
+| `check:shots --update` | configurator and document re-taken |
+
+The configurator's scale ratio fell to 3.09× because the marque lockup
+over the hull was already hidden and the price figure now sits at the
+display step. Same standing question as the 4.73× above: the spec says
+6×, the owner said the big head was awful.

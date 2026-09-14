@@ -1482,3 +1482,331 @@
   border-radius: 0;
   background: none;
 }
+
+/* ============================================================
+   THE CONFIGURATOR, RE-CUT TO THE REFERENCE — 2026-09-15.
+
+   The owner, after the unframing pass: "Configurator still sucks."
+   Photographed on the hull step at 1440 and read against Porsche's:
+
+     290 OF 900 PIXELS WERE CHROME BEFORE THE BOAT. A grey strip
+     with "Back"; then a glass card with a ring, PACKAGE PRICING,
+     a 56px figure, a tax sentence, a Cash/Trade toggle, a grey
+     refused button and its refusal paragraph; then a stepper with
+     pills, numbered circles, ticks and a "chosen: …" caption under
+     every stop. Porsche's top is one 56px bar. The hull started at
+     y=290.
+
+     THE NAME WAS ON THE RAIL THREE TIMES: the side head, the
+     "chosen:" caption, and a cream bordered chip — all "Highfield -
+     RU230KAM (PVC) WH".
+
+     AND THE HULL SAT IN A GREY BLOB. The shared stage's sweep
+     gradient and its 70px inset vignette survived the earlier
+     override because that rule was less specific than the one in
+     `productstage.css` that sets them.
+
+   WHAT IT IS NOW — Porsche's shape, nothing invented:
+
+     the steps    one line of words across the top, the current one
+                  underlined. No circles, no ticks, no captions.
+     the stage    the hull, full height, on white, figures on a
+                  hairline under it
+     the rail     this step's options, scrolling
+     the foot     the price, the level, the one action — the FOOT
+                  OF THE RAIL, bottom right, where every reference
+                  puts its summary. It still fills up: the ring is
+                  there, smaller, beside the figure.
+
+   Nothing in the markup moved. The money card was already the
+   first child of `.bs`; it is placed by grid-area and this pass
+   moves its area from the top of the page to the foot of the
+   right column.
+   ============================================================ */
+
+.bs {
+  grid-template-columns: minmax(0, 1fr) clamp(380px, 32vw, 520px);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'rail rail'
+    'stage side'
+    'stage money';
+  background: var(--surface-1);
+}
+
+/* -- the steps: words on a line -------------------------------- */
+
+.bs-rail {
+  padding: var(--s-2) var(--gutter) 0;
+  border-bottom: var(--border) solid var(--line);
+  background: none;
+}
+
+.bs-rail .ui-stepper-count,
+.bs-rail .ui-stepper-chose,
+.bs-rail .ui-stepper-mark,
+.bs-rail .ui-stepper-run {
+  display: none;
+}
+
+.bs-rail .ui-stepper-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--s-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bs-rail .ui-stepper-item {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.bs-rail .ui-stepper-go {
+  display: block;
+  padding: var(--s-3) 0 var(--s-3);
+  border: 0;
+  border-bottom: var(--border-strong) solid transparent;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  margin-bottom: calc(-1 * var(--border));
+}
+
+.bs-rail .ui-stepper-name {
+  color: var(--fg-tertiary);
+}
+
+.bs-rail .ui-stepper-item[data-state='done'] .ui-stepper-name {
+  color: var(--fg-secondary);
+}
+
+.bs-rail .ui-stepper-item[data-state='current'] .ui-stepper-go,
+.bs-rail .ui-stepper-go[aria-current] {
+  border-bottom-color: var(--fg);
+}
+
+.bs-rail .ui-stepper-item[data-state='current'] .ui-stepper-name,
+.bs-rail .ui-stepper-go[aria-current] .ui-stepper-name {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bs-rail .ui-stepper-go:hover {
+    background: none;
+    border-bottom-color: var(--line-strong);
+  }
+
+  .bs-rail .ui-stepper-go:hover .ui-stepper-name {
+    color: var(--fg);
+  }
+}
+
+/* -- the stage: the hull, and nothing around it ---------------- */
+
+.bs .bs-product .ui-stage .ui-stage-frame {
+  background: var(--surface-1);
+  border: 0;
+  box-shadow: none;
+}
+
+.bs-product {
+  padding: var(--s-6) var(--s-8) var(--s-4) var(--gutter);
+}
+
+.bs-specs {
+  gap: var(--s-1) var(--s-8);
+  padding: var(--s-4) 0 0;
+}
+
+/* -- the rail: the options, once each ------------------------- */
+
+.bs-step {
+  padding: var(--s-5) var(--gutter) var(--s-8) var(--s-6);
+  border-left: var(--border) solid var(--line);
+  background: var(--surface-1);
+}
+
+/* the picked line is a row on a hairline, not a cream chip */
+.bs-line {
+  border: 0;
+  border-bottom: var(--border) solid var(--line);
+  border-radius: 0;
+  background: none;
+  padding-inline: 0;
+}
+
+/* -- the foot: the price, the level, the one action ----------- */
+
+.bs-bar {
+  grid-area: money;
+  min-width: 0;
+  border-left: var(--border) solid var(--line);
+  background: var(--surface-1);
+}
+
+.bs .ui-done {
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'arc figure'
+    'levels levels'
+    'do do';
+  gap: var(--s-3) var(--s-4);
+  margin: 0;
+  padding: var(--s-4) var(--gutter) var(--s-5) var(--s-6);
+  border: 0;
+  border-top: var(--border) solid var(--line);
+  border-radius: 0;
+  background: var(--surface-1);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
+.bs .ui-done-arc {
+  grid-area: arc;
+  width: 40px;
+  height: 40px;
+}
+
+.bs .ui-done-dial {
+  width: 40px;
+  height: 40px;
+}
+
+.bs .ui-done-figure {
+  grid-area: figure;
+  min-width: 0;
+}
+
+.bs .ui-done-cap {
+  display: none;
+}
+
+.bs .ui-done-now {
+  font-size: var(--t-display-size);
+  font-weight: var(--t-display-weight);
+  line-height: var(--t-display-lead);
+  letter-spacing: var(--t-display-track);
+}
+
+.bs .ui-done-levels {
+  grid-area: levels;
+  justify-self: start;
+}
+
+.bs .ui-done-do {
+  grid-area: do;
+  display: grid;
+  gap: var(--s-2);
+}
+
+.bs .ui-done-do .ui-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ONE COLUMN under 1000: the steps, the hull, the options, the
+   foot — the foot last and sticky, which is where a phone keeps
+   its price. */
+@media (max-width: 1000px) {
+  .bs {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(240px, 0.8fr) minmax(0, 1fr) auto;
+    grid-template-areas:
+      'rail'
+      'stage'
+      'side'
+      'money';
+  }
+
+  .bs-bar,
+  .bs-step {
+    border-left: 0;
+  }
+
+  .bs-product {
+    padding: var(--s-4) var(--gutter) 0;
+  }
+
+  .bs .ui-done {
+    padding-inline: var(--gutter);
+  }
+}
+
+/* UNDER 1000 THE FIGURES COME OFF THE PICTURE. `.bs-product` stacks
+   the stage and the spec strip in one grid cell so the figures lie
+   along the foot of the hull — which at 834, photographed
+   2026-09-15, put "Tube Dia 36 cm" across the boat's transom
+   because the stage band is short there and the hull fills it.
+   A flex column gives the figures their own row under the
+   picture. */
+@media (max-width: 1000px) {
+  .bs-product {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+  }
+
+  .bs-product > .ui-stage {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .bs-specs {
+    position: static;
+    flex: 0 0 auto;
+    align-self: stretch;
+    background: var(--surface-1);
+  }
+}
+
+/* THE GREY BEHIND THE HULL WAS `m-lit` — the material class the
+   shared stage puts on its own frame, drawing the dark room's light
+   as a pseudo-element. `elementsFromPoint` on the grey came back
+   white all the way down, because a pseudo-element is not an
+   element: the frame itself was `rgb(255,255,255)` and still grey
+   to look at. On white the "light" is a grey smudge the exact
+   shape of a spotlight, and it followed the frame from the top and
+   bottom at 1440 to the sides at 834. */
+.bs-product .ui-stage-frame.m-lit,
+.bs-product .ui-stage-frame.m-grain {
+  background-image: none;
+}
+
+.bs-product .ui-stage-frame::before,
+.bs-product .ui-stage-frame::after {
+  display: none;
+}
+
+/* THE STEP LINE HOLDS AT EVERY WIDTH. Under 1000 the Stepper's own
+   sheet fills the current stop and underlines it in brass at a
+   specificity the rules above did not reach — photographed at 834,
+   "The hull" in a grey pill under a black line under a brass line.
+   One rule, one selector deeper, for every width. */
+.bs .bs-rail .ui-stepper-item,
+.bs .bs-rail .ui-stepper-item[data-state='current'] {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.bs .bs-rail .ui-stepper-item[data-state='current'] .ui-stepper-go {
+  background: none;
+  border-bottom-color: var(--fg);
+  box-shadow: none;
+}
+
+/* the picked lines start where the words above them start */
+.bs-picked {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bs-part {
+  padding-inline: 0;
+}

@@ -3410,3 +3410,17 @@
     background: var(--surface-1);
   }
 }
+
+/* THE CONFIGURATOR'S BAR TAKES THE STAGE'S GROUND, for the reason the
+   catalogue's does: a 44px `--bg` strip with "Back" in it over a
+   white page is a second header. */
+.shell-viewstage:has(> .bs),
+.shell-viewstage:has(.bs) .shell-view-bar {
+  background: var(--surface-1);
+}
+
+@media (max-width: 1024px) {
+  .shell-body:has(.bs) {
+    background: var(--surface-1);
+  }
+}
