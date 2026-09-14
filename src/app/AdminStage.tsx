@@ -54,12 +54,8 @@ import {
   ArrowsLeftRight,
   Quotes,
   CaretLeft,
-  FlowArrow,
-  Graph,
-  Scales,
+  CaretRight,
   ShieldCheck,
-  Stack,
-  TreeStructure,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
@@ -74,27 +70,24 @@ import {
 } from '@/features/tenancy'
 import type { AppUser } from '@/features/auth'
 import { PageHead } from '@/features/page'
-import { atLeast, ROLE_NAME } from '@/features/auth'
+import { ROLE_NAME } from '@/features/auth'
 import { ICON_SIZE, weightFor } from '@/lib/icons'
-import { Button, Card, Field, SectionHead } from '@/ui'
+import { Button, Field, SectionHead } from '@/ui'
 import { stageKeys, useStageEscape } from './stageKeys'
 import { useStageEntry } from './stageEntry'
+import './admin-stage.css'
 
 const MARK = ICON_SIZE.medium
 const MARK_WEIGHT = weightFor(MARK)
 
 export interface AdminStageProps {
-  /** the drawing — the app's one permanent surface, under
-   *  everything. Only the shell can empty the window stack. */
-  onOpenDrawing: () => void
-  /** every table you have, on one page */
-  onOpenTables: () => void
-  /** set a value once at a brand, a range or a model */
-  onOpenLevels: () => void
-  /** the limits every row must keep */
-  onOpenRules: () => void
-  /** what fits what — the pairings behind every shortlist */
-  onOpenFitment: () => void
+  /* FIVE DOORS LEFT THIS STAGE AND THEIR PROPS STAYED FOR WEEKS.
+     The drawing, the data model, the levels, the rules and the
+     fitment builder are `DataStage`'s now — `winKit` wires all
+     five there, at its own case — and Admin went on declaring and
+     destructuring them, which the linter had been reporting as five
+     unused parameters ever since. A prop nothing reads is a claim
+     about a screen that is no longer true. */
   /** the organisation's saved configurations */
   onOpenConfigurations: () => void
   /** one module's own set-up, from the access grid */
@@ -111,7 +104,6 @@ function Door({
   glyph: Glyph,
   name,
   fact,
-  wide,
   onPick,
 }: {
   glyph: Icon
@@ -120,24 +112,30 @@ function Door({
    *  figure has not resolved — or has none to give — carries no
    *  line rather than a placeholder; the name centres instead. */
   fact?: string
-  wide?: boolean
   onPick: () => void
 }): ReactElement {
-  /* A DOOR IS A CARD, and the card is the primitive's: ground, hairline,
-     radius, lift, press and focus ring come from `src/ui`, once. What
-     this stage still owns is the cell it stands in (the drawing's door
-     is worth two) and what is on it.
+  /* A DOOR IS A ROW, NOT A CARD, and that is the whole change on
+     this screen.
 
-     THE NAME WEARS THE DISPLAY TIER'S MIDDLE STEP. `--t-display-xl` is
-     the step ds.css cut for "a name that is one of several and is the
-     point of the screen"; five doors are the point of this screen, and
-     the page's own title above them stays at the title step so the
-     chrome never outranks them. The grid is two columns so the longest
-     name a door carries — "Saved configurations" — fits at 34px at
-     1280 and wraps at a space, never mid-word, below it. */
+     It was a 500x140 card carrying a 34px name and one line of
+     eleven-pixel mono, four of them in a two-by-two grid, with the
+     floor below y=550 empty. The argument for that was "Admin must
+     not become a graveyard, so build it like a selling screen" —
+     right about the risk, wrong about the remedy. What keeps a
+     door alive is that it carries an honest figure and sits where
+     a person looks; being 140px tall does not. And the doors this
+     stage was sized for are `DataStage`'s now: the data model, the
+     levels, the rules, the fitment builder all moved. Four
+     settings drawn as a showroom is the graveyard with better
+     lighting.
+
+     THE WHOLE ROW PRESSES and it is a real `<button>`, so keyboard
+     reach, press and focus come for free rather than from a card
+     primitive pretending to be one. The chevron is what marks a
+     door apart from a setting — drawn, not said. */
   return (
-    <div className={`ad-cell${wide ? ' is-wide' : ''}`}>
-      <Card onActivate={onPick} pad="md">
+    <div className="ad-cell">
+      <button type="button" className="ad-row" onClick={onPick}>
         <span className="ad-door-mark" aria-hidden="true">
           <Glyph size={MARK} weight={MARK_WEIGHT} />
         </span>
@@ -145,18 +143,16 @@ function Door({
         {/* THE ONE FACT. Mono, tabular, because most of them are
             figures and a column of facts that do not line up on the
             decimal is a column somebody has to read twice. */}
-        {fact ? <span className="ad-door-fact">{fact}</span> : null}
-      </Card>
+        {fact ? <span className="ad-door-fact">{fact}</span> : <span />}
+        <span className="ad-door-go" aria-hidden="true">
+          <CaretRight size={ICON_SIZE.tiny} weight="bold" />
+        </span>
+      </button>
     </div>
   )
 }
 
 export function AdminStage({
-  onOpenDrawing,
-  onOpenTables,
-  onOpenLevels,
-  onOpenRules,
-  onOpenFitment,
   onOpenConfigurations,
   onOpenModule,
   user,
@@ -167,12 +163,6 @@ export function AdminStage({
   const roles = useProjectStore((s) => s.roles)
   const org = useProjectStore((s) => s.meta.org)
   const constraints = useConstraints()
-
-  /* THE TOP RUNG. `atLeast` rather than an equality: a check
-     written `role === 'super-admin'` is a gate that stays shut the
-     day a rung is added above it, and there is one above it in
-     every multi-tenant build. */
-  const top = atLeast(user, 'super-admin')
 
   /* WHOSE SET-UP IS ON SCREEN. Held here rather than in the shell's
      Stage union — see the header. */
@@ -371,15 +361,15 @@ export function AdminStage({
                   redrawn — one control, one behaviour, one place that
                   knows what an import costs. */}
               <div className="ad-cell">
-                <Card pad="md">
+                <div className="ad-row">
                   <span className="ad-door-mark" aria-hidden="true">
                     <ArrowsLeftRight size={MARK} weight={MARK_WEIGHT} />
                   </span>
                   <span className="ad-door-name">Import / export</span>
-                  <span className="ad-door-fact">
+                  <span className="ad-do">
                     <ImportExportMenu align="left" />
                   </span>
-                </Card>
+                </div>
               </div>
               {/* THE SENTENCE EVERY QUOTE STARTS WITH. A setting and
                   not a door — pressing it goes nowhere — so it takes
@@ -436,22 +426,32 @@ function QuoteTermsCell(): ReactElement {
 
   return (
     <div className="ad-cell">
-      <Card pad="md">
+      <div className="ad-row">
         <span className="ad-door-mark" aria-hidden="true">
           <Quotes size={MARK} weight={MARK_WEIGHT} />
         </span>
         <span className="ad-door-name">Quote terms</span>
-        <span className="ad-door-fact">
+        {/* THE FIELD TAKES THE FIGURE'S TRACK AS WELL AS ITS OWN. It
+            is the widest control on the screen and the only one
+            carrying a value a person types, so it is the one thing
+            here allowed to break the register's two verticals. Its
+            consequence goes UNDER it, in the name's track, because
+            "editing this leaves quotes already written alone" is a
+            fact somebody needs before they type rather than after. */}
+        <span className="ad-terms">
           <Field
             label="The sentence every new quote starts with"
             value={draft}
             onChange={setDraft}
             placeholder="This quote is valid for 30 days."
-            hint="Copied onto a quote when it is made. Editing it here leaves quotes already written alone."
             onBlur={() => setQuoteTerms(draft)}
           />
         </span>
-      </Card>
+        <p className="ad-say">
+          Copied onto a quote when it is made. Editing it here leaves quotes already
+          written alone.
+        </p>
+      </div>
     </div>
   )
 }

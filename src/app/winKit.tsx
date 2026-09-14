@@ -550,18 +550,13 @@ export function renderStage(s: Stage, h: StageHandlers): ReactNode {
       )
     case 'admin':
       return (
+        /* THE FIVE DOORS THAT MOVED. The drawing, the data model,
+           the levels, the rules and the fitment builder are all
+           wired on the `data` case above — Admin is the
+           ORGANISATION, which is who may do what, what has been
+           saved, and what goes in and out. Passing them here as
+           well left five parameters Admin never read. */
         <AdminStage
-          onOpenDrawing={h.openSheet}
-          onOpenTables={() => h.openWin({ kind: 'gallery' })}
-          onOpenLevels={() => h.openWin({ kind: 'levels', entityId: null })}
-          onOpenRules={() => h.openWin({ kind: 'rules' })}
-          /* THE FITMENT BUILDER HAD NO DOOR ANYWHERE. `{ kind: 'flow' }`
-             was in this union and nothing in the application opened it —
-             a finished feature reachable from nothing, which is the exact
-             failure `check-reachability` was written for and the exact
-             one it cannot see, because the stage IS imported. Admin is
-             where it belongs: it is the shape of what you sell. */
-          onOpenFitment={() => h.openWin({ kind: 'flow' })}
           onOpenConfigurations={h.openConfigurations}
           onOpenModule={(moduleId) =>
             h.openWin({ kind: 'module', moduleId, tab: 'settings' })

@@ -1,0 +1,321 @@
+/* ============================================================
+   ADMIN (ad-) — COCKPIT, and it stopped being a billboard.
+
+   WHAT IT WAS, measured at 1440x900: four cards, each about
+   500x140, in a two-by-two grid, each holding a 34px name and one
+   line of eleven-pixel mono. Everything below y=550 was empty
+   floor — the screen was four fifths air. Two of the four were not
+   even doors: one holds a menu trigger and one holds a text field,
+   drawn at the size of a door so that pressing the card did
+   nothing.
+
+   These rules lived in `shell.css`, 177 lines of it, which is the
+   shell holding a stage's own drawing. They live beside the stage
+   now, which is this repo's own convention and was being broken
+   here alone.
+
+   WHAT IT IS. A REGISTER, at the Cockpit's own density: one row
+   per setting, a mark, a name, the figure it holds, and its
+   control on the right. Four rows at 56px instead of four cards at
+   140, inside a reading measure rather than stretched across a
+   1,200px stage — because a settings list that runs the width of a
+   desk monitor is a list your eye has to travel to read.
+
+   THE ARGUMENT THE OLD FILE MADE FOR THE BILLBOARD was that "Admin
+   must not become a graveyard, so build it like a selling screen".
+   That was right about the risk and wrong about the remedy. What
+   keeps a door alive is that it carries an honest figure and sits
+   where a person looks; making it 140px tall does not. And the
+   doors this stage was sized for — the data model, the levels, the
+   rules, the fitment builder — are not here any more: they are
+   `DataStage`'s. Admin is four settings. Four settings drawn as a
+   showroom is the graveyard with better lighting.
+
+   NO KIND HUE, still, and for the reason the old header gave: a
+   rule, a role and an import are not boats, motors, trailers or
+   rigging kits, and a hue only ever marks a thing that HAS that
+   kind. Admin is ink, accent and hairline. That is the rule being
+   kept where keeping it costs something.
+   ============================================================ */
+
+.ad-well {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
+/* THE MEASURE IS THE LIST'S, NOT THE STAGE'S. A row whose name is
+   at x=24 and whose control is at x=1180 is a row a person reads
+   by moving their head. */
+.ad-well > * {
+  width: min(760px, 100%);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* the access screen is this stage's own state and brings its own
+   layout — it must not be squeezed into the settings measure */
+.ad-well > .ac {
+  width: 100%;
+  padding-inline: 0;
+}
+
+.ad-band {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-bottom: var(--s-12);
+}
+
+.ad-band + .ad-band {
+  margin-top: var(--s-8);
+}
+
+.ad-band-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding-bottom: var(--s-2);
+  border-bottom: var(--border) solid var(--line-subtle);
+}
+
+/* ------------------------------------------------------------
+   THE ROWS.
+
+   A list and not a grid: `.ad-grid` keeps its name because four
+   components write it, but it is a column now. One hairline
+   between rows, none above the first and none below the last, so
+   the band's own head rule is the only heavy line on the screen.
+   ------------------------------------------------------------ */
+
+.ad-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.ad-cell {
+  min-width: 0;
+}
+
+.ad-cell + .ad-cell {
+  border-top: var(--border) solid var(--line-subtle);
+}
+
+/* A ROW IS A GRID OF FOUR: mark, name, figure, control. The name
+   is the only track that grows, so every figure and every control
+   on this screen lands on the same two verticals — which is the
+   whole reason a register is faster to read than four cards. */
+.ad-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--s-3) var(--s-4);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--s-3) var(--s-2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+/* the rows that are doors — the whole row presses */
+button.ad-row {
+  cursor: pointer;
+  transition: background var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button.ad-row:hover {
+    background: var(--surface-1);
+  }
+}
+
+button.ad-row:focus-visible {
+  outline: var(--border-strong) solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* THE MARK IS A PLATE AND NOT AN ICON FLOATING IN SPACE. 32px,
+   the control height, so it sits on the same rhythm as everything
+   else in the Cockpit. */
+.ad-door-mark {
+  display: grid;
+  place-items: center;
+  width: var(--control-h-md);
+  height: var(--control-h-md);
+  border: var(--border) solid var(--line-subtle);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  color: var(--fg-tertiary);
+  transition: color var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button.ad-row:hover .ad-door-mark {
+    color: var(--accent);
+  }
+}
+
+/* THE NAME IS READING SIZE. It was 34px — the display tier's
+   middle step — for four settings on an otherwise empty screen,
+   which is a hierarchy with nothing under it. The stage's own name
+   above is the largest thing here, and that is the order the
+   screen reads in. */
+.ad-door-name {
+  color: var(--fg);
+  font-size: var(--t-subtitle-size);
+  font-weight: var(--t-subtitle-weight);
+  line-height: var(--t-subtitle-lead);
+  letter-spacing: var(--t-subtitle-track);
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+/* THE ONE FACT. Mono and tabular, because most of them are figures
+   and a column of facts that do not line up on the decimal is a
+   column somebody reads twice. */
+.ad-door-fact {
+  color: var(--fg-tertiary);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm-size);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* the chevron on a row that goes somewhere — the one thing that
+   distinguishes a door from a setting, and it is drawn rather
+   than said */
+.ad-door-go {
+  display: grid;
+  place-items: center;
+  color: var(--fg-quaternary);
+  transition:
+    color var(--d-press) var(--ease-out),
+    transform var(--d-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button.ad-row:hover .ad-door-go {
+    color: var(--accent);
+    transform: translateX(2px);
+  }
+}
+
+/* ------------------------------------------------------------
+   THE ROWS THAT ARE NOT DOORS.
+
+   Import / export holds a menu; quote terms holds a field. Both
+   keep the row's shape and put their control in the fourth track,
+   so nothing on this screen is drawn as a door that lies about
+   what a press will do.
+   ------------------------------------------------------------ */
+
+.ad-do {
+  grid-column: 4;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* THE TERMS FIELD DROPS UNDER ITS OWN NAME instead of sitting in
+   the control track. `Field` always draws a real label — that is
+   its own rule and a good one — so put on the right it stacked a
+   caption over an input in a 130px track and pushed the row to
+   three lines of ragged right-aligned text. Under the name it
+   reads as what it is: a heading, the instruction, the value, and
+   the consequence, in that order, all on one vertical. */
+.ad-terms {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  min-width: 0;
+  width: min(420px, 100%);
+}
+
+.ad-terms + .ad-say {
+  grid-row: 3;
+}
+
+/* THE CONSEQUENCE, UNDER THE CONTROL THAT CAUSES IT. It sits in
+   the name's track so it reads as a note on this row rather than
+   as a new row — and it is the one place on the screen with a
+   sentence on it, because "editing this leaves quotes already
+   written alone" is a fact a person needs before they type, not
+   after. */
+.ad-say {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  margin: 0;
+  max-width: 68ch;
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+}
+
+.ad-name {
+  color: var(--fg);
+}
+
+/* ------------------------------------------------------------
+   AND ON A PHONE THE ROW STACKS, in the order it reads: what it
+   is, then what it holds, then what you can do about it.
+   ------------------------------------------------------------ */
+@media (max-width: 560px) {
+  /* EVERY CHILD IS PLACED, none left to auto-flow. The first draft
+     of this block placed three of the five and let the mark and the
+     name find their own cells: the name landed under the mark on
+     row two and the row read as two stacked items rather than one.
+     A grid with some explicit placements and some implicit ones
+     flows the implicit ones around the explicit ones, which is
+     almost never what the layout meant. */
+  .ad-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    row-gap: var(--s-2);
+  }
+
+  .ad-door-mark {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .ad-door-name {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .ad-door-go {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .ad-door-fact {
+    grid-column: 2 / -1;
+    grid-row: 2;
+  }
+
+  .ad-do,
+  .ad-terms {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  /* AND THE SAME SPECIFICITY AS THE RULE IT HAS TO BEAT. `.ad-terms
+     + .ad-say` is a compound selector and outranks a bare `.ad-say`
+     wherever it appears, media query or not — so the desktop rule
+     kept the sentence on row 3, on top of the field that had just
+     been moved there. Measured on a 430px phone: the terms
+     placeholder and the consequence were printed over each other. */
+  .ad-say,
+  .ad-terms + .ad-say {
+    grid-column: 1 / -1;
+    grid-row: 4;
+  }
+}
