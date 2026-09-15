@@ -177,8 +177,17 @@ measure*. If it clears 4.5:1, it is legal.
 
 ### Three faces
 
-**Inter** for everything a person reads. **IBM Plex Mono** for every figure,
-code, SKU and identifier. **Archivo** for display, and nothing else.
+**Instrument Sans** for everything a person reads, and for display too — one
+voice, the way Polestar and Porsche set a whole site in one grotesque and let
+the photography carry the personality (`--font-display` resolves to
+`--font-sans`; `world.css` records why Bricolage Grotesque was dropped).
+**IBM Plex Mono** for every figure, code, SKU and identifier. **Outfit at
+200/300** is `--font-wide`, the wide light face every boat maker sets a
+model's name in over a photograph — a chapter's name, a tile's name, the one
+big line on an entry screen — and nothing that is read at length.
+
+This section said Inter and Archivo when it was written; neither was ever
+loaded, and the faces above are the ones `index.html` links.
 
 Mono is not decoration — it is what makes a column of money line up.
 
@@ -228,6 +237,33 @@ to two lines with the full text still in the DOM. A proper noun is the one
 string a truncation cannot be read through.
 
 ---
+
+### The tile rule, and the scene
+
+Written 2026-09-15, when the standard changed. Every product card in the app —
+a kind on Home, a brand on the shelf, a model in the catalogue, a place in
+Modules, a boat in the picker, a door on the first run — is one of two tiles,
+and **the picture decides which**, never a list of makers:
+
+- a **scene tile** where the picture is a photograph: Nimbus's shape — the
+  picture to the edge at 4:3 on `--scene-deep`, the name in `--font-wide`
+  over its foot in `--scene-ink`, an outline pill, the brand's glyph top-left;
+- a **studio tile** where it is a render: Zodiac's — the render on white, the
+  name under it in the same face, dark.
+
+`src/features/quote/scene.ts` asks the picture: drawn at 32×32, the edge ring
+sampled; near-white or neutral means a render. Measured on seventeen seed
+pictures: every render's ring saturates at 0.00–0.01, every photograph's at
+0.13–0.64. A picture that cannot be read is a studio shot, the failure that
+can only make a screen quieter. The chaptered configurator and the document's
+cover use the same verdict at full width.
+
+**Nothing is faked to earn a scene tile.** Highfield's file holds only
+white-ground renders, so Highfield is studio everywhere until real photography
+is added to the seed's image table, at which point the rule picks it up with
+no code change. The `--scene-*` tokens live in `world.css`; text over a
+photograph must sit on an element with a real `background-color`, because the
+contrast ruler composites colours, not images.
 
 ## 5 · SPACE, DEPTH, MATERIAL
 
@@ -504,6 +540,9 @@ screen* and fails when a screen is bimodal.
 | file | owns |
 |---|---|
 | `src/styles/system.css` | the system — tokens, both registers, both themes, type, press, focus |
+| `src/styles/world.css` | the last-imported token file: the world the rebuilt screens draw in — `--action` (sea blue), the `--scene-*` inks, `--font-wide`, the elevations. Imported last so it wins at equal specificity |
+| `src/features/entry/` | the entry frame sign-in, the wizard and the first run share |
+| `src/features/quote/scene.ts` | the tile rule's judge |
 | `src/ui/**` | the primitives. None accepts `className` or `style` |
 | `src/features/*/*.css` | a feature's own appearance |
 | `/design.html` | every surface drawn — the reference |

@@ -130,7 +130,17 @@ No shared-element transitions, no `layoutId`, no page transitions — **the stag
 do not animate at all.** Build the choreography layer on `stillness.tsx`, using
 the exact values in `DESIGN_SYSTEM.md` §6.
 
-### Phase 4 — Showroom: the quote flow
+### Phase 4 — Showroom: the quote flow *(done — and then redone to the standard of 2026-09-15)*
+
+**What landed:** the picker and the place as tiles (`PickerScreen`, `PlaceScreen`),
+the configurator as chapters that fill the window with the boat's photograph
+(`BuildScreen.tsx`, after Saxdor and Porsche driven live), the finishes as a
+swatch card, the cascade, and the document with the chapters' cover on screen
+and Porsche's PDF on paper. Each is an entry in `docs/research/visual-qa-rebuild.md`.
+The first cut stamped one "Porsche language" across everything and was rejected;
+the standard that replaced it is restated in `docs/specs/SCREENS.md`.
+
+The brief as it was written:
 
 The flagship. Prove the system here before touching anything else.
 
@@ -147,21 +157,41 @@ Also here: variant colourways from the decode map in
 hidden); and wiring `fitmentCascade`, which has **zero production callers**
 today.
 
-### Phase 5 — Cockpit: tables, data, rules, admin
+### Phase 5 — Cockpit: tables, data, rules, admin *(done, except the table itself)*
+
+**What landed:** the quotes register, customers, Data, Rules, What fits what,
+Review, Admin, and the view / design / levels / history stages, each measured
+(18+ rows at 1280×800, tabular figures, 2.5–4× scale contrast). **The sheet —
+the table of rows — is still the app's oldest surface** (`SCREENS.md` marks it
+"old language"). The brief as it was written:
 
 Rows 24 dense / 32 default / 44 comfortable. Fixed table layout at 12 columns or
 fewer, auto above, identity column pinned. 150px minimum column width. Figma's
 mixed-value model. Linear's tap-vs-hold peek. WCAG 2.1.4 single-key remapping.
 Fix `table.css:651` — a kind hue used as reading ink at 4.33:1 across 21 bands.
 
-### Phase 6 — home, modules, customers, onboarding, auth
+### Phase 6 — home, modules, customers, onboarding, auth *(done)*
+
+**What landed:** home, modules and the catalogue on the tile rule (a
+photograph makes a scene tile, a render a studio tile — `scene.ts` reads the
+pixels); customers as a register; sign-in, the wizard and the first run on
+Porsche's login frame (`src/features/entry/`). The bottom bar is gone; nothing
+is seeded or faked. The brief as it was written:
 
 Home is Showroom, and `docs/BACKLOG.md:153` is still unanswered: *"i saw the
 design of the new home dashboard. HATE IT"*, and *"The bottom bar in that image
 is disgusting"*. Under the two-register thesis the answer is layout, content and
 finish together.
 
-### Phase 7 — repoint the guards
+### Phase 7 — repoint the guards *(partly done)*
+
+**What landed:** `check-contrast` measures eleven screens and sets `aria-hidden`
+nodes aside (1,278 nodes clear at `3c0e8e1`); `check-shots` photographs
+fourteen; `check-collide` (nothing overlaps) and `qa-sweep` (register, thinness,
+mid-word cuts) are new; `check:words` and `check:stores` joined `npm test`,
+which is seven guards. **The literal-px ratchet was kept, not retired** — it
+keeps catching sheets that bypass the ramp — and sits at 460. Still open: motion
+coverage, density, and the bundle gate. The brief as it was written:
 
 - `check-styles.mjs` — keep orphan-class, literal-colour, undefined-`var()` and
   the 11px floor. **Retire the literal-px ratchet**; replace with ramp coverage.
@@ -184,13 +214,15 @@ Build alongside, migrate screen by screen, delete the old layer last.
   components. Old stylesheets stay until their last consumer is gone.
 - One switch selects old shell vs new, so the branch always runs.
 - Every phase ends green on `npm test` and `npm run build`.
-- **The 1,913 engine tests stay passing throughout.** They are the proof the
-  rebuild did not touch the logic.
+- **The engine tests stay passing throughout.** They are the proof the
+  rebuild did not touch the logic — 1,913 when this was written, 2,974 at
+  `3c0e8e1`, none removed.
 
 ## The scoreboard
 
-`docs/research/visual-qa-2026-09-09.md` is the only honest measurement in the
-repo and it is the number to beat. Re-run it per phase: ramp ratio and distinct
+`docs/research/visual-qa-rebuild.md` is the rebuild's scoreboard, one entry per
+pass, against the rulers `docs/research/visual-qa-2026-09-09.md` established —
+which was the only honest measurement in the repo and the number to beat. Re-run it per phase: ramp ratio and distinct
 steps in use per screen, contrast over all ~1,450 text leaves, mid-word
 truncations, horizontal overflow. Measure performance against the **build**,
 never `npm run dev` — dev-mode JSX overhead already cost this project four

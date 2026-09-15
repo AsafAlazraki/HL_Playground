@@ -1,94 +1,93 @@
-# Handoff — 2026-09-10
+# Handoff — 2026-09-15
 
 Written so a session on another machine can pick this up cold. The chat that
 produced this is not the record; this file and the docs it points to are.
+The previous handoff (2026-09-10, on `stunning`) asked which visual direction
+to take; that question is answered and the rebuild it led to is on `main`.
 
 ## State of the tree
 
-- Branch `stunning`, everything below is committed and pushed.
-- `npm test` is green at the commit before this one (`923186c`): 157 test
-  files, 2,530 passing plus one `it.fails`, lint at the 371 ratchet,
-  reachability and style guards clean, 107 dead rules reported (not failed).
-- Screenshot baselines in `tools/shots/*.png` were re-taken deliberately after
-  every surface moved onto `src/ui` primitives. `npm run check:shots` needs a
-  dev server on port 5090.
-- `@fontsource/instrument-serif` is uninstalled; nothing imported it. The
-  `--font-display` token in `src/styles/tokens.css` still names the face with
-  a Georgia fallback and is unused by any live screen.
+- Branch `main` at `3c0e8e1`, identical to `rebuild`, both pushed. Work
+  continues on `rebuild` and lands on `main` by fast-forward.
+- `npm test` is green: seven guards — types, lint at the 343 ratchet, vitest
+  (2,974 passing plus one `it.fails`, 199 files), reachability, styles
+  (17 baselined orphans, 133 dead rules reported, literal px 460/460),
+  words, stores.
+- The server rulers ran clean on the same commit against a cold-started dev
+  server: `check-collide` (nothing overlaps at 1440×900), `check-contrast`
+  (1,278 text nodes over eleven screens), `qa-sweep`, and `check-shots`
+  (14 baselines re-taken, committed under `tools/shots/`).
+- Every screen in `docs/specs/SCREENS.md` is rebuilt and measured;
+  `docs/research/visual-qa-rebuild.md` is the scoreboard, one entry per pass.
 
 ## Setup on a new machine
 
 ```bash
 git clone https://github.com/AsafAlazraki/HL_Playground.git
-cd HL_Playground && git checkout stunning
+cd HL_Playground
 npm ci
-npm test            # five guards, see CLAUDE.md
-npm run dev         # then /design.html for the design sheet
+npm test            # seven guards, see CLAUDE.md
+npm run dev         # port 5090; then /design.html for the design sheet
 ```
 
-Node 24 is required. `check:contrast` and `check:shots` drive the system
-Chrome through `playwright-core` and need `npm run dev` on port 5090 in
-another terminal.
+Node 24 is required. `check:contrast`, `check:shots`, `check-collide` and
+`qa-sweep` drive the system Chrome through `playwright-core` and need
+`npm run dev` on port 5090 in another terminal. **Restart it cold**
+(`rm -rf node_modules/.vite`) before measuring anything you have just
+restructured — Vite's HMR serves partial transforms and the rulers will
+measure them (CLAUDE.md records three cases).
+
+## The standard, and the two rules that came out of it
+
+Asaf's standard, stated 2026-09-15 after a night of one "Porsche language"
+stamped across twenty screens: *every section designed on its own merits from
+real boat-configurator references, never one treatment reused; and nothing
+faked.* The references were driven live — Saxdor, Axopar, Nimbus, Zodiac,
+Beneteau, De Antonio, Jeanneau, Porsche's configurator and its PDF, Porsche's
+and BMW's logins — and kept as frames in `out/ref/`, `out/ref/boats/` and
+`out/ref/entry/` (not committed; re-drive them).
+
+- **The tile rule.** A card asks its own picture (`src/features/quote/scene.ts`
+  samples the edge ring at 32×32; paper or neutral means a render). A
+  photograph makes a scene tile, a render a studio tile. Highfield's file
+  holds only renders, so Highfield is on white everywhere until real
+  photography is added. It is never faked.
+- **The entry frame** (`src/features/entry/`). Sign-in, the wizard and the
+  first run share Porsche's login frame with the dealer's own Stacer running
+  across the window, captioned as the file's.
+
+The chaptered configurator (`src/features/quote/BuildScreen.tsx`), the
+document's cover, the picker and place tiles, and the three front screens
+all follow from those two.
 
 ## Where the backlog and decisions live
 
-- `docs/BACKLOG.md` — reconciled: what is done, partial, open, stale.
-- `docs/plan/DECISIONS.md` — three decisions Asaf made on 2026-09-09:
-  split undo (sheet when priced alternatives are at stake, toast+UNDO
-  otherwise); real users with roles via `mayDo()`; counts as a quiet strip.
-- `docs/plan/QUOTE_GROUND_UP.md` — the quote design spec the rebuild follows.
+- `docs/specs/SCREENS.md` — every stage, who uses it, the experience it must
+  give, what is still missing.
+- `docs/BACKLOG.md` — reconciled; the guard baseline has a 2026-09-15 column.
+- `docs/plan/REBUILD.md` — the phases, with what each landed as.
+- `docs/plan/DECISIONS.md` — the three decisions of 2026-09-09.
 - `docs/research/INDEX.md` — every research run and what it decided.
-- `.claude/skills/` — Asaf's earlier research (emil-design-eng, apple-design,
-  the configurator playbook). Use it; do not re-research it.
+- `.claude/skills/` — Asaf's earlier research. Use it; do not re-research it.
 
-## The open question: which visual direction
+## What is still open
 
-Asaf rejected the current look outright ("absolutely horrible design").
-Three directions were drawn as full artboards in `.design/`:
-
-| file | direction |
-|---|---|
-| `.design/Main.dc.html` | **A · Porsche** — dark `#0b0f14`, full-bleed hull photo, 132px name, bands in a right rail |
-| `.design/DirectionB.dc.html` | **B · Apple** — `#f5f5f7`, layered white cards with soft shadows, pill controls, `#0071e3` |
-| `.design/DirectionC.dc.html` | **C · Quiet Precision, sharpened** — the existing `ds.css` tokens (`#081b2e` / `#0a5fc2`) with a ruled ledger, mono figures, solid navy price bar |
-
-Published canvas (private to Asaf's account):
-https://claude.ai/code/artifact/68de89a2-cac3-4725-ae5a-5456bed8bb40
-
-Re-seed after editing an artboard (path is the bundled `design` skill):
-
-```
-node <design-skill>/seed-canvas.mjs --template <design-skill>/payload.template.html \
-  --out .design/helmlogic-quote-directions.html --title "HelmLogic Quote Directions" \
-  --artboard Main.dc.html --artboard DirectionB.dc.html --artboard DirectionC.dc.html \
-  --image public/seed-images/<each webp used> --canvas canvas.json
-```
-
-**Next step is Asaf's:** pick A, B or C. Then rebuild `ds.css` tokens and the
-quote, catalogue, configurator and module surfaces onto that direction, at the
-layout level, not as CSS tweaks. He has said this repeatedly and it is the
-standing brief: "break it and rebuild the layouts and components at the core
-level. Nothing stays the same."
-
-## Queued work that was blocked on a session limit
-
-A resweep workflow failed on quota before it ran. Its items are still open:
-
-1. Visual QA re-sweep of all ten screens against `DESIGN_CONTRACT.md` §11
-   (the last sweep, `docs/research/visual-qa-2026-09-09.md`, found the
-   display tier on 2 of 10 screens).
-2. Back controls on every deep screen.
-3. Undo on `addLine` per the split-undo decision.
-4. Backlog item O4.
-5. README, CLAUDE.md and BACKLOG update to match this tree (CLAUDE.md still
-   quotes the 2026-09-09 test counts).
+1. **Highfield photography.** The Sport 560 and the rest of Highfield's
+   range have only white-ground renders in the file, so every Highfield
+   surface is a studio tile. Real photographs go into the seed's image
+   table; the tile rule picks them up with no code change.
+2. **The wizard is unreachable with the demo account** — it carries its
+   organisation and lands on the first run. `tools/shot-entry.mjs` says how
+   the wizard was photographed and what it needs.
+3. **Onboarding of a real second tenant** is a seam, not a feature
+   (`docs/plan/TENANCY.md`).
+4. The bundle is unguarded (`docs/plan/REBUILD.md`, phase 7).
 
 ## Working agreements Asaf has stated
 
 - No `/loop`. Finish a phase, then start the next one without asking.
-- Do not push to `stunning` without being told. (This push was to move
-  machines.)
-- Measure before claiming improvement; the visual QA sweep exists because
-  claims outran the screens.
-- Keep the machine light: one dev server, unique ports, kill them after.
-- Research goes into `docs/research/`, never only into chat.
+- Push only when told. (`main` was pushed on 2026-09-15 on request.)
+- Show static directions before building a new section; never say "same
+  treatment as X".
+- Nothing faked — no seeded customers, quotes, pairings or photographs; an
+  empty state is the true state.

@@ -34,22 +34,28 @@ reconciliation of 2026-09-08 at `7c56419`; the right is re-measured on
 2026-09-09 at `530597d`, the last commit, from a clean checkout of it — not
 from a working tree with other people's edits in it.
 
-| guard | 2026-09-08 (`7c56419`) | 2026-09-09 |
-|---|---|---|
-| `npx tsc --noEmit -p tsconfig.app.json` | clean | clean |
-| `vitest run` | 1,770 in 112 files | **1,913 passing + 1 `it.fails`, 119 files** |
-| — of which render | none | **35, in 4 `.test.tsx` files** (`ui` project, happy-dom) |
-| `npm run lint` | did not exist | **399 warnings against a ratchet of 400** (411 at `31d1265`, 400 at `f853666`) |
-| `npm test` | 3 guards | **5** — types, lint, vitest, reachability, styles |
-| `npm run check:reachable` | pass | pass — 28 feature dirs, 1 dormant by declaration |
-| `npm run check:contrast` | clean — 272 text nodes over 5 screens | not re-run; it needs a running server |
-| style debt | 19 baselined orphans, **174 dead CSS rules** | 19 orphans, **177 dead rules** |
-| `npm run build` | green, 1.17s | not re-run |
-| bundle | one chunk at **3,291.80 kB** (gzip 459.32 kB) | not re-measured |
+| guard | 2026-09-08 (`7c56419`) | 2026-09-09 | 2026-09-15 (`3c0e8e1`, on `main`) |
+|---|---|---|---|
+| `npx tsc --noEmit -p tsconfig.app.json` | clean | clean | clean |
+| `vitest run` | 1,770 in 112 files | **1,913 passing + 1 `it.fails`, 119 files** | **2,974 passing + 1 `it.fails`, 199 files** |
+| — of which render | none | **35, in 4 `.test.tsx` files** (`ui` project, happy-dom) | 38 `.test.tsx` files |
+| `npm run lint` | did not exist | **399 warnings against a ratchet of 400** (411 at `31d1265`, 400 at `f853666`) | 343 against a ratchet of 343 |
+| `npm test` | 3 guards | **5** — types, lint, vitest, reachability, styles | **7** — plus words and stores |
+| `npm run check:reachable` | pass | pass — 28 feature dirs, 1 dormant by declaration | pass |
+| `npm run check:contrast` | clean — 272 text nodes over 5 screens | not re-run; it needs a running server | clean — 1,278 text nodes over 11 screens |
+| style debt | 19 baselined orphans, **174 dead CSS rules** | 19 orphans, **177 dead rules** | 17 orphans, 133 dead rules, literal px 460/460 |
+| `npm run build` | green, 1.17s | not re-run | green |
+| bundle | one chunk at **3,291.80 kB** (gzip 459.32 kB) | not re-measured | not re-measured |
 
 The dead-rule count is the one figure `check-styles` prints without failing
 on, and it is the one that moved the wrong way: 174 → 177 over eight commits.
-A number nothing enforces drifts.
+A number nothing enforces drifts. (It fell to 133 by 2026-09-15 as the old
+sheets were replaced; still nothing enforces it.)
+
+**The rebuild is on `main` as of 2026-09-15** — every screen in
+`docs/specs/SCREENS.md` rebuilt and measured; the scoreboard is
+`docs/research/visual-qa-rebuild.md`. Rows below that describe the old
+screens' appearance are answered by that; their other content stands.
 
 ## The backlog — ranked by effort, cheapest first
 

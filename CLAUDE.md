@@ -49,15 +49,36 @@ filter. Read it before you re-derive any of them and re-block the work. It is
 there because those clauses, not laziness, are what rejected every visual idea
 this project brought for months.
 
-**The rebuilt screens are what the app opens on.** Home, the quote
-picker, a place, a catalogue, the configurator and Data are rebuilt and
-measured — `docs/research/visual-qa-rebuild.md` is the scoreboard.
+**Every screen is rebuilt and measured** — `docs/specs/SCREENS.md` is the
+inventory (every stage, who uses it, the experience it must give, its
+status) and `docs/research/visual-qa-rebuild.md` is the scoreboard, one
+entry per pass. The standard changed on 2026-09-15 and the inventory
+restates it: every section is designed from real boat-configurator
+references driven live (`out/ref/`, `out/ref/boats/`, `out/ref/entry/`),
+never one treatment stamped across screens, and **nothing is faked** — no
+seeded customer, quote, pairing or photograph; an empty state is the true
+state. Two rules that came out of it and now run through the app:
+
+- **The tile rule.** A card asks its own picture (`src/features/quote/scene.ts`
+  reads the edge ring of the pixels): a photograph makes a *scene tile* —
+  picture to the edge, the name over it in the wide light face, an
+  outline pill — and a render makes a *studio tile* — the render on white,
+  the name under it. Highfield's file holds only renders, so Highfield is
+  studio everywhere until real photography is added; it is never faked.
+- **The entry frame** (`src/features/entry/`). Sign-in, the wizard and the
+  first run share Porsche's login frame: the dealer's own Stacer running
+  across most of the window, captioned as the file's, and a white column
+  with the one thing being asked.
+
 `#build=old` in the URL returns every shipped screen and the answer is
 remembered; `#build=new` comes back. `src/features/quote/rebuilt.ts` is
 the one switch, and carries why it is a hash and not a search param.
 
-The design system is `src/styles/system.css`. Every surface is drawn at
-`/design.html` (`npm run dev`, then open it) — check your screen against it.
+The design system is `src/styles/system.css`; `src/styles/world.css` is
+the last-imported token file and holds the world the rebuilt screens draw
+in (the sea-blue `--action`, the `--scene-*` inks, `--font-wide`). Every
+surface is drawn at `/design.html` (`npm run dev`, then open it) — check
+your screen against it.
 
 ## Before you commit
 
@@ -78,17 +99,18 @@ ever run here) and has come down to 343. Clear warnings and lower the number in
 the same commit. The 344th warning is a failure, not a new baseline.
 
 **`check-styles`** fails if a class is written in TSX that no stylesheet
-declares. 19 pre-existing orphans are baselined in `tools/style-baseline.json`;
-you may not add a 20th. Clear one and run `node tools/check-styles.mjs
+declares. 17 pre-existing orphans are baselined in `tools/style-baseline.json`;
+you may not add an 18th. Clear one and run `node tools/check-styles.mjs
 --update-baseline`. It was 35 before the prose pass cleared sixteen of them.
-It also prints the dead rules — 177 at `530597d`, 110 today — which it does
-not fail on, which is why that number drifts.
+It also prints the dead rules — 177 at `530597d`, 133 at `3c0e8e1` — which it
+does not fail on, which is why that number drifts.
 
 **And it holds a ratchet on the type ramp.** REDESIGN_ROLLOUT step 4 and
 RESPONSIVE both track "how much type goes through the scale", and both tracked
 it as a number in prose, which rotted three times: 878 literal / 21% tokens in
 the doc, 722 / 59% on a later sweep, 1,624 declarations with 1,012 through
-tokens and **518 literal px** measured 2026-09-11. `check-styles` counts it on
+tokens and **518 literal px** measured 2026-09-11; **460 at `3c0e8e1`**, the
+ceiling lowered with it. `check-styles` counts it on
 every run, prints it in the OK line, and fails if it RISES. A literal px is not
 a defect — a caption that must not scale is a legitimate one — so nothing is
 forbidden except the count going up. Clear some and lower `LITERAL_PX_CEILING`
@@ -129,14 +151,15 @@ guessed at the root size would be inventing the number it failed on.
 
 Stated so nobody assumes coverage.
 
-**What is covered, measured 2026-09-09 at `530597d`:** 119 test files, 1,913
+**What is covered, measured 2026-09-15 at `3c0e8e1`:** 199 test files, 2,974
 passing and one `it.fails` — `src/lib/configure/contradiction.test.ts:652`,
 a known solver defect asserted out loud rather than left silent.
 `vitest.config.ts` runs two projects, split by file extension so neither can
 quietly become the other:
-`.test.ts` is logic in `node` (115 files); `.test.tsx` renders in `happy-dom`
-— **4 files, 35 rendering tests**, over the shell's dialog and stage entry
-(`src/app`), the dashboard tiles, and the quote picker.
+`.test.ts` is logic in `node` (161 files); `.test.tsx` renders in `happy-dom`
+— **38 files**, over the shell's dialog and stage entry (`src/app`), the
+dashboard, the quote picker, the document, the registers and the rebuilt
+screens. It was 4 files and 35 tests on 2026-09-09.
 
 Those 35 exist because the picker's duplicated eyebrow was found by a rendering
 test and not by three people reading the screen (`5d00103`). Query by role and
@@ -148,12 +171,14 @@ class is renamed and passes when the screen is broken.
 - **No E2E.** Nothing drives the real app end to end. `check-contrast` and
   `check-shots` open a browser, but each measures one thing — colour, and
   pixels.
-- **158 non-test `.tsx` files, and 4 suites.** A foothold, not coverage.
+- **188 non-test `.tsx` files, and 38 suites.** Better than a foothold; not
+  coverage.
 - **Whether a screen makes sense is a person's job**, still.
 
-**Visual regression IS automated**, on eleven screens — home, modules, one
-module, data, a catalogue (its Jobs lens), a gallery, a register, quotes,
-customers, the quote picker and the configurator:
+**Visual regression IS automated**, on fourteen screens — home, modules, one
+module, data, the catalogue, a register, quotes, customers, the configurator,
+a place, the cascade, the document and the board; the gallery lens is listed
+and reported as unreached, because the catalogue replaced it:
 
 ```bash
 npm run dev                        # in one terminal
@@ -220,8 +245,10 @@ Not everything is dev overhead, which is why the rule is "measure", not
 gesture by `performance.mark`, and print it bucketed as scripting / style /
 layout / paint with the hot functions by self time.
 
-**Contrast is automated**, on five screens — home, modules, data, quotes,
-customers (`tools/check-contrast.mjs:140-145`):
+**Contrast is automated**, on eleven screens — home, modules, one module,
+data, the catalogue, quotes, customers, the picker, a place, the configurator
+and the document (the `SCREENS` table in `tools/check-contrast.mjs`). It takes
+`--url http://localhost:5093` to measure a second server:
 
 ```bash
 npm run dev            # in one terminal
@@ -241,9 +268,13 @@ parser returns null rather than guessing and each screen prints the heading it
 actually found. A guard that silently measures the wrong screen reports clean
 and means nothing.
 
-Baseline when it landed (`7c56419`, 2026-09-08): **272 text nodes across five
-screens, all clear.** Not re-measured since — it needs a running server, so no
-number here is asserted for today's tree.
+Baseline when it landed (`7c56419`, 2026-09-08): 272 text nodes across five
+screens, all clear. **Measured 2026-09-15 at `3c0e8e1`: 1,278 text nodes across
+eleven screens, all clear, 182 `aria-hidden` nodes set aside.** Beside it,
+`tools/check-collide.mjs` (nothing overlaps at 1440×900) and `tools/qa-sweep.mjs`
+(every screen in a register, nothing thin, nothing cut) ran clean on the same
+tree. All three need a server; a structural edit wants a cold restart first
+(see above).
 
 ## Plans worth knowing about
 
@@ -266,10 +297,11 @@ number here is asserted for today's tree.
   over one screen is worse than the problem it solves.
 - **Commit messages explain the decision**, not the diff. Say what was measured
   and why the change is what it is.
-- **`main` and `stunning` are identical** as of 2026-09-12 at `e36c61b` — the
-  backlog merged. The ground-up rebuild lands on **`rebuild`**, branched from
-  there. `redesign` is abandoned at 48 ahead, last touched 2026-09-01; do not
-  branch from it.
+- **`main` carries the rebuild.** `rebuild` was fast-forwarded into `main` and
+  pushed on 2026-09-15 at `3c0e8e1` (86 commits since `e36c61b`, where `main`
+  and `stunning` were last identical). Work continues on `rebuild` and lands on
+  `main` the same way. `stunning` is behind and stays so; `redesign` is
+  abandoned at 48 ahead, last touched 2026-09-01; do not branch from either.
 
 ## Where learnings go
 

@@ -48,20 +48,23 @@ is committed so agent tooling starts it on the right one.
 
 This app is **local-first**: everything lives in your browser's IndexedDB, so
 nothing about a project travels in the repository. A fresh clone opens on
-**sign-in** — which signs you in locally and sends nothing anywhere — and then on
-an empty sheet. Getting to the same 53 tables the screenshots show:
+**sign-in** — the dealer's own Stacer running across most of the window, a
+white column beside it; it signs you in locally and sends nothing anywhere —
+and then on the first run, an empty Home with two doors. Getting to the same
+53 tables the screenshots show:
 
 1. press **Use the demo account**. It *fills* the form; it does not submit.
 2. press **Sign in**
-3. the first door — **Load your Master Price File**, which states its size:
-   53 tables, 15,691 rows
+3. the first door — **Load your Master Price File**, a tile drawn from the
+   file's own photograph, which states its size: 53 tables, 15,691 rows
 
    That door names the business whose file it is, because the file is
    Northside Marine's and they are the first real customer rather than a
-   fixture. If you typed *Northside Marine* at step 1 it reads **Load your
-   Master Price File** instead and is tagged YOUR DATA — same set, the reading
-   that is true for whoever is looking at it. See `startingPointWords` in
-   `src/app/demoLoad.ts`.
+   fixture. The demo account carries its organisation, so it lands here and
+   never meets the two-question wizard (name the business, say what it sells);
+   that wizard is what a business with no name meets, and it shares the
+   sign-in's frame. See `startingPointWords` in `src/app/demoLoad.ts` and
+   `docs/specs/SCREENS.md`.
 
 Two consequences worth knowing. Each *origin* has its own database, so running
 the same code on a different port gives you a fresh empty one — useful for
@@ -69,10 +72,12 @@ testing onboarding, surprising the first time. And the sheet you build is not
 in git: use **I/O** in the masthead to export a project file if you want to hand
 one to somebody.
 
-`npm test` runs five guards in order: **typecheck**, **lint** (oxlint, ratcheted
+`npm test` runs seven guards in order: **typecheck**, **lint** (oxlint, ratcheted
 so the count can only fall), **vitest** (two projects — `logic` in node,
-`ui` in happy-dom), **reachability**, and the **style contract**. CI runs all of
-them plus the build, on Node 22 and 24.
+`ui` in happy-dom), **reachability**, the **style contract**, **words** (no
+jargon a person can read, no raw control bytes) and **stores** (every stored key
+is forgotten on a wipe or kept on purpose). CI runs all of them plus the build,
+on Node 22 and 24.
 
 A sixth is deliberately outside `npm test` because it needs a running server:
 
@@ -175,6 +180,14 @@ longer than it was true. `src/features/quote/` is 20+ files: Choose · Configure
 Address over a persistent price bar, level pricing, overrides with a reason
 gate, issue-and-freeze, and an A4 document. There is also sign-in, tenancy,
 roles, a sales pipeline and a CRM, none of which this file mentioned.
+
+**Every screen was rebuilt between 12 and 15 September 2026** on two registers
+(Showroom and Cockpit — `docs/specs/DESIGN_SYSTEM.md`), each section from real
+boat-configurator references driven live, and measured after every pass;
+`docs/specs/SCREENS.md` is the inventory and `docs/research/visual-qa-rebuild.md`
+the scoreboard. Nothing in the app is faked: no seeded customer, quote, pairing
+or photograph, and a brand whose file holds only renders is drawn on white until
+real photography is added. `main` carries the rebuild.
 
 **Read `docs/BACKLOG.md` before planning anything.** 227 claims from the planning
 docs were checked against the code on 2026-09-08: 102 were already built, 37 were
