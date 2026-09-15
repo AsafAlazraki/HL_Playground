@@ -405,3 +405,27 @@ now.
 | `check-contrast` | 1,286 text nodes, all clear |
 | `qa-sweep` | clean; quotes 2.83× |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-15, late — the customers register in the same language
+
+"Now do the same Porsche treatment on the customers screen." Porsche has
+no public register of people, so the reference is the one the quotes
+register took an hour earlier (Finder): a title pair, the list a white
+card on a 16px radius, every row led by a picture, sentence case, one
+blue pill. A person on this sheet has no photograph, so every row leads
+with their initials on a disc — `markOf`, the same function the
+catalogue uses for a hull with no picture. The aurora sky behind the
+page is off. The count of quotes is a chip only on a register where
+somebody has been quoted; a dash in a blue chip is a chip about nothing.
+
+The seed carries no customer register, so `tools/shot-customers.mjs`
+now creates one, issues a quote to a named person, types two people in
+through the screen's own form and photographs the list — the first
+photograph of this screen with anybody on it. The first frame showed the
+sixth thing on a quoted row wrapping under a five-track grid; six now.
+
+| ruler | result |
+|---|---|
+| `check:types` · `lint` · register tests | clean · 343/343 · 66 passed |
+| `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,286 clear · clean, customers 2.83× |
+| `check:shots --update` | 14 of 14 re-taken |

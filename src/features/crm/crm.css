@@ -1477,3 +1477,271 @@
   margin: 0;
   width: min(680px, calc(100% - var(--page-gutter) * 2));
 }
+
+/* ============================================================
+   THE REGISTER OF PEOPLE, IN PORSCHE'S LANGUAGE — 2026-09-15.
+
+   The same language the quotes register took the same evening,
+   read off Porsche Finder: a title pair, no uppercase and no mono,
+   the list a white card on a 16px radius, every row led by a
+   picture, one blue pill. A person on this sheet has no
+   photograph, so the row leads with their initials on a disc.
+
+   The aurora sky behind the page goes: the app is white now, and
+   a violet gradient behind a Cockpit register was the dark room's
+   idea of depth. The paper tokens this file was written on
+   (`--paper`, `--ink-*`) stay declared; the rules below take the
+   app's own.
+   ============================================================ */
+
+.cx-root {
+  background: var(--surface-1);
+}
+
+.cx-sky {
+  display: none;
+}
+
+/* -- the head: a title pair, one blue pill ---------------------- */
+
+.cx-root .ph-name {
+  font-size: var(--t-display-size);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+
+.cx-root .ph-count {
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--fg-secondary);
+}
+
+.cx-root .ph-line {
+  color: var(--fg-tertiary);
+}
+
+.cx-root .ph-acts .ui-btn--primary {
+  min-height: 44px;
+  padding-inline: var(--s-5);
+  border-radius: 999px;
+}
+
+.cx-root .ph-tools .ui-field-input,
+.cx-find .ui-field-input {
+  border: var(--border) solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-1);
+  padding-inline: var(--s-4);
+}
+
+.cx-find .ui-field-input:focus {
+  border-color: var(--fg);
+  box-shadow: none;
+}
+
+.cx-find .ui-field-label {
+  color: var(--fg-tertiary);
+}
+
+/* -- the book is a card ----------------------------------------- */
+
+.cx-book {
+  border: var(--border) solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: var(--e-card);
+  overflow: hidden;
+}
+
+.cx-shown {
+  color: var(--fg-tertiary);
+  font-family: var(--font-sans);
+}
+
+.cx-row {
+  contain-intrinsic-size: auto 60px;
+}
+
+.cx-row-open {
+  grid-template-columns: 40px minmax(0, 1.1fr) minmax(0, 1.4fr) auto auto;
+  gap: var(--s-4);
+  min-height: 60px;
+  padding: var(--s-2) var(--s-5) var(--s-2) var(--s-5);
+  border-left: 0;
+  border-bottom: var(--border) solid var(--line);
+}
+
+.cx-rows > :last-child > .cx-row-open {
+  border-bottom: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cx-row-open:hover {
+    background: var(--surface-2);
+  }
+}
+
+.cx-row.is-open > .cx-row-open {
+  background: color-mix(in srgb, var(--action) 6%, var(--surface-1));
+}
+
+.cx-row-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+  font-size: var(--t-small-size);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.cx-row.is-picked .cx-row-mark {
+  background: var(--action);
+  color: var(--action-fg);
+}
+
+.cx-row-name {
+  font-size: var(--t-body-size);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--fg);
+}
+
+.cx-row-contact {
+  color: var(--fg-tertiary);
+}
+
+.cx-row-when {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+.cx-row-worth {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.cx-row-count {
+  display: inline-block;
+  min-width: 0;
+  padding: 2px var(--s-3);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--action) 12%, var(--surface-1));
+  color: var(--action);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.cx-num {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+
+.cx-blank {
+  color: var(--fg-tertiary);
+  font-style: italic;
+}
+
+/* the pick box sits in the mark's disc, not in a gutter */
+.cx-pick {
+  left: var(--s-3);
+}
+
+/* -- the foot is a card too ------------------------------------- */
+
+.cx-foot {
+  border: var(--border) solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: var(--e-card);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.cx-foot-say {
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+}
+
+.cx-key {
+  border-color: var(--line);
+  background: var(--surface-2);
+  color: var(--fg-secondary);
+}
+
+/* -- the empty state ------------------------------------------ */
+
+.cx-empty .ui-card,
+.cx-empty > div {
+  border-radius: 16px;
+}
+
+.cx-empty-title {
+  font-size: var(--t-display-size);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+
+.cx-empty-say,
+.cx-empty-why {
+  color: var(--fg-secondary);
+}
+
+.cx-empty .ui-btn--primary {
+  min-height: 44px;
+  padding-inline: var(--s-5);
+  border-radius: 999px;
+}
+
+.cx-none {
+  color: var(--fg-tertiary);
+}
+
+/* every caption on this register is sentence case in the body face */
+.cx-root .ui-section-caption,
+.cx-empty .ui-section-caption,
+.cx-root .mono-label {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-tertiary);
+}
+
+/* the row holds six things when somebody is quoted — the mark, the
+   name, the contact, the day, the worth and the count — and a
+   five-track grid wrapped the sixth onto its own line. And the count
+   is a chip only on a register where somebody has been quoted; on
+   one where nobody has, a dash in a blue chip is a chip about
+   nothing. */
+.cx-row-open {
+  grid-template-columns: 40px minmax(0, 1.1fr) minmax(0, 1.4fr) auto auto auto;
+}
+
+.cx-row-count {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--fg-tertiary);
+}
+
+.cx-rows--quoted .cx-row-count {
+  padding: 2px var(--s-3);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--action) 12%, var(--surface-1));
+  color: var(--action);
+}

@@ -3452,3 +3452,9 @@
     background: var(--surface-1);
   }
 }
+
+@media (max-width: 1024px) {
+  .shell-body:has(.cx-root) {
+    background: var(--surface-1);
+  }
+}

@@ -49,6 +49,7 @@ import { Plus } from '@phosphor-icons/react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { ICON_SIZE } from '@/lib/icons'
 import { money } from '@/lib/money'
+import { markOf } from '@/lib/mark'
 import { Button, Card, Field, SectionHead } from '@/ui'
 import { PageHead } from '@/features/page'
 import { Picker } from '@/features/picker'
@@ -714,6 +715,16 @@ export function CustomerList({ onOpen, openId }: CustomerListProps): ReactElemen
                         }}
                         aria-label={who}
                       >
+                        {/* THE MARK LEADS THE ROW. Porsche's list leads
+                            every row with the car; a person has no
+                            photograph on this sheet, so the row leads
+                            with their initials on a disc — the same
+                            `markOf` the catalogue uses for a hull with
+                            no picture. Hidden from the reader: the name
+                            beside it says it. */}
+                        <span className="cx-row-mark" aria-hidden="true">
+                          {c.name === '' ? '·' : markOf(c.name)}
+                        </span>
                         <span className="cx-row-name">
                           {c.name === '' ? (
                             <span className="cx-blank">no name yet</span>
