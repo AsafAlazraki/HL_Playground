@@ -34,7 +34,7 @@ tabular figures, keyboard parity, no entrance animation, scale contrast
 choices as chips in a card, the list a white card on a 16px radius, every
 row led by a mark, sentence case, no mono, one blue pill.
 
-**Status** below is as of `0bf4099`. *Done* means re-cut in the language and
+**Status** below is as of `c0c60d4`. *Done* means re-cut in the language and
 measured green on every ruler; *old language* means untouched since the
 light-mode turn (`ecb658f`) — working, measured, but still wearing cards,
 mono capitals and glass.
@@ -64,13 +64,13 @@ mono capitals and glass.
 | `customer` — the register of people | a dealer filing or finding somebody | one book of everybody sold to; mark, open, walk with the keyboard | every row led by the person's initials; one tab stop, arrows, J/K, X, Shift, Ctrl+A | **done** — `290f8e5`; the seed has no register, `tools/shot-customers.mjs` makes one |
 | `data` — the register of tables | a dealer or the owner | see the shape of the business: 53 tables, what each holds, how many rows | every row led by the kind's glyph on a disc; the five doors as pills in a card; 21 rows at 1280 | **done** — `aa88209` |
 | `rules` — Business rules | the owner, occasionally | read what the price file asserts; write a rule; see what is checked | groups as cards led by their kind; rules as rows on hairlines; the three views as chips | **done** — `0bf4099` |
-| `flow` — What fits what | the owner, occasionally | see what one boat may be sold with, and what each brand's rows pair to | one boat at a time with what stops fitting struck through; a card per brand with a bar per pairing kind | **in hand** — this pass |
-| `review` — the reviewer | the owner, before a launch | every blocker and advisory over the whole file | a ledger of findings, each with its row | **old language** |
+| `flow` — What fits what | the owner, occasionally | see what one boat may be sold with, and what each brand's rows pair to | one boat at a time with what stops fitting struck through; a card per brand with a bar per pairing kind | **done** — `87a961e`; the harness waits on `.fo-root` |
+| `review` — the reviewer | the owner, before a launch | every blocker and advisory over the whole file | a ledger of findings, each with its row | **done** — `f3f6997` |
 | `table` — the register of rows | a dealer, all day | the sheet: search, sort, fill, row commands | 18+ rows, tabular, keyboard-first; the workspace under the catalogue | **old language** — the table itself is the app's oldest surface |
 | `view` — what goes with each one | the owner | pair rows to rows: which motors fit which hulls | the view page with handles that grow in place | **old language** |
 | `design` — what each column may hold | the owner | column setup | the designer | **old language** |
 | `levels` — the price ladder | the owner | set a value at brand/range/model, cascade down | a ladder you can read at a glance | **old language** |
-| `admin` — the organisation | the owner, rarely | who may do what; what is saved; what comes in and goes out | eight doors in one stage, built as a selling screen | **old language** — re-extracted to `admin-stage.css` earlier, still the pre-Porsche shape |
+| `admin` — the organisation | the owner, rarely | who may do what; what is saved; what comes in and goes out | eight doors in one stage, built as a selling screen | **done** — `c0c60d4` |
 
 ### Not screens, but every screen has them
 
@@ -89,10 +89,11 @@ Not styling — things a person would notice are absent.
 
 - **`history`** has no harness route, so it has never been photographed by
   `check-shots`; it is the one Showroom screen nobody has measured.
-- **`review`, `view`, `design`, `levels`, `admin`, onboarding, auth** are in the
-  old language. Each is a CSS-only pass of the kind Rules took, and the order
-  should follow how often a dealer sees them: `review` first (it is a door off
-  Data), then `admin`, then the three owner-only stages, then onboarding.
+- **`view`, `design`, `levels`, `history`, onboarding, auth** are in the old
+  language. Each is a CSS-only pass of the kind Rules, Review and Admin took.
+  None of the three owner-only stages has a harness route yet, so the first
+  step for each is a route in `tools/shot-one.mjs`, or its frame cannot be
+  looked at before it ships.
 - **The register of rows (`table`)** is the hardest and the most-used Cockpit
   surface, and it has not been re-cut. It needs its own measurement pass
   before its language changes — density and keyboard parity are guarded there
