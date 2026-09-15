@@ -567,3 +567,36 @@ photography in the seed; the SP560 is eight top-down renders on white, and
 under "no fake data" a Saxdor-style chapter on it would be a lie until
 Highfield's press photography is added. Nothing is built until one is
 picked.
+
+## 2026-09-15, night — the configurator as chapters
+
+"Do what you think is best." Direction A, after Saxdor, built: the
+build is a story you scroll — one chapter per decision, each the height
+of the window and snapping; the name at the wide light face (`--font-wide`,
+Outfit 200); one floating card of choices; a pill at the foot with a dash
+per chapter, where you are and the figure; a finale — "Your build is
+ready" — with the ring, the levels, the act and the handover in one card.
+`BuildScreen`'s stage, rail and money bar are gone from the markup; every
+pure function under it is untouched.
+
+The honesty rule is `scene.ts`: a chapter fills the window with a picture
+only when the picture's edge ring is not paper — a render on white has a
+white ring, a photograph has sky and sea. The Stacer 529 Assault Pro is a
+scene (the seed's own on-water photograph); every Highfield is a studio
+(the seed holds only top-down renders on white), drawn large on a white
+ground with the same card. The verdict is per address, derived from a
+cache and never set inside an effect. The harness takes `HL_PLACE` so a
+chapter can be photographed on a boat that has a photograph.
+
+Three things the frames caught: the title's scrim block sat on the boat
+(the chapter's own `background-color` is what the ruler composites, so
+the block was never needed — the name went up into the sky); the narrow
+layout lost its gutter to the rule that lifted the name; and the words
+guard found a NUL sentinel in the hook.
+
+| ruler | result |
+|---|---|
+| `npm test` | seven green, 2,974 tests, lint 343/343 |
+| `check-collide` · `check-contrast` | nothing overlaps · 1,278 text nodes clear |
+| `qa-sweep` | clean; **configurator 8.70×** — over the Showroom spec's 6× for the first time, and honestly |
+| `check:shots --update` | 14 of 14 re-taken |

@@ -94,6 +94,12 @@
      is the neutral, tight grotesque those sites use a licensed
      equivalent of. The app now has one voice instead of two. */
   --font-display: var(--font-sans);
+  /* THE WIDE LIGHT FACE — the one every boat maker sets a model's
+     name in (Saxdor's Tussilago, Nimbus's Akzidenz light): wide,
+     thin, tracked, uppercase, over a photograph. Outfit at 200/300
+     is the Google face closest to it. Used for a chapter's name and
+     nothing that is read at length. */
+  --font-wide: 'Outfit', 'Instrument Sans', system-ui, sans-serif;
   --font-sans: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
@@ -138,6 +144,16 @@
      7.1:1 - both past 4.5 with room. It is the colour of the one
      act on a screen, the ring on a chosen option, and nothing else. */
   --action: #0f4c81;
+  /* THE SCENE — a chapter that fills the window with a photograph.
+     Deep is what shows before the picture lands and where it does
+     not reach; veil and foot are the gradient over it; scrim is the
+     ground a text block carries so the contrast ruler measures what
+     is painted. Ink is white: 8.6:1 on scrim over the darkest sea. */
+  --scene-deep: #0b1a33;
+  --scene-ink: #ffffff;
+  --scene-veil: rgba(5, 12, 26, 0.32);
+  --scene-foot: rgba(5, 12, 26, 0.6);
+  --scene-scrim: rgba(6, 17, 31, 0.62);
   --action-fg: #ffffff;
   --action-hover: #0d4270;
   --action-press: #0a3559;

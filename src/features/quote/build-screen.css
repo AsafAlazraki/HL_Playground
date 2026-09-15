@@ -2525,3 +2525,571 @@
     padding-inline: var(--gutter);
   }
 }
+
+
+/* ============================================================
+   THE BUILD IS A STORY YOU SCROLL — chapters, after Saxdor.
+   2026-09-15, the night the standard changed.
+
+   The root stops being a grid and becomes the scroller: one chapter
+   per decision, each the height of the window, snapping. A chapter
+   is a photograph when the picture is one (`data-scene="scene"`)
+   and a render on a quiet ground when it is not. The card floats
+   top-right; the name sits bottom-left at the wide light display
+   step; the foot is one pill. Everything that was `.bs-product`,
+   `.bs-step` and `.bs-bar` is gone from the markup — their rules
+   above are dead and stay for the record.
+   ============================================================ */
+
+.bs.bs--chapters {
+  display: block;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-snap-type: y proximity;
+  background: var(--surface-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bs.bs--chapters {
+    scroll-snap-type: none;
+  }
+}
+
+.bs-ch {
+  position: relative;
+  min-height: 100%;
+  overflow: hidden;
+  scroll-snap-align: start none;
+  background: var(--surface-2);
+  color: var(--fg);
+}
+
+/* the photograph, when there is one */
+.bs-ch[data-scene='scene'] {
+  background: var(--scene-deep) var(--bs-ch-photo) center 45% / cover no-repeat;
+  color: var(--scene-ink);
+}
+
+.bs-ch[data-scene='scene']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    var(--scene-veil) 0%,
+    transparent 38%,
+    transparent 62%,
+    var(--scene-foot) 100%
+  );
+  pointer-events: none;
+}
+
+/* the render, when there is not: large, centred, on the quiet ground */
+.bs-ch-render {
+  position: absolute;
+  inset: 8% 32% 14% 6%;
+  width: auto;
+  height: auto;
+  max-width: 62%;
+  max-height: 78%;
+  margin: auto;
+  object-fit: contain;
+}
+
+.bs-ch--hero .bs-ch-render {
+  inset: 10% 30% 26% 4%;
+}
+
+/* -- the top line ---------------------------------------------- */
+
+.bs-ch-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-5) var(--gutter);
+}
+
+.bs-ch-brand {
+  font-family: var(--font-wide);
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  color: inherit;
+}
+
+.bs-ch-crumb {
+  color: inherit;
+  opacity: 0.85;
+}
+
+/* -- the name ---------------------------------------------------- */
+
+.bs-ch-title {
+  position: absolute;
+  left: var(--gutter);
+  bottom: var(--s-16);
+  z-index: 2;
+  max-width: min(60%, 44rem);
+  padding: var(--s-4) var(--s-5) var(--s-4) 0;
+}
+
+.bs-ch[data-scene='scene'] .bs-ch-title {
+  /* the ruler composites colours, not pictures: the block under
+     the name carries its own ground so what is measured is what
+     is painted */
+  padding-inline: var(--s-5);
+  margin-left: calc(-1 * var(--s-5));
+  border-radius: 12px;
+  background: var(--scene-scrim);
+}
+
+.bs-ch-eyebrow {
+  margin: 0 0 var(--s-2);
+  color: inherit;
+  opacity: 0.85;
+}
+
+.bs-ch-name {
+  margin: 0;
+  font-family: var(--font-wide);
+  font-weight: 200;
+  font-size: clamp(2.75rem, 1.5rem + 5.6vw, 6.5rem);
+  line-height: 0.96;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: inherit;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.bs-ch-specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-6);
+  margin: var(--s-5) 0 0;
+}
+
+.bs-ch-spec dt {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.bs-ch-spec dd {
+  margin: 0;
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.bs-ch-scroll {
+  position: absolute;
+  left: 50%;
+  bottom: var(--s-6);
+  z-index: 2;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-1);
+  margin: 0;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: inherit;
+  opacity: 0.85;
+}
+
+/* -- the floating card ----------------------------------------- */
+
+.bs-ch-card {
+  position: absolute;
+  top: var(--s-12);
+  right: var(--gutter);
+  z-index: 3;
+  width: min(30rem, calc(100% - 2 * var(--gutter)));
+  max-height: calc(100% - var(--s-12) - var(--s-16));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--s-5) var(--s-5) var(--s-3);
+  border-radius: 16px;
+  background: var(--surface-1);
+  color: var(--fg);
+  box-shadow: var(--e-float);
+}
+
+.bs-ch-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-3);
+  margin: 0 0 var(--s-3);
+}
+
+.bs-ch-card-title {
+  font-family: var(--font-wide);
+  font-weight: 300;
+  font-size: clamp(1.25rem, 1rem + 0.8vw, 1.625rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.bs-ch-card-sub {
+  color: var(--fg-tertiary);
+}
+
+/* the band's pane inside the card: its head wears the card's voice */
+.bs-ch-card .bs-pane-num {
+  font-family: var(--font-wide);
+  font-weight: 300;
+  font-size: clamp(1.25rem, 1rem + 0.8vw, 1.625rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.bs-ch-card .bs-pane-head,
+.bs-ch-card .bs-picked,
+.bs-ch-card .bs-curate,
+.bs-ch-card .bs-offer-cap,
+.bs-ch-card .bs-part {
+  margin-inline: 0;
+}
+
+.bs-ch-card .bs-cand {
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  grid-template-areas: 'well say say' 'well state state';
+}
+
+.bs-ch-card .bs-cand-well,
+.bs-ch-card .bs-cand-well:not(:has(.bs-cand-img)) {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+}
+
+.bs-ch-card .bs-finishes {
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* -- the finale --------------------------------------------------- */
+
+.bs-ch--fin .bs-ch-title--fin {
+  bottom: auto;
+  top: var(--s-16);
+  max-width: min(50%, 36rem);
+}
+
+.bs-ch-card--fin {
+  top: var(--s-10);
+  bottom: var(--s-16);
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.bs-ch-card--fin .ui-done {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'figure arc' 'levels levels' 'do do';
+  gap: var(--s-3) var(--s-4);
+  margin: 0;
+  padding: 0 0 var(--s-4);
+  border: 0;
+  border-bottom: var(--border) solid var(--line);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.bs-ch-card--fin .ui-done-now {
+  font-family: var(--font-wide);
+  font-weight: 200;
+  font-size: clamp(2rem, 1.4rem + 2.4vw, 3.25rem);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.bs-ch-card--fin .ui-done-do .ui-btn {
+  width: 100%;
+  justify-content: center;
+  border-radius: 999px;
+}
+
+.bs-ch-hand .bs-hand,
+.bs-ch-hand .bs-book,
+.bs-ch-hand .bs-stops,
+.bs-ch-hand .bs-ready {
+  margin-inline: 0;
+}
+
+/* -- the foot ------------------------------------------------------- */
+
+.bs-ch-foot {
+  position: sticky;
+  bottom: var(--s-5);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  width: fit-content;
+  max-width: calc(100% - 2 * var(--gutter));
+  margin: calc(-1 * var(--s-14, var(--s-12))) auto 0;
+  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-5);
+  border-radius: 999px;
+  background: var(--surface-1);
+  color: var(--fg);
+  box-shadow: var(--e-float);
+}
+
+.bs-ch-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.bs-ch-dot {
+  display: block;
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line-strong);
+  transition: width var(--d-slow) var(--ease-out), background var(--d-press) var(--ease-out);
+}
+
+.bs-ch-dot.is-done {
+  background: var(--fg-tertiary);
+}
+
+.bs-ch-dot.is-here {
+  width: 40px;
+  background: var(--action);
+}
+
+.bs-ch-where {
+  color: var(--fg-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.bs-ch-figure {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.bs-ch-details {
+  padding: var(--s-2) var(--s-4);
+  border: 0;
+  border-radius: 999px;
+  background: var(--action);
+  color: var(--action-fg);
+  font: inherit;
+  font-size: var(--t-caption-size);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bs-ch-details:hover {
+    background: var(--action-hover);
+  }
+}
+
+.bs-ch-details:focus-visible {
+  outline: var(--border-strong) solid var(--fg);
+  outline-offset: 2px;
+}
+
+/* -- one column under 900: the card sits under the picture -------- */
+
+@media (max-width: 900px) {
+  .bs-ch {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .bs-ch[data-scene='scene'] {
+    background-size: cover;
+    background-position: center 30%;
+    min-height: 100%;
+  }
+
+  .bs-ch-render {
+    position: relative;
+    inset: auto;
+    max-width: 90%;
+    max-height: 40vh;
+    margin: var(--s-16) auto var(--s-4);
+  }
+
+  .bs-ch-top {
+    position: relative;
+  }
+
+  .bs-ch-title {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    max-width: none;
+    margin: auto var(--gutter) var(--s-4);
+  }
+
+  .bs-ch-card,
+  .bs-ch-card--fin {
+    position: relative;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    width: auto;
+    max-height: none;
+    margin: 0 var(--gutter) var(--s-16);
+  }
+
+  .bs-ch-scroll {
+    display: none;
+  }
+
+  .bs-ch--fin .bs-ch-title--fin {
+    top: auto;
+    max-width: none;
+  }
+}
+
+.bs-ch-arrow {
+  display: block;
+  font-size: var(--t-body-size);
+}
+
+.bs-ch-card--finishes {
+  padding-bottom: var(--s-5);
+}
+
+/* THE CARD IS QUIET, AS SAXDOR'S IS — a name, one line, a price, a
+   tick. The first frame of the chapters carried the old rail's
+   paragraphs into the card: a "chosen: …" caption under the head,
+   the search, "4 OFFERED" in capitals with a sentence beside it,
+   two lines of rigging-kit codes under every motor, and a
+   "Recommended" stamp cut to "Recomme" inside a 56px thumbnail. */
+.bs-ch-card .bs-pane-why,
+.bs-ch-card .bs-offer-why {
+  display: none;
+}
+
+.bs-ch-card .bs-offer-count {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-tertiary);
+}
+
+.bs-ch-card .bs-cand-facts {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bs-ch-card .bs-cand-fact + .bs-cand-fact {
+  display: none;
+}
+
+.bs-ch-card .bs-cand-well .bs-cand-rec {
+  display: none;
+}
+
+.bs-ch-card .bs-cand[data-on] .bs-cand-name::after {
+  content: ' · recommended';
+  font-weight: 400;
+  color: var(--fg-tertiary);
+}
+
+.bs-ch-card .bs-cand-name {
+  font-size: var(--t-small-size);
+}
+
+.bs-ch-card .bs-cand {
+  padding-block: var(--s-2);
+}
+
+/* the studio ground is white, so a render's own white ground is
+   invisible and the boat floats — the grey showed the picture's
+   rectangle as a box */
+.bs-ch[data-scene='studio'] {
+  background: var(--surface-1);
+}
+
+.bs-ch[data-scene='studio'] .bs-ch-render {
+  inset: 6% 30% 24% 3%;
+  max-width: 66%;
+  max-height: 72%;
+}
+
+/* THE NAME GOES UP, THE SCRIM GOES. Photographed on the Stacer: the
+   title's scrim block sat on the boat — the subject of the picture
+   is bottom-left, exactly where the name was. The chapter's own
+   `background-color` (`--scene-deep`) is what the contrast ruler
+   composites under the name, so the block was never needed for the
+   measurement; the veil at the top of the picture is deepened
+   instead and the name sits in the sky, under the brand line. */
+.bs-ch[data-scene='scene'] .bs-ch-title,
+.bs-ch--hero .bs-ch-title {
+  top: var(--s-16);
+  bottom: auto;
+  padding-inline: 0;
+  margin-left: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.bs-ch[data-scene='scene']::before {
+  background: linear-gradient(
+    180deg,
+    var(--scene-foot) 0%,
+    var(--scene-veil) 34%,
+    transparent 58%,
+    var(--scene-veil) 100%
+  );
+}
+
+.bs-ch[data-scene='scene'] .bs-ch-name,
+.bs-ch[data-scene='scene'] .bs-ch-eyebrow,
+.bs-ch[data-scene='scene'] .bs-ch-spec {
+  text-shadow: 0 1px 2px var(--scene-foot);
+}
+
+/* the fact under a motor is one line with an ellipsis, not a hard cut */
+.bs-ch-card .bs-cand-fact {
+  display: inline;
+}
+
+/* UNDER 900 THE NAME IS IN THE FLOW AGAIN. The rule above that
+   lifts the name into the sky at 1440 also zeroed the margin the
+   narrow layout gave it — photographed at 834: "529 ASSAULT PRO"
+   cut at the left edge, and the foot pill over the specs. Restated
+   here, later, so the narrow layout wins where it applies. */
+@media (max-width: 900px) {
+  .bs-ch[data-scene='scene'] .bs-ch-title,
+  .bs-ch--hero .bs-ch-title {
+    position: relative;
+    top: auto;
+    margin: var(--s-6) var(--gutter) var(--s-4);
+  }
+
+  .bs-ch {
+    padding-bottom: var(--s-16);
+  }
+
+  .bs-ch-foot {
+    margin-top: calc(-1 * var(--s-12));
+  }
+}

@@ -45,8 +45,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence } from 'motion/react'
-import type { ReactElement } from 'react'
-import { Button, Completion, Field, ProductStage } from '@/ui'
+import type { CSSProperties, ReactElement, ReactNode } from 'react'
+import { Button, Completion, Field } from '@/ui'
+import { useImageDisplay } from '@/lib/imageSources'
+import { useSceneKind } from './scene'
+import type { ImageRef } from '@/types/model'
 import { money } from '@/lib/money'
 import { QUOTE_LEVEL_ORDER, LEVEL_TITLE } from '@/types/model'
 import type { QuoteDef, QuoteLine } from '@/types/model'
@@ -160,7 +163,7 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
      about which stop was pressed. `rootMargin` cuts the bottom 60%
      off the observed area so a section becomes current as its head
      comes up the rail, not as its foot leaves it. */
-  const railRef = useRef<HTMLElement>(null)
+  const railRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const rail = railRef.current
     if (!rail || typeof IntersectionObserver === 'undefined') return
@@ -182,262 +185,222 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
     }
     return () => io.disconnect()
   }, [bands])
+  /* THE STOPS — one list for the ring in the finale and the dots in
+     the foot. A band is decided when it holds a line, or when it
+     decides nothing (the subject) or has nothing to offer; the
+     handover when a name is typed. `bands.ts` carries the argument. */
+  const stops = useMemo(
+    () => [
+      ...bands.map((b) => ({
+        id: b.id,
+        title: b.name,
+        done: !b.decides || !b.offers || b.tables.some((t) => t.step.lines.length > 0),
+      })),
+      { id: HANDOVER_STEP, title: 'Who it is for', done: quote.customer.name.trim() !== '' },
+    ],
+    [bands, quote.customer.name],
+  )
   const { still } = useStillness()
 
   return (
-    <div className="bs" data-register="showroom">
-      <footer className="bs-bar">
-        {/* ============================================================
-            THE FOOT IS A CARD THAT FILLS UP, not a bar.
+    <div className="bs bs--chapters" data-register="showroom" ref={railRef}>
+      {/* ============================================================
+          THE BUILD IS A STORY YOU SCROLL — chapters, after Saxdor.
 
-            `PriceBar` is a solid strip welded to the bottom edge: the
-            figure, the ladder, the action, and nothing about where in
-            the quote anybody is. The rail at the top carried that and
-            the foot carried money, so the surface a person watches
-            while deciding told them half of what they were deciding.
+          Driven live on 2026-09-15 (`out/ref/boats/saxdor-*`): the
+          model's name at 80px, weight 300, over a full-bleed
+          photograph; then one chapter per decision, each a full-bleed
+          photograph with a single floating card of choices; a pill
+          at the foot saying where you are; and a finale — "YOUR BUILD
+          IS READY" — over the boat, with the price. The owner's
+          verdict on the stage-and-rail this replaces: "still sucks";
+          on the three directions drawn from the references: "do what
+          you think is best". This is what I think is best.
 
-            `Completion` is the same information as a floating card
-            with an arc around it — one segment per stop, lit when
-            that stop is decided, so the gaps ARE the work left. When
-            the last one lands the card says so once and stops.
-            ============================================================ */}
-        <Completion
-          /* ============================================================
-             THE ARC COUNTS THE BANDS THE RAIL COUNTS, and the first
-             draft counted `steps` instead: the card read "3 / 7" under
-             a rail reading "STEP 3 OF 5", which is two counts of one
-             quote on one screen — the exact fault this rebuild has
-             been fixing everywhere else.
+          THE HONESTY RULE. A chapter fills the window with a picture
+          only when the picture IS a photograph — `useSceneKind` asks
+          the pixels. A boat the seed holds only as a render on white
+          (every Highfield) gets the same chapter with the render
+          large on a quiet ground. Same design, two registers of
+          light; nothing stretched, nothing invented.
 
-             `orderBands` is the answer the rail already uses: seven
-             trailer TABLES are one `03 Trailer` band, because a dealer
-             does not think "now I will open the GFAB Trailers table".
-             The handover is the band the rail adds at the end, so it
-             is the step the arc adds too.
-             ============================================================ */
-          steps={[
-            ...bands.map((b) => ({
-              id: b.id,
-              title: b.name,
-              /* A BAND IS DECIDED WHEN IT HOLDS A LINE — or when it
-                 DECIDES NOTHING, which `orderBands` marks: the band
-                 holding only the subject is the thing being
-                 configured, not a choice anybody can make, so leaving
-                 it unlit would be the arc asking for something that
-                 cannot be given. */
-              /* A DECISION WITH NOTHING TO DECIDE IS SETTLED. `!b.offers`
-                 is the new clause and `bands.ts` carries the argument:
-                 measured on the seed's first boat, two of five stops had
-                 nothing paired to that hull, so the ring read "4 of 5"
-                 for ever and the complete state could not be reached on
-                 that boat at all. The screen was already saying it in
-                 words at the stop itself; the ring was counting it as
-                 outstanding anyway. */
-              done: !b.decides || !b.offers || b.tables.some((t) => t.step.lines.length > 0),
-            })),
-            {
-              id: HANDOVER_STEP,
-              title: 'Who it is for',
-              done: quote.customer.name.trim() !== '',
-            },
-          ]}
-          total={totals.total}
-          caption="Package pricing"
-          tax={
-            totals.taxRate !== null && totals.totalExcludingTax !== null
-              ? { label: 'GST', totalExcluding: totals.totalExcludingTax }
-              : undefined
-          }
-          notPriced={totals.unpricedCount}
-          levels={QUOTE_LEVEL_ORDER.map((k) => ({
-            key: k,
-            label: LEVEL_TITLE[k] ?? k,
-          }))}
-          levelKey={quote.levelKey}
-          /* CHANGING THE RUNG IS THE ONE CHOICE THAT MOVES EVERY LINE
-             ALREADY MADE, so it asks first. The rebuilt screen called
-             `setLevel` straight through, which silently repriced the
-             whole quote — "nobody announces a cascade" is the closed
-             negative `configurator-teardowns-2026.md` found across
-             eight shipping configurators, and I had shipped it.
-
-             `levelConflict` returns null when nothing actually moves,
-             and then the change simply happens: a sheet that opens to
-             report no change is furniture. */
-          onLevel={(k) => {
-            const label = LEVEL_TITLE[k] ?? k
-            const conflict = levelConflict(quote, k, label)
-            if (conflict === null) {
-              setLevel(quote.id, k)
-              return
-            }
-            setProposal({ conflict, levelKey: k, levelLabel: label })
-          }}
-          /* IT WAS A DEAD CONTROL, AND A `disabled` ONE, which is two
-             rules broken in one element.
-
-             It had no `onClick` at all: pressing the one primary
-             action on the screen did nothing, which is worse than
-             being refused because it gives no reason either. And it
-             was a raw `<button disabled>`, which `Button` refuses on
-             purpose — its own note says a disabled button "cannot be
-             focused or hovered and is skipped by a screen reader, so
-             the person who needs the reason is the one person who
-             cannot reach it."
-
-             `refusedBecause` keeps it focusable, marks it
-             `aria-disabled`, blocks the click and puts the engine's
-             own blocker beneath it. One reason, attached to the
-             control it refuses. */
-          action={
-            <Button
-              tone="primary"
-              size="lg"
-              refusedBecause={refusals[0]}
-              onClick={() => {
-                if (issueQuote(quote.id)) onIssued?.(quote)
-              }}
-            >
-              Give it to the customer
-            </Button>
-          }
-          /* NO `actionNote`. The reason lives on the control that is
-             refused, via `Button`'s `refusedBecause` — printing it
-             twice would be the app saying one thing in two voices,
-             and `Field` makes the same call for the same reason:
-             a hint and a refusal never stack.
-
-             A SECOND blocker, where there is one, is on the handover
-             stop as a list. That is a different job: the bar says
-             why this button will not fire, the stop says everything
-             still standing between here and a document. */
-        />
-      </footer>
-
-
-      <div className="bs-body">
-        <section className="bs-product" aria-label="What is being quoted">
-          {/* AN IDENTIFIER IS NOT A HEADLINE, and the first draft of
-              this screen proved `CONFIGURATOR.md`'s point by setting
-              `Highfield - ADV7 (HYP) B-G-B` at the marque step: three
-              lines, filling the column the product is supposed to be
-              in. `subjectLabel` is four facts welded together — a
-              maker, a model, a hull material, a colourway — and only
-              the model is a name. `marqueOf` takes them apart and
-              NOTHING IS DROPPED: all three parts are drawn, inside
-              one `h1`, in the order they were written. */}
-          <h1 className="bs-lockup">
-            {lockup.maker ? (
-              <span className="t-label bs-eyebrow">{lockup.maker}</span>
-            ) : (
-              <span className="t-label bs-eyebrow">{quote.organisation ?? 'Quoting'}</span>
-            )}
-            <span className={lockup.long ? 't-hero bs-marque' : 't-marque bs-marque'}>
-              {lockup.model}
-            </span>
-            {lockup.trim ? (
-              <span className="t-small bs-trim">{lockup.trim}</span>
-            ) : null}
-          </h1>
-
-          <ProductStage
-            pictures={subjectPictures(quote, steps)}
-            emptyBecause={`No picture on ${quote.subjectLabel} yet. Add one on its row and it shows here.`}
-          />
-
+          NOTHING UNDER IT MOVED. `orderBands`, `stepOffer`, the
+          refusals, the frozen lines, `Completion`'s ring and the
+          `IntersectionObserver` that follows the scroll are exactly
+          what they were; the chapters are placed by the same
+          `data-band` the rail used.
+          ============================================================ */}
+      <Chapter
+        img={quote.subjectImage}
+        className="bs-ch bs-ch--hero"
+        id={`bs-sect-${bands[0]?.id ?? 'hull'}`}
+        band={bands[0]?.id ?? 'hull'}
+        current={openId === bands[0]?.id}
+        label={quote.subjectLabel}
+      >
+        <div className="bs-ch-top">
+          <span className="t-label bs-ch-brand">{quote.organisation ?? 'Quoting'}</span>
+          <span className="t-caption bs-ch-crumb">
+            {lockup.maker ? `${lockup.maker} · ` : ''}
+            {lockup.model}
+          </span>
+        </div>
+        <div className="bs-ch-title">
+          <p className="t-label bs-ch-eyebrow">
+            {lockup.maker || (quote.organisation ?? 'Quoting')}
+            {lockup.trim ? ` · ${lockup.trim}` : ''}
+          </p>
+          <h1 className="bs-ch-name">{lockup.model}</h1>
           {quote.subjectSpecs.length > 0 ? (
-            <dl className="bs-specs">
-              {quote.subjectSpecs.slice(0, 8).map((s) => (
-                <div className="bs-spec" key={s.label}>
-                  <dt className="t-caption bs-spec-lab">{s.label}</dt>
-                  <dd className="t-mono bs-spec-val">{s.value}</dd>
+            <dl className="bs-ch-specs">
+              {quote.subjectSpecs.slice(0, 5).map((s) => (
+                <div className="bs-ch-spec" key={s.label}>
+                  <dt className="t-caption">{s.label}</dt>
+                  <dd className="t-small">{s.value}</dd>
                 </div>
               ))}
             </dl>
           ) : null}
-        </section>
-
-        <section className="bs-step" aria-label="What goes with it" ref={railRef}>
-          {/* ============================================================
-              THE NAME HEADS THE OPTIONS, not the photograph.
-
-              It was laid over the hull, and three separate attempts to
-              stop it crossing the boat all failed for the same reason:
-              a label over a picture has no column of its own. Every
-              shipping configurator driven for this rebuild puts the
-              model's name at the top of the options rail instead, above
-              the search — so it is beside what you are choosing rather
-              than on top of what you are choosing it for.
-              ============================================================ */}
-          <header className="bs-side-head">
-            <p className="t-label bs-eyebrow">{lockup.maker || (quote.organisation ?? 'Quoting')}</p>
-            <h1 className="t-title bs-side-name">{lockup.model}</h1>
-            {lockup.trim ? <p className="t-small bs-trim">{lockup.trim}</p> : null}
-          </header>
-
-          {/* ============================================================
-              EVERY SECTION, STACKED, THE WAY PORSCHE'S ARE.
-
-              It was one band at a time behind a stepper — a tab strip
-              across the top of the page, five words with circles and
-              ticks and a caption under each, and the rail showed only
-              the stop you had pressed. Porsche's configurator, driven
-              live on 2026-09-15, has no stepper at all: Exterior,
-              Wheels, Interior and the rest are stacked down one rail
-              and you SCROLL through them; the section under your eye
-              is the current one. The owner asked for exactly that.
-
-              So every band is on the rail at once, in order, and the
-              handover is the last section. `openId` is still the
-              current one — it now follows the scroll instead of the
-              press — and every pure function under it is untouched.
-              ============================================================ */}
-          {bands.map((b) => (
-            <section
-              key={b.id}
-              className="bs-sect"
-              id={`bs-sect-${b.id}`}
-              data-band={b.id}
-              data-current={openId === b.id || undefined}
-              aria-label={b.name}
-            >
-              <BandPane quote={quote} band={b} />
-              {finishes && b.tables.some((t) => t.step.subject) ? (
-                <div className="bs-finishes">
-                  <p className="t-small bs-finishes-head">
-                    <span className="bs-finishes-count">{finishes.offers.length} finishes</span>
-                    {finishes.materials.length > 1 ? (
-                      <span className="t-caption bs-finishes-mat">
-                        {finishes.materials.join(' / ')}
-                      </span>
-                    ) : null}
-                  </p>
-                  <Colourways
-                    offers={finishes.offers}
-                    chosenRowId={quote.rootRowId}
-                    material={finishes.materials.length > 1}
-                    label={`Finishes of ${finishes.name}`}
-                    onChoose={(offer) => refinish(quote.id, offer.entry.rowId)}
-                  />
-                </div>
-              ) : null}
-            </section>
-          ))}
-          <section
-            className="bs-sect"
-            id={`bs-sect-${HANDOVER_STEP}`}
-            data-band={HANDOVER_STEP}
-            data-current={openId === HANDOVER_STEP || undefined}
-            aria-label="Who it is for"
-          >
-            <div className="bs-pane-head">
-              <p className="t-label bs-pane-num">
-                {String(bands.length + 1).padStart(2, '0')} Who it is for
-              </p>
+        </div>
+        {finishes ? (
+          <div className="bs-ch-card bs-ch-card--finishes">
+            <p className="bs-ch-card-head">
+              <span className="bs-ch-card-title">Finish</span>
+              <span className="t-caption bs-ch-card-sub">
+                {finishes.offers.length} the file holds
+                {finishes.materials.length > 1 ? ` · ${finishes.materials.join(' / ')}` : ''}
+              </span>
+            </p>
+            <div className="bs-finishes">
+              <Colourways
+                offers={finishes.offers}
+                chosenRowId={quote.rootRowId}
+                material={finishes.materials.length > 1}
+                label={`Finishes of ${finishes.name}`}
+                onChoose={(offer) => refinish(quote.id, offer.entry.rowId)}
+              />
             </div>
+          </div>
+        ) : null}
+        <p className="t-caption bs-ch-scroll" aria-hidden="true">
+          Scroll to begin
+          <span className="bs-ch-arrow">↓</span>
+        </p>
+      </Chapter>
+
+      {bands
+        .filter((b) => !b.tables.some((t) => t.step.subject))
+        .map((b) => {
+          /* the chapter wears the picture of what is ON it — the motor
+             once a motor is picked — and the boat's until then */
+          const picked = b.tables.flatMap((t) => t.step.lines).find((l) => l.image)
+          return (
+            <Chapter
+              key={b.id}
+              img={picked?.image ?? quote.subjectImage}
+              className="bs-ch"
+              id={`bs-sect-${b.id}`}
+              band={b.id}
+              current={openId === b.id}
+              label={b.name}
+            >
+              <div className="bs-ch-card">
+                <BandPane quote={quote} band={b} />
+              </div>
+            </Chapter>
+          )
+        })}
+
+      <Chapter
+        img={quote.subjectImage}
+        className="bs-ch bs-ch--fin"
+        id={`bs-sect-${HANDOVER_STEP}`}
+        band={HANDOVER_STEP}
+        current={openId === HANDOVER_STEP}
+        label="Who it is for"
+      >
+        <div className="bs-ch-title bs-ch-title--fin">
+          <p className="t-label bs-ch-eyebrow">
+            {lockup.maker ? `${lockup.maker} ` : ''}
+            {lockup.model}
+          </p>
+          <h2 className="bs-ch-name">
+            Your build
+            <br />
+            is ready
+          </h2>
+        </div>
+        <div className="bs-ch-card bs-ch-card--fin">
+          <Completion
+            steps={stops}
+            total={totals.total}
+            caption="Package pricing"
+            tax={
+              totals.taxRate !== null && totals.totalExcludingTax !== null
+                ? { label: 'GST', totalExcluding: totals.totalExcludingTax }
+                : undefined
+            }
+            notPriced={totals.unpricedCount}
+            levels={QUOTE_LEVEL_ORDER.map((k) => ({
+              key: k,
+              label: LEVEL_TITLE[k] ?? k,
+            }))}
+            levelKey={quote.levelKey}
+            onLevel={(k) => {
+              const label = LEVEL_TITLE[k] ?? k
+              const conflict = levelConflict(quote, k, label)
+              if (conflict === null) {
+                setLevel(quote.id, k)
+                return
+              }
+              setProposal({ conflict, levelKey: k, levelLabel: label })
+            }}
+            action={
+              <Button
+                tone="primary"
+                size="lg"
+                refusedBecause={refusals[0]}
+                onClick={() => {
+                  if (issueQuote(quote.id)) onIssued?.(quote)
+                }}
+              >
+                Give it to the customer
+              </Button>
+            }
+          />
+          <div className="bs-ch-hand">
             <Handover quote={quote} refusals={refusals} />
-          </section>
-        </section>
+          </div>
+        </div>
+      </Chapter>
+
+      {/* THE FOOT — where you are, and what it comes to. One pill,
+          Saxdor's: a dash per chapter, the current one long, the
+          figure, and Details, which goes to the finale. */}
+      <div className="bs-ch-foot" role="navigation" aria-label="Where you are in the build">
+        <span className="bs-ch-dots" aria-hidden="true">
+          {stops.map((s) => (
+            <i
+              key={s.id}
+              className={`bs-ch-dot${openId === s.id ? ' is-here' : ''}${s.done ? ' is-done' : ''}`}
+            />
+          ))}
+        </span>
+        <span className="t-caption bs-ch-where">
+          {Math.max(1, stops.findIndex((s) => s.id === openId) + 1)} / {stops.length}
+        </span>
+        <span className="bs-ch-figure">{money(totals.total)}</span>
+        <button
+          type="button"
+          className="bs-ch-details"
+          onClick={() =>
+            railRef.current
+              ?.querySelector(`[data-band="${CSS.escape(HANDOVER_STEP)}"]`)
+              ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        >
+          Details
+        </button>
       </div>
 
 
@@ -481,28 +444,6 @@ export function BuildScreen({ quote, onIssued }: BuildScreenProps): ReactElement
 /** The subject's picture, as the stage wants it. One for now — a
  *  frozen quote holds a single `subjectImage`, and the colourway
  *  gallery is the picker's job rather than the document's. */
-function subjectPictures(quote: QuoteDef, steps: readonly BuildStep[]) {
-  /* THE GALLERY — the hull first, then everything picked that has a
-     photograph. Porsche's strip under the stage holds nine views
-     of one car; this quote has one view of the hull and a
-     photograph of most of what goes on it — a motor, a trailer, a
-     rigging kit — and until now the stage showed the hull alone.
-     Each picture SAYS what it is under the stage, because a Yamaha
-     on its own is not obviously the Yamaha on this quote. Keyed by
-     src so the same picture twice is one thumbnail. */
-  const out: { src: string; alt: string; says?: string }[] = []
-  const seen = new Set<string>()
-  const add = (src: string | undefined, alt: string, says?: string) => {
-    if (!src || seen.has(src)) return
-    seen.add(src)
-    out.push({ src, alt, says })
-  }
-  add(quote.subjectImage?.src, quote.subjectImage?.alt ?? quote.subjectLabel)
-  for (const step of steps) {
-    for (const line of step.lines) add(line.image?.src, line.label, line.label)
-  }
-  return out
-}
 
 /* ---- who it is for ----------------------------------------- */
 
@@ -684,6 +625,52 @@ function Handover({
  *  on the rail — and the heading is drawn only where the decision
  *  really spans more than one table, which is the treatment
  *  `QuoteStart` already proved with `.qs-sec-head`. */
+
+/* ============================================================
+   ONE CHAPTER. Full-bleed when the picture is a photograph, the
+   render on a quiet ground when it is not — `scene.ts` decides by
+   reading the pixels. The children are laid over it; the text
+   blocks carry their own scrim colour so what the contrast ruler
+   composites is what is painted.
+   ============================================================ */
+function Chapter({
+  img,
+  className,
+  id,
+  band,
+  current,
+  label,
+  children,
+}: {
+  img: ImageRef | undefined
+  className: string
+  id: string
+  band: string
+  current: boolean
+  label: string
+  children: ReactNode
+}): ReactElement {
+  const kind = useSceneKind(img?.src)
+  const { at, paint } = useImageDisplay(img?.src ?? '')
+  const scene = kind === 'scene' && paint
+  return (
+    <section
+      className={className}
+      id={id}
+      data-band={band}
+      data-current={current || undefined}
+      data-scene={scene ? 'scene' : 'studio'}
+      aria-label={label}
+      style={scene ? ({ '--bs-ch-photo': `url("${at}")` } as CSSProperties) : undefined}
+    >
+      {!scene && img && paint ? (
+        <FrozenPhoto img={img} fallbackAlt={label} className="bs-ch-render" w={1600} h={900} />
+      ) : null}
+      {children}
+    </section>
+  )
+}
+
 function BandPane({ quote, band }: { quote: QuoteDef; band: Band }): ReactElement {
   const many = band.tables.length > 1
 

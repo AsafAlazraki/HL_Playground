@@ -113,7 +113,11 @@ const SCREENS = {
     async (p) => {
       await SCREENS.picker[1](p)
       await wait(p, 2100)
-      await p.locator('.qp-card').first().click()
+      /* WHICH PLACE. `HL_PLACE="Stacer"` picks the brand; the first card
+         is Highfield, whose boats are renders on white — a chaptered
+         configurator photographed only there never shows a scene. */
+      const place = process.env.HL_PLACE
+      await (place ? p.locator('.qp-card').filter({ hasText: place }).first() : p.locator('.qp-card').first()).click()
     },
   ],
   /* THE BOARD WITH SOMETHING ON IT. `quotes` opens a fresh session's
