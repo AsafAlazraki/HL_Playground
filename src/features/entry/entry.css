@@ -1,0 +1,474 @@
+/* ============================================================
+   THE ENTRY FRAME — see EntryFrame.tsx for what it is and whose
+   photograph it carries.
+
+   MEASURED AGAINST PORSCHE'S LOGIN, 2026-09-15 at 1440: the
+   photograph takes 936px, the column 504; the headline is 36px in
+   a light weight; the fields are 56px tall and quiet; the primary
+   is full-width and black; a second, grey way in sits under an
+   "or" rule with one sentence beneath it. This frame keeps those
+   proportions and draws them in the app's own tokens: the sea-blue
+   action, the wide light face for the one big line, an underline
+   field rather than a filled box, because the underline is what
+   every finder in this app already is.
+
+   NOTHING HERE IS A LITERAL COLOUR. The photograph sits on
+   `--scene-deep` so the ink on its foot is measured against a
+   real ground — the contrast ruler composites background-colours,
+   not images — and the veil under the caption is the scene's own.
+   ============================================================ */
+
+.en {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(24rem, 33rem);
+  background: var(--bg);
+}
+
+/* ---- the photograph ---------------------------------------- */
+
+.en-scene {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  background-color: var(--scene-deep);
+  background-image: var(--en-photo, none);
+  background-position: center;
+  background-size: cover;
+  color: var(--scene-ink);
+}
+
+/* the veil, only where the words are */
+.en-scene::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 0;
+  height: 45%;
+  background: linear-gradient(to top, var(--scene-foot), transparent);
+  pointer-events: none;
+}
+
+.en-scene-foot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  width: 100%;
+  padding: var(--s-10) var(--s-10) var(--s-8);
+}
+
+.en-caption {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin: 0;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  letter-spacing: var(--t-small-track);
+}
+
+.en-caption-from {
+  color: var(--scene-ink);
+  opacity: 0.72;
+  font-size: var(--t-caption-size);
+}
+
+/* ---- where you are, on the picture ------------------------- */
+
+.en-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.en-step {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  align-items: center;
+  gap: var(--s-3);
+  font-family: var(--font-wide);
+  font-weight: 300;
+  font-size: var(--t-title-size);
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  color: var(--scene-ink);
+  opacity: 0.55;
+}
+
+.en-step.is-here {
+  opacity: 1;
+}
+
+.en-step-n {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: var(--border) solid currentColor;
+  border-radius: var(--r-full);
+  font-family: var(--font-mono);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+}
+
+.en-step.is-here .en-step-n {
+  background: var(--scene-ink);
+  color: var(--scene-deep);
+}
+
+/* ---- the column -------------------------------------------- */
+
+.en-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--s-8) var(--s-12) var(--s-6);
+  overflow: auto;
+  background: var(--surface-rest);
+  color: var(--fg);
+}
+
+.en-crest {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--fg);
+}
+
+.en-crest-mark {
+  display: inline-grid;
+  place-items: center;
+}
+
+.en-crest-word {
+  font-family: var(--font-wide);
+  font-weight: 400;
+  font-size: var(--t-body-size);
+  letter-spacing: 0.04em;
+}
+
+.en-col-in {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 24rem;
+  padding-block: var(--s-10);
+  animation: ds-rise var(--d-scene) var(--ease-out-expo) backwards;
+}
+
+.en-fine {
+  margin: 0;
+  max-width: 24rem;
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+  color: var(--fg-tertiary);
+}
+
+/* ---- the words --------------------------------------------- */
+
+.en-eyebrow {
+  margin: 0 0 var(--s-4);
+  color: var(--fg-tertiary);
+}
+
+.en-head {
+  margin: 0;
+  font-family: var(--font-wide);
+  font-weight: 300;
+  font-size: clamp(2rem, 1.5rem + 1.6vw, 2.75rem);
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: var(--fg);
+}
+
+.en-sub {
+  margin: var(--s-2) 0 0;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg-secondary);
+}
+
+.en-say {
+  margin: var(--s-4) 0 0;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg-secondary);
+}
+
+/* ---- a field ----------------------------------------------- */
+
+.en-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-top: var(--s-6);
+}
+
+.en-field + .en-field {
+  margin-top: var(--s-5);
+}
+
+.en-label {
+  font-size: var(--t-caption-size);
+  line-height: var(--t-caption-lead);
+  letter-spacing: var(--t-caption-track);
+  color: var(--fg-tertiary);
+}
+
+.en-input {
+  width: 100%;
+  padding: var(--s-2) 0 var(--s-3);
+  border: 0;
+  border-bottom: var(--border) solid var(--line-strong);
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--t-title-size);
+  font-weight: 500;
+  letter-spacing: var(--t-title-track);
+  color: var(--fg);
+  transition: border-color var(--d-fast) var(--ease);
+}
+
+.en-input::placeholder {
+  color: var(--fg-quaternary);
+  font-weight: 400;
+}
+
+.en-input:hover {
+  border-bottom-color: var(--fg-tertiary);
+}
+
+.en-input:focus,
+.en-input:focus-visible {
+  outline: none;
+  border-bottom-color: var(--action);
+  box-shadow: 0 var(--border) 0 var(--action);
+}
+
+.en-input.is-wrong {
+  border-bottom-color: var(--danger);
+}
+
+.en-input.is-wrong:focus {
+  box-shadow: 0 var(--border) 0 var(--danger);
+}
+
+/* the one big field — the business's own name, set as a name */
+.en-input--big {
+  font-family: var(--font-wide);
+  font-weight: 300;
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  letter-spacing: -0.01em;
+}
+
+.en-count {
+  align-self: flex-end;
+  font-family: var(--font-mono);
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+/* the reason, where it failed */
+.en-why {
+  margin: var(--s-3) 0 0;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--danger);
+}
+
+/* ---- the acts ---------------------------------------------- */
+
+.en-go {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  width: 100%;
+  height: 3rem;
+  margin-top: var(--s-8);
+  padding: 0 var(--s-4);
+  border: 0;
+  border-radius: var(--r-control);
+  background: var(--action);
+  color: var(--action-fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-body-size);
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  transition:
+    background-color var(--d-fast) var(--ease),
+    transform var(--d-fast) var(--ease);
+}
+
+.en-go:hover {
+  background: var(--action-hover);
+}
+
+.en-go:active {
+  background: var(--action-press);
+  transform: translateY(1px);
+}
+
+.en-go:focus-visible {
+  outline: var(--border-strong) solid var(--action);
+  outline-offset: 2px;
+}
+
+.en-go:disabled {
+  cursor: default;
+  background: var(--bg-sunken);
+  color: var(--fg-tertiary);
+  transform: none;
+}
+
+.en-or {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-5);
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+}
+
+.en-or::before,
+.en-or::after {
+  content: '';
+  border-top: var(--border) solid var(--line);
+}
+
+.en-demo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  margin-top: var(--s-5);
+  padding: var(--s-3) var(--s-4);
+  border: var(--border) solid var(--line-strong);
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--d-fast) var(--ease),
+    background-color var(--d-fast) var(--ease);
+}
+
+.en-demo:hover {
+  border-color: var(--fg);
+}
+
+.en-demo:active {
+  background: var(--bg-sunken);
+}
+
+.en-demo:focus-visible {
+  outline: var(--border-strong) solid var(--action);
+  outline-offset: 2px;
+}
+
+.en-demo-say {
+  font-size: var(--t-body-size);
+  font-weight: 600;
+}
+
+.en-demo-who {
+  font-family: var(--font-mono);
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+.en-alt {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-top: var(--s-5);
+  padding: var(--s-1) 0;
+  border: 0;
+  background: none;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-decoration-color: var(--line-strong);
+  cursor: pointer;
+}
+
+.en-alt:hover {
+  color: var(--fg);
+  text-decoration-color: currentColor;
+}
+
+.en-alt:focus-visible {
+  outline: var(--border-strong) solid var(--action);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ---- narrow: the picture becomes a band --------------------- */
+
+@media (max-width: 900px) {
+  .en {
+    grid-template-columns: 1fr;
+    grid-template-rows: min(36vh, 22rem) minmax(0, 1fr);
+  }
+
+  .en-scene-foot {
+    padding: var(--s-6) var(--s-5) var(--s-5);
+  }
+
+  .en-steps {
+    flex-direction: row;
+    gap: var(--s-5);
+  }
+
+  .en-step {
+    font-size: var(--t-body-size);
+  }
+
+  .en-col {
+    padding: var(--s-5) var(--s-5) var(--s-4);
+  }
+
+  .en-col-in {
+    justify-content: flex-start;
+    padding-block: var(--s-6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .en-col-in {
+    animation: none;
+  }
+}
+
+.en-step-say {
+  min-width: 0;
+}
+
+/* at the band's height the steps sit over the hull, so the veil
+   reaches higher — measured at 834: "What you sell" over white */
+@media (max-width: 900px) {
+  .en-scene::after {
+    height: 70%;
+  }
+}

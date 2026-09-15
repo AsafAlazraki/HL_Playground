@@ -100,6 +100,7 @@
    ============================================================ */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import {
   TABLE_KINDS,
@@ -112,6 +113,7 @@ import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { countLabel, leafNoun } from '@/features/table/grouping'
 import { coverPhoto } from '@/features/table/coverPhoto'
 import { ICON_SIZE } from '@/lib/icons'
+import { seededCopy } from '@/lib/imageSources'
 import { realDemoSet, startingPointWords } from './demoLoad'
 import { useDemoLoad } from './useDemoLoad'
 import { Button, Card, SectionHead } from '@/ui'
@@ -190,6 +192,13 @@ export interface HomeStageProps {
    *  screen — so there is one place the structure question is asked. */
   onNewTable?: () => void
 }
+
+/** the Master Price File's own photograph of a Stacer Assault Pro 529
+ *  running — the same one the entry is drawn from, because a door to
+ *  the file should look like the file. The 429 banner was tried first
+ *  and its white hull sat exactly where the words go. */
+const FIRST_DOOR_PHOTO =
+  'https://www.northsidemarine.com.au/stacer-boats/wp-content/uploads/sites/8/2023/01/529-Assault-Lifestyle-Tiffs-7-1024x676.jpg'
 
 export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
   const entities = useProjectStore((s) => s.entities)
@@ -521,6 +530,11 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
     [],
   )
 
+  /* THE DOOR'S PHOTOGRAPH IS THE FILE'S OWN — the seed's copy of the
+     dealer's Stacer Assault Pro, running. No copy, no picture: the
+     door falls back to the studio tile rather than to a stand-in. */
+  const firstPhoto = groups.length === 0 ? seededCopy(FIRST_DOOR_PHOTO) : null
+
   return (
     <div className="shell-viewstage hm" role="region" aria-label="Home">
       {/* THE ATMOSPHERE, AND IT CARRIES NOTHING. Two drifting radial
@@ -594,78 +608,63 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
              ============================================================ */
           <div className="hm-first">
             <div className="hm-first-say">
-              <SectionHead level="none">Nothing on the sheet yet</SectionHead>
+              <span className="mono-label hm-first-eyebrow">Nothing on the sheet yet</span>
 
-              <h2 className="hm-first-title">
-                Home is every table you have, on one page.
-              </h2>
+              <h2 className="hm-first-title">Every table you have, on one page.</h2>
 
-              {/* THE EXAMPLES ARE THE PRESET NAMES, not a second
-                  vocabulary. This read "a brand of boats, the outboards,
-                  the trailers" while the line beneath it lists Boats,
-                  Motors, Trailers, Accessories out of TABLE_KINDS — two
-                  namings of one set of things, one of which the app does
-                  not use anywhere else. Same words as the presets, so a
-                  reader meets each noun once. */}
+              {/* ONE PARAGRAPH, NOT A WALL. The examples are the preset
+                  names, so a reader meets each noun once. */}
               <p className="hm-first-prose">
-                A table holds one kind of thing you sell — one brand&rsquo;s models, the
-                motors, the trailers, the accessories that go with them. Its columns are
-                what you record about them; its rows are the stock itself. Everything
-                else in {org?.name ?? 'this app'} is built on those tables: what fits
-                what, the rules that price a rig, the quotes you hand a customer. So a
-                table is the first thing to put here, and it stays on this computer.
+                A table holds one kind of thing you sell &mdash; one brand&rsquo;s models, the
+                motors, the trailers, the accessories that go with them. What fits what, the
+                rules that price a rig and the quotes you hand a customer are all built on
+                those tables, and they stay on this computer.
               </p>
 
-              {/* WHAT YOU ALREADY HAVE, COUNTED. Zero is the honest
-                  figure for the tables, so the line goes on to the thing
-                  that is not zero — the presets a table can be drawn
-                  from, counted and named out of TABLE_KINDS. A screen
-                  that says only "you have nothing" has told a person
-                  nothing they could not see. */}
               {/* mono is for FIGURES, so only the count takes it — "no
                   tables" is words and is set as words, in full ink */}
               <p className="hm-first-count">
                 You have <b>no tables</b> yet. <strong>{presets.length}</strong> presets
-                are ready to draw one from — {presets.slice(0, -1).join(', ')} and{' '}
+                are ready to draw one from &mdash; {presets.slice(0, -1).join(', ')} and{' '}
                 {presets[presets.length - 1]}.
               </p>
             </div>
 
+            {/* ============================================================
+                THE TWO DOORS TAKE THE TILE RULE. The prepared file has
+                photographs in it, so its door is a scene tile drawn from
+                one of them — the dealer's own Stacer, running — and says
+                whose file it is in the same words the demos module
+                writes. A blank sheet has no picture, so its door is a
+                studio tile: the seven kinds a table can be, as glyphs,
+                on white. Neither invents anything.
+                ============================================================ */}
             <div className="hm-first-doors">
-              {/* THE PREPARED SET. Drawn only when one ships — the
-                  register answers that (`realDemoSet`), so the screen
-                  can never offer a button that loads nothing. */}
               {real && words ? (
-                /* THE DOOR IS THE CARD PRIMITIVE. The cell around it
-                   carries what the primitive cannot: `aria-busy` while
-                   the file is coming (the primitive passes no ARIA
-                   through — reported), and the pointer-and-focus warm-up
-                   that is the earliest honest evidence somebody wants
-                   the file — see useDemoLoad.ts. */
-                <div
-                  className="hm-first-cell"
+                <button
+                  type="button"
+                  className={`hm-door${phase === 'failed' ? ' is-failed' : ''}`}
+                  data-scene={firstPhoto ? 'scene' : 'studio'}
+                  data-press="card"
+                  style={
+                    firstPhoto
+                      ? ({ ['--hm-photo' as string]: `url(${firstPhoto.at})` } as CSSProperties)
+                      : undefined
+                  }
                   aria-busy={phase === 'loading'}
+                  onClick={() => press(real)}
                   onPointerEnter={() => warm(real)}
                   onFocus={() => warm(real)}
                 >
-                  <Card pad="lg" onActivate={() => press(real)}>
-                    <span className="mono-label hm-first-door-tag">{words.tag}</span>
-                    {/* ONE ACCENT, ON THE ONE PRIMARY THING: the prepared
-                        file is what a person on this screen almost always
-                        wants, so its name is the accent's one appearance
-                        in the doors. */}
-                    <span className="hm-first-door-name is-primary">{words.label}</span>
-                    {/* where the numbers came from — the demos module's own
-                        sentence. While the file is coming, and if it never
-                        comes, this line says so instead: one sentence with
-                        a reason, on the control it is about, in full ink. */}
-                    <span
-                      className={`hm-first-door-note${phase === 'failed' ? ' is-failed' : ''}`}
-                    >
-                      {words.note}
-                    </span>
+                  <span className="hm-door-say">
+                    <span className="mono-label hm-door-tag">{words.tag}</span>
+                    <span className="hm-door-name">{words.label}</span>
+                    {/* the provenance line — the demos module's own
+                        sentence; while the file is coming, and if it never
+                        comes, this is where that is said */}
+                    <span className="hm-door-note">{words.note}</span>
                     {holds ? (
-                      <span className="hm-first-door-foot">
+                      <span className="hm-door-foot">
                         <b>{holds.tables}</b>
                         <span>tables</span>
                         <i aria-hidden="true" />
@@ -673,31 +672,49 @@ export function HomeStage({ onOpenTable, onNewTable }: HomeStageProps) {
                         <span>rows</span>
                       </span>
                     ) : null}
-                  </Card>
-                </div>
+                  </span>
+                  <span className="hm-door-go" aria-hidden="true">
+                    {phase === 'loading' ? 'Loading' : 'Load'}
+                  </span>
+                </button>
               ) : null}
-
               {/* AND THE OTHER HONEST STARTING POINT. Drawn only when the
                   shell handed down the way to open the dialog, so this
                   never becomes an enabled control that does nothing. */}
               {onNewTable ? (
-                <div className="hm-first-cell">
-                  <Card pad="lg" onActivate={onNewTable}>
-                    <span className="mono-label hm-first-door-tag">Blank sheet</span>
-                    <span className="hm-first-door-name">Start a table</span>
-                    <span className="hm-first-door-note">
-                      Pick what it holds and give it a name. Its columns arrive already
-                      drawn for that kind, and you can change any of them afterwards.
+                <button
+                  type="button"
+                  className="hm-door"
+                  data-scene="studio"
+                  data-press="card"
+                  onClick={onNewTable}
+                >
+                  <span className="hm-door-kinds" aria-hidden="true">
+                    {KIND_ORDER.map((k) => (
+                      <span key={k} className="hm-door-kind" data-kind={k}>
+                        <TableKindSymbol kind={k} size={ICON_SIZE.medium} />
+                      </span>
+                    ))}
+                  </span>
+                  <span className="hm-door-say">
+                    <span className="mono-label hm-door-tag">Blank sheet</span>
+                    <span className="hm-door-name">Start a table</span>
+                    <span className="hm-door-note">
+                      Pick what it holds and give it a name. Its columns arrive already drawn
+                      for that kind, and you can change any of them afterwards.
                     </span>
-                    <span className="hm-first-door-foot">
+                    <span className="hm-door-foot">
                       <b>{presets.length}</b>
                       <span>presets</span>
                       <i aria-hidden="true" />
                       <b>0</b>
                       <span>rows loaded</span>
                     </span>
-                  </Card>
-                </div>
+                  </span>
+                  <span className="hm-door-go" aria-hidden="true">
+                    New table
+                  </span>
+                </button>
               ) : null}
             </div>
           </div>

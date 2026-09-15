@@ -676,3 +676,42 @@ puts its wordmark.
 | `npm test` | seven green, 2,974 tests, lint 343/343 |
 | `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,278 clear · clean |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-15, night — the entry: sign-in, the wizard, the first run
+
+The three screens the inventory still marked "old language". References
+driven live and kept in `out/ref/entry/`: Porsche's login (the frame),
+BMW's registration (the same frame mirrored), Brabus Marine's running
+hero (the picture), and Linear's and Notion's centred forms (what this
+is not — a SaaS login, not a dealer's front door). Tesla, Garmin,
+Mercury and Boston Whaler refused the driver.
+
+**The frame** (`features/entry/`): a photograph across most of the
+window, a white column with the one thing being asked, a light
+headline in the wide face, underline fields, a full-width sea-blue
+primary, the demo account under an "or". **The photograph is the
+file's own** — the Stacer Assault Pro 529 running, the repository's
+seeded copy — and the caption names whose file it is. No copy, no
+picture: the frame keeps its deep ground. **The wizard** shares the
+frame; where-you-are sits on the picture's foot. **The first run**
+after sign-in takes the tile rule: the door to the file is a scene tile
+drawn from the same photograph, the blank sheet a studio tile with the
+seven kinds as glyphs.
+
+Found on the way: the demo account carries its organisation, so it
+never meets the wizard — sign-in lands on the first run — and the
+wizard was reachable only by clearing a loaded sheet; it was
+photographed through a hash the driver set and the tree does not carry.
+The old sign-in sheet also held the who-chip's rules; gutting it took
+them, and the sweep caught seventeen orphans before the driver did.
+The 429 banner was tried on the file's door first and its white hull
+sat exactly where the words go; the door uses the 529 and the scrim.
+
+Literal px fell 468 → 460 with the two old sheets gone; the ceiling is
+lowered to match.
+
+| ruler | result |
+|---|---|
+| `npm test` | seven green, 2,974 tests, lint 343/343, literal px 460/460 |
+| `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,278 clear · clean |
+| `check:shots --update` | 14 of 14 re-taken |

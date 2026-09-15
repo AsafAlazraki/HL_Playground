@@ -6,12 +6,11 @@
    provided. What it DOES is establish who is quoting, which the
    quote document needs and the dashboard is built around.
 
-   THE SHAPE. Two panels. The left is the product saying what it
-   is for — "sell complicated things simply" — because this is a
-   sales tool and its first screen should say so rather than
-   showing a logo and two fields. The right is the form, and the
-   form is four elements: email, password, one primary, one
-   refusal line.
+   THE SHAPE IS THE ENTRY FRAME (`features/entry`): the dealer's own
+   boat running, and a white column with the one thing being asked.
+   Porsche's login, driven live 2026-09-15, is the reference — a
+   photograph most of the way across, a light headline, quiet
+   fields, a full-width primary, one other way in under an "or".
 
    A REFUSAL IS A SENTENCE WITH A REASON, IN THE PLACE IT FAILED
    (rule 10). "Invalid credentials" is not a reason. `signIn`
@@ -21,10 +20,15 @@
    IT OFFERS THE DEMO ACCOUNT rather than making somebody guess.
    A build that ships one seeded operator and then hides its email
    is a locked door with the key taped to the inside.
+
+   THE BUSINESS IS NAMED FROM THE ACCOUNT, not typed here: the
+   demo user carries `orgName`, and that is the one place the
+   name lives.
    ============================================================ */
 
 import { useState } from 'react'
 import type { FormEvent, JSX } from 'react'
+import { EntryFrame } from '@/features/entry/EntryFrame'
 import { demoAccount, signIn, type AppUser, type SignInProblem } from './session'
 
 export interface SignInProps {
@@ -52,91 +56,78 @@ export function SignIn({ onSignedIn }: SignInProps): JSX.Element {
   const passWrong = problem?.kind === 'no-password' || problem?.kind === 'wrong-password'
 
   return (
-    <div className="si">
-      {/* ---- what this is for -------------------------------- */}
-      <aside className="si-say">
-        <div className="ds-aurora si-sky" aria-hidden="true" />
-        <div className="si-say-in">
-          <span className="mono-label si-eyebrow">HelmLogic</span>
-          <h1 className="ds-hero si-head">Sell complicated things simply.</h1>
-          {/* one line under the hero, which is what a stage gets */}
-          <p className="si-lede">Everything you sell, and the quote at the end of it.</p>
-        </div>
-      </aside>
+    <EntryFrame
+      fileOf={demo.orgName}
+      fine="This build signs you in locally. Nothing is sent anywhere, and everything you do stays in this browser."
+    >
+      <form className="si" onSubmit={submit} noValidate>
+        <h1 className="en-head">Sign in</h1>
+        <p className="en-sub">{demo.orgName}</p>
 
-      {/* ---- the form ---------------------------------------- */}
-      <main className="si-form-side">
-        <form className="si-form" onSubmit={submit} noValidate>
-          <h2 className="si-form-head">Sign in</h2>
-          <p className="si-form-note">Northside Marine</p>
-
-          <label className="si-field">
-            <span className="si-label">Email</span>
-            <input
-              className={`si-input${emailWrong ? ' is-wrong' : ''}`}
-              type="email"
-              autoComplete="username"
-              inputMode="email"
-              value={email}
-              aria-invalid={emailWrong || undefined}
-              aria-describedby={emailWrong ? 'si-why' : undefined}
-              onChange={(ev) => {
-                setEmail(ev.target.value)
-                if (emailWrong) setProblem(null)
-              }}
-            />
-          </label>
-
-          <label className="si-field">
-            <span className="si-label">Password</span>
-            <input
-              className={`si-input${passWrong ? ' is-wrong' : ''}`}
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              aria-invalid={passWrong || undefined}
-              aria-describedby={passWrong ? 'si-why' : undefined}
-              onChange={(ev) => {
-                setPassword(ev.target.value)
-                if (passWrong) setProblem(null)
-              }}
-            />
-          </label>
-
-          {/* THE REASON, WHERE IT FAILED. `role="alert"` so it is
-              announced, and it is a sentence rather than a code. */}
-          {problem ? (
-            <p className="si-why" id="si-why" role="alert">
-              {problem.say}
-            </p>
-          ) : null}
-
-          <button type="submit" className="si-go">
-            Sign in
-          </button>
-
-          {/* THE DEMO ACCOUNT, OFFERED. It is in the bundle
-              already; hiding it only locks out the person it was
-              made for. */}
-          <button
-            type="button"
-            className="si-demo"
-            onClick={() => {
-              setEmail(demo.email)
-              setPassword(demo.password)
-              setProblem(null)
+        <label className="en-field">
+          <span className="en-label">Email</span>
+          <input
+            className={`en-input${emailWrong ? ' is-wrong' : ''}`}
+            type="email"
+            autoComplete="username"
+            inputMode="email"
+            value={email}
+            aria-invalid={emailWrong || undefined}
+            aria-describedby={emailWrong ? 'si-why' : undefined}
+            onChange={(ev) => {
+              setEmail(ev.target.value)
+              if (emailWrong) setProblem(null)
             }}
-          >
-            <span className="si-demo-say">Use the demo account</span>
-            <span className="si-demo-who">{demo.email}</span>
-          </button>
+          />
+        </label>
 
-          <p className="si-fine">
-            This build signs you in locally. Nothing is sent anywhere, and everything you
-            do stays in this browser.
+        <label className="en-field">
+          <span className="en-label">Password</span>
+          <input
+            className={`en-input${passWrong ? ' is-wrong' : ''}`}
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            aria-invalid={passWrong || undefined}
+            aria-describedby={passWrong ? 'si-why' : undefined}
+            onChange={(ev) => {
+              setPassword(ev.target.value)
+              if (passWrong) setProblem(null)
+            }}
+          />
+        </label>
+
+        {/* THE REASON, WHERE IT FAILED. `role="alert"` so it is
+            announced, and it is a sentence rather than a code. */}
+        {problem ? (
+          <p className="en-why" id="si-why" role="alert">
+            {problem.say}
           </p>
-        </form>
-      </main>
-    </div>
+        ) : null}
+
+        <button type="submit" className="en-go">
+          Sign in
+        </button>
+
+        <span className="en-or" aria-hidden="true">
+          or
+        </span>
+
+        {/* THE DEMO ACCOUNT, OFFERED. It fills the form; it does not
+            submit, so what is about to happen is on screen first. */}
+        <button
+          type="button"
+          className="en-demo"
+          onClick={() => {
+            setEmail(demo.email)
+            setPassword(demo.password)
+            setProblem(null)
+          }}
+        >
+          <span className="en-demo-say">Use the demo account</span>
+          <span className="en-demo-who">{demo.email}</span>
+        </button>
+      </form>
+    </EntryFrame>
   )
 }

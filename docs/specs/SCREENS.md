@@ -54,7 +54,7 @@ mono capitals and glass.
 | `module` — the places | a dealer choosing what to work in | every place, photographed | shelves of places with the kind glyph as a glyph | **done** |
 | `gallery` — every table as cards | (retired lens) | — | the catalogue replaced it; `check-shots` skips it as unreached | **retired** |
 | `history` — the diary | a dealer after lunch | resume somebody else's draft; see every quote a customer was given | a diary, not a list: days, then quotes under them | **done** — the harness now routes through a quote |
-| onboarding · auth | a new dealer, once | sign in; load the seed or a file | one question per screen, the product visible behind it | **old language** — the sweep does not cover them |
+| onboarding · auth — the entry | a new dealer, once; everybody, every morning | sign in; name the business and say what it sells, or open a saved copy; then load the file or start a table | **Porsche's login frame**, driven live: the dealer's own Stacer running across most of the window (the seed's copy, captioned as the file's), a white column with the one thing asked, a light headline, underline fields, one full-width primary, the demo account under an "or". The wizard shares the frame with where-you-are on the picture's foot; the first run after sign-in takes the tile rule — the door to the file a scene tile, the blank sheet a studio tile of the seven kinds. The demo account carries its organisation, so it skips the wizard and lands on the first run | **done** — the entry, the night the standard changed; `out/scripts/shot-entry.mjs` photographs it |
 
 ### Cockpit
 

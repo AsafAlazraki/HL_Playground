@@ -1,1496 +1,285 @@
 /* ============================================================
-   ONBOARDING (ob-) — the first screen anybody ever sees.
+   ONBOARDING — the wizard's own parts, inside the entry frame.
 
-   WHAT THIS REPLACES. A 468px white card floating in the middle of
-   an aurora. It was correct, calm, contrast-clean — and it was the
-   first run of every other product a person has ever set up. The
-   app behind it is a NAVY RAIL AGAINST A PAPER PAGE (app/SideNav.tsx
-   argues why), and the screen that introduces it had no part of
-   that drawing anywhere on it.
+   The frame, the column, the head, the field, the primary and the
+   quiet link are `features/entry/entry.css`; this sheet holds only
+   what the wizard adds: the industry rows, the refusal under them,
+   the saved-copy drop and the plate that reads a file back.
 
-   WHAT IT IS NOW. ONE SLAB IN TWO HALVES. The left half is
-   `--chrome` — the same navy the rail is, at the same radius, under
-   the same shadow — and carries the mark, the big line and how far
-   along you are. The right half is paper and carries the one
-   question. They share a border, a radius and a single `--e-hero`,
-   so it reads as one object lying on the ground rather than as two
-   panels agreeing to sit near each other.
-
-   ============================================================
-   THE ACCENT IS BARRED ON THE NAVY HALF, AND IT IS MEASURED.
-
-   `--accent` (#0a5fc2) is 1.9:1 on `--chrome` (#0b2138) — recorded
-   in shell.css beside the rail, which reached the same answer for
-   its lit row. So everything that marks state on the left is WHITE
-   AT LOW ALPHA: the crest behind the mark, the current step's disc,
-   the rule down the spine. Blue on that half would be a state
-   nobody can see.
-
-   THE LAMP IS 5% AND THE FAINT TIER IS BANNED UNDER IT. One white
-   radial sits behind the mark. Composited over `--chrome` at 5% it
-   lifts the ground's relative luminance from 0.0144 to 0.0239 —
-   which takes `--chrome-fg-faint` from 5.2:1 to 4.54:1, a tenth of
-   a point above the floor. That is not a margin, it is a
-   coincidence, so `--chrome-fg-faint` appears NOWHERE on this
-   screen and the quietest ink on the navy half is
-   `--chrome-fg-soft`:
-
-     --chrome-fg       on --chrome          14.9 : 1
-     --chrome-fg       on --chrome + lamp   ~13.6 : 1
-     --chrome-fg-soft  on --chrome           8.4 : 1
-     --chrome-fg-soft  on --chrome + lamp    7.4 : 1
-
-   §1 says a tint counts. A lamp counts too.
-
-   CONTRAST ON THE PAPER HALF, measured against the grounds actually
-   used — `--surface-1` (#ffffff), `--surface-3` (#eef3f8) and
-   `--accent-wash`:
-
-     --fg           on --surface-1      17.4 : 1
-     --fg-secondary on --surface-1       8.1 : 1
-     --fg-secondary on --surface-3       7.4 : 1
-     --fg-tertiary  on --surface-1       5.5 : 1
-     --fg-tertiary  on --surface-3       4.9 : 1   <- the floor holds
-     --accent       on --surface-1       5.9 : 1
-     --accent       on --accent-wash     5.2 : 1
-     --accent-fg    on --accent          5.9 : 1
-     --fg           on --danger-wash    15.6 : 1
-
-   `--fg-quaternary` (2.6:1) appears nowhere on either half.
-
-   THE ACCENT, FOUR TIMES, ALL OF THEM ON PAPER (§1): the field's
-   focus rule, the Continue button, whichever card is under the
-   pointer, and the drop plate when a file is over it. Nothing else
-   on the screen is blue.
-
-   UPPERCASE IS A LABEL STYLE (§2). The only capitals anywhere are
-   `.mono-label` captions — the "Not yet" tag, the "Not opened" tag
-   — and the one mono revision stamp. The wordmark, the business
-   name at 44px, the industry names, both buttons, the step labels
-   and every sentence keep their own case.
+   WHAT WAS HERE. 1,496 lines: a navy-and-paper slab, its lamp, its
+   crest, a numbered rail, an aurora behind it all, and four industry
+   cards with a sheen. Replaced 2026-09-15 with the entry frame the
+   sign-in shares; the rules below are the whole of what remains.
    ============================================================ */
 
-/* ------------------------------------------------------------
-   THE ROOM
-   ------------------------------------------------------------ */
-
-.ob-root {
-  position: fixed;
-  inset: 0;
-  z-index: 10;
-  overflow: auto;
-  isolation: isolate;
-  background: var(--bg-canvas);
-  color: var(--fg);
-}
-
-/* The atmosphere is FIXED rather than absolute: on a short window
-   the slab scrolls and the light behind it must not scroll with it,
-   or the page reads as a photograph being dragged. */
-.ob-sky {
-  position: fixed;
-  z-index: 0;
-}
-
-.ob-screen {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  padding: var(--s-10) var(--s-6);
-}
-
-/* ------------------------------------------------------------
-   THE SLAB — one object, two grounds.
-
-   `margin: auto` centres it safely: content taller than the window
-   still starts at the top instead of being clipped off it.
-   ------------------------------------------------------------ */
-
-.ob-stage {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
-  width: min(980px, 100%);
-  margin: auto;
-  border: 1px solid var(--line);
-  border-radius: var(--r-panel);
-  background: var(--grad-surface);
-  /* the tight contact shadow under the wide soft one is what makes
-     an edge look lit rather than drawn; the inset hairline is the
-     light landing on the top edge */
-  box-shadow: var(--e-hero), inset 0 1px 0 var(--edge-light);
-  /* the navy half is a filled rectangle and would otherwise square
-     off the slab's two left corners */
-  overflow: hidden;
-  animation: ds-rise var(--d-scene) var(--ease-out-expo) backwards;
-}
-
-/* One column under 900px: the navy half becomes a head, not a
-   column, and the spine lies down beside the line. */
-@media (max-width: 900px) {
-  .ob-stage {
-    grid-template-columns: minmax(0, 1fr);
-    width: min(560px, 100%);
-  }
-}
-
-/* ------------------------------------------------------------
-   THE NAVY HALF
-   ------------------------------------------------------------ */
-
-.ob-brand {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-6);
-  padding: var(--s-8) var(--s-6);
-  background: var(--chrome);
-  color: var(--chrome-fg);
-  /* the seam between the two grounds, on the navy side of the line
-     so the paper half keeps its own edge clean */
-  box-shadow: inset -1px 0 0 var(--chrome-line-soft);
-}
-
-@media (max-width: 900px) {
-  .ob-brand {
-    gap: var(--s-5);
-    padding: var(--s-6);
-    box-shadow: inset 0 -1px 0 var(--chrome-line-soft);
-  }
-}
-
-/* ONE SOFT LAMP, AT 5%, AND IT CARRIES NOTHING. See the arithmetic
-   at the head of this file for why it is 5% and not 7%: at 7% the
-   quietest chrome ink drops to 4.28:1, which fails. */
-.ob-brand-lamp {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    120% 70% at 12% 8%,
-    var(--chrome-wash) 0%,
-    transparent 62%
-  );
-}
-
-/* -- the mark ----------------------------------------------- */
-
-.ob-brand-top {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-}
-
-/* THE CREST IS WHITE, NOT ACCENT. The badge behind this mark used
-   to be `--accent` on paper, which was right there and is 1.9:1
-   here. White at 10% is the same idea in the material that works on
-   this ground — and it is the same value `.sn-crest` uses in the
-   rail, so the two marks are one object seen twice. */
-.ob-crest {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 38px;
-  height: 38px;
-  border-radius: var(--r-control);
-  background: var(--chrome-wash-hover);
-  color: var(--chrome-fg);
-  box-shadow: inset 0 1px 0 var(--chrome-edge);
-}
-
-/* A WORDMARK IS A NAME. It was stamped HELMLOGIC at 15px with
-   +0.2em; capitals cost a name its word-shape and gain nothing the
-   weight was not already saying. */
-.ob-crest-word {
-  font-family: var(--font-sans);
-  font-size: var(--t-heading-size);
-  font-weight: 600;
-  letter-spacing: -0.012em;
-  text-transform: none;
-  color: var(--chrome-fg);
-}
-
-/* -- the big line ------------------------------------------- */
-
-.ob-brand-say {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-  margin-top: auto;
-}
-
-@media (max-width: 900px) {
-  .ob-brand-say {
-    margin-top: 0;
-  }
-}
-
-/* THE ONE PLACE THE HERO STEP IS SPENT. ds.css imports Archivo for
-   exactly this line and argues the case in its own words: "a
-   dealership's own name deserves better than the default". On step
-   2 this IS the dealership's name, in their case, at 34-52px.
-
-   A NAME IS NEVER A STAMP (§2), so there is no transform here and
-   there never may be: `Pvc Marine` uppercased cannot be told from a
-   business that types itself PVC MARINE, and those are different
-   facts about somebody's letterhead. */
-.ob-brand-line {
-  margin: 0;
-  font-family: var(--font-hero);
-  font-size: var(--t-hero-size);
-  font-weight: var(--t-hero-weight);
-  line-height: var(--t-hero-lead);
-  letter-spacing: -0.036em;
-  font-variation-settings: 'wdth' 105;
-  text-transform: none;
-  color: var(--chrome-fg);
-  text-wrap: balance;
-  /* a 60-character single word is legal in a business name and has
-     to break rather than run out of the slab */
-  overflow-wrap: break-word;
-}
-
-/* A LONG NAME IS SET ONE STEP DOWN, NOT SQUEEZED. `--t-display-lg`
-   bottoms out at 26px, so the display face still never renders
-   anywhere near the size that retired the last one. */
-.ob-brand-line.is-long {
-  font-size: var(--t-display-lg-size);
-  font-weight: var(--t-display-lg-weight);
-  line-height: var(--t-display-lg-lead);
-  letter-spacing: -0.028em;
-  font-variation-settings: 'wdth' 103;
-}
-
-.ob-brand-note {
-  margin: 0;
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  line-height: 1.55;
-  letter-spacing: var(--t-small-track);
-  color: var(--chrome-fg-soft);
-}
-
-/* -- how far along you are ---------------------------------- */
-
-/* THE FUNCTIONAL GAP THIS PASS FOUND AND BUILT. There was no way to
-   know that "what's the name of your business?" was one of two
-   questions rather than one of twelve. Two steps, numbered, the
-   current one lit and the finished one ticked. */
-.ob-steps {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.ob-step {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-}
-
-/* THE RULE BETWEEN TWO STEPS, drawn off the mark rather than as its
-   own element — 22px of white hairline hanging under every disc but
-   the last. */
-.ob-step + .ob-step .ob-step-mark::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: 100%;
-  width: 1px;
-  height: var(--s-3);
-  background: var(--chrome-wash-press);
-}
-
-/* A FIGURE TAKES THE MONO FACE, tabular, so 1 and 2 sit on one
-   axis. It is a disc rather than a bare number because a number
-   with no ground reads as body text at the same size. */
-.ob-step-mark {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 22px;
-  height: 22px;
-  border-radius: var(--r-full);
-  border: 1px solid var(--chrome-line-strong);
-  background: transparent;
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  color: var(--chrome-fg-soft);
-  transition:
-    background var(--d-med) var(--ease),
-    color var(--d-med) var(--ease),
-    border-color var(--d-med) var(--ease),
-    box-shadow var(--d-med) var(--ease);
-}
-
-.ob-step-name {
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 500;
-  letter-spacing: var(--t-small-track);
-  text-transform: none;
-  color: var(--chrome-fg-soft);
-  transition: color var(--d-med) var(--ease);
-}
-
-/* THE CURRENT STEP IS WHITE ON WHITE-AT-16%, which is the state the
-   rail already uses for its lit row — and the reason it does: an
-   accent wash on this ground is 1.9:1. */
-.ob-step.is-here .ob-step-mark {
-  background: var(--chrome-wash-press);
-  border-color: var(--chrome-line-strong);
-  color: var(--chrome-fg);
-  box-shadow: inset 0 1px 0 var(--chrome-edge);
-}
-.ob-step.is-here .ob-step-name {
-  color: var(--chrome-fg);
-  font-weight: 570;
-}
-
-.ob-step.is-done .ob-step-mark {
-  background: var(--chrome-wash-hover);
-  border-color: var(--chrome-line);
-  color: var(--chrome-fg);
-}
-
-/* Off the numbered path — the saved-copy screen answers both
-   questions at once, and says so where the numbers are. */
-.ob-steps-note {
-  position: relative;
-  margin: calc(-1 * var(--s-3)) 0 0;
-  font-family: var(--font-sans);
-  font-size: var(--t-caption-size);
-  line-height: 1.5;
-  color: var(--chrome-fg-soft);
-}
-
-/* The one line about where a dealer's price file actually lives.
-   `--chrome-fg-soft`, not faint — see the lamp arithmetic above. */
-.ob-brand-foot {
-  position: relative;
-  margin: 0;
-  padding-top: var(--s-4);
-  border-top: 1px solid var(--chrome-line-soft);
-  font-family: var(--font-sans);
-  font-size: var(--t-caption-size);
-  line-height: 1.5;
-  color: var(--chrome-fg-soft);
-}
-
-/* ------------------------------------------------------------
-   THE PAPER HALF
-   ------------------------------------------------------------ */
-
 .ob-work {
-  min-width: 0;
-  padding: var(--s-8);
-  background: transparent;
-}
-
-@media (max-width: 900px) {
-  .ob-work {
-    padding: var(--s-6);
-  }
+  display: flex;
+  flex-direction: column;
+  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
 }
 
 .ob-form {
   display: flex;
   flex-direction: column;
+  margin: 0;
+}
+
+.ob-arrow {
+  flex: 0 0 auto;
+}
+
+/* ---- the industry rows ------------------------------------ */
+
+.ob-rows {
+  display: flex;
+  flex-direction: column;
+  margin: var(--s-8) 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: var(--border) solid var(--line);
+}
+
+.ob-row-cell {
+  border-bottom: var(--border) solid var(--line);
+}
+
+.ob-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--s-4);
+  width: 100%;
+  padding: var(--s-4) 0;
+  border: 0;
+  background: none;
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  transition: padding-left var(--d-fast) var(--ease);
+}
+
+.ob-row:hover {
+  padding-left: var(--s-2);
+}
+
+.ob-row:active {
+  color: var(--fg-secondary);
+}
+
+.ob-row:focus-visible {
+  outline: var(--border-strong) solid var(--action);
+  outline-offset: 2px;
+  border-radius: var(--r-control);
+}
+
+.ob-row-sym {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--r-full);
+  background: var(--bg-sunken);
+  color: var(--fg-secondary);
+}
+
+.ob-row-say {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   min-width: 0;
 }
 
-/* -- the question ------------------------------------------- */
-
-/* IT STEPS DOWN FROM THE HERO, DELIBERATELY. Two display lines on
-   one screen, both shouting, is two headlines; the navy half owns
-   the display face and this is the app's own voice asking the
-   question. `display` (28px, Inter) is the step below the one the
-   left-hand line takes, and the tracking still runs negative. */
-.ob-ask {
-  margin: 0;
-  font-family: var(--font-sans);
-  font-size: var(--t-display-size);
-  font-weight: var(--t-display-weight);
-  line-height: var(--t-display-lead);
-  letter-spacing: var(--t-display-track);
-  text-transform: none;
-  color: var(--fg);
-  text-wrap: balance;
-}
-
-/* WHY THE APP IS ASKING, in one sentence and only where it is true:
-   the business name is what `freeze.ts` writes onto a quote and
-   `QuoteDocument` prints at the head of it. */
-.ob-why {
-  margin: var(--s-3) 0 0;
-  max-width: 46ch;
-  font-size: var(--t-small-size);
-  line-height: 1.55;
-  letter-spacing: var(--t-small-track);
-  color: var(--fg-secondary);
-}
-
-/* -- the field ---------------------------------------------- */
-
-.ob-field {
-  position: relative;
-  display: flex;
-  align-items: center;
-  margin-top: var(--s-6);
-}
-
-/* A RULE, NOT A BOX. The name is the largest thing a person types
-   in this app and the only thing on this half of the slab; a
-   bordered 32px input would make it look like the sixth field of a
-   form. */
-.ob-input {
-  width: 100%;
-  padding: var(--s-3) var(--s-1) var(--s-3) 0;
-  border: 0;
-  border-bottom: 1.5px solid var(--line-strong);
-  border-radius: 0;
-  background: transparent;
-  font-family: var(--font-sans);
-  font-size: 20px;
-  font-weight: 500;
-  letter-spacing: -0.014em;
-  color: var(--fg);
-  transition:
-    border-color var(--d-fast) var(--ease),
-    box-shadow var(--d-fast) var(--ease);
-}
-.ob-input::placeholder {
-  color: var(--fg-tertiary);
+.ob-row-name {
+  font-family: var(--font-wide);
   font-weight: 400;
-}
-.ob-input:hover {
-  border-bottom-color: var(--fg-tertiary);
-}
-.ob-input:focus,
-.ob-input:focus-visible {
-  outline: none;
-  border-bottom-color: var(--accent);
-  box-shadow: 0 1.5px 0 var(--accent);
-}
-
-/* THE CAP, SAID BEFORE IT BITES. `maxLength={60}` silently ate the
-   61st keystroke of a long dealership name and nothing on screen
-   ever mentioned a limit; this appears at 45 and counts. A figure,
-   so it is mono and tabular — it must not shuffle as it climbs.
-   5.5:1 on white. */
-/* UNDER THE RULE, NOT ON TOP OF THE NAME. Sat inside the field it
-   would land on the 46th character of the very name it is counting
-   — and reserving a gutter for it permanently would put a hole in
-   the one line this screen is built around. */
-.ob-count {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 3px);
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-  font-variant-numeric: tabular-nums;
+  font-size: var(--t-title-size);
+  line-height: 1.2;
   letter-spacing: 0;
+}
+
+.ob-row-blurb {
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
   color: var(--fg-tertiary);
-  pointer-events: none;
-  animation: ds-fade var(--d-fast) var(--ease) backwards;
 }
 
-/* -- the one primary ---------------------------------------- */
-
-.ob-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--s-2);
-  width: 100%;
-  height: 46px;
-  margin-top: var(--s-6);
-  padding: 0 var(--s-5);
-  border: 1px solid transparent;
-  border-radius: var(--r-control);
-  /* THE FLAT ACCENT, NOT THE BRAND RAMP. `--grad-brand` runs
-     `--accent` (#0a5fc2) to `--accent-2` (#0d94c4), and white
-     measures 5.9:1 on the first and 3.5:1 on the second — swept
-     in-browser. §1 asks every text/background pair to clear 4.5,
-     and §2 already records why gradient TEXT is barred: a gradient
-     cannot be measured at every stop. Ink on a gradient is the same
-     problem the other way up. */
-  background: var(--action);
-  color: var(--accent-fg);
-  font-family: var(--font-sans);
-  font-size: var(--t-body-size);
-  font-weight: 560;
-  letter-spacing: -0.004em;
-  text-transform: none;
-  box-shadow: var(--e2), inset 0 1px 0 var(--edge-light);
-  cursor: pointer;
-  transition:
-    transform var(--d-fast) var(--ease),
-    box-shadow var(--d-med) var(--ease),
-    background var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease);
-}
-.ob-primary svg {
-  flex: none;
-  transition: transform var(--d-med) var(--ease-out-expo);
-}
-/* the glow is a STATE — it exists only under the pointer.
-   `--accent-hover` is 5.2:1 for white and `--accent-press` darker
-   still, so every one of the three states clears the floor. */
-.ob-primary:not(:disabled):hover {
-  background: var(--action-hover);
-  box-shadow: var(--e3), var(--glow-md), inset 0 1px 0 var(--edge-light);
-}
-.ob-primary:not(:disabled):hover svg {
-  transform: translateX(3px);
-}
-/* PRESS LANDS ON POINTER-DOWN (§4). 0.97 is the control scale — the
-   button is 46px tall and can take it. */
-.ob-primary:not(:disabled):active {
-  background: var(--action-press);
-  transform: scale(0.97);
-  transition-duration: var(--d-press);
-}
-.ob-primary:focus-visible {
-  outline: none;
-  box-shadow: var(--focus);
-}
-/* WAITING, NOT BROKEN — a sunken well until a name is typed, so it
-   still reads as the button rather than as a second empty field.
-
-   THE WELL IS THE TRAP §1 NAMES. The quietest ink measured 4.2:1
-   here once, on the first word anybody reads in the product.
-   `--fg-secondary` is 7.4:1 on `--surface-3`. The waiting is said
-   by the well and by the button losing its own fill, never by an
-   ink that cannot be read. */
-.ob-primary:disabled {
-  background: var(--surface-3);
-  border-color: var(--line);
-  color: var(--fg-secondary);
-  box-shadow: none;
-  cursor: default;
-}
-
-/* -- the quiet second answer -------------------------------- */
-
-/* A text button under the primary, not a second primary: naming the
-   business is what nearly everybody does here, and two filled
-   buttons would make the first run a choice instead of a sentence.
-   It is still a real control and takes all three states. */
-.ob-alt {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--s-2);
-  align-self: center;
-  margin-top: var(--s-4);
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid transparent;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--fg-secondary);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    color var(--d-fast) var(--ease),
-    background var(--d-fast) var(--ease),
-    transform var(--d-fast) var(--ease);
-}
-.ob-alt:hover {
-  color: var(--accent);
-  background: var(--accent-wash);
-}
-.ob-alt:active {
-  transform: scale(0.97);
-  transition-duration: var(--d-press);
-}
-.ob-alt:focus-visible {
-  outline: none;
-  box-shadow: var(--focus);
-}
-/* Back sits below the two answers and reads as the way out, so it
-   gets the smaller step and none of the accent on hover. */
-.ob-alt--back {
-  margin-top: var(--s-2);
-  font-size: var(--t-caption-size);
-}
-.ob-alt--back:hover {
-  color: var(--fg);
-  background: var(--surface-3);
-}
-
-/* Step 2's way back sits ABOVE its question, aligned with the
-   question's own left edge. */
-.ob-back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  align-self: flex-start;
-  margin: 0 0 var(--s-4) calc(-1 * var(--s-3));
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid transparent;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--fg-secondary);
-  font-family: var(--font-sans);
-  font-size: var(--t-small-size);
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-  cursor: pointer;
-  transition:
-    color var(--d-fast) var(--ease),
-    background var(--d-fast) var(--ease),
-    transform var(--d-fast) var(--ease);
-}
-.ob-back:hover {
-  color: var(--fg);
-  background: var(--surface-3);
-}
-.ob-back:active {
-  transform: scale(0.97);
-  transition-duration: var(--d-press);
-}
-.ob-back:focus-visible {
-  outline: none;
-  box-shadow: var(--focus);
-}
-
-/* ============================================================
-   STEP 2 — what do you sell?
-
-   FOUR CARDS BECAME TWO AND A SENTENCE. Two of the four were
-   `disabled` buttons stamped COMING SOON: a control that can never
-   be pressed, drawn at the same weight as the two that can, on the
-   second screen anybody sees. §7 asks a refusal to be a sentence
-   with a reason in the place it is refused — so the answers that
-   exist are answers, and the two that do not are one quiet line
-   underneath saying why, named out of the model rather than typed
-   here.
-
-   WHICH ANSWERS ARE LIVE IS STILL THE MODEL'S RULING —
-   `INDUSTRIES[k].available` plus the `STARTS_BLANK` reading in
-   Onboarding.tsx. Nothing about the split is written in CSS.
-   ============================================================ */
-
-/* auto-fit rather than a breakpoint: two live answers make two
-   columns in the paper half and one when the slab stacks, and the
-   day a third industry ships it takes the row by itself */
-.ob-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--s-3);
-  margin-top: var(--s-6);
-}
-
-/* -- one choice -------------------------------------------- */
-
-.ob-kind {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s-2);
-  padding: var(--s-5);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--grad-surface);
-  box-shadow: var(--e-card), inset 0 1px 0 var(--edge-light);
-  color: var(--fg);
-  font-family: var(--font-sans);
-  text-align: left;
-  cursor: pointer;
-  transition:
-    transform var(--d-med) var(--ease-out-expo),
-    box-shadow var(--d-med) var(--ease),
-    border-color var(--d-fast) var(--ease);
-}
-
-/* THE MARK IS DRAWN AT ITS OWN ASPECT. It was forced to 96x59 by a
-   `width`/`height` pair on the svg — a square Phosphor glyph
-   squashed by a third. The size now comes from the call site
-   (`ICON_SIZE.large`) and this rule does layout only. */
-.ob-kind-sym {
-  display: flex;
-  margin-bottom: var(--s-1);
-  color: var(--fg-secondary);
-  transition:
-    color var(--d-med) var(--ease),
-    transform var(--d-med) var(--ease-out-expo);
-}
-
-/* AN INDUSTRY NAME IS A NAME — "MARINE", "MOTORCYCLES & ATVS" were
-   the names on the cards a person was about to press. */
-.ob-kind-label {
-  font-family: var(--font-sans);
-  font-size: var(--t-heading-size);
-  font-weight: var(--t-heading-weight);
-  line-height: var(--t-heading-lead);
-  letter-spacing: var(--t-heading-track);
-  text-transform: none;
-  color: var(--fg);
-}
-.ob-kind-blurb {
-  font-size: var(--t-small-size);
-  line-height: 1.5;
-  color: var(--fg-secondary);
-}
-/* the affordance, not a decoration: it says the card is a door and
-   it travels when the door is under the pointer */
-.ob-kind-go {
-  position: absolute;
-  top: var(--s-4);
-  right: var(--s-4);
-  display: inline-flex;
+.ob-row-go {
+  display: inline-grid;
+  place-items: center;
   color: var(--fg-tertiary);
-  transition:
-    color var(--d-med) var(--ease),
-    transform var(--d-med) var(--ease-out-expo);
+  transition: transform var(--d-fast) var(--ease);
 }
 
-.ob-kind:hover,
-.ob-kind:focus-visible {
-  transform: translateY(-3px);
-  border-color: var(--accent-line);
-  box-shadow: var(--e4), var(--glow-md), inset 0 1px 0 var(--edge-light);
-}
-.ob-kind:hover .ob-kind-sym,
-.ob-kind:focus-visible .ob-kind-sym {
-  color: var(--accent);
-}
-.ob-kind:hover .ob-kind-go,
-.ob-kind:focus-visible .ob-kind-go {
-  color: var(--accent);
-  transform: translateX(3px);
-}
-.ob-kind:focus-visible {
-  outline: none;
-  box-shadow: var(--focus), var(--e4);
-}
-/* A CARD PRESSES BY A HAIR AND LOSES ITS LIFT (§4). 0.97 on a 280px
-   card is an 8px shrink and reads as a glitch. */
-.ob-kind:active {
-  transform: translateY(0) scale(0.994);
-  box-shadow: var(--e1);
-  transition-duration: var(--d-press);
+.ob-row:hover .ob-row-go {
+  color: var(--fg);
+  transform: translateX(2px);
 }
 
-/* -- the answers that are not drawn yet --------------------- */
-
+/* what cannot be picked, and why, where it is refused */
 .ob-soon {
   display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--s-1) var(--s-3);
+  flex-direction: column;
+  gap: var(--s-1);
   margin: var(--s-5) 0 0;
-  padding: var(--s-3) var(--s-4);
-  border: 1px solid var(--line-subtle);
-  border-radius: var(--r-card);
-  background: var(--surface-3);
   font-size: var(--t-small-size);
-  line-height: 1.55;
+  line-height: var(--t-small-lead);
   color: var(--fg-secondary);
-  text-align: left;
 }
-/* 4.9:1 on --surface-3, measured — the floor holds on the tint */
+
 .ob-soon-tag {
-  flex: none;
   color: var(--fg-tertiary);
 }
-.ob-soon-say {
-  flex: 1 1 20ch;
-  min-width: 0;
-}
 
-/* ============================================================
-   STEP 3 — open a saved copy.
-
-   Off the default path, and the way out of a trap: CLEAR SHEET
-   wipes the organisation, the shell lands back here, and this is
-   the only import door on the near side of that gate. Same slab,
-   because it is the same room.
-   ============================================================ */
+/* ---- the saved copy ---------------------------------------- */
 
 .ob-drop {
-  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  margin-top: var(--s-6);
-  padding: var(--s-6) var(--s-4);
-  border: 1.5px dashed var(--line-strong);
+  justify-content: center;
+  gap: var(--s-1);
+  margin-top: var(--s-2);
+  padding: var(--s-8) var(--s-4);
+  border: var(--border) dashed var(--line-strong);
   border-radius: var(--r-card);
-  background: var(--surface-3);
-  color: var(--fg-secondary);
+  background: transparent;
+  color: var(--fg);
   cursor: pointer;
   transition:
     border-color var(--d-fast) var(--ease),
-    background var(--d-fast) var(--ease),
-    box-shadow var(--d-fast) var(--ease),
-    color var(--d-fast) var(--ease),
-    transform var(--d-fast) var(--ease);
+    background-color var(--d-fast) var(--ease);
 }
-.ob-drop:hover {
-  border-color: var(--accent);
-  background: var(--accent-wash);
-  color: var(--accent);
-}
-.ob-drop:active {
-  transform: scale(0.994);
-  transition-duration: var(--d-press);
-}
-.ob-drop:focus-visible {
-  outline: none;
-  border-style: solid;
-  border-color: var(--accent);
-  box-shadow: var(--focus);
-}
+
+.ob-drop:hover,
 .ob-drop.is-over {
-  border-style: solid;
-  border-color: var(--accent);
-  background: var(--accent-wash-strong);
-  box-shadow: var(--glow-sm);
-  color: var(--accent);
+  border-color: var(--action);
+  background: var(--surface-rest);
 }
+
+.ob-drop:focus-visible {
+  outline: var(--border-strong) solid var(--action);
+  outline-offset: 2px;
+}
+
 .ob-drop-glyph {
-  display: block;
   margin-bottom: var(--s-2);
+  color: var(--fg-tertiary);
 }
+
 .ob-drop-main {
-  font-family: var(--font-sans);
   font-size: var(--t-body-size);
-  font-weight: 550;
-  letter-spacing: -0.004em;
-  color: var(--fg);
+  font-weight: 600;
 }
-.ob-drop:hover .ob-drop-main,
-.ob-drop.is-over .ob-drop-main {
-  color: var(--accent);
-}
-/* currentColor, so the second half of the instruction turns with
-   its parent on hover and drag-over */
+
 .ob-drop-sub {
   font-size: var(--t-small-size);
-  color: currentColor;
+  color: var(--fg-tertiary);
 }
 
 .ob-file {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-/* -- a file that was refused -------------------------------- */
-
-/* THE REFUSAL SAYS WHY, WHERE IT WAS REFUSED — never a toast, never
-   a tooltip, never silence. It stopped shouting REJECTED in 11px
-   letterspaced mono: the reason is a sentence and is set as one, in
-   --fg on --danger-wash (15.6:1), with the red kept for the rail
-   and the caption. */
+/* the refusal: a caption, then the reason in full ink, a rail of
+   the danger colour beside it — never a stamp */
 .ob-refuse {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--s-1);
   margin-top: var(--s-4);
-  padding: var(--s-3) var(--s-4);
-  border-left: 2px solid var(--danger);
-  border-radius: 0 var(--r-control) var(--r-control) 0;
-  background: var(--danger-wash);
-  animation: ds-fade var(--d-fast) var(--ease) backwards;
-}
-.ob-refuse-tag {
-  color: var(--danger);
-}
-.ob-refuse-say {
+  padding-left: var(--s-3);
+  border-left: var(--border-strong) solid var(--danger);
   font-size: var(--t-small-size);
-  line-height: 1.55;
+  line-height: var(--t-small-lead);
   color: var(--fg);
 }
 
-/* -- what the file holds ------------------------------------ */
-
-.ob-plate {
-  margin-top: var(--s-6);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface-1);
-  box-shadow: var(--e1), inset 0 1px 0 var(--edge-light);
-  overflow: hidden;
-  animation: ds-rise var(--d-slow) var(--ease-out-expo) backwards;
+.ob-refuse-tag {
+  color: var(--danger);
 }
+
+/* what the file holds, read back before it is put on the sheet */
+.ob-plate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin-top: var(--s-2);
+  padding: var(--s-4) 0;
+  border-top: var(--border) solid var(--line);
+  border-bottom: var(--border) solid var(--line);
+}
+
 .ob-plate-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--s-2);
-  padding: var(--s-3) var(--s-4);
-  background: var(--surface-3);
-  border-bottom: 1px solid var(--line-subtle);
+  gap: var(--s-3);
 }
-/* THE FILE'S OWN NAME IS A NAME, so it is sentence case and never a
-   stamp. It is also the one string on this screen that came from
-   outside, so it truncates rather than pushing the rev off the
-   edge. */
+
 .ob-plate-name {
-  min-width: 0;
-  font-family: var(--font-sans);
-  font-size: var(--t-heading-size);
-  font-weight: var(--t-heading-weight);
-  letter-spacing: var(--t-heading-track);
-  text-transform: none;
-  color: var(--fg);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-family: var(--font-wide);
+  font-weight: 400;
+  font-size: var(--t-title-size);
+  line-height: 1.2;
 }
-/* a mono stamp — one of the three sanctioned uppercase uses */
+
 .ob-plate-rev {
-  flex: none;
   font-family: var(--font-mono);
-  font-size: var(--t-mono-sm-size);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  font-variant-numeric: tabular-nums;
-  color: var(--fg-secondary);
-}
-.ob-plate-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-}
-.ob-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: var(--s-4) var(--s-2);
-  border-left: 1px solid var(--line-subtle);
-}
-.ob-stat:first-child {
-  border-left: 0;
-}
-/* MONO, TABULAR, AND THE BIGGEST THING ON THE PLATE: it is the fact
-   the plate exists to state. */
-.ob-stat-num {
-  font-family: var(--font-mono);
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-  color: var(--fg);
-}
-.ob-stat-lbl {
-  font-family: var(--font-sans);
   font-size: var(--t-caption-size);
-  font-weight: 500;
-  letter-spacing: var(--t-caption-track);
-  text-transform: none;
   color: var(--fg-tertiary);
 }
-/* "Also — 5 modules · 3 pages" and "Source — <the chosen file>".
-   The second is a file name, which is a value; the first is a count
-   in the app's own nouns. Neither is a caption, so neither is
-   uppercase. */
-.ob-plate-also {
-  padding: var(--s-2) var(--s-4);
-  border-top: 1px solid var(--line-subtle);
-  font-family: var(--font-sans);
-  font-size: var(--t-caption-size);
-  line-height: 1.5;
-  letter-spacing: 0;
-  text-transform: none;
+
+.ob-plate-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-3);
+}
+
+.ob-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ob-stat-num {
+  font-family: var(--font-mono);
+  font-size: var(--t-title-size);
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
+}
+
+.ob-stat-lbl {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+.ob-plate-also {
+  font-size: var(--t-small-size);
   color: var(--fg-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
-/* ============================================================
-   THE ARRIVAL.
-
-   The slab rises once in `--d-scene` (620ms). Inside it, the mark,
-   the big line, the note, the spine, the question, the field and
-   both buttons follow on a 46ms beat — index set inline as `--i`
-   at the call site, capped at 9 so nothing ever waits half a
-   second. Longest path: 120ms + 9x46 + 420ms ≈ 950ms, once in the
-   life of a dealership.
-
-   WHY THIS IS INSIDE THE MOTION BUDGET AND A COMMAND PALETTE IS
-   NOT. The budget's rule is about frequency, not taste: a thing a
-   person does a hundred times a day must open on the frame of the
-   keypress. This screen is opened once. It is the one place in the
-   app where an entrance is worth its milliseconds.
-   ============================================================ */
-
-.ob-in {
-  animation: ds-rise var(--d-slower) var(--ease-out-expo) backwards;
-  animation-delay: calc(120ms + min(var(--i, 0), 9) * 46ms);
-}
-
-/* ============================================================
-   MOVEMENT GOES; LIGHT AND COLOUR STAY.
-
-   base.css cuts every duration under `prefers-reduced-motion` and
-   ds.css cuts the shared entrances, but an entrance declared here
-   by name has to be named here too — otherwise it merely runs in
-   0.01ms, which is the same picture but not the same promise.
-   ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-  .ob-stage,
-  .ob-in,
-  .ob-plate,
-  .ob-refuse,
-  .ob-count {
+  .ob-work {
     animation: none;
   }
-  .ob-kind:hover,
-  .ob-kind:focus-visible,
-  .ob-kind:active,
-  .ob-primary:not(:disabled):active,
-  .ob-primary:not(:disabled):hover svg,
-  .ob-drop:active,
-  .ob-alt:active,
-  .ob-back:active {
-    transform: none;
-  }
 }
 
-/* The atmosphere on this screen is ds.css's own and is already
-   covered there; the lamp is this file's, so it is named here.
-   Higher contrast and reduced transparency both take it. */
-@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-  .ob-brand-lamp {
-    display: none;
-  }
-}
-
-/* ============================================================
-   THE FIRST SCREEN, ON A REAL MONITOR — added with the fluid layer.
-
-   Measured at 1728x1080: the name card drew 345px wide and sat
-   alone in the middle of the window, and the industry step put
-   four cards in a 840px column with `Back` floating far to their
-   left. It read as a phone layout that had been stretched onto a
-   desktop, which is exactly what it was.
-   ============================================================ */
-
-.ob-card {
-  width: min(100% - var(--sp-6, 24px) * 2, 460px);
-}
-
-.ob-col {
-  width: min(100% - var(--gutter) * 2, 1120px);
-  margin-inline: auto;
-}
-
-/* `repeat(3, 1fr)` below 1180px and `repeat(4, …)` above it meant
-   four industries drew as three columns with one orphan on every
-   window between 900px and 1180px. auto-fit lets the row decide,
-   and the min() keeps it from overflowing a phone. */
-.ob-grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
-}
-
-/* ============================================================
-   THE FIRST RUN, COMPOSED FOR A REAL MONITOR — the pass above
-   widened the card and let the industry grid decide its own
-   columns. This is the composition those two numbers were asking
-   for, and it is the whole of what a stakeholder sees first.
-
-   MEASURED BEFORE ANY OF IT: at 1707 CSS px the name card drew
-   460px and every other pixel of the window was navy. Widening
-   one column to fill a monitor is the wrong answer — a question
-   and a field both have a measure, and past it neither gets
-   easier to read. So the card SPLITS: what is being asked on the
-   left, what you do about it on the right.
-
-   AND IT SPLITS ON ITS OWN WIDTH, not the window's. .ob-card
-   takes container-type: inline-size and the split is a
-   @container rule, which is the difference between a component
-   that responds and a page that has been told about a phone.
-   There is no device breakpoint in this block; the one threshold
-   is 720px of CARD, which is the width at which the question and
-   the field each still have a measure worth having.
-
-   THE ONE SURFACE WHERE DISPLAY TYPE IS LEGITIMATE. response.css
-   says so in its own comment — it deliberately keeps the shared
-   display ramp shallow because those tokens are spent on dense
-   data screens, and it names onboarding as the exception that
-   should take its hero size in its own stylesheet. This is that
-   stylesheet. --ob-hero-* is a COMPLETE step (rule 6): size,
-   weight, leading and tracking move together, and the tracking
-   runs negative as the size grows (rule 7).
-
-   THREE SPACING TIERS AND A FOURTH, NAMED. Outer padding must
-   exceed the inner gap or the group does not read as a unit.
-     --ob-pad    28 -> 48   the card's own edge
-     --ob-block  20 -> 32   between one group and the next
-     --sp-4      16         inside a group
-     --sp-2       8         a label to the field it names
-   ============================================================ */
-
-.ob-root {
-  /* the hero step, whole */
-  --ob-hero-size: clamp(30px, 1.36rem + 1.05vw, 48px);
-  --ob-hero-lead: 1.04;
-  --ob-hero-track: -0.026em;
-  --ob-block: clamp(20px, 1.5vw, 32px);
-}
-
-.ob-screen {
-  padding: clamp(32px, 5vh, 72px) var(--gutter);
-}
-
-/* -- the card ------------------------------------------------ */
-
-.ob-card {
-  container-type: inline-size;
-  --ob-pad: clamp(28px, 2.2vw, 48px);
-  padding: var(--ob-pad);
-  /* a card that is not the split one still keeps a measure rather
-     than a phone width. `max-width` is released here because the
-     460px cap five rules above IS the fault this block is fixing —
-     a width that grows under a max-width that does not is a card
-     that never moves. */
-  width: min(100%, clamp(460px, 42vw, 640px));
-  max-width: none;
-}
-
-.ob-card--split {
-  width: min(100%, clamp(460px, 66vw, 1080px));
-}
-
-.ob-card-say,
-.ob-card-do {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.ob-card-do {
-  margin-top: var(--ob-block);
-}
-
-/* the grid lives one step inside the container, because an element
-   cannot answer a @container query about itself */
-.ob-card-body {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-@container (min-width: 720px) {
-  .ob-card--split .ob-card-body {
-    display: grid;
-    grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
-  }
-  .ob-card-say {
-    padding-right: var(--ob-block);
-  }
-  /* the divider is the DO column's own left edge rather than a
-     third element, so it is exactly as tall as the taller column
-     and can never be one pixel out */
-  .ob-card-do {
-    margin-top: 0;
-    padding-left: var(--ob-block);
-    border-left: 1px solid var(--hairline);
-  }
-  /* the logbook rule bleeds to the card's left edge and stops at
-     the column, instead of running under the field */
-  .ob-rule {
-    margin-right: 0;
-  }
-}
-
-.ob-rule {
-  margin-top: var(--ob-block);
-}
-
-.ob-ask {
-  margin-top: var(--ob-block);
-  font-family: var(--font-ui);
-  font-size: var(--ob-hero-size);
-  font-weight: var(--display-weight);
-  line-height: var(--ob-hero-lead);
-  letter-spacing: var(--ob-hero-track);
-  color: var(--ink);
-  text-wrap: balance;
-}
-
-.ob-note {
-  margin-top: var(--sp-4);
-  font-size: var(--ui-m-size);
-  line-height: 1.6;
-  max-width: 46ch;
-  text-wrap: pretty;
-}
-
-/* -- the right-hand column ----------------------------------- */
-
-/* 11px mono uppercase is the ONE sanctioned use of capitals — a
-   group caption — and this is what gives the two columns a shared
-   top edge. It replaces an aria-label, so the field's name is on
-   the screen and not only in the accessibility tree.
-   --ink-soft measures 7.7:1 on the card's white. */
-.ob-field-label {
-  font-family: var(--font-mono);
-  font-size: var(--micro-size);
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  line-height: 1.2;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
-.ob-input {
-  /* the label-8-field tier, which is what makes the pair read as
-     one thing rather than two */
-  margin-top: var(--sp-2);
-  font-size: clamp(19px, 1.05rem + 0.32vw, 26px);
-  letter-spacing: -0.008em;
-  /* FOCUS IS NEVER ANIMATED. The ring was in the transition list, so
-     it faded in over --t-fast; a focus indicator that arrives late is
-     a focus indicator that is not there when the key was pressed. */
-  transition: border-color var(--t-fast) var(--ease-draft);
-}
-
-.ob-primary {
-  margin-top: var(--ob-block);
-  min-height: 48px;
-  /* NESTED RADIUS. A 10px control inset 28-48px inside a 10px card is
-     the parent's radius copied onto a child; the child's corner is not
-     concentric with it at that inset, and the control step is 6px. */
-  border-radius: var(--radius-sm);
-}
-
-/* RULE 10 — the disabled primary says why, where it is, rather than
-   sitting grey and silent. It is drawn in both states so the column
-   does not jump under the pointer when the first letter is typed;
-   what changes is the first sentence. */
-.ob-why {
-  margin-top: var(--sp-3);
-  font-family: var(--font-ui);
-  font-size: var(--ui-s-size);
-  font-weight: 400;
-  line-height: 1.55;
-  letter-spacing: 0;
-  color: var(--ink-soft);
-  max-width: 46ch;
-  text-wrap: pretty;
-}
-
-.ob-alt {
-  margin-top: var(--sp-3);
-  align-self: flex-start;
-}
-/* Back is the way out of the file screen, so it goes to the FOOT of
-   its column rather than trailing whichever control happens to be
-   above it. */
-.ob-alt--back {
-  margin-top: auto;
-  padding-top: var(--sp-4);
-}
-
-/* -- the refusal --------------------------------------------- */
-
-/* A REFUSAL IS A SENTENCE AND A SENTENCE IS NOT A STAMP. This was
-   11px mono with +0.1em of the label's tracking, drawn entirely in
-   --red over a red tint — three separate reasons it was the hardest
-   thing on the screen to read, on the one occasion a person is being
-   told something went wrong.
-
-   THE FLAG IS RED; THE REASON IS INK. --ink measures 18.9:1 on white
-   and stays far clear of the floor over a tint of this order, which
-   is the exact arithmetic DESIGN_PRINCIPLES records as having been
-   got wrong before. The red is spent on the rail and the stamp, where
-   it is a signal rather than a body colour. */
-.ob-refuse {
-  margin-top: var(--sp-3);
-  padding: var(--sp-3);
-  border-left: 2px solid var(--red);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  background: var(--red-wash);
-  color: var(--ink);
-  font-family: var(--font-ui);
-  font-size: var(--ui-s-size);
-  font-weight: 400;
-  letter-spacing: 0;
-  line-height: 1.55;
-  text-wrap: pretty;
-}
-.ob-refuse strong {
+/* a caption over a block, on the label's tier, with the field's air above it */
+.ob-caption {
   display: block;
-  margin-bottom: var(--sp-1);
-  font-family: var(--font-mono);
-  font-size: var(--micro-size);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--red);
+  margin-top: var(--s-6);
 }
 
-/* -- the drop zone and the plate ----------------------------- */
-
-/* both are inset a full --ob-pad inside a 10px card, so neither may
-   wear the card's radius — see the note on .ob-primary */
-.ob-drop {
-  margin-top: var(--sp-2);
-  padding: var(--sp-5) var(--sp-4);
-  border-radius: var(--radius-sm);
+.ob-refuse-say {
+  color: var(--fg);
 }
 
-.ob-plate {
-  margin-top: var(--sp-2);
-  border-radius: var(--radius-sm);
-}
-
-/* THE STAT STRIP REFLOWS OR IT IS NOT A GRID. repeat(3, 1fr) is an
-   unconditional column count: at any width where three columns do not
-   fit it does not wrap, it overflows. auto-fit lets the strip decide —
-   and the dividers move from border-right (which needs a :last-child
-   exception that is wrong the moment a row wraps) to a 1px gap over
-   the hairline, which is correct in every arrangement. */
-.ob-plate-grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(96px, 100%), 1fr));
-  gap: 1px;
-  background: var(--hairline);
-}
-.ob-stat {
-  align-items: flex-start;
-  gap: var(--sp-1);
-  padding: var(--sp-3);
-  border-right: 0;
-  background: var(--paper-high);
-}
-/* the figure is the fact and it is drawn like one — heaviest and
-   darkest, with its caption a tier below it (rule 9) */
-.ob-stat-num {
-  font-size: clamp(18px, 1rem + 0.28vw, 24px);
-  letter-spacing: -0.01em;
-}
-
-/* ============================================================
-   STEP 2 — the industry grid as a page, not three things dropped
-   on a field.
-
-   BACK USED TO FLOAT. The rail sat above a CENTRED header over a
-   grid on a different measure, so the only control on the rail had
-   nothing to line up with and read as abandoned to the left. Rail,
-   header and grid now share one left edge.
-   ============================================================ */
-
-.ob-col {
-  /* narrower than the app's --measure ON PURPOSE (rule 4): four
-     cards and one question do not want 2074px, they want a measure
-     that grows to about four comfortable cards and then stops */
-  width: min(100%, clamp(1120px, 74vw, 1560px));
-  max-width: none;
-  margin-inline: auto;
-}
-
-.ob-nav {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-}
-
-.ob-head {
-  margin-top: var(--section-gap);
-  text-align: left;
-}
-
-.ob-title {
-  font-family: var(--font-ui);
-  font-size: var(--ob-hero-size);
-  font-weight: var(--display-weight);
-  line-height: var(--ob-hero-lead);
-  letter-spacing: var(--ob-hero-track);
-  text-wrap: balance;
-}
-
-.ob-sub {
-  margin-top: var(--sp-4);
-  font-size: var(--ui-m-size);
-  line-height: 1.6;
-  max-width: 72ch;
-  text-wrap: pretty;
-}
-
-.ob-grid {
-  margin-top: var(--section-gap);
-  gap: clamp(16px, 1.4vw, 28px);
-}
-
-/* -- one choice ---------------------------------------------- */
-
-.ob-kind {
-  container-type: inline-size;
-  --ob-kind-pad: clamp(20px, 1.3vw, 28px);
-  gap: var(--sp-2);
-  padding: var(--ob-kind-pad);
-  /* THE ACCENT RAIL WAS A SQUARE 2px BAR ON A 10px CORNER, so its two
-     top corners poked outside the card's radius. A border does the
-     same job and is mitred by the radius for free. */
-  border-top: 2px solid var(--accent-blue);
-  padding-top: calc(var(--ob-kind-pad) - 1px);
-}
-.ob-kind::before {
-  display: none;
-}
-.ob-kind--soon {
-  border-top-color: var(--hairline);
-}
-
-/* THE SYMBOL WAS BEING LETTERBOXED. .ob-kind-sym svg forced 96x59
-   onto a square Phosphor icon, which preserves its aspect ratio — so
-   it drew 59px wide with 18px of dead space either side and sat off
-   the card's own text edge. Square, and sized against the CARD (cqi)
-   rather than the window, because this component is reused at two,
-   three and four columns. */
-.ob-kind-sym {
-  margin-bottom: var(--sp-3);
-}
-.ob-kind-sym svg {
-  width: clamp(44px, 18cqi, 64px);
-  height: auto;
-  aspect-ratio: 1;
-}
-
-.ob-kind-label {
-  font-size: var(--ui-l-size);
-  text-wrap: balance;
-}
-.ob-kind-blurb {
-  font-size: var(--ui-size);
-  line-height: 1.5;
-  text-wrap: pretty;
-}
-
-/* HOVER PICKS TWO SIGNALS, NOT THREE. It was lift + shadow + border
-   colour; the border was the third change in one transition and the
-   first two already say "this rises". The border keeps its job on
-   focus, where it is the only signal there is. */
-.ob-kind:not(:disabled):hover {
-  border-color: var(--hairline-strong);
-  border-top-color: var(--accent-blue);
-}
-.ob-kind:not(:disabled):focus-visible {
-  border-color: var(--accent-blue);
-}
-.ob-kind:not(:disabled):active {
-  transform: translateY(-1px) scale(0.994);
+.ob-soon-say {
+  color: var(--fg-secondary);
 }

@@ -1582,183 +1582,300 @@
 }
 
 .hm-first {
-  display: grid;
-  gap: var(--sp-6);
-  width: 100%;
-  max-width: 1080px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-10);
+  width: min(100%, 68rem);
   margin: 0 auto;
+  padding: var(--s-16) var(--s-8) var(--s-12);
 }
 
 .hm-first-say {
-  display: grid;
-  gap: var(--sp-3);
-  max-width: 62ch;
+  display: flex;
+  flex-direction: column;
+  max-width: 40rem;
 }
 
+.hm-first-eyebrow {
+  color: var(--fg-tertiary);
+}
 
-/* the page's own line, set at the dashboard's headline step — the same
-   one `.md-dash-org` takes, so the two front doors of this app open at
-   the same volume. Not the display serif: that face appears exactly
-   twice in the product (onboarding's question and the invitation's
-   answer) and a third would stop it meaning anything. */
+/* the page's own line, in the wide light face every rebuilt screen
+   opens with — a first screen that does not look like the app it
+   opens is a first screen that has to be explained */
 .hm-first-title {
-  margin: 0;
-  font-family: var(--font-ui);
-  font-size: var(--t-display-lg-size);
-  font-weight: var(--t-display-lg-weight);
-  line-height: var(--t-display-lg-lead);
-  letter-spacing: var(--t-display-lg-track);
-  color: var(--ink);
+  margin: var(--s-4) 0 0;
+  font-family: var(--font-wide);
+  font-weight: 300;
+  font-size: clamp(2.25rem, 1.5rem + 2.4vw, 3.5rem);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
   text-wrap: balance;
+  color: var(--fg);
 }
 
 .hm-first-prose {
-  margin: 0;
-  font-size: var(--ui-l-size);
-  line-height: 1.6;
-  letter-spacing: var(--ui-l-track);
-  color: var(--ink-soft);
+  margin: var(--s-5) 0 0;
+  max-width: 36rem;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg-secondary);
 }
 
 .hm-first-count {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.65;
-  color: var(--ink-soft);
+  margin: var(--s-3) 0 0;
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-tertiary);
 }
+
 /* the figure, and only the figure — mono is for numbers */
 .hm-first-count strong {
   font-family: var(--font-mono);
-  font-size: 13px;
   font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-}
-/* "no tables" is words, so it is set as words */
-.hm-first-count b {
-  font-weight: 560;
-  color: var(--ink);
+  color: var(--fg);
 }
 
-/* -- the two doors ------------------------------------------- */
+/* "no tables" is words, so it is set as words */
+.hm-first-count b {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+/* -- the two doors, as tiles ------------------------------------
+   The door to the file is a scene tile: the photograph to the edge,
+   the words on its foot in the scene's ink. The blank sheet has no
+   picture and is a studio tile — the seven kinds as glyphs on white.
+   Photographed 2026-09-15; see docs/research/visual-qa-rebuild.md. */
 
 .hm-first-doors {
   display: grid;
-  gap: var(--sp-4);
-  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
-  align-items: stretch;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-6);
 }
 
-/* THE TWO DOORS ARE THE CARD PRIMITIVE. The cell is the grid item,
-   and it carries the one thing a primitive cannot: the busy state
-   while the file is coming. Every ground, lift, press and ring is
-   card.css's. */
-.hm-first-cell {
-  display: grid;
-  min-width: 0;
+.hm-door {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  aspect-ratio: 16 / 10;
+  width: 100%;
+  padding: var(--s-6);
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: var(--surface-rest);
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--e-card);
+  transition:
+    box-shadow var(--d-slow) var(--ease),
+    transform var(--d-slow) var(--ease);
 }
-.hm-first-cell[aria-busy='true'] {
+
+.hm-door:hover {
+  box-shadow: var(--e-card-hover);
+  transform: translateY(-2px);
+}
+
+.hm-door:active {
+  transform: translateY(0);
+}
+
+.hm-door:focus-visible {
+  outline: var(--border-strong) solid var(--action);
+  outline-offset: 2px;
+}
+
+.hm-door[aria-busy='true'] {
   cursor: progress;
 }
-/* ONE ACCENT, ON THE ONE PRIMARY THING — the prepared file's name. */
-.hm-first-door-name.is-primary {
-  color: var(--accent);
+
+.hm-door[data-scene='scene'] {
+  border-color: transparent;
+  background-color: var(--scene-deep);
+  background-image: var(--hm-photo, none);
+  background-position: center;
+  background-size: cover;
+  color: var(--scene-ink);
 }
 
-/* read BEFORE the name, which is the whole point on the data door: a
-   person who has just typed their own business name must not be able
-   to mistake a bundled workbook for their own file. Boxed, so it reads
-   as a stamp and not as a heading. */
-.hm-first-door-tag {
-  display: inline-block;
-  align-self: flex-start;
-  padding: 2px 6px 1px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
-  color: var(--ink-faint);
-}
-.hm-first-cell:hover .hm-first-door-tag {
-  border-color: var(--hairline-strong);
-  color: var(--ink-soft);
+.hm-door[data-scene='scene']::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 0;
+  height: 85%;
+  /* the scrim, not the veil: the words sit low on a bright picture,
+     measured unreadable over a white hull at 1440 */
+  background: linear-gradient(to top, var(--scene-scrim) 30%, transparent);
+  pointer-events: none;
 }
 
-.hm-first-door-name {
-  margin-top: var(--s-2);
-  font-family: var(--font-ui);
-  font-size: 15px;
-  font-weight: 570;
-  line-height: 1.3;
-  letter-spacing: -0.009em;
-  color: var(--ink);
+.hm-door-say {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  max-width: 24rem;
+  padding-right: 7rem;
 }
 
-.hm-first-door-note {
-  margin-top: var(--s-1);
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--ink-soft);
+.hm-door-tag {
+  color: var(--fg-tertiary);
 }
 
-/* the figures, on the door's own ruled foot — the same shape
-   `.hm-card-stats` gives a table card, so a door and a card read as
-   members of one system */
-.hm-first-door-foot {
+.hm-door[data-scene='scene'] .hm-door-tag {
+  color: var(--scene-ink);
+  opacity: 0.72;
+}
+
+.hm-door-name {
+  font-family: var(--font-wide);
+  font-weight: 300;
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.hm-door-note {
+  font-size: var(--t-small-size);
+  line-height: var(--t-small-lead);
+  color: var(--fg-secondary);
+}
+
+.hm-door[data-scene='scene'] .hm-door-note {
+  color: var(--scene-ink);
+  opacity: 0.86;
+}
+
+/* when the file refuses to come, the note says so in the door's own
+   ink; the door itself does not change colour */
+.hm-door.is-failed .hm-door-note {
+  font-weight: 600;
+  opacity: 1;
+}
+
+.hm-door-foot {
   display: flex;
   align-items: baseline;
-  gap: 5px;
-  width: 100%;
-  margin-top: auto;
-  padding-top: 9px;
-  border-top: 1px solid var(--hairline);
-  font-size: 12px;
-  color: var(--ink-faint);
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
 }
-.hm-first-door-foot b {
+
+.hm-door[data-scene='scene'] .hm-door-foot {
+  color: var(--scene-ink);
+  opacity: 0.8;
+}
+
+.hm-door-foot b {
   font-family: var(--font-mono);
-  font-size: 14px;
   font-weight: 500;
+  font-size: var(--t-small-size);
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-}
-.hm-first-door-foot i {
-  width: 1px;
-  height: 10px;
-  margin: 0 4px;
-  background: var(--hairline-strong);
+  color: inherit;
 }
 
-/* ============================================================
-   THE DOOR WHILE THE FILE IS COMING, AND WHEN IT DOES NOT COME.
-
-   The prepared set is its own bundle chunk (demos/seedChunk.ts), so
-   between the press and the sheet changing there is a fetch. On a
-   fast connection it is a frame; on a phone in a boat shed it is
-   not, and a door that looks pressed and does nothing is the worst
-   reading of that gap.
-
-   THE RAIL IS WHAT MOVES, and only the rail. It is already the one
-   accent on this screen and it already means "this is the door that
-   loads the file", so a slow travel down it says the file is on its
-   way without introducing a spinner, a second colour or a fifth
-   accent appearance. The words say the rest — `startingPointWords`
-   writes them, and they name the document being fetched.
-
-   NOTHING IS DISABLED. `aria-busy` announces the wait and the hook
-   refuses a second press; a `disabled` button would drop focus to
-   the body mid-press and take the words with it.
-   ============================================================ */
-
-/* AND WHEN IT REFUSES. No second hue: what changes is that the
-   sentence stops being a quiet provenance note and becomes the thing
-   on the door you are meant to read — full ink, at the size it
-   already had. DESIGN_CONTRACT §6.5: a refusal is a sentence with a
-   reason, in the place where the thing was refused. The control
-   stays pressable, because pressing it again is the retry. */
-.hm-first-door-note.is-failed {
-  color: var(--ink);
+.hm-door-foot i {
+  align-self: center;
+  width: var(--border);
+  height: 0.75rem;
+  background: currentColor;
+  opacity: 0.4;
 }
+
+/* the outline pill, bottom right */
+.hm-door-go {
+  position: absolute;
+  right: var(--s-5);
+  bottom: var(--s-5);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  height: 2rem;
+  padding: 0 var(--s-4);
+  border: var(--border) solid currentColor;
+  border-radius: var(--r-full);
+  font-size: var(--t-caption-size);
+  font-weight: 600;
+  letter-spacing: var(--t-label-track);
+  text-transform: uppercase;
+  color: inherit;
+  transition:
+    background-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+}
+
+.hm-door:hover .hm-door-go {
+  background: var(--fg);
+  border-color: var(--fg);
+  color: var(--surface-rest);
+}
+
+.hm-door[data-scene='scene']:hover .hm-door-go {
+  background: var(--scene-ink);
+  border-color: var(--scene-ink);
+  color: var(--scene-deep);
+}
+
+/* the blank sheet's picture is the seven kinds, as glyphs */
+.hm-door-kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-bottom: var(--s-8);
+}
+
+/* the glyphs sit at the top and the words at the foot, in flow — an
+   absolute row overlapped the tag at 834, where the door grows tall */
+.hm-door[data-scene='studio'] {
+  justify-content: space-between;
+}
+
+.hm-door-kind {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-full);
+  color: var(--fg-secondary);
+}
+
+@media (max-width: 900px) {
+  .hm-first {
+    gap: var(--s-8);
+    padding: var(--s-10) var(--s-5) var(--s-10);
+  }
+
+  .hm-first-doors {
+    grid-template-columns: 1fr;
+  }
+
+  .hm-door {
+    aspect-ratio: auto;
+    min-height: 16rem;
+  }
+
+  .hm-door-say {
+    padding-right: 0;
+    padding-bottom: 2.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-door,
+  .hm-door:hover {
+    transform: none;
+  }
+}
+
 
 .shell-invite-alt[aria-busy='true'] {
   cursor: progress;

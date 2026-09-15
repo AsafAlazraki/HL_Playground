@@ -372,8 +372,11 @@ export function signOut(): void {
 }
 
 /** The one seeded account, so the sign-in screen can offer it
- *  rather than making somebody guess a demo credential. */
-export const demoAccount = (): { email: string; password: string } => ({
+ *  rather than making somebody guess a demo credential — and the
+ *  business it belongs to, so the first screens can name it without
+ *  a literal of their own. */
+export const demoAccount = (): { email: string; password: string; orgName: string } => ({
   email: SEEDED[0]!.user.email,
   password: SEEDED[0]!.password,
+  orgName: SEEDED[0]!.user.orgName,
 })

@@ -51,7 +51,7 @@
    ============================================================ */
 
 import { useRef, useState } from 'react'
-import type { CSSProperties, DragEvent, ReactElement } from 'react'
+import type { DragEvent, ReactElement } from 'react'
 import type { ProjectExport } from '@/types/model'
 import {
   applyReplace,
@@ -109,8 +109,6 @@ function alsoLine(s: EnvelopeSummary): string[] {
   ].filter(Boolean)
 }
 
-const at = (i: number): CSSProperties => ({ ['--i' as string]: i }) as CSSProperties
-
 export interface OpenSavedCopyProps {
   onBack: () => void
 }
@@ -144,17 +142,17 @@ export function OpenSavedCopy({ onBack }: OpenSavedCopyProps): ReactElement {
 
   return (
     <div className="ob-form">
-      <h1 className="ob-ask ob-in" style={at(2)}>
+      <h1 className="en-head">
         Open a saved copy
       </h1>
-      <p className="ob-why ob-in" style={at(3)}>
+      <p className="en-say">
         A .json file this app saved earlier puts its tables, rows, modules and pages
         back on the sheet, exactly as they were.
       </p>
 
       {summary && pending ? (
         <>
-          <span className="ob-field-label">This file holds</span>
+          <span className="en-label ob-caption">This file holds</span>
           <div className="ob-plate">
             <div className="ob-plate-head">
               <span className="ob-plate-name">{summary.name}</span>
@@ -190,7 +188,7 @@ export function OpenSavedCopy({ onBack }: OpenSavedCopyProps): ReactElement {
 
           <button
             type="button"
-            className="ob-primary"
+            className="en-go"
             onClick={() => {
               applyReplace(pending.data)
             }}
@@ -199,7 +197,7 @@ export function OpenSavedCopy({ onBack }: OpenSavedCopyProps): ReactElement {
           </button>
           <button
             type="button"
-            className="ob-alt"
+            className="en-alt"
             onClick={() => {
               setPending(null)
               setError(null)
@@ -212,13 +210,13 @@ export function OpenSavedCopy({ onBack }: OpenSavedCopyProps): ReactElement {
         <>
           {/* the caption and the block it names arrive on the same
               beat, or they arrive as two things */}
-          <span className="ob-field-label ob-in" style={at(4)}>
+          <span className="en-label ob-caption">
             The file
           </span>
           <button
             type="button"
-            className={`ob-drop ob-in${dragOver ? ' is-over' : ''}`}
-            style={at(4)}
+            className={`ob-drop${dragOver ? ' is-over' : ''}`}
+           
             onClick={() => fileRef.current?.click()}
             onDragOver={(e) => {
               e.preventDefault()
@@ -265,8 +263,8 @@ export function OpenSavedCopy({ onBack }: OpenSavedCopyProps): ReactElement {
 
       <button
         type="button"
-        className="ob-alt ob-alt--back ob-in"
-        style={at(5)}
+        className="en-alt"
+       
         onClick={onBack}
       >
         <BackArrow />

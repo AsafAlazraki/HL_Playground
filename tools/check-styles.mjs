@@ -362,7 +362,7 @@ for (const f of css) {
    src/design is exempt, exactly as the floor above is exempt: the
    gallery draws miniatures of screens, and that type is a picture of
    type rather than type a person reads. */
-const LITERAL_PX_CEILING = 468
+const LITERAL_PX_CEILING = 460
 const literalPx = []
 for (const f of css) {
   if (f.includes(`${sep}design${sep}`)) continue
