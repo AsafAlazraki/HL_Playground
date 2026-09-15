@@ -429,3 +429,20 @@ sixth thing on a quoted row wrapping under a five-track grid; six now.
 | `check:types` · `lint` · register tests | clean · 343/343 · 66 passed |
 | `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,286 clear · clean, customers 2.83× |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-15, later — the Data register in the same language
+
+"Now do the same Porsche treatment on the Data screen." The same
+language the quotes and customers registers took: a title pair, the
+doors as pills in a card, the list a white card on a 16px radius, every
+row led by a mark, sentence case, no mono. A table has no photograph;
+its kind has a glyph, so the kind's glyph on a disc in its own hue leads
+the row where a 6px dot did. The row keeps `--row-h`: CLAUDE.md asks a
+Cockpit screen for eighteen rows at 1280×800 and a 48px row gave twelve;
+photographed at 1280, twenty-one are on the screen.
+
+| ruler | result |
+|---|---|
+| `check:types` · `lint` · `check:styles` | clean · 343/343 · 468/468 |
+| `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,286 clear · clean, data 2.83× |
+| `check:shots --update` | 14 of 14 re-taken |

@@ -3458,3 +3458,9 @@
     background: var(--surface-1);
   }
 }
+
+@media (max-width: 1024px) {
+  .shell-body:has(.dt) {
+    background: var(--surface-1);
+  }
+}

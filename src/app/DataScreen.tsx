@@ -39,6 +39,7 @@ import { useConstraints } from '@/features/constraints/constraintDefs'
 import { WORKBOOK_RULES } from '@/features/constraints'
 import { ICON_SIZE } from '@/lib/icons'
 import { Field } from '@/ui'
+import { TableKindSymbol, kindOf } from '@/features/tablekit'
 import { isRetired } from '@/types/model'
 import type { EntityDef } from '@/types/model'
 import { useLintFindings } from '@/features/review'
@@ -63,7 +64,7 @@ type SortBy = 'name' | 'rows' | 'columns' | 'place'
 interface Sheet {
   id: string
   name: string
-  kind: string
+  kind: NonNullable<EntityDef['kind']>
   /** the module this table belongs to, or '' when none claims it */
   place: string
   rows: number
@@ -249,7 +250,13 @@ export function DataScreen({
               <tr key={sheet.id} className="dt-row" data-kind={sheet.kind}>
                 <td className="dt-c dt-c--name">
                   <button type="button" className="dt-open" onClick={() => onOpenTable(sheet.id)}>
-                    <span className="k-dot dt-dot" aria-hidden="true" />
+                    {/* THE KIND LEADS THE ROW, as a glyph on a disc in its own hue —
+                          Porsche's list leads every row with a picture and a
+                          table of rows has none; a 6px dot was the same fact
+                          at a size nobody read. */}
+                      <span className="dt-mark" aria-hidden="true">
+                        <TableKindSymbol kind={kindOf(sheet.kind)} size={ICON_SIZE.small} />
+                      </span>
                     {sheet.name}
                   </button>
                 </td>
