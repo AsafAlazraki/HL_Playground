@@ -543,3 +543,27 @@ a tinted card, named by `elementsFromPoint` on the rig's rows.
 | `check:types` · `lint` · 322 tests over the four features | clean · 343/343 · passed |
 | `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,286 clear · clean |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-15, night — the standard changes
+
+"It is not just Porsche — other boat places have stunning configurators.
+You have a habit of being so lazy and reusing things, but I want every new
+section genuinely beautiful." Twelve makers' configurators driven live and
+photographed into `out/ref/boats/`: Axopar (split stage/rail, condensed
+capitals, check pills, a foot bar with the price and a pager), Saxdor (the
+build as chapters — a full-bleed photograph per stop with one floating
+card, a wide light display face at 80/300, a pill progress bar, "YOUR BUILD
+IS READY" as the finale), Nimbus (photo tiles with the name over the
+picture), Zodiac (choose the range on white), plus Porsche. Brabus, Boston
+Whaler, Sea Ray and Quicksilver are behind certificate errors or Cloudflare.
+
+Two deliverables, both artifacts: the reference board, and three static
+directions for the configurator — Chapters (after Saxdor), Split (after
+Axopar), Cinema (nobody's) — drawn on the Stacer 529 Assault Pro with the
+seed's real figures ($28,530 hull; six Yamahas at $14,330–$22,233; the
+TA1400 trailer at $8,703; $51,563 total) and the seed's own on-water
+photographs. The 529 was chosen because it is the boat that HAS on-water
+photography in the seed; the SP560 is eight top-down renders on white, and
+under "no fake data" a Saxdor-style chapter on it would be a lie until
+Highfield's press photography is added. Nothing is built until one is
+picked.

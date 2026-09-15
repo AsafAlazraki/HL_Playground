@@ -106,6 +106,20 @@ Not styling — things a person would notice are absent.
 - **Porsche's cover has a lit scene; ours is a top-down render on white.** The
   assets decide that. Cut-out art would also bring `--photo-drop` back.
 
+## The standard, restated 2026-09-15 (night)
+
+The owner, after twenty screens took one "Porsche language": *"It is not
+just Porsche — other boat places have stunning configurators. You have a
+habit of being so lazy and reusing things, but I want every new section
+genuinely beautiful."* So the language above is a floor, not a design.
+From here every section is designed on its own merits from the boat
+configurators driven live and photographed in `out/ref/boats/` — Saxdor,
+Axopar, Nimbus, Zodiac, Porsche — and **shown as static directions before
+it is built**. The reference board and the first three directions (for the
+configurator, on the Stacer 529 Assault Pro because it is the boat with
+honest on-water photography in the seed) are published artifacts named in
+`visual-qa-rebuild.md`.
+
 ## How to keep this true
 
 Add a row when a stage is added to `winKit.tsx`. Move a row to *done* only
