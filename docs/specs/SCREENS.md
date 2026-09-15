@@ -34,7 +34,7 @@ tabular figures, keyboard parity, no entrance animation, scale contrast
 choices as chips in a card, the list a white card on a 16px radius, every
 row led by a mark, sentence case, no mono, one blue pill.
 
-**Status** below is as of `c0c60d4`. *Done* means re-cut in the language and
+**Status** below is as of the four-stage commit that follows `c81ad0d`. *Done* means re-cut in the language and
 measured green on every ruler; *old language* means untouched since the
 light-mode turn (`ecb658f`) — working, measured, but still wearing cards,
 mono capitals and glass.
@@ -53,7 +53,7 @@ mono capitals and glass.
 | `table` in the catalogue lens | a dealer showing a range | browse one brand's models | masthead, hairline bays, hulls at 360–520px on white, one-baseline captions | **done** |
 | `module` — the places | a dealer choosing what to work in | every place, photographed | shelves of places with the kind glyph as a glyph | **done** |
 | `gallery` — every table as cards | (retired lens) | — | the catalogue replaced it; `check-shots` skips it as unreached | **retired** |
-| `history` — the diary | a dealer after lunch | resume somebody else's draft; see every quote a customer was given | a diary, not a list: days, then quotes under them | **old language** — not re-cut, not photographed by the harness |
+| `history` — the diary | a dealer after lunch | resume somebody else's draft; see every quote a customer was given | a diary, not a list: days, then quotes under them | **done** — the harness now routes through a quote |
 | onboarding · auth | a new dealer, once | sign in; load the seed or a file | one question per screen, the product visible behind it | **old language** — the sweep does not cover them |
 
 ### Cockpit
@@ -67,9 +67,9 @@ mono capitals and glass.
 | `flow` — What fits what | the owner, occasionally | see what one boat may be sold with, and what each brand's rows pair to | one boat at a time with what stops fitting struck through; a card per brand with a bar per pairing kind | **done** — `87a961e`; the harness waits on `.fo-root` |
 | `review` — the reviewer | the owner, before a launch | every blocker and advisory over the whole file | a ledger of findings, each with its row | **done** — `f3f6997` |
 | `table` — the register of rows | a dealer, all day | the sheet: search, sort, fill, row commands | 18+ rows, tabular, keyboard-first; the workspace under the catalogue | **old language** — the table itself is the app's oldest surface |
-| `view` — what goes with each one | the owner | pair rows to rows: which motors fit which hulls | the view page with handles that grow in place | **old language** |
-| `design` — what each column may hold | the owner | column setup | the designer | **old language** |
-| `levels` — the price ladder | the owner | set a value at brand/range/model, cascade down | a ladder you can read at a glance | **old language** |
+| `view` — what goes with each one | the owner | pair rows to rows: which motors fit which hulls | the view page with handles that grow in place | **done** — and its finder said "Find a [object Object]" until tonight |
+| `design` — what each column may hold | the owner | column setup | the designer | **done** |
+| `levels` — the price ladder | the owner | set a value at brand/range/model, cascade down | a ladder you can read at a glance | **done** |
 | `admin` — the organisation | the owner, rarely | who may do what; what is saved; what comes in and goes out | eight doors in one stage, built as a selling screen | **done** — `c0c60d4` |
 
 ### Not screens, but every screen has them
@@ -87,13 +87,8 @@ mono capitals and glass.
 
 Not styling — things a person would notice are absent.
 
-- **`history`** has no harness route, so it has never been photographed by
-  `check-shots`; it is the one Showroom screen nobody has measured.
-- **`view`, `design`, `levels`, `history`, onboarding, auth** are in the old
-  language. Each is a CSS-only pass of the kind Rules, Review and Admin took.
-  None of the three owner-only stages has a harness route yet, so the first
-  step for each is a route in `tools/shot-one.mjs`, or its frame cannot be
-  looked at before it ships.
+- **Onboarding and auth** are the last two surfaces in the old language, and
+  the sweep does not cover them; a route for each is the first step.
 - **The register of rows (`table`)** is the hardest and the most-used Cockpit
   surface, and it has not been re-cut. It needs its own measurement pass
   before its language changes — density and keyboard parity are guarded there

@@ -3517,3 +3517,34 @@
     background: var(--surface-1);
   }
 }
+
+/* the four owner-and-diary stages: the bar and the burger strip take
+   the page's white; the designer's bar gives up its second title */
+.shell-viewstage:has(.hy-root),
+.shell-viewstage:has(.hy-root) .shell-view-bar,
+.shell-viewstage:has(.lv),
+.shell-viewstage:has(.lv) .shell-view-bar,
+.shell-viewstage:has(.vw-root),
+.shell-viewstage:has(.vw-root) .shell-view-bar,
+.shell-viewstage:has(.ds-root),
+.shell-viewstage:has(.ds-root) .shell-view-bar {
+  background: var(--surface-1);
+}
+
+.shell-viewstage:has(.ds-root) .shell-view-what {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .shell-body:has(.hy-root),
+  .shell-body:has(.lv),
+  .shell-body:has(.vw-root),
+  .shell-body:has(.ds-root) {
+    background: var(--surface-1);
+  }
+}
+
+/* the designer's scroller paints --bg beside its 590px column */
+.shell-designstage .shell-design-scroll {
+  background: var(--surface-1);
+}

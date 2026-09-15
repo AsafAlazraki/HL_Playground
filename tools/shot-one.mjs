@@ -214,6 +214,58 @@ const SCREENS = {
       await p.getByRole('button', { name: /Start the quote|Back to the quote/ }).click()
     },
   ],
+  /* THE FOUR STAGES NO HARNESS HAD A STOP FOR — SCREENS.md, 2026-09-15.
+     The owner-only doors are on a table's action bar (Fitment opens
+     the view page, Columns the designer), Configure on Data opens the
+     levels editor, and History is a way off the quotes register. */
+  view: [
+    '.shell-view-split',
+    async (p) => {
+      await rail(p, /^Data/)
+      await wait(p, 1600)
+      await p.locator('.dt-open').filter({ hasText: 'Yamaha Outboards' }).first().click()
+      await wait(p, 1800)
+      /* the doors are on the SHEET's action bar; the catalogue lens
+         the table opens on has none, so open the sheet first */
+      await p.getByRole('button', { name: /Open the sheet/ }).first().click()
+      await wait(p, 1800)
+      await p.getByRole('button', { name: /^Fitment/ }).first().click()
+    },
+  ],
+  design: [
+    '.ds-sect',
+    async (p) => {
+      await rail(p, /^Data/)
+      await wait(p, 1600)
+      await p.locator('.dt-open').filter({ hasText: 'Yamaha Outboards' }).first().click()
+      await wait(p, 1800)
+      /* the doors are on the SHEET's action bar; the catalogue lens
+         the table opens on has none, so open the sheet first */
+      await p.getByRole('button', { name: /Open the sheet/ }).first().click()
+      await wait(p, 1800)
+      await p.getByRole('button', { name: /^Columns/ }).first().click()
+    },
+  ],
+  levels: [
+    '.lv',
+    async (p) => {
+      await rail(p, /^Data/)
+      await wait(p, 1500)
+      await p.getByRole('button', { name: /^Configure/ }).first().click()
+    },
+  ],
+  history: [
+    '.hy-root',
+    async (p) => {
+      /* with a quote in it — a fresh session's history is its empty
+         state, which is a true screen but not the one to measure */
+      await SCREENS.document[1](p)
+      await wait(p, 2200)
+      await rail(p, /^Quotes/)
+      await wait(p, 1500)
+      await p.getByRole('button', { name: /^History/ }).first().click()
+    },
+  ],
 }
 
 const [sure, open] = SCREENS[screen] ?? []

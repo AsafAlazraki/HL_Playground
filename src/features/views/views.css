@@ -1176,3 +1176,158 @@
     font-variation-settings: 'wdth' 100;
   }
 }
+
+/* ============================================================
+   THE VIEW PAGE — what goes with each one — IN PORSCHE'S LANGUAGE.
+   2026-09-15.
+
+   Showroom, with a product on it: the motor large, the name at the
+   hero step, the figure the largest thing on the page. What comes
+   off: the aurora ground, the sheet's border and shadow and
+   blueprint frame, the mono captions, the kind-tinted rows. What
+   goes on: white, the places as cards on a 16px radius, the
+   blocks as cards, the figures in the body face.
+   ============================================================ */
+
+.vw-root {
+  background: var(--surface-1);
+}
+
+.vw-sheet {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.vw-sheet::before,
+.vw-sheet::after {
+  display: none;
+}
+
+.vw-root .mono-label,
+.vw-root .ds-mono,
+.vw-trail,
+.vw-levels-lab,
+.vw-spec dt,
+.vw-place-noun {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-tertiary);
+}
+
+.vw-name {
+  max-width: none;
+  font-family: var(--font-sans);
+  font-size: var(--t-hero-size);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.vw-hero {
+  border-bottom-color: var(--line);
+}
+
+.vw-hero-shot {
+  border-radius: 16px;
+}
+
+.vw-spec-val,
+.vw-place-n,
+.vw-rig-amt {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  color: var(--fg);
+}
+
+.vw-spec-val {
+  font-size: var(--t-body-size);
+  font-weight: 600;
+}
+
+.vw-place-n {
+  font-size: var(--t-heading-size);
+  font-weight: 600;
+}
+
+/* -- the rig: the figure large, the lines as rows ---------------- */
+
+.vw-rig {
+  border-radius: 16px;
+}
+
+.vw-rig-say,
+.vw-rig-note {
+  color: var(--fg-tertiary);
+}
+
+.vw-rig-lines {
+  gap: 0;
+}
+
+.vw-rig-line {
+  padding: var(--s-2) 0;
+  border: 0;
+  border-top: var(--border) solid var(--line);
+  border-radius: 0;
+  background: none;
+}
+
+.vw-rig-line a,
+.vw-rig-go {
+  color: var(--fg);
+}
+
+/* -- the blocks and the places are cards ------------------------ */
+
+.vw-block,
+.vw-block-head {
+  border-radius: 16px;
+}
+
+.vw-block-head {
+  border-radius: 16px 16px 0 0;
+}
+
+.vw-block-name {
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.vw-row-line {
+  border-radius: 10px;
+}
+
+.vw-places {
+  padding: 0;
+  gap: var(--s-3);
+}
+
+.vw-place-name {
+  font-weight: 600;
+}
+
+.vw-foot {
+  border-radius: 16px;
+}
+
+/* the rig's rows: the shared `ui-row--action` paints an 8% brass
+   wash on the view page's list — named by elementsFromPoint — and on
+   white a wash is a tinted card; a row on a hairline instead */
+.vw-root .vw-rig-line .ui-row--action {
+  background: none;
+  border-radius: 10px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .vw-root .vw-rig-line .ui-row--action:hover {
+    background: var(--surface-2);
+  }
+}

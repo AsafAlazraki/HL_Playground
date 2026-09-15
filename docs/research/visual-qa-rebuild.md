@@ -520,3 +520,26 @@ the door's act a grey pill.
 |---|---|
 | `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,286 clear · clean, admin 2.83× |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-15, the last four — history, levels, view, design
+
+"go." Four stages no harness had a stop for. Routes first
+(`tools/shot-one.mjs`): the view page and the designer are doors on the
+SHEET's action bar, not the catalogue lens a table opens on, so each
+route opens the sheet first; Configure on Data opens the levels editor;
+History is a way off the quotes register and is routed through an issued
+quote so the frame is not the empty state. Then a CSS-only pass on each in
+the language: white grounds, title pairs, sentence-case captions, cards on
+a 16px radius, figures in the body face, chips in the action hue.
+
+Two things the frames exposed that were not styling: the view page's
+finder read **"Find a [object Object]"** — `leafNoun` returns
+`{ one, many }` and the label interpolated the object (`ViewStage.tsx`);
+and the shared `ui-row--action` paints an 8% brass wash that on white is
+a tinted card, named by `elementsFromPoint` on the rig's rows.
+
+| ruler | result |
+|---|---|
+| `check:types` · `lint` · 322 tests over the four features | clean · 343/343 · passed |
+| `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,286 clear · clean |
+| `check:shots --update` | 14 of 14 re-taken |

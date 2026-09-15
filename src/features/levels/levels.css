@@ -921,3 +921,170 @@
   min-width: 0;
   max-width: 100%;
 }
+
+/* ============================================================
+   CONFIGURE (THE LEVELS EDITOR), IN PORSCHE'S LANGUAGE — 2026-09-15.
+
+   The Cockpit language: a title pair with the count as a chip,
+   captions in sentence case, the picker of tables as cards on a
+   16px radius, the editor's three panes as cards, figures in the
+   body face, no mono. The tree, the set panel and every write are
+   untouched.
+   ============================================================ */
+
+.lv {
+  background: var(--surface-1);
+}
+
+.lv .ph-name {
+  font-size: var(--t-display-size);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.lv .ph-count {
+  display: inline-block;
+  padding: 2px var(--s-3);
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.lv .ph-line {
+  color: var(--fg-secondary);
+}
+
+.lv .ui-section-caption,
+.lv .mono-label,
+.lv-pick-cap,
+.lv-pane-head,
+.lv-tree-kind,
+.lv-set-where,
+.lv-col-says,
+.lv-rows-head {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-tertiary);
+}
+
+/* -- the picker of tables --------------------------------------- */
+
+.lv-pick {
+  gap: var(--s-3);
+}
+
+.lv-pick-row {
+  padding: var(--s-4) var(--s-5);
+  border: var(--border) solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: var(--e-card);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .lv-pick-row:hover {
+    background: var(--surface-2);
+    border-color: var(--line-strong);
+  }
+}
+
+.lv-pick-name {
+  font-weight: 600;
+}
+
+.lv-pick-meta {
+  font-family: var(--font-sans);
+  color: var(--fg-tertiary);
+}
+
+.lv-pick-meta strong,
+.lv-pick-meta b {
+  font-family: var(--font-sans);
+  color: var(--fg);
+}
+
+/* -- the editor's panes ----------------------------------------- */
+
+.lv-pane {
+  border: var(--border) solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: var(--e-card);
+}
+
+.lv-pane-head strong,
+.lv-pane-head b {
+  font-family: var(--font-sans);
+  color: var(--fg);
+}
+
+.lv-tree-name,
+.lv-col-name,
+.lv-row-name,
+.lv-set-title {
+  font-family: var(--font-sans);
+  color: var(--fg);
+}
+
+.lv-tree-name {
+  font-weight: 500;
+}
+
+.lv-tree-count,
+.lv-col-value,
+.lv-row-val,
+.lv-now,
+.lv-radius-n,
+.lv-chip-n {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.lv-tree-row[aria-current],
+.lv-tree-row.is-on,
+.lv-tree-row[aria-selected='true'] {
+  background: color-mix(in srgb, var(--action) 8%, var(--surface-1));
+  border-radius: 10px;
+}
+
+.lv-chip {
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-3);
+  font-family: var(--font-sans);
+}
+
+.lv-input,
+.lv-field input {
+  border: var(--border) solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-1);
+  padding-inline: var(--s-4);
+}
+
+.lv-input:focus,
+.lv-field input:focus {
+  border-color: var(--fg);
+  box-shadow: none;
+  outline: none;
+}
+
+.lv-go,
+.lv-putall {
+  border-radius: 999px;
+}
+
+.lv-empty,
+.lv-why,
+.lv-put-none {
+  color: var(--fg-tertiary);
+}

@@ -320,7 +320,10 @@ export function ViewStage({
               one, which is the primitive's rule and the right one. */}
           <div className="shell-view-find">
             <Field
-              label={`Find a ${leafNoun(entity)}`}
+              /* `leafNoun` returns { one, many }; interpolating the object printed
+                 "Find a [object Object]" over the finder on every view page —
+                 first seen the night a harness photographed this stage */
+              label={`Find a ${leafNoun(entity).one}`}
               type="search"
               value={query}
               onChange={setQuery}

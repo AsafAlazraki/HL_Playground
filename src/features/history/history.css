@@ -1038,3 +1038,199 @@
     margin-left: 0;
   }
 }
+
+/* ============================================================
+   HISTORY, IN PORSCHE'S LANGUAGE — 2026-09-15.
+
+   The diary is Showroom, and this is the first time any harness has
+   photographed it with a quote in it. The language: white ground,
+   the title at the display step, the tally in the body face, the
+   filters as pills in a card, the search and the pickers rounded,
+   every row led by the hull, no mono anywhere.
+   ============================================================ */
+
+.hy-root {
+  background: var(--surface-1);
+}
+
+.hy-sky {
+  display: none;
+}
+
+.hy-root .mono-label,
+.hy-eyebrow,
+.hy-picker-label,
+.hy-group-stamp {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-tertiary);
+}
+
+.hy-title,
+.hy-none-title {
+  font-family: var(--font-sans);
+  font-size: var(--t-display-size);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.hy-fig-n {
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.hy-fig-of {
+  color: var(--fg-tertiary);
+}
+
+/* -- the filters: pills in a card ------------------------------ */
+
+.hy-filters {
+  border: var(--border) solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: var(--e-card);
+}
+
+.hy-chip {
+  height: 36px;
+  padding: 0 var(--s-4);
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg);
+  font-weight: 500;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hy-chip:hover {
+    background: var(--surface-4);
+    color: var(--fg);
+  }
+}
+
+.hy-chip[aria-pressed='true'] {
+  border: 0;
+  background: var(--action);
+  color: var(--action-fg);
+}
+
+.hy-chip-n {
+  font-family: var(--font-sans);
+  color: var(--fg-tertiary);
+}
+
+.hy-chip[aria-pressed='true'] .hy-chip-n {
+  color: var(--action-fg);
+}
+
+.hy-find-input,
+.hy-select {
+  border: var(--border) solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-1);
+  padding-inline: var(--s-4);
+  font-family: var(--font-sans);
+}
+
+.hy-find-input:focus,
+.hy-select:focus {
+  border-color: var(--fg);
+  box-shadow: none;
+  outline: none;
+}
+
+/* -- the days ---------------------------------------------------- */
+
+.hy-group-title {
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.hy-group-n {
+  color: var(--fg-tertiary);
+}
+
+.hy-list {
+  border-radius: 16px;
+  box-shadow: var(--e-card);
+}
+
+.hy-row {
+  border-bottom-color: var(--line);
+}
+
+.hy-shot,
+.hy-img {
+  border-radius: 8px;
+}
+
+.hy-ref,
+.hy-when,
+.hy-total,
+.hy-card-total,
+.hy-stamp {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.hy-total,
+.hy-card-total {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.hy-ref,
+.hy-when {
+  color: var(--fg-tertiary);
+}
+
+/* the state is a chip, not a coloured tick */
+.hy-mark {
+  padding: 2px var(--s-3);
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+}
+
+.hy-card {
+  border-radius: 16px;
+  box-shadow: var(--e-card);
+}
+
+.hy-card-what {
+  font-weight: 600;
+}
+
+.hy-none-count,
+.hy-none-say,
+.hy-none-do {
+  color: var(--fg-secondary);
+}
+
+/* the state is one chip, and its bar and its mono type go */
+.hy-mark {
+  height: auto;
+  padding: 2px var(--s-3);
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-3);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  letter-spacing: 0;
+}
+
+.hy-mark::before {
+  display: none;
+}

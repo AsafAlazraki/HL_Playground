@@ -2131,3 +2131,139 @@
 .ds-sheet-sep {
   color: var(--fg-quaternary);
 }
+
+/* ============================================================
+   THE DESIGNER — what each column may hold — IN PORSCHE'S LANGUAGE.
+   2026-09-15.
+
+   Cockpit. What it was: a draughtsman's title block with mono
+   uppercase stamps, a section rule that fades, and twenty-seven
+   bordered rows each its own card. What it is: a title pair in a
+   card, captions in sentence case, the columns as rows on
+   hairlines inside one card, the type and the band as chips in
+   the body face. Nothing a column setting does has changed.
+   ============================================================ */
+
+.ds-root {
+  background: var(--surface-1);
+  animation: none;
+}
+
+.ds-root .mono-label,
+.ds-root .ds-caption,
+.ds-root .ds-sub-head,
+.ds-about-what,
+.ds-sect-label,
+.ds-sect-meta {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-tertiary);
+}
+
+.ds-sect-meta {
+  color: var(--fg-secondary);
+}
+
+.ds-sect-rule {
+  background: var(--line);
+}
+
+/* -- the title block is a card ------------------------------------ */
+
+.ds-titleblock {
+  border: var(--border) solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: var(--e-card);
+}
+
+.ds-titleblock-row {
+  padding: var(--s-3) var(--s-5);
+  border-bottom-color: var(--line);
+}
+
+.ds-name-text {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.ds-sheet-fig,
+.ds-sheet-count {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  color: var(--fg);
+}
+
+.ds-sheet-sep {
+  color: var(--line-strong);
+}
+
+.ds-cs-line {
+  font-family: var(--font-sans);
+  color: var(--fg-tertiary);
+}
+
+/* -- the columns are rows in one card ----------------------------- */
+
+.ds-fields {
+  gap: 0;
+  border: var(--border) solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: var(--e-card);
+  overflow: hidden;
+}
+
+.ds-frow {
+  border: 0;
+  border-bottom: var(--border) solid var(--line);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.ds-frow:last-child {
+  border-bottom: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ds-frow:hover {
+    background: var(--surface-2);
+    border-color: var(--line);
+    box-shadow: none;
+  }
+}
+
+/* the type and the band are chips in the body face; the band's
+   text is the sheet's own and is never re-cased here */
+.ds-root .type-tag,
+.ds-root .ds-band-tag,
+.ds-root .ds-frow .btn.ds-mini-btn {
+  padding: 1px var(--s-2);
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.ds-arrow-btn,
+.ds-mini-btn {
+  border-radius: 999px;
+}
+
+.ds-add-wrap .btn,
+.ds-root .btn {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
