@@ -63,6 +63,7 @@ import {
   priceOf,
 } from '@/features/catalogue/fold'
 import type { Model, Offer } from '@/features/catalogue/fold'
+import { useSceneKind } from './scene'
 import { createViewFor } from '@/features/views/viewDefs'
 import { useProjectStore } from '@/store/useProjectStore'
 import { Button, Field, Marque } from '@/ui'
@@ -285,6 +286,12 @@ function ModelCard({
   on: boolean
   onChoose: (offer: Offer) => void
 }): ReactElement {
+  /* NIMBUS'S TILE WHERE THERE IS A PHOTOGRAPH, ZODIAC'S WHERE THERE
+     IS A RENDER — driven live 2026-09-15. Which is which is read from
+     the picture's own pixels (`scene.ts`), never assumed, so nothing
+     is stretched to look like a photograph. */
+  const scene = useSceneKind(model.img?.src)
+  const tile = marqueOf(model.name)
   const first = model.offers[0]
   /* ONE FIGURE WHEN THE FINISHES COST THE SAME, which on Highfield
      they do — all seven ADV7 colourways are $105,930. `priceOf`
@@ -299,6 +306,7 @@ function ModelCard({
         data-kind={kind}
         data-press="card"
         aria-pressed={on}
+        data-scene={scene === 'scene' ? 'scene' : 'studio'}
         onClick={() => {
           if (first) onChoose(first)
         }}
@@ -323,13 +331,21 @@ function ModelCard({
             has series. Two lines of name, one of price, one of
             census. */}
         <span className="pl-say">
-          <span className="t-title pl-name">{model.name}</span>
+          {/* THE MODEL, NOT THE SKU. "Stacer - 359 Skimma (HS)" is a maker,
+              a model and a trim welded together; on the maker's own
+              shelf the maker is the masthead and the trim is a caption.
+              `marqueOf` takes it apart and nothing is dropped. */}
+          <span className="t-title pl-name">{tile.model || model.name}</span>
+          {tile.trim ? <span className="t-caption pl-trim">{tile.trim}</span> : null}
           <span className="t-caption pl-price">
             {priced === '' ? 'No price on this one' : spread ? `from ${priced}` : priced}
           </span>
           <span className="t-caption pl-count">
             {model.offers.length > 1 ? `${model.offers.length} finishes` : ''}
           </span>
+        </span>
+      <span className="pl-go" aria-hidden="true">
+          Build
         </span>
       </button>
     </li>

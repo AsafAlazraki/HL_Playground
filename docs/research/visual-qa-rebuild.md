@@ -600,3 +600,27 @@ guard found a NUL sentinel in the hook.
 | `check-collide` · `check-contrast` | nothing overlaps · 1,278 text nodes clear |
 | `qa-sweep` | clean; **configurator 8.70×** — over the Showroom spec's 6× for the first time, and honestly |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-15, night — the picker and the place as tiles
+
+The chapters' rule, on the two screens before them. Nimbus's tile where
+a place or a model has a photograph — the picture fills the card, the
+name over it in the light wide face, the census small above it, Build or
+Quote as an outline pill in the corner; Zodiac's tile where it has a
+render — the render large on white, the name under it. `data-scene` on
+each card comes from `useSceneKind`. The place tile names the model
+(`marqueOf`), not the SKU.
+
+The scene rule was recalibrated by measuring, not guessing. The RU280 —
+a top-down render cropped to its grey tube — was judged a scene by the
+paper test, and a luminance-spread test written to catch it did not:
+measured on seventeen seed pictures, renders spread 7–48 and photographs
+28–65, no line between them. Saturation does separate them: every
+render's edge ring is 0.00–0.01, every photograph's 0.13–0.64. The rule
+is now paper OR neutral (< 0.06).
+
+| ruler | result |
+|---|---|
+| `npm test` | seven green, 2,974 tests, lint 343/343 |
+| `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,278 clear · clean |
+| `check:shots --update` | 14 of 14 re-taken |

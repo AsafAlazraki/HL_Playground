@@ -36,6 +36,9 @@ const known = new Map<string, SceneKind>()
  *  a studio shot; a photograph's sky is bright but not paper */
 const PAPER = 235
 const STUDIO_SHARE = 0.7
+/** the most colour a render's edge ring carries; the dullest
+ *  photograph in the seed (a grey Stabicraft on grey water) is 0.13 */
+const NEUTRAL = 0.06
 
 function judge(img: HTMLImageElement): SceneKind {
   try {
@@ -50,16 +53,34 @@ function judge(img: HTMLImageElement): SceneKind {
     const d = g.getImageData(0, 0, w, h).data
     let light = 0
     let n = 0
+    let sat = 0
     for (let y = 0; y < h; y += 1) {
       for (let x = 0; x < w; x += 1) {
         if (x > 1 && x < w - 2 && y > 1 && y < h - 2) continue
         const i = (y * w + x) * 4
-        const l = (d[i] + d[i + 1] + d[i + 2]) / 3
+        const r = d[i]
+        const g2 = d[i + 1]
+        const b2 = d[i + 2]
+        const l = (r + g2 + b2) / 3
+        const mx = Math.max(r, g2, b2)
+        const mn = Math.min(r, g2, b2)
         n += 1
         if (l > PAPER) light += 1
+        sat += mx === 0 ? 0 : (mx - mn) / mx
       }
     }
-    return light / n > STUDIO_SHARE ? 'studio' : 'scene'
+    /* TWO TESTS, EITHER MAKES A STUDIO SHOT. Paper: most of the ring is
+       near-white. Neutral: the ring has no colour in it — a render
+       whose subject runs to the picture's edge (Highfield's RU280,
+       cropped top-down, grey tube on every side) is not white there
+       but it is grey; a photograph's ring has sky and water in it.
+       Measured on seventeen seed pictures, 2026-09-15: every render's
+       ring saturates at 0.00–0.01, every photograph's at 0.13–0.64.
+       Luminance spread was tried first and does not separate them
+       (renders 7–48, photographs 28–65). */
+    if (light / n > STUDIO_SHARE) return 'studio'
+    if (sat / n < NEUTRAL) return 'studio'
+    return 'scene'
   } catch {
     return 'studio'
   }

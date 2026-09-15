@@ -39,6 +39,7 @@ import { quoteDoors } from './start'
 import type { QuoteDoor } from './start'
 import { marqueOf } from './marque'
 import { FrozenPhoto } from './photo'
+import { useSceneKind } from './scene'
 import './picker-screen.css'
 
 export interface PickerScreenProps {
@@ -230,6 +231,11 @@ function DoorCard({
   cover: IndexEntry['img']
   onOpen: () => void
 }): ReactElement {
+  /* NIMBUS'S TILE WHERE THERE IS A PHOTOGRAPH, ZODIAC'S WHERE THERE
+     IS A RENDER — driven live 2026-09-15. Which is which is read from
+     the picture's own pixels (`scene.ts`), never assumed, so nothing
+     is stretched to look like a photograph. */
+  const scene = useSceneKind(cover?.src)
   /* A brand name is a name, not an identifier, so the lockup mostly
      passes it through — but `Haines Signature Factory Packages` is
      four facts welded together like a subject label, and splitting
@@ -244,7 +250,8 @@ function DoorCard({
         data-kind={door.kind}
         data-press="card"
         onClick={onOpen}
-      >
+      
+        data-scene={scene === 'scene' ? 'scene' : 'studio'}>
         <span className="qp-well">
           {/* ============================================================
               THE PLATE IS ALWAYS DRAWN, AND THE PHOTOGRAPH COVERS IT.
@@ -296,6 +303,9 @@ function DoorCard({
               "209 motors". `door.say` is what the dashboard prints
               for the same place, so the two can never disagree. */}
           <span className="t-caption qp-say-count">{door.say}</span>
+        </span>
+      <span className="qp-go" aria-hidden="true">
+          Quote
         </span>
       </button>
     </li>
