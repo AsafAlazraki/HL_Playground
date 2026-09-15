@@ -3464,3 +3464,15 @@
     background: var(--surface-1);
   }
 }
+
+/* the rules window too */
+.shell-viewstage:has(.cn-root),
+.shell-viewstage:has(.cn-root) .shell-view-bar {
+  background: var(--surface-1);
+}
+
+@media (max-width: 1024px) {
+  .shell-body:has(.cn-root) {
+    background: var(--surface-1);
+  }
+}

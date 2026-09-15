@@ -446,3 +446,25 @@ photographed at 1280, twenty-one are on the screen.
 | `check:types` · `lint` · `check:styles` | clean · 343/343 · 468/468 |
 | `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,286 clear · clean, data 2.83× |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-15, last — the Rules screen in the same language
+
+"Now do the same Porsche treatment on the Rules screen." CSS only, the
+last block of `constraints.css`: a title pair across the top instead of
+a column beside the content; the three views as chips in a card; every
+group a card led by its kind's mark, every rule a row on a hairline
+inside it — where each of sixteen rules had been its own shadowed card
+with a 3px rail under a tinted band; sentence case, the rate in the body
+face at one column width, the blueprint sky off. Two rules of the wide
+window had to be undone by name: the `@container (min-width: 1200px)`
+grid with `align-items: start` shrank every card to its content once
+the sheet was a column (photographed: view chips 200px wide, the
+evidence sentence one word per line), and the two-abreast group list
+wrapped every sentence to four lines. The engine, the ledger and every
+verdict are untouched.
+
+| ruler | result |
+|---|---|
+| `check:styles` | 468/468, no orphans |
+| `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,286 clear · clean, rules 3.09× |
+| `check:shots --update` | 14 of 14 re-taken |

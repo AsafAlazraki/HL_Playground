@@ -5517,3 +5517,330 @@
 .cn-grp-list:has(.cn-rl.is-open) {
   gap: var(--s-3);
 }
+
+/* ============================================================
+   THE RULES SCREEN, IN PORSCHE'S LANGUAGE — 2026-09-15.
+
+   The language every register took tonight, read off Porsche
+   Finder and the configurator: a title pair across the top, the
+   choices as chips in a white card on a 16px radius, every group a
+   card led by a mark, rows on hairlines inside it, sentence case
+   in the body face, no mono, the one act a blue pill.
+
+   What it was: a grey ground, one 840px sheet with a blueprint
+   frame, the head in a column beside the content, an uppercase
+   mono eyebrow, a grey pill track for the three views, every group
+   under a tinted band with a dot, and every rule its own shadowed
+   card with a 3px kind rail — sixteen cards on one screen. The
+   engine under it, the ledger's figures and every verdict are
+   what they were; this file's last block re-dresses them.
+   ============================================================ */
+
+.cn-root {
+  padding: var(--s-6) var(--gutter) var(--s-16);
+  background: var(--surface-1);
+}
+
+.cn-sheet {
+  display: flex;
+  flex-direction: column;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.cn-sheet::before,
+.cn-sheet::after {
+  display: none;
+}
+
+/* -- the title pair ------------------------------------------- */
+
+.cn-head {
+  padding-bottom: var(--s-3);
+  border-bottom: 0;
+}
+
+.cn-eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-tertiary);
+}
+
+.cn-title {
+  margin-top: var(--s-1);
+  font-family: var(--font-sans);
+  font-size: var(--t-display-size);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+
+.cn-lede {
+  margin-top: var(--s-2);
+  font-size: var(--t-body-size);
+  color: var(--fg-secondary);
+}
+
+.cn-lede b {
+  color: var(--fg);
+}
+
+/* -- the three views: chips in a card ------------------------- */
+
+.cn-seg {
+  gap: var(--s-2);
+  margin: var(--s-4) 0 var(--s-5);
+  padding: var(--s-3) var(--s-4);
+  border: var(--border) solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: var(--e-card);
+}
+
+.cn-seg-btn {
+  flex: 0 0 auto;
+  height: 40px;
+  padding: 0 var(--s-4);
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cn-seg-btn:hover {
+    background: var(--surface-4);
+    color: var(--fg);
+  }
+}
+
+.cn-seg-btn.is-on,
+.cn-seg-btn.is-on:hover {
+  background: var(--action);
+  color: var(--action-fg);
+  box-shadow: none;
+}
+
+.cn-seg-n {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+  background: var(--surface-1);
+}
+
+.cn-seg-btn.is-on .cn-seg-n {
+  background: color-mix(in srgb, var(--action-fg) 22%, transparent);
+  color: var(--action-fg);
+}
+
+/* the sentence that says what a view holds */
+.cn-evidence {
+  border-left-color: var(--action);
+}
+
+.cn-evidence-k {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--action);
+}
+
+.cn-evidence-say {
+  color: var(--fg-secondary);
+}
+
+/* -- every group is a card ------------------------------------ */
+
+.cn-grp {
+  margin-top: var(--s-4);
+  padding: var(--s-4) var(--s-5) var(--s-2);
+  border: var(--border) solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: var(--e-card);
+}
+
+.cn-grp-head,
+.cn-grp-head.k-band {
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.cn-grp-head::after,
+.cn-grp-head.k-band::after {
+  display: none;
+}
+
+.cn-grp-head .k-dot,
+.cn-grp-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+}
+
+.cn-grp-name {
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.cn-grp-count,
+.cn-grp-head.k-band .cn-grp-count {
+  padding: 2px var(--s-3);
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+}
+
+.cn-grp-say {
+  margin-top: var(--s-1);
+  font-size: var(--t-small-size);
+  color: var(--fg-tertiary);
+}
+
+/* -- the rules are rows on hairlines, not sixteen cards ------- */
+
+.cn-grp-list {
+  gap: 0;
+  margin-top: var(--s-3);
+}
+
+.cn-rl {
+  padding: var(--s-3) 0;
+  border: 0;
+  border-top: var(--border) solid var(--line);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.cn-rl-rate-n {
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.cn-rl-rate-of,
+.cn-rl-because,
+.cn-rl-why {
+  color: var(--fg-tertiary);
+}
+
+.cn-rl-says {
+  font-size: var(--t-body-size);
+  color: var(--fg);
+}
+
+.cn-rl-pill {
+  height: 24px;
+  padding: 0 var(--s-3);
+  border: 0;
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+}
+
+.cn-rl-live-k,
+.cn-rl-caveat {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* the ledger's other lists take the same card */
+.cn-ledger,
+.cn-list {
+  margin-top: var(--s-4);
+}
+
+.cn-list-item {
+  border-radius: 12px;
+}
+
+.cn-band {
+  margin-top: var(--s-6);
+  padding-top: var(--s-5);
+  border-top: var(--border) solid var(--line);
+}
+
+.cn-band-lede {
+  color: var(--fg-tertiary);
+}
+
+/* THE WIDE WINDOW'S COLUMN RULES COME OFF. At 1200cqw and up the
+   sheet was a two-column grid with `align-items: start` and the
+   head a sticky, height-capped column with a rule down its right —
+   and with the sheet turned into a flex column that `start` shrank
+   every card to its content: the view chips 200px wide, the
+   evidence sentence one word per line. Photographed at 1440. The
+   head is a title pair now and the page is one column at every
+   width. */
+.cn-sheet {
+  align-items: stretch;
+}
+
+.cn-head {
+  position: static;
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+  border-right: 0;
+}
+
+.cn-sky {
+  display: none;
+}
+
+.cn-seg,
+.cn-evidence,
+.cn-grp,
+.cn-view,
+.cn-band,
+.cn-ledger {
+  width: 100%;
+}
+
+/* one rule per line, as Porsche's rows are — the wide window had
+   been laying a group's rules two abreast, so every sentence wrapped
+   to four lines beside a pill; and the rate column has one width, so
+   "100%" and "90.49%" start the sentence in the same place */
+.cn-grp-list {
+  display: flex;
+  flex-direction: column;
+  grid-template-columns: none;
+}
+
+.cn-rl-row {
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+}
+
+.cn-rl-rate-n {
+  min-width: 0;
+  text-align: right;
+}
