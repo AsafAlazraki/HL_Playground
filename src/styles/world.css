@@ -157,6 +157,9 @@
   --action-fg: #ffffff;
   --action-hover: #0d4270;
   --action-press: #0a3559;
+  /* the action colour as a wash — a selected row, a chosen cell's
+     ground; the brass `--accent-wash` was showing through the register */
+  --action-wash: rgba(15, 76, 129, 0.1);
 
   /* THE SHADOW A CUT-OUT CASTS ON WHITE. Not a box around the
      product — a shadow under it, which is what every reference

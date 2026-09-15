@@ -59,22 +59,22 @@ export type { CellRef, CellRange, NormalRange }
  *  ARITHMETIC used was 34, so the arithmetic moves. `table.css` now
  *  states `min-height: 0` on `.tb-row` beside the note that says why:
  *  one authority, here, and the paint follows it. */
-export const ROW_H = 40
+export const ROW_H = 28
 /** A grouping line — structure, so a touch taller than a data row and
  *  drawn much quieter. Kept at ROW_H + 4, the relationship it has
  *  always had. */
-export const GROUP_H = 44
+export const GROUP_H = 30
 /** The quiet + ROW at the foot of a group. Shorter than a data row so
  *  it reads as an invitation, not as an empty entry. */
-export const ADD_H = 32
+export const ADD_H = 24
 /** One step of nesting, per hierarchy level. */
 export const INDENT_W = 18
 /** Frozen header row height. */
-export const HEAD_H = 44
+export const HEAD_H = 34
 /** The spanning band row that sits ABOVE the column headings, naming
  *  the sections. Drawn only when the table actually has bands, so a
  *  section-less register is exactly as tall as it always was. */
-export const BAND_H = 26
+export const BAND_H = 22
 /** Width a folded section keeps for its chip. Wide enough to read
  *  "PRICING · 4" and still a fifth of the columns it replaces. */
 export const FOLD_W = 132

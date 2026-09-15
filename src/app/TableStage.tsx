@@ -236,7 +236,12 @@ export function TableStage({
             masthead is the title. So when the rebuilt catalogue owns
             the page this bar keeps only the way back — which is
             every reference configurator's top bar exactly. */}
-        <p className="shell-view-what" role="heading" aria-level={1} hidden={catalogue}>
+        {/* AND HIDDEN ON THE REGISTER TOO, since 2026-09-16: the workspace
+            draws the name in its own masthead (`PageHead`, an h1), so this
+            was the same eleven characters twice, sixty pixels apart, on
+            every register and not only under the catalogue lens. The bar
+            keeps the way back. */}
+        <p className="shell-view-what" role="heading" aria-level={1} hidden>
           <span className="shell-view-what-mark">
             <TableKindSymbol kind={kindOf(entity.kind)} size={ICON_SIZE.small} />
           </span>

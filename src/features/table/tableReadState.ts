@@ -58,9 +58,15 @@ export interface RowMetrics {
   addH: number
 }
 
+/* THE LADDER, RECUT 2026-09-16. The Cockpit requirement is eighteen
+   data rows at 1280×800 and the register showed five: 40px rows under
+   194px of chrome. Linear draws its list at 32, Retool's ladder runs
+   20/32/48, Stripe's dashboard at 40 with nothing above it. Compact is
+   28 — a 22px thumbnail still reads — and comfortable is 36; the
+   drawer lines and the + row move with them so the rhythm holds. */
 export const ROW_METRICS: Record<RowDensity, RowMetrics> = {
-  compact: { rowH: 34, groupH: 36, addH: 28 },
-  comfortable: { rowH: 40, groupH: 42, addH: 32 },
+  compact: { rowH: 28, groupH: 30, addH: 22 },
+  comfortable: { rowH: 36, groupH: 34, addH: 28 },
 }
 
 export const DENSITY_LABEL: Record<RowDensity, string> = {
@@ -73,9 +79,10 @@ interface ReadState {
   onlyFilled: boolean
 }
 
-/* Comfortable, for the reason set out at the top of this file: it is
-   the height the stylesheet was already painting. */
-const DEFAULT: ReadState = { density: 'comfortable', onlyFilled: false }
+/* Compact, since the recut: it is the density that meets the Cockpit
+   requirement at 1280×800 (eighteen rows), and comfortable is one
+   press away on the rail for a picture-heavy table. */
+const DEFAULT: ReadState = { density: 'compact', onlyFilled: false }
 
 let state: Record<string, ReadState> = {}
 

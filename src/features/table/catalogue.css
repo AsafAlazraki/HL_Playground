@@ -682,3 +682,85 @@
     transform: none;
   }
 }
+
+/* ============================================================
+   THE MASTHEAD OVER THE REGISTER, RECUT — 2026-09-16.
+
+   The register's name was said twice — in the stage bar at 30px
+   and here at 28px, sixty pixels apart — and the head under it
+   spent 155px before the first row. The bar keeps only the way
+   back now (TableStage.tsx), so this is the title, and a Cockpit
+   title is a line, not a billboard: the name at the title step,
+   the count beside it in mono, the lens switch at the right, the
+   search and the filters on one row beneath. Measured after: the
+   first row at 1280×800 sits under 118px of chrome, from 194.
+   ============================================================ */
+
+.cat-root .ph.is-tight {
+  align-items: center;
+  padding: var(--s-3) var(--page-gutter) var(--s-2);
+}
+
+.cat-root .ph-say {
+  gap: 0;
+}
+
+.cat-root .ph-line-1 {
+  gap: var(--s-3);
+}
+
+.cat-root .ph-name {
+  font-family: var(--font-sans);
+  font-size: var(--t-title-size);
+  font-weight: var(--t-title-weight);
+  line-height: var(--t-title-lead);
+  letter-spacing: var(--t-title-track);
+}
+
+.cat-root .ph-count {
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+.cat-root .ph-tools.is-tight {
+  padding-top: 0;
+  padding-bottom: var(--s-2);
+  border-bottom: var(--border) solid var(--line);
+}
+
+/* the lens switch on white: a hairline pill, the chosen lens filled */
+.cat-root .cat-lens {
+  background: transparent;
+}
+
+/* the kind, the name and the count on ONE line — the eyebrow above the
+   name cost a line the register cannot spare; measured 2026-09-16 the
+   first row sat at 321px under 188px of chrome at 1280×800 */
+.cat-root .ph-say {
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--s-3);
+}
+
+.cat-root .ph-say > .ui-section {
+  margin: 0;
+}
+
+/* THE SEARCH KEEPS ITS LABEL FOR A SCREEN READER AND LOSES IT FROM THE
+   SCREEN. The field primitive draws "Search" above the box, which on
+   this one row is a line of chrome saying what the placeholder already
+   says; the label stays in the tree (the primitive's `<label for>` is
+   how the driver finds it) and is clipped, the same pattern the sheet's
+   own file input uses. */
+.cat-root .cat-find .ui-field-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.cat-root .cat-find .ui-field {
+  gap: 0;
+}

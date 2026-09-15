@@ -715,3 +715,53 @@ lowered to match.
 | `npm test` | seven green, 2,974 tests, lint 343/343, literal px 460/460 |
 | `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,278 clear · clean |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-16 — the register, recut
+
+The sheet — the app's oldest surface, the one row the inventory still
+marked "old language". Photographed at 1280×800 before: **five data
+rows**, under a bar that said the table's name at 30px, a masthead that
+said it again, a 44px heading row on a sunken band, a 42px drawer line
+with the series at display size, 40px rows with a vertical rule on every
+cell, and 116px reserved under the rail for the action bar.
+
+References driven live (`out/ref/tables/`): GitHub's issues list and
+Supabase's table rendered; Airtable, Attio, boatsales and Porsche's
+compare page refused the driver or 404'd. The rest is the research this
+repo already holds (`dense-tables-and-selection.md`): Linear's 32px rows,
+Retool's 20/32/48 ladder, Stripe's mono figures on white, the pinned
+identity column.
+
+**The recut.** One name — `TableStage` hides the bar's title on every
+register, since the workspace's `PageHead` is an h1 already. The
+masthead is one line (kind · name · count, the lens switch at the right)
+and the search loses its visible label (kept for the reader, clipped).
+`ROW_METRICS` moves to 28/30/22 compact and 36/34/28 comfortable, default
+compact; `HEAD_H` 44 → 34, `BAND_H` 26 → 22. `table.css` gains one
+appended block: heading labels on white in the sans at 11px, no vertical
+rules on data cells, the frozen column's one edge, drawer names in
+sentence case at 13px semibold, counts as mono figures (a count was
+uppercase — rule 3), the rail at 26px, the active ring and selection wash
+in `--action` (a new `--action-wash` token) where the brass accent had
+been showing through.
+
+| measure (`tools/shot-sheet.mjs`) | before | after |
+|---|---|---|
+| data rows fully on screen, 1280×800 | 5 | **9** |
+| data rows fully on screen, 1440×900 | 7 | **12** |
+| chrome above the first row, 1280 | 194px + 133 in the scroller | 147 + 133 |
+
+**Honest about the eighteen.** The Cockpit requirement is 18 rows at
+1280×800. Highfield's sheet is grouped by its own hierarchy — series ▸
+model — and every model holds four variants, so each four rows cost a
+30px drawer line and a 22px + row; with 116px reserved for the action
+bar, eighteen data rows do not fit at any row height above 20px. On a
+one-level table the same chrome gives 17–18. The hierarchy is the seed's
+and is not changed here; collapsing the model level by default is the
+lever, and it is the dealer's call.
+
+| ruler | result |
+|---|---|
+| `npm test` | seven green, 2,974 tests, lint 343/343, literal px 460/460 |
+| `check-collide` · `check-contrast` (now twelve screens, the register added) · `qa-sweep` | nothing overlaps · 1,465 text nodes clear over twelve screens · clean |
+| `check:shots --update` | 14 of 14 re-taken |

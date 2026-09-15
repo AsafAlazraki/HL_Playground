@@ -262,6 +262,19 @@ const SCREENS = [
       await p.waitForTimeout(2400)
     },
   },
+  {
+    /* THE REGISTER, under the same catalogue — recut 2026-09-16 and
+       never measured before: the sheet's heading labels, drawer lines,
+       gutter figures and rail are all set on white now, so this is
+       where a tint would first fail */
+    name: 'register',
+    at: 'table',
+    sure: '.tb-scroll',
+    open: async (p) => {
+      await p.getByRole('button', { name: /^Open the sheet$/ }).first().click()
+      await p.waitForTimeout(2400)
+    },
+  },
   { name: 'quotes', at: 'quotes', open: async (p) => door(p, /^Quotes/) },
   { name: 'customers', at: 'customers', open: async (p) => door(p, /^Customers/) },
   {

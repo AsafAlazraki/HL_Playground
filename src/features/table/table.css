@@ -5394,3 +5394,319 @@ body.tb-resizing {
   padding: var(--sp-2) var(--sp-3);
   text-align: left;
 }
+
+/* ============================================================
+   THE REGISTER, RECUT — 2026-09-16.
+
+   The sheet was the app's oldest surface and the one screen the
+   inventory still marked "old language". Photographed at 1280×800
+   before this pass: FIVE data rows on screen, under a bar that
+   said the table's name at 30px, a masthead that said it again at
+   28px, a 44px heading row, a 42px drawer line with the series
+   name at display size, and 40px rows with a vertical rule on
+   every cell. The Cockpit requirement is eighteen rows.
+
+   References driven live and kept in out/ref/tables/: GitHub's
+   issues list (hairline rows, nothing vertical, the row is the
+   unit), Supabase's table (mono header chips, no rules), and, from
+   the research this repo already holds (dense-tables-and-
+   selection.md), Linear's 32px rows, Stripe's right-aligned mono
+   figures on a white ground, Airtable's frozen identity column.
+   Airtable and Attio refused the driver; nothing here is copied
+   from a screenshot of them.
+
+   WHAT THE RECUT IS. One name (the bar keeps the way back; the
+   masthead is the title). Rows on a 28/36 ladder (helpers.ts,
+   tableReadState.ts) with the drawer lines on the same ladder.
+   No vertical rules on data cells — the frozen identity column
+   keeps its one edge, which is what makes it read as frozen. The
+   heading row is 34px of 11px labels on white, not a sunken band.
+   A drawer's name is a name — sentence case, 13px, semibold — and
+   its count is a figure, mono, never uppercase (rule 3). The rail
+   at the foot is 26px. Everything is appended here, after every
+   earlier rule for the same class, so it wins at equal
+   specificity; where an earlier rule was more specific it is
+   named again below.
+   ============================================================ */
+
+/* -- the heading row: labels on white ---------------------------- */
+
+.tb-root .tb-head,
+.tb-root .tb-bands {
+  background: var(--surface-1);
+}
+
+.tb-root .tb-head {
+  border-bottom: var(--border) solid var(--line-strong);
+}
+
+.tb-root .tb-th {
+  border-right: 0;
+  background: transparent;
+}
+
+.tb-root .tb-th-banded {
+  background: transparent;
+}
+
+.tb-root .tb-th-main {
+  gap: 0;
+  padding: 0 var(--sp-3);
+}
+
+.tb-root .tb-th-name {
+  font-family: var(--font-sans);
+  font-variation-settings: normal;
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: 0.06em;
+  color: var(--fg-secondary);
+}
+
+.tb-root .tb-th-sorted .tb-th-name,
+.tb-root .tb-th-selected .tb-th-name {
+  color: var(--fg);
+}
+
+.tb-root .tb-corner,
+.tb-root .tb-bandcorner {
+  background: var(--surface-1);
+}
+
+/* -- the cells: the row is the unit, not the cell ----------------- */
+
+.tb-root .tb-cell {
+  border-right: 0;
+  border-bottom: var(--border) solid var(--line-subtle);
+}
+
+/* the frozen identity column keeps its one edge; that edge is what
+   says "this does not scroll" */
+.tb-root .tb-cell-pin {
+  border-right: var(--border) solid var(--line-strong);
+}
+
+.tb-root .tb-cell-sys {
+  border-right: 0;
+  background: transparent;
+}
+
+.tb-root .tb-row {
+  background: var(--surface-1);
+}
+
+/* no stripes: the hairlines carry the rows, the hover says which */
+.tb-root .tb-row-alt {
+  background: var(--surface-1);
+}
+
+.tb-root .tb-row:hover {
+  background: var(--bg-sunken);
+}
+
+/* -- the gutter: a figure in the margin --------------------------- */
+
+.tb-root .tb-gut {
+  background: var(--surface-1);
+  border-right: var(--border) solid var(--line);
+  border-bottom: var(--border) solid var(--line-subtle);
+  font-size: var(--t-label-size);
+  letter-spacing: 0.02em;
+  color: var(--fg-quaternary);
+}
+
+.tb-root .tb-gut:hover {
+  background: var(--bg-sunken);
+  color: var(--fg);
+}
+
+.tb-root .tb-gut-on {
+  background: var(--accent-wash);
+  color: var(--fg);
+}
+
+/* -- the drawer lines: a name is a name, a count is a figure ------ */
+
+.tb-root .tb-grpline {
+  background: var(--surface-1);
+  border-bottom: var(--border) solid var(--line);
+}
+
+.tb-root .tb-grpline::before {
+  background: var(--line-strong);
+}
+
+.tb-root .tb-grpline[data-level='1']::before,
+.tb-root .tb-grpline[data-level='2']::before {
+  display: none;
+}
+
+.tb-root .tb-grpline-shut,
+.tb-root .tb-grpline-shut[data-level='0'] {
+  background: var(--surface-rest);
+}
+
+.tb-root .tb-grp-lab {
+  font-family: var(--font-mono);
+  font-size: var(--t-label-size);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+}
+
+.tb-root .tb-grp-name,
+.tb-root .tb-grpline[data-level='0'] .tb-grp-name,
+.tb-root .tb-grpline[data-level='1'] .tb-grp-name,
+.tb-root .tb-grpline[data-level='2'] .tb-grp-name,
+.tb-root.tb-grid-compact .tb-grpline[data-level='0'] .tb-grp-name,
+.tb-root .tb-grid-compact .tb-grpline[data-level='0'] .tb-grp-name {
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+  text-transform: none;
+  color: var(--fg);
+}
+
+.tb-root .tb-grpline[data-level='1'] .tb-grp-name,
+.tb-root .tb-grpline[data-level='2'] .tb-grp-name {
+  font-weight: 500;
+  color: var(--fg-secondary);
+}
+
+.tb-root .tb-grp-name-none,
+.tb-root .tb-grpline[data-level='0'] .tb-grp-name-none {
+  font-weight: 400;
+  color: var(--fg-tertiary);
+}
+
+.tb-root .tb-grp-rule {
+  background: var(--line-subtle);
+}
+
+.tb-root .tb-grp-count {
+  font-family: var(--font-mono);
+  font-size: var(--t-caption-size);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-tertiary);
+}
+
+/* the + row at a drawer's foot: a line, not a band */
+.tb-root .tb-addline {
+  background: var(--surface-1);
+  border-bottom: var(--border) solid var(--line-subtle);
+}
+
+/* -- the rail at the foot ----------------------------------------- */
+
+.tb-root .tb-rail {
+  height: 26px;
+  border-top: var(--border) solid var(--line);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+}
+
+/* -- pictures in a 28px row --------------------------------------- */
+
+.tb-root .tb-imgslot {
+  width: 22px;
+  height: 22px;
+}
+
+.tb-root .tb-grid-roomy .tb-imgslot,
+.tb-root.tb-grid-roomy .tb-imgslot {
+  width: 28px;
+  height: 28px;
+}
+
+/* -- the recut, second look (photographed at 1280×800) ------------ */
+
+/* the frozen column's heading wore the sunken band; on white it wants
+   the faintest ground, and its one edge does the saying */
+.tb-root .tb-th-pin,
+.tb-root .tb-th-pin.tb-th-sorted,
+.tb-root .tb-th-pin.tb-th-selected {
+  background: var(--surface-rest);
+  border-right: var(--border) solid var(--line-strong);
+}
+
+/* the active cell's ring is the action colour, not the brass */
+.tb-root .tb-cell-on,
+.tb-root .tb-cell.tb-cell-on {
+  box-shadow: inset 0 0 0 2px var(--action);
+}
+
+.tb-root .tb-cell-editing {
+  box-shadow: inset 0 0 0 2px var(--action);
+}
+
+/* a count is text, not a chip */
+.tb-root .tb-grp-count {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+/* the rail's row-height switch: the chosen one is ink on the sunken
+   ground, not brass */
+.tb-root .tb-rail-segbtn-on {
+  background: var(--bg-sunken);
+  color: var(--fg);
+}
+
+.tb-root .tb-rail-lens-on {
+  background: var(--bg-sunken);
+  color: var(--fg);
+}
+
+/* the frozen column, on white: its heading and its band take the
+   rest ground, its row cells the row's own paint, and the active
+   ring and the selection wash take the action colour — the brass
+   was the old accent showing through the recut */
+.tb-root .tb-th.tb-th-pin,
+.tb-root .tb-band-pin {
+  background: var(--surface-rest);
+}
+
+.tb-root .tb-cell-pin {
+  background: var(--surface-1);
+}
+
+.tb-root .tb-row-alt .tb-cell-pin {
+  background: var(--surface-1);
+}
+
+.tb-root .tb-row:hover .tb-cell-pin {
+  background: var(--bg-sunken);
+}
+
+.tb-root .tb-cell-pin[aria-selected='true'] {
+  background: var(--action-wash);
+  box-shadow:
+    inset 0 0 0 1px var(--action),
+    var(--tb-edge, none);
+}
+
+.tb-root .tb-cell-pin.tb-cell-pin-on {
+  box-shadow:
+    inset 0 0 0 2px var(--action),
+    var(--tb-edge, none);
+}
+
+/* the active ring, the fill preview and the fill handle are drawn as
+   their own elements over the sheet; they take the action colour too */
+.tb-root .tb-ring {
+  box-shadow: inset 0 0 0 2px var(--action);
+}
+
+.tb-root .tb-fillbox {
+  border-color: var(--action);
+}
+
+.tb-root .tb-fillhandle {
+  background: var(--action);
+}
