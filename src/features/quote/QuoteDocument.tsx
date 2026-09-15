@@ -40,7 +40,7 @@
    with its own screen. The @page rules live in quote.css.
    ============================================================ */
 
-import type { ReactElement } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import { money } from './pricing'
 import { lineAmount, linesOf, looseLines, quoteTotals } from './totals'
 import { FrozenPhoto } from './photo'
@@ -50,6 +50,12 @@ import type { QuoteDef, QuoteLine } from '@/types/model'
 
 export interface QuoteDocumentProps {
   quote: QuoteDef
+  /** WHAT THE PAGE PUTS BESIDE THE DOCUMENT — Print, a new version,
+   *  the customer's other quotes. Screen furniture, never paper:
+   *  `.qt-doc-acts` is hidden in the print block. It is a prop and
+   *  not a child of the page so the document's side column can hold
+   *  it where Porsche's summary holds its own — under the price. */
+  aside?: ReactNode
 }
 
 /* ============================================================
@@ -74,7 +80,7 @@ function readTrim(trim: string): string {
   return say === '' ? clean : `${clean} · ${say}`
 }
 
-export function QuoteDocument({ quote }: QuoteDocumentProps): ReactElement {
+export function QuoteDocument({ quote, aside }: QuoteDocumentProps): ReactElement {
   const totals = quoteTotals(quote)
   const issued = quote.issuedAt ?? quote.updatedAt
 
@@ -122,91 +128,68 @@ export function QuoteDocument({ quote }: QuoteDocumentProps): ReactElement {
 
   return (
     <article className="qt-doc" aria-label={`${kind} ${quote.reference}`}>
-      <span className="qt-tick qt-tick--tl" aria-hidden="true" />
-      <span className="qt-tick qt-tick--tr" aria-hidden="true" />
+      {/* ============================================================
+          THE SHAPE IS PORSCHE'S CONFIGURATION DOCUMENT, read from
+          the real PDF (out/ref/porsche-configuration.pdf, fetched
+          2026-09-15) and from its on-screen summary:
 
-      {/* -- 1. the title block ------------------------------- */}
-      <header className="qt-doc-head">
-        <div className="qt-doc-who">
-          <p className="mono-label">{kind}</p>
-          {quote.organisation ? <p className="qt-doc-org">{quote.organisation}</p> : null}
-        </div>
-        <dl className="qt-plate">
-          <Plate label="Date" value={dateOf(issued)} />
-          <Plate label="Reference" value={quote.reference} />
-          {quote.preparedBy ? <Plate label="Prepared by" value={quote.preparedBy} /> : null}
-          {quote.state === 'draft' ? <Plate label="Status" value="Draft" /> : null}
-        </dl>
-      </header>
+            the cover   the car, large, on a light panel; the model's
+                        name centred under it with a chip beside it;
+                        one bold line; the code and the date as chips
+            the summary "Summary", a rule, the configuration's name
+                        against its price
+            the tables  one centred title per section, then rows of a
+                        48px thumbnail, the option, its code in grey,
+                        its price — "Standard Equipment" in grey when
+                        there is none
+            the side    on screen only: the price, the acts, the meta
 
-      {/* -- 2. the customer ---------------------------------- */}
-      {/* nothing is printed for an empty field: no "N/A", no dashes,
-          no placeholder that could be mistaken for a value */}
-      <section className="qt-doc-customer">
-        <p className="mono-label">Prepared for</p>
-        <p className="qt-doc-customer-name">
-          {quote.customer.name.trim() === '' ? (
-            <span className="qt-doc-blank">the customer's name is not filled in yet</span>
-          ) : (
-            quote.customer.name
-          )}
-        </p>
-        {(quote.customer.contact ?? []).map((c, i) => (
-          <p key={`${c}-${i}`} className="qt-doc-customer-line">
-            {c}
-          </p>
-        ))}
-      </section>
-
-      {/* -- 3. the subject ----------------------------------- */}
-      <section className="qt-doc-subject">
-        {/* THE RIG, AS LARGE AS THE PAGE HONESTLY ALLOWS. 220px was a
-            catalogue tile on the one document a customer ever reads;
-            300 is a third of the sheet's measure and still leaves the
-            name and the spec strip a full column beside it. The print
-            block caps it at 55mm so the whole rig reaches page 1, and
-            the box is reserved before the bytes land so a picture
-            arriving late never re-paginates a document mid-print. */}
-        <FrozenPhoto
-          img={quote.subjectImage}
-          fallbackAlt={quote.subjectLabel}
-          className="qt-doc-photo"
-          w={300}
-          h={225}
-        />
-        <div className="qt-doc-subject-id">
-          {/* ============================================================
-              THE ONE PAGE A CUSTOMER READS, AND IT PRINTED AN SKU.
-
-              "Highfield - RU230KAM (PVC) WH" is four facts welded
-              together — a maker, a model, a hull material and a
-              colourway — and it was the headline of the document, set
-              at 26px and wrapping onto two lines. A person being sold
-              a boat reads the model's name; the string with the
-              brackets in it is what gets ordered.
-
-              NOTHING IS DROPPED AND NOTHING IS RESOLVED LATE. `marqueOf`
-              takes the FROZEN label apart and every character of it
-              comes back out in maker, model and trim — the same
-              function and the same lockup the configurator draws, so
-              the screen a dealer built on and the page a customer is
-              handed name the boat identically. It reads the quote's
-              own frozen string and no live data, which is the whole
-              of `freeze.ts`'s contract.
-
-              AND THE SKU IS STILL CITED, on the line below in the rig
-              table, exactly as the price file writes it. The headline
-              is the name; the line is the order.
-              ============================================================ */}
-          <h1 className="qt-doc-name">
-            {lockup.maker === '' ? null : (
-              <span className="qt-doc-marque-maker">{lockup.maker}</span>
-            )}
-            <span className="qt-doc-marque-model">{lockup.model}</span>
-            {lockup.trim === '' ? null : (
-              <span className="qt-doc-marque-trim">{readTrim(lockup.trim)}</span>
-            )}
-          </h1>
+          Every fact on it is still the quote's frozen copy — this
+          file reads no live data — and every one that printed before
+          prints now. What changed is where it stands.
+          ============================================================ */}
+      <div className="qt-doc-main">
+        {/* -- 1. the cover ------------------------------------- */}
+        <section className="qt-doc-hero">
+          {/* the box is reserved before the bytes land so a picture
+              arriving late never re-paginates a document mid-print */}
+          <FrozenPhoto
+            img={quote.subjectImage}
+            fallbackAlt={quote.subjectLabel}
+            className="qt-doc-photo"
+            w={880}
+            h={495}
+          />
+          <div className="qt-doc-subject-id">
+            {/* THE NAME, NOT THE SKU. `marqueOf` takes the frozen label
+                apart and nothing is dropped: maker, model and trim all
+                print, and the SKU is cited on the hull's own line in
+                the table exactly as the price file writes it. */}
+            <h1 className="qt-doc-name">
+              {lockup.maker === '' ? null : (
+                <span className="qt-doc-marque-maker">{lockup.maker}</span>
+              )}
+              <span className="qt-doc-marque-model">{lockup.model}</span>
+              {lockup.trim === '' ? null : (
+                <span className="qt-doc-marque-trim">{readTrim(lockup.trim)}</span>
+              )}
+            </h1>
+            <div className="qt-doc-who">
+              {/* the dealer's name is its own element and nothing else is
+                  in it — a test reads it back verbatim, and rule 3 keeps
+                  it off uppercase on their own paper */}
+              <p className="qt-doc-kind">
+                <span className="qt-doc-kind-word">{kind}</span>
+                {quote.organisation ? ' from ' : null}
+                {quote.organisation ? <span className="qt-doc-org">{quote.organisation}</span> : null}
+              </p>
+              <p className="qt-doc-chips">
+                <span className="qt-doc-chip">{quote.reference}</span>
+                <span className="qt-doc-chip">{dateOf(issued)}</span>
+                {quote.state === 'draft' ? <span className="qt-doc-chip">Draft</span> : null}
+              </p>
+            </div>
+          </div>
           {quote.subjectSpecs.length > 0 ? (
             <dl className="qt-doc-specs">
               {quote.subjectSpecs.map((s) => (
@@ -217,156 +200,163 @@ export function QuoteDocument({ quote }: QuoteDocumentProps): ReactElement {
               ))}
             </dl>
           ) : null}
-        </div>
-      </section>
-
-      {/* -- 4. the rig --------------------------------------
-          A real <table> with a <thead>, so a long rig repeats its
-          column heads on page 2 and page breaks fall between rows
-          for free. */}
-      <table className="qt-doc-lines">
-        <thead>
-          <tr>
-            {/* THE PICTURE COLUMN HAS NO HEADING. "Photo" over a
-                column of thumbnails is a label for something
-                nobody needs told; the cell is its own legend. It
-                is still a real `th` so the header row keeps its
-                column count and the rig repeats correctly on page
-                two. */}
-            <th className="qt-col-pic">
-              <span className="qt-sr">Picture</span>
-            </th>
-            <th className="mono-label qt-col-desc">Description</th>
-            <th className="mono-label qt-col-qty">Qty</th>
-            <th className="mono-label qt-col-amt">Amount</th>
-          </tr>
-        </thead>
-        {quote.sections.map((section) => {
-          const lines = linesOf(quote, section.lineIds)
-          if (lines.length === 0) return null
-          return (
-            <tbody key={section.blockId}>
-              <tr className="qt-doc-sec">
-                <th className="mono-label" colSpan={4} scope="colgroup">
-                  {section.title}
-                </th>
-              </tr>
-              {lines.map((line) => (
-                <DocLine key={line.id} line={line} />
-              ))}
-            </tbody>
-          )
-        })}
-
-        {/* AND THE LINES NO SECTION CLAIMS, LAST AND WITH NO HEADING.
-            The build screen files these under "Typed onto the quote",
-            which is true of the one route that makes them there and
-            false of the two that make them in a file — so on the
-            customer's copy they are drawn as what they provably are:
-            lines of this quote. A heading here would be a claim about
-            where they came from, and this document invents nothing.
-            `.qt-doc-loose` gives the group the same air a section head
-            would have given it, so it reads as its own block rather
-            than as more of the one above. */}
-        {loose.length > 0 ? (
-          <tbody className="qt-doc-loose">
-            {loose.map((line) => (
-              <DocLine key={line.id} line={line} />
-            ))}
-          </tbody>
-        ) : null}
-      </table>
-
-      {/* -- 5. the money box --------------------------------- */}
-      <section className="qt-money">
-        <dl className="qt-money-rows">
-          <div className="qt-money-row">
-            <dt>Package</dt>
-            <dd className="qt-num">{money(totals.packageTotal)}</dd>
-          </div>
-
-          {quote.adjustments.map((a) => (
-            <div key={a.id} className="qt-money-row">
-              <dt>
-                {a.label.trim() === '' ? (
-                  <span className="qt-doc-blank">this line has no name yet</span>
-                ) : (
-                  a.label
-                )}
-                {a.note ? <span className="qt-money-note"> — {a.note}</span> : null}
-                {/* the business's own qualifier, from Quote Sheet!R175 */}
-                {a.kind === 'tradeIn' ? (
-                  <span className="qt-money-note"> — subject to final inspection</span>
-                ) : null}
-              </dt>
-              <dd className={`qt-num${a.amount < 0 ? ' is-credit' : ''}`}>{money(a.amount)}</dd>
-            </div>
-          ))}
-
-          <div className="qt-money-row qt-money-row--total">
-            <dt>Total</dt>
-            <dd className="qt-num qt-total">{money(totals.total)}</dd>
-          </div>
-
-          {totals.totalExcludingTax === null ? (
-            <p className="qt-money-say">
-              The amounts above are inclusive of tax unless otherwise stated.
-            </p>
-          ) : (
-            <div className="qt-money-row qt-money-row--tax">
-              <dt>
-                Total excluding tax
-                <span className="qt-money-note"> — at {totals.taxRate}%</span>
-              </dt>
-              <dd className="qt-num">{money(totals.totalExcludingTax)}</dd>
-            </div>
-          )}
-        </dl>
-      </section>
-
-      {/* -- 6. the unpriced notice --------------------------- */}
-      {totals.unpricedCount > 0 ? (
-        <p className="qt-unpriced" role="note">
-          {totals.unpricedCount === 1
-            ? '1 line on this quote has no price in the price file and is not in the total.'
-            : `${totals.unpricedCount} lines on this quote have no price in the price file and are not in the total.`}
-        </p>
-      ) : null}
-
-      {/* -- 6b. what the dealer wrote on it -------------------
-          THE ONE PLACE THIS DOCUMENT CARRIES CONDITIONS, and it was
-          set as the smallest reading text on the page — 12px, soft
-          ink, no caption, floating between a carmine warning and the
-          closing rule. The header above says why there are no
-          twenty-seven clauses: writing plausible ones would be
-          fabricating a contract. What the dealer TYPED is not
-          fabricated, and the field they typed it in is labelled "Note
-          on the quote" with the placeholder "validity, conditions —
-          printed as typed". On a $150,000 quotation that is the
-          sentence a customer needs after the total, so it is given a
-          rule, the caption the field already carries, and the reading
-          size the rest of the document uses.
-
-          The caption is the field's own word. "Terms" would be a
-          claim this app has no right to make about a free-text line
-          somebody typed. */}
-      {quote.note ? (
-        <section className="qt-doc-note">
-          <p className="mono-label">Note</p>
-          <p className="qt-doc-note-say">{quote.note}</p>
         </section>
-      ) : null}
 
-      {/* -- 7. footer ---------------------------------------- */}
+        {/* -- 2. what is on it ---------------------------------- */}
+        <section className="qt-doc-card">
+          <h2 className="qt-doc-card-title">What is on this quote</h2>
+          {/* A real <table> with a <thead>, so a long rig repeats its
+              column heads on page 2 and page breaks fall between rows
+              for free. The picture column has no heading: the cell is
+              its own legend, and the th keeps the column count. */}
+          <table className="qt-doc-lines">
+            <thead>
+              <tr>
+                <th className="qt-col-pic">
+                  <span className="qt-sr">Picture</span>
+                </th>
+                <th className="mono-label qt-col-desc">Option</th>
+                <th className="mono-label qt-col-qty">Qty</th>
+                <th className="mono-label qt-col-amt">Price</th>
+              </tr>
+            </thead>
+            {quote.sections.map((section) => {
+              const lines = linesOf(quote, section.lineIds)
+              if (lines.length === 0) return null
+              return (
+                <tbody key={section.blockId}>
+                  <tr className="qt-doc-sec">
+                    <th colSpan={4} scope="colgroup">
+                      {section.title}
+                    </th>
+                  </tr>
+                  {lines.map((line) => (
+                    <DocLine key={line.id} line={line} />
+                  ))}
+                </tbody>
+              )
+            })}
+            {/* the lines no section claims, last and with no heading —
+                a heading would be a claim about where they came from,
+                and this document invents nothing */}
+            {loose.length > 0 ? (
+              <tbody className="qt-doc-loose">
+                {loose.map((line) => (
+                  <DocLine key={line.id} line={line} />
+                ))}
+              </tbody>
+            ) : null}
+          </table>
+        </section>
+
+        {/* -- 3. the unpriced notice, and the dealer's note ------- */}
+        {totals.unpricedCount > 0 ? (
+          <p className="qt-unpriced" role="note">
+            {totals.unpricedCount === 1
+              ? '1 line on this quote has no price in the price file and is not in the total.'
+              : `${totals.unpricedCount} lines on this quote have no price in the price file and are not in the total.`}
+          </p>
+        ) : null}
+        {/* what the dealer TYPED is not fabricated; "Note" is the
+            field's own word, and "Terms" would be a claim this app has
+            no right to make about a free-text line */}
+        {quote.note ? (
+          <section className="qt-doc-note">
+            <p className="mono-label">Note</p>
+            <p className="qt-doc-note-say">{quote.note}</p>
+          </section>
+        ) : null}
+      </div>
+
+      <aside className="qt-doc-side">
+        {/* -- 4. the money -------------------------------------- */}
+        <section className="qt-money">
+          <dl className="qt-money-rows">
+            <div className="qt-money-row qt-money-row--total">
+              <dt>Package price</dt>
+              <dd className="qt-num qt-total">{money(totals.total)}</dd>
+            </div>
+            <div className="qt-money-row">
+              <dt>Package</dt>
+              <dd className="qt-num">{money(totals.packageTotal)}</dd>
+            </div>
+            {quote.adjustments.map((a) => (
+              <div key={a.id} className="qt-money-row">
+                <dt>
+                  {a.label.trim() === '' ? (
+                    <span className="qt-doc-blank">this line has no name yet</span>
+                  ) : (
+                    a.label
+                  )}
+                  {a.note ? <span className="qt-money-note"> — {a.note}</span> : null}
+                  {/* the business's own qualifier, from Quote Sheet!R175 */}
+                  {a.kind === 'tradeIn' ? (
+                    <span className="qt-money-note"> — subject to final inspection</span>
+                  ) : null}
+                </dt>
+                <dd className={`qt-num${a.amount < 0 ? ' is-credit' : ''}`}>{money(a.amount)}</dd>
+              </div>
+            ))}
+            {totals.totalExcludingTax === null ? (
+              <p className="qt-money-say">
+                The amounts above are inclusive of tax unless otherwise stated.
+              </p>
+            ) : (
+              <div className="qt-money-row qt-money-row--tax">
+                <dt>
+                  Total excluding tax
+                  <span className="qt-money-note"> — at {totals.taxRate}%</span>
+                </dt>
+                <dd className="qt-num">{money(totals.totalExcludingTax)}</dd>
+              </div>
+            )}
+          </dl>
+        </section>
+
+        {/* -- 5. the acts, on screen only ------------------------ */}
+        {aside ? <div className="qt-doc-acts">{aside}</div> : null}
+
+        {/* -- 6. who it is for ---------------------------------- */}
+        {/* nothing is printed for an empty field: no "N/A", no dashes,
+            no placeholder that could be mistaken for a value */}
+        <section className="qt-doc-customer">
+          <p className="mono-label">Prepared for</p>
+          <p className="qt-doc-customer-name">
+            {quote.customer.name.trim() === '' ? (
+              <span className="qt-doc-blank">the customer's name is not filled in yet</span>
+            ) : (
+              quote.customer.name
+            )}
+          </p>
+          {(quote.customer.contact ?? []).map((c, i) => (
+            <p key={`${c}-${i}`} className="qt-doc-customer-line">
+              {c}
+            </p>
+          ))}
+        </section>
+
+        {/* -- 7. the plate --------------------------------------- */}
+        <header className="qt-doc-head">
+          {/* THE DATE AND THE REFERENCE ARE ON THE COVER AND IN THE FOOT —
+              twice, and deliberately: QUOTE_SPEC §6.7 asks the foot to
+              carry them so a separated page can be identified, and the
+              cover carries them as Porsche's carries its code and date.
+              The plate does not say them a third time. */}
+          <dl className="qt-plate">
+            {quote.preparedBy ? <Plate label="Prepared by" value={quote.preparedBy} /> : null}
+            {quote.state === 'draft' ? <Plate label="Status" value="Draft" /> : null}
+          </dl>
+        </header>
+      </aside>
+
+      {/* -- 8. the paper's footer, every page ------------------- */}
       <footer className="qt-doc-foot">
-        <span className="mono-label">{dateOf(issued)}</span>
         <span className="mono-label">{quote.reference}</span>
+        <span className="mono-label">{dateOf(issued)}</span>
       </footer>
     </article>
   )
 }
-
-/* ---------------------------------------------------------- */
 
 function Plate({ label, value }: { label: string; value: string }): ReactElement {
   return (

@@ -96,8 +96,9 @@ export function QuotePage({
     <div className="qt-root qt-root--doc" data-register="showroom">
       {/* the controls are OUTSIDE the document, and print hides
           everything that is not the document itself */}
-      <div className="qt-issued-head">
-        <div className="qt-issued-bar">
+<QuoteDocument quote={quote} aside={
+          <>
+            <div className="qt-issued-bar">
           <p className="qt-issued-say mono-label">
             Given to the customer{quote.issuedAt ? ` · ${localDay(quote.issuedAt)}` : ''}
           </p>
@@ -136,31 +137,13 @@ export function QuotePage({
             </button>
           ) : null}
         </div>
-
-        {/* ============================================================
-            WHY THERE IS NOTHING TO TYPE ON.
-
-            This page has no inputs, no add-a-line control and no
-            adjustment doors, and it used to say nothing at all about
-            that: a salesperson looking for the field they had been
-            typing in five minutes earlier found a document and no
-            explanation. `mutate` refuses every edit to an issued quote —
-            correctly — and DESIGN_PRINCIPLES rule 10 is that a refusal
-            is a sentence with a reason IN THE PLACE where the thing is
-            refused, never a control that is quietly absent.
-
-            So it is a sentence, it says why, and it names what the
-            person CAN do — the control it names is the one immediately
-            above it. It sits outside `.qt-doc`, so it is on the screen
-            and never on the customer's paper.
-            ============================================================ */}
-        <p className="qt-issued-why">
+            <p className="qt-issued-why">
           Nothing here can be changed — it is the record of what the customer was offered.{' '}
           <em>Make a new version</em> opens a draft that prints as a revised quotation.
         </p>
-      </div>
-
-      <QuoteDocument quote={quote} />
+          </>
+        }
+      />
     </div>
   )
 }

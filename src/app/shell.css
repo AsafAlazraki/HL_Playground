@@ -3432,3 +3432,16 @@
   background: var(--surface-2);
   border-right: var(--border) solid var(--line);
 }
+
+/* the document's page too: its bar and its burger strip take the
+   page's ground */
+.shell-viewstage:has(.qt-root--doc),
+.shell-viewstage:has(.qt-root--doc) .shell-view-bar {
+  background: var(--surface-1);
+}
+
+@media (max-width: 1024px) {
+  .shell-body:has(.qt-root--doc) {
+    background: var(--surface-1);
+  }
+}

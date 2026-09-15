@@ -331,3 +331,49 @@ the toast said so with Undo; Undo brought all of it back.
 | `check-contrast` | four swatch captions at 4.31:1 in quaternary on the tile's grey — lifted to tertiary; then 1,287 nodes clear |
 | `qa-sweep` | clean |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-15, evening — the document re-cut to Porsche's PDF
+
+"Do the same Porsche treatment on the quote document and go find a
+Porsche document itself." Found: the configurator's own "Download
+configuration (PDF)" — behind a "Select PDF content" modal — fetched as
+`out/ref/porsche-configuration.pdf` (15 pages, `%PDF-`, 2.5 MB) and
+rendered through pdf.js because the machine has no poppler. Its shape:
+a cover (the car large on a light panel, the name centred under it at
+32/400 with a chip, one bold line, the code and the date as chips), then
+"Summary" against the price with a footnote, then one centred title per
+section and a four-column table — category, a 48px thumbnail with the
+option, the code in grey, the price or "Standard Equipment" in grey —
+with the code and the page number in every footer. Its on-screen summary
+is the same in two columns, the price and the pills on the right.
+
+Ours was a cream A4 sheet with crop marks, a brass masthead at 56px,
+beige section bands and mono uppercase captions. `QuoteDocument.tsx` is
+re-cut — cover / card / side — and `QuotePage` hands its acts in as a
+prop so the side column holds Print where Porsche's holds "Select a
+dealer"; nothing on it reads live data and every frozen fact that
+printed still prints. The one print block is extended, not doubled: page
+one lays the cover, then the price beside the customer and the plate;
+the tables start on page two. Two bugs on the way, both mine: the paper
+rules were inserted before the file's last `}` — which by then closed a
+screen rule appended after the print block — and sat as invalid nested
+text until brace-matched into place; and `body`'s cream `--sheet` showed
+as a block wherever the document ended short of the page.
+
+`document.test.tsx` caught the reference and the date printing three
+times (cover chips, plate, foot) against the spec's twice; the plate no
+longer says them. The dealer's name is its own element again.
+
+| ruler | result |
+|---|---|
+| `check:types` · `lint` · `vitest` | clean · 343/343 · 2,974 passed (8 of them on the document) |
+| `check-collide` | nothing overlaps |
+| `check-contrast` | 1,286 text nodes across 11 screens, all clear |
+| `qa-sweep` | clean; document 4.73× |
+| `check:shots --update` | 14 of 14 re-taken |
+| A4 through Chrome | 2 pages; page one is Porsche's page one |
+
+Note for the next person: `check-contrast` and `check-shots` take `--url`,
+not `HL_ORIGIN`; run against 5090 they measured a server that had since
+died and said "No dev server" — with the default port in the sentence,
+whichever port was asked for.

@@ -2410,3 +2410,118 @@
 .bs-finishes .cw-code {
   color: var(--fg-tertiary);
 }
+
+/* ============================================================
+   THE PRICE AND THE ACT GO TO THE FOOT OF THE RAIL — the owner,
+   2026-09-15: "not happy with the header on the config in the top
+   left, and the give-to-customer should be at the bottom of the
+   right scroll." The slim top bar copied Porsche's position and
+   lost what a dealer needs at a glance: the figure was 20px in a
+   corner beside a ring and a toggle. The foot of the rail is where
+   the eye lands after the last section, and where a thumb lands on
+   a phone. One block: the figure large, what it is, what is not in
+   it, the rung, and the one act, full width.
+   ============================================================ */
+
+.bs {
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'stage side'
+    'stage money';
+}
+
+.bs-bar {
+  grid-area: money;
+  border-left: 0;
+  border-top: var(--border) solid var(--line);
+  background: var(--surface-1);
+}
+
+.bs .ui-done {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'figure arc'
+    'levels levels'
+    'do do';
+  align-items: center;
+  gap: var(--s-3) var(--s-4);
+  padding: var(--s-4) var(--gutter) var(--s-5) var(--s-5);
+  border: 0;
+}
+
+.bs .ui-done-figure {
+  grid-area: figure;
+  gap: 2px;
+}
+
+.bs .ui-done-cap {
+  display: block;
+  color: var(--fg-tertiary);
+}
+
+.bs .ui-done-now {
+  font-size: var(--t-hero-size);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.bs .ui-done-arc,
+.bs .ui-done-dial {
+  width: 48px;
+  height: 48px;
+}
+
+.bs .ui-done-arc {
+  grid-area: arc;
+  justify-self: end;
+}
+
+.bs .ui-done-levels {
+  grid-area: levels;
+  justify-self: start;
+}
+
+.bs .ui-done-do {
+  grid-area: do;
+  display: grid;
+  gap: var(--s-2);
+  align-items: stretch;
+}
+
+.bs .ui-done-do .ui-btn {
+  width: 100%;
+  justify-content: center;
+  padding-inline: var(--s-6);
+  border-radius: 999px;
+}
+
+.bs .ui-done-do .ui-btn--primary:not([aria-disabled='true']) {
+  background: var(--action);
+  color: var(--action-fg);
+}
+
+/* the rail scrolls above the foot and stops short of it */
+.bs-step {
+  padding-bottom: var(--s-8);
+}
+
+@media (max-width: 1000px) {
+  .bs {
+    grid-template-rows: minmax(360px, 1fr) minmax(0, 1.1fr) auto;
+    grid-template-areas:
+      'stage'
+      'side'
+      'money';
+  }
+
+  .bs .ui-done {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'figure arc'
+      'levels levels'
+      'do do';
+    padding-inline: var(--gutter);
+  }
+}

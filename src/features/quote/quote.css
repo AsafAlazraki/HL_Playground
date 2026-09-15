@@ -2211,6 +2211,541 @@
   margin: 14mm;
 }
 
+
+/* ============================================================
+   THE DOCUMENT, RE-CUT TO PORSCHE'S — 2026-09-15.
+
+   Read from the real thing: `out/ref/porsche-configuration.pdf`
+   (fetched from the configurator's own "Download configuration"
+   the same morning) and the on-screen Summary it comes from.
+
+   PAPER, THEIRS: a cover — the car large on a light panel, the
+   model's name centred under it at 32/400 with a chip beside it,
+   one bold line, the code and the date as chips; then "Summary", a
+   rule, the configuration's name against its price; then one
+   centred title per section and rows of a 48px thumbnail, the
+   option, its code in grey, its price; hairlines between rows; a
+   footer on every page with the code and the page number.
+
+   SCREEN, THEIRS: the same in two columns — the cover and the
+   equipment card on the left, and on the right the price, one
+   black pill, two grey ones, two text links, a footnote.
+
+   OURS WAS A CREAM SHEET WITH CROP MARKS, a brass-ruled masthead
+   with the dealer's name at 56px, beige section bands and mono
+   uppercase labels on every caption. Nothing about it was wrong
+   and none of it is theirs. The sheet palette (`--sheet-*`) stays
+   declared for the print block's sake; on screen the document is
+   the app's own white and grey.
+   ============================================================ */
+
+.qt-root--doc {
+  padding: var(--s-4) var(--gutter) var(--s-16);
+  background: var(--surface-1);
+}
+
+/* the page's own bar went into the side column; nothing stands
+   above the document any more */
+.qt-issued-head {
+  display: contents;
+}
+
+.qt-doc {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 412px);
+  grid-template-areas: 'main side';
+  align-items: start;
+  column-gap: var(--s-8);
+  width: auto;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0;
+  background: none;
+  color: var(--fg);
+  box-shadow: none;
+  container-type: normal;
+  font-size: var(--t-body-size);
+}
+
+.qt-tick {
+  display: none;
+}
+
+.qt-doc-main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  min-width: 0;
+}
+
+.qt-doc-side {
+  grid-area: side;
+  position: sticky;
+  top: var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  min-width: 0;
+}
+
+/* -- the cover ---------------------------------------------------- */
+
+.qt-doc-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-5);
+  padding: var(--s-8) var(--s-8) var(--s-8);
+  border-radius: 16px;
+  background: var(--surface-2);
+  text-align: center;
+}
+
+.qt-doc-photo {
+  width: min(880px, 100%);
+  aspect-ratio: 16 / 9;
+  height: auto;
+  object-fit: contain;
+  background: none;
+  box-shadow: none;
+}
+
+.qt-doc-subject-id {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.qt-doc-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2) var(--s-3);
+  margin: 0;
+}
+
+.qt-doc-marque-maker {
+  flex: 1 0 100%;
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.qt-doc-marque-model {
+  font-size: var(--t-hero-size);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--fg);
+}
+
+/* the trim is a chip beside the name — Porsche's "2027" */
+.qt-doc-marque-trim {
+  display: inline-block;
+  padding: 3px var(--s-3);
+  border-radius: 999px;
+  background: var(--surface-4);
+  color: var(--fg-secondary);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.qt-doc-who {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.qt-doc-kind {
+  margin: 0;
+  font-size: var(--t-body-size);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.qt-doc-org {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.qt-doc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s-2);
+  margin: 0;
+}
+
+.qt-doc-chip {
+  display: inline-block;
+  padding: 3px var(--s-3);
+  border-radius: 999px;
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font-size: var(--t-caption-size);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+
+.qt-doc-specs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s-2) var(--s-6);
+  margin: 0;
+  padding-top: var(--s-2);
+}
+
+.qt-doc-spec {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+}
+
+.qt-doc-spec-val {
+  margin: 0;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- the card ----------------------------------------------------- */
+
+.qt-doc-card {
+  padding: var(--s-5) var(--s-6) var(--s-6);
+  border: var(--border) solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: var(--e-card);
+}
+
+.qt-doc-card-title {
+  margin: 0 0 var(--s-2);
+  font-size: var(--t-heading-size);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.qt-doc-lines {
+  margin-top: 0;
+}
+
+.qt-doc-lines thead th {
+  padding: var(--s-2) var(--s-2) var(--s-3);
+  border-bottom: var(--border) solid var(--line);
+  color: var(--fg-tertiary);
+}
+
+/* THE SECTION TITLE IS PORSCHE'S — centred, sentence case, at the
+   heading step, with air above; no band, no brass, no uppercase */
+.qt-doc-sec th {
+  padding: var(--s-8) var(--s-2) var(--s-3);
+  border: 0;
+  background: none;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-align: center;
+  text-transform: none;
+}
+
+.qt-doc-line td {
+  padding: var(--s-3) var(--s-2);
+  border-bottom: var(--border) solid var(--line);
+  vertical-align: middle;
+}
+
+.qt-doc-line td.qt-col-pic {
+  width: 64px;
+  padding-left: 0;
+}
+
+.qt-doc-pic {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: var(--surface-2);
+}
+
+.qt-doc-line-name {
+  color: var(--fg);
+  font-size: var(--t-body-size);
+  font-weight: 500;
+}
+
+.qt-doc-detail {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+}
+
+.qt-doc-fact-lab {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.qt-doc-tag {
+  display: inline-block;
+  margin-left: var(--s-2);
+  padding: 1px var(--s-2);
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.qt-col-qty {
+  color: var(--fg-tertiary);
+}
+
+.qt-doc-line td.qt-col-amt {
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.qt-nil {
+  color: var(--fg-tertiary);
+}
+
+/* -- the side ----------------------------------------------------- */
+
+.qt-money {
+  justify-content: stretch;
+  margin: 0;
+}
+
+.qt-money-rows {
+  width: 100%;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.qt-money-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-2) 0;
+  border-bottom: var(--border) solid var(--line);
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+
+/* THE FIGURE FIRST AND LARGE — "Price for equipment" over "$0.00" at
+   26px on Porsche's; ours is the whole package and gets the hero
+   step, because on this document that number is the point */
+.qt-money-row--total {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-1);
+  padding: 0 0 var(--s-4);
+  border-bottom: var(--border) solid var(--line);
+}
+
+.qt-money-row--total dt {
+  color: var(--fg-tertiary);
+  font-size: var(--t-small-size);
+  font-weight: 400;
+}
+
+.qt-money-row dd.qt-total {
+  font-family: var(--font-sans);
+  font-size: var(--t-hero-size);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--fg);
+}
+
+.qt-money-row dd {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.qt-money-row--tax {
+  border-bottom: 0;
+}
+
+.qt-money-say {
+  margin: var(--s-2) 0 0;
+  color: var(--fg-tertiary);
+  font-size: var(--t-caption-size);
+}
+
+/* the acts: one pill in the action hue, the rest quiet, all full
+   width, as Porsche's column */
+.qt-doc-acts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.qt-doc-acts .qt-issued-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s-2);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
+.qt-doc-acts .qt-issued-say {
+  order: 9;
+  margin-top: var(--s-2);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-tertiary);
+}
+
+.qt-doc-acts .btn {
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg);
+  font-size: var(--t-body-size);
+  font-weight: 500;
+}
+
+.qt-doc-acts .btn:not(.btn-ghost) {
+  background: var(--action);
+  color: var(--action-fg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qt-doc-acts .btn:not(.btn-ghost):hover {
+    background: var(--action-hover);
+  }
+
+  .qt-doc-acts .btn.btn-ghost:hover {
+    background: var(--surface-4);
+  }
+}
+
+.qt-doc-acts .qt-issued-why {
+  max-width: none;
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+.qt-doc-customer {
+  padding: var(--s-4) 0 0;
+  border-top: var(--border) solid var(--line);
+}
+
+.qt-doc-customer-name {
+  margin: 0;
+  font-size: var(--t-body-size);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.qt-doc-customer-line {
+  margin: 0;
+  color: var(--fg-secondary);
+}
+
+.qt-doc-head {
+  display: block;
+  padding: var(--s-4) 0 0;
+  border: 0;
+  border-top: var(--border) solid var(--line);
+}
+
+.qt-plate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin: 0;
+}
+
+.qt-plate-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.qt-plate-val {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* the paper's footer is for paper */
+.qt-doc-foot {
+  display: none;
+}
+
+.qt-unpriced,
+.qt-doc-note {
+  margin: 0;
+}
+
+/* every caption is sentence-case sans on this document; Porsche
+   has no uppercase and no mono anywhere on it */
+.qt-doc .mono-label {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-tertiary);
+}
+
+.qt-doc-blank {
+  color: var(--fg-tertiary);
+  font-style: italic;
+}
+
+/* one column under 1000 — the side follows the cover */
+@media (max-width: 1000px) {
+  .qt-doc {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'main'
+      'side';
+    row-gap: var(--s-6);
+  }
+
+  .qt-doc-side {
+    position: static;
+  }
+
+  .qt-doc-hero {
+    padding: var(--s-5) var(--s-4) var(--s-6);
+  }
+}
+
 @media print {
   html,
   body {
@@ -2424,4 +2959,207 @@
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
+
+  /* ------------------------------------------------------------
+     PORSCHE'S PAGES, on paper. The cover, then the summary, then
+     the sections; the code and the page in the footer. The two
+     screen columns dissolve — `display: contents` — and `order`
+     lays the frozen blocks in the order their PDF lays them.
+     Screen furniture (`.qt-doc-acts`) is not paper.
+     ------------------------------------------------------------ */
+  .qt-doc {
+    display: flex;
+    flex-direction: column;
+    gap: 6mm;
+    background: var(--surface-1);
+    color: var(--fg);
+  }
+
+  .qt-doc-main,
+  .qt-doc-side {
+    display: contents;
+  }
+
+  .qt-doc-acts {
+    display: none;
+  }
+
+  .qt-doc-hero {
+    order: 1;
+    padding: 8mm 6mm;
+    border-radius: 4mm;
+    break-inside: avoid;
+  }
+
+  .qt-doc-photo {
+    width: 150mm;
+    max-width: 100%;
+  }
+
+  .qt-doc-marque-model {
+    font-size: 24pt;
+  }
+
+  .qt-money {
+    order: 2;
+    break-inside: avoid;
+  }
+
+  .qt-doc-customer {
+    order: 3;
+  }
+
+  .qt-doc-head {
+    order: 4;
+  }
+
+  .qt-doc-card {
+    order: 5;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    break-before: page;
+  }
+
+  .qt-doc-card-title {
+    text-align: center;
+  }
+
+  .qt-unpriced {
+    order: 6;
+  }
+
+  .qt-doc-note {
+    order: 7;
+  }
+
+  .qt-doc-foot {
+    order: 8;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6mm;
+    padding-top: 2mm;
+    border-top: var(--border) solid var(--line);
+  }
+
+  .qt-doc-sec th {
+    font-size: 16pt;
+    padding-top: 8mm;
+  }
+
+  .qt-doc-pic {
+    width: 12mm;
+    height: 12mm;
+  }
+
+  .qt-money-row dd.qt-total {
+    font-size: 22pt;
+  }
+
+  /* PAGE ONE IS PORSCHE'S PAGE ONE: the cover, then the price beside
+     who it is for and the plate — one row, as their "Your 911
+     Configuration | Price for equipment" is — and the tables from
+     page two. A grid, because the two screen columns are gone and
+     the frozen blocks need placing, not stacking. */
+  .qt-doc {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'hero hero'
+      'money who'
+      'money plate'
+      'card card'
+      'unpriced unpriced'
+      'note note'
+      'foot foot';
+    column-gap: 10mm;
+    row-gap: 5mm;
+    align-items: start;
+  }
+
+  .qt-doc-hero { grid-area: hero; padding: 6mm 6mm 6mm; }
+  .qt-doc-photo { width: 120mm; }
+  .qt-money { grid-area: money; }
+  .qt-doc-customer { grid-area: who; padding-top: 0; border-top: 0; }
+  .qt-doc-head { grid-area: plate; }
+  .qt-doc-card { grid-area: card; }
+  .qt-unpriced { grid-area: unpriced; }
+  .qt-doc-note { grid-area: note; }
+  .qt-doc-foot { grid-area: foot; }
+
+  /* the page under the document is the document's white — the cream
+     `--sheet` the old paper set on body showed as a cream block wherever
+     the document ended short of the page */
+  html,
+  body {
+    background: var(--surface-1) !important;
+  }
+}
+
+/* FOUR THINGS FROM THE FIRST PHOTOGRAPH OF THE RE-CUT DOCUMENT.
+   `.qt-doc-org` still wore the old masthead's display size, so
+   "from Northside Marine" ran to three 56px lines under the name;
+   the buttons wore `.btn`'s mono uppercase; the trim chip wrapped
+   to three lines; the facts under a line ran together with no
+   separator. And the hull's own white ground sat as a white box on
+   the grey cover — Porsche's cover is grey because their art has
+   no ground; ours has, so the cover is white with a line. */
+.qt-doc-org {
+  display: inline;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: 0;
+}
+
+.qt-doc-hero {
+  border: var(--border) solid var(--line);
+  background: var(--surface-1);
+}
+
+.qt-doc-marque-trim {
+  white-space: nowrap;
+}
+
+.qt-doc-acts .btn {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.qt-doc-fact + .qt-doc-fact::before {
+  content: ' · ';
+  color: var(--line-strong);
+}
+
+/* the cover's caption block inherited the old masthead's shrunken
+   column — "Quotation from Northside Marine" wrapped a word to a
+   line and the reference chip broke mid-string. It is as wide as
+   the cover, and a chip never breaks. */
+.qt-doc-hero .qt-doc-who {
+  flex: none;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+
+.qt-doc-kind,
+.qt-doc-chip {
+  white-space: nowrap;
+}
+
+.qt-doc-kind {
+  white-space: normal;
+  max-width: 40ch;
+}
+
+/* the caption block's PARENT was the narrow one — `.qt-doc-subject-id`
+   is a centred flex column and shrank to the name's width, so every
+   line under the name wrapped inside 200px */
+.qt-doc-hero .qt-doc-subject-id {
+  align-self: stretch;
+  width: 100%;
+}
+
+.qt-doc-kind-word {
+  font-weight: 600;
 }
