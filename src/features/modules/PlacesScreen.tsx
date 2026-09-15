@@ -30,6 +30,7 @@ import type { ReactElement } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { Field, Marque } from '@/ui'
 import { FrozenPhoto } from '@/features/quote/photo'
+import { useSceneKind } from '@/features/quote/scene'
 import { doorPicture } from '@/features/dashboard/doors'
 import { ICON_SIZE } from '@/lib/icons'
 import { usePlaces } from '@/features/dashboard/usePlaces'
@@ -230,10 +231,19 @@ function Tile({
   onOpen: () => void
   onSettings: () => void
 }): ReactElement {
+  /* NIMBUS'S TILE WHERE THE PLACE HAS A PHOTOGRAPH, ZODIAC'S WHERE IT
+     HAS A RENDER — read from the picture's own pixels (`scene.ts`). */
+  const scene = useSceneKind(cover?.src)
   return (
     <li className="mo-cell">
       <div className="mo-tile" data-kind={place.kind}>
-        <button type="button" className="mo-face" data-press="card" onClick={onOpen}>
+        <button
+          type="button"
+          className="mo-face"
+          data-scene={scene === 'scene' ? 'scene' : 'studio'}
+          data-press="card"
+          onClick={onOpen}
+        >
           <span className="mo-well">
             {/* ============================================================
                 THE PLACE'S MARK, NOT ITS INITIALS — AND IT SITS ON
@@ -275,6 +285,9 @@ function Tile({
                 ? 'no longer sold'
                 : `${place.census.items.toLocaleString('en-AU')} ${place.census.noun}`}
             </span>
+          </span>
+          <span className="mo-go" aria-hidden="true">
+            Open
           </span>
         </button>
         <button

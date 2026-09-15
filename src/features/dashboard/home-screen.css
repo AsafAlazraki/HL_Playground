@@ -763,3 +763,453 @@
   box-shadow: none;
   padding-inline: 0;
 }
+
+
+/* ============================================================
+   THE TILE — Nimbus's where there is a photograph, Zodiac's where
+   there is a render. 2026-09-15, the night the standard changed.
+
+   Nimbus (builder.nimbusboats.com, driven live): a photograph fills
+   the tile, the model's name sits over it bottom-left in a light
+   wide face, the year small above it, "BUILD" an outline pill in
+   the corner. Zodiac (configure.zodiac-nautic.com): a render large
+   on white with the name under it. A place or a model gets one or
+   the other by what its own picture is — `data-scene` is read from
+   the pixels, never assumed.
+   ============================================================ */
+
+/* -- the scene tile: the picture is the card ------------------- */
+
+[data-scene='scene'].fd-tile {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--scene-deep);
+  color: var(--scene-ink);
+  box-shadow: var(--e-card);
+}
+
+[data-scene='scene'].fd-tile .fd-well {
+  position: absolute;
+  inset: 0;
+  aspect-ratio: auto;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: var(--scene-deep);
+  box-shadow: none;
+  transition: transform var(--d-slow) var(--ease-out);
+}
+
+[data-scene='scene'].fd-tile .fd-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: none;
+}
+
+[data-scene='scene'].fd-tile .fd-plate {
+  display: none;
+}
+
+/* the veil under the words; the card's own deep ground is what the
+   contrast ruler composites */
+[data-scene='scene'].fd-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--scene-veil) 0%, transparent 40%, var(--scene-foot) 100%);
+  pointer-events: none;
+}
+
+[data-scene='scene'].fd-tile .fd-say {
+  position: absolute;
+  left: var(--s-5);
+  right: var(--s-5);
+  bottom: var(--s-5);
+  z-index: 2;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--s-1);
+  padding: 0;
+  color: var(--scene-ink);
+  text-shadow: 0 1px 2px var(--scene-foot);
+}
+
+[data-scene='scene'].fd-tile .fd-name {
+  min-height: 0;
+  max-height: none;
+  font-family: var(--font-wide);
+  font-weight: 300;
+  font-size: clamp(1.375rem, 1rem + 1.3vw, 2rem);
+  line-height: 1.05;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--scene-ink);
+}
+
+[data-scene='scene'].fd-tile .fd-say > :not(.fd-name) {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--scene-ink);
+  opacity: 0.85;
+}
+
+.fd-go {
+  display: none;
+}
+
+[data-scene='scene'].fd-tile .fd-go {
+  position: absolute;
+  right: var(--s-5);
+  bottom: var(--s-5);
+  z-index: 2;
+  display: inline-block;
+  padding: var(--s-2) var(--s-4);
+  border: var(--border) solid var(--scene-ink);
+  border-radius: 4px;
+  color: var(--scene-ink);
+  font-size: var(--t-caption-size);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-scene='scene'].fd-tile:hover .fd-well {
+    transform: scale(1.03);
+  }
+
+  [data-scene='scene'].fd-tile:hover .fd-go {
+    background: var(--scene-ink);
+    color: var(--scene-deep);
+  }
+}
+
+/* -- the studio tile: the render on white, the name under it ---- */
+
+[data-scene='studio'].fd-tile .fd-well {
+  background: var(--surface-1);
+}
+
+[data-scene='studio'].fd-tile .fd-plate {
+  background: var(--surface-1);
+}
+
+[data-scene='studio'].fd-tile .fd-name {
+  font-family: var(--font-wide);
+  font-weight: 300;
+  font-size: clamp(1.25rem, 0.95rem + 1vw, 1.625rem);
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+
+/* ============================================================
+   THE TILE — Nimbus's where there is a photograph, Zodiac's where
+   there is a render. 2026-09-15, the night the standard changed.
+
+   Nimbus (builder.nimbusboats.com, driven live): a photograph fills
+   the tile, the model's name sits over it bottom-left in a light
+   wide face, the year small above it, "BUILD" an outline pill in
+   the corner. Zodiac (configure.zodiac-nautic.com): a render large
+   on white with the name under it. A place or a model gets one or
+   the other by what its own picture is — `data-scene` is read from
+   the pixels, never assumed.
+   ============================================================ */
+
+/* -- the scene tile: the picture is the card ------------------- */
+
+[data-scene='scene'].fd-brand {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--scene-deep);
+  color: var(--scene-ink);
+  box-shadow: var(--e-card);
+}
+
+[data-scene='scene'].fd-brand .fd-brand-well {
+  position: absolute;
+  inset: 0;
+  aspect-ratio: auto;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: var(--scene-deep);
+  box-shadow: none;
+  transition: transform var(--d-slow) var(--ease-out);
+}
+
+[data-scene='scene'].fd-brand .fd-brand-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: none;
+}
+
+[data-scene='scene'].fd-brand .fd-brand-plate {
+  display: none;
+}
+
+/* the veil under the words; the card's own deep ground is what the
+   contrast ruler composites */
+[data-scene='scene'].fd-brand::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--scene-veil) 0%, transparent 40%, var(--scene-foot) 100%);
+  pointer-events: none;
+}
+
+[data-scene='scene'].fd-brand .fd-brand-say {
+  position: absolute;
+  left: var(--s-5);
+  right: var(--s-5);
+  bottom: var(--s-5);
+  z-index: 2;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--s-1);
+  padding: 0;
+  color: var(--scene-ink);
+  text-shadow: 0 1px 2px var(--scene-foot);
+}
+
+[data-scene='scene'].fd-brand .fd-brand-name {
+  min-height: 0;
+  max-height: none;
+  font-family: var(--font-wide);
+  font-weight: 300;
+  font-size: clamp(1.375rem, 1rem + 1.3vw, 2rem);
+  line-height: 1.05;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--scene-ink);
+}
+
+[data-scene='scene'].fd-brand .fd-brand-say > :not(.fd-brand-name) {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--scene-ink);
+  opacity: 0.85;
+}
+
+.fd-brand-go {
+  display: none;
+}
+
+[data-scene='scene'].fd-brand .fd-brand-go {
+  position: absolute;
+  right: var(--s-5);
+  bottom: var(--s-5);
+  z-index: 2;
+  display: inline-block;
+  padding: var(--s-2) var(--s-4);
+  border: var(--border) solid var(--scene-ink);
+  border-radius: 4px;
+  color: var(--scene-ink);
+  font-size: var(--t-caption-size);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-scene='scene'].fd-brand:hover .fd-brand-well {
+    transform: scale(1.03);
+  }
+
+  [data-scene='scene'].fd-brand:hover .fd-brand-go {
+    background: var(--scene-ink);
+    color: var(--scene-deep);
+  }
+}
+
+/* -- the studio tile: the render on white, the name under it ---- */
+
+[data-scene='studio'].fd-brand .fd-brand-well {
+  background: var(--surface-1);
+}
+
+[data-scene='studio'].fd-brand .fd-brand-plate {
+  background: var(--surface-1);
+}
+
+[data-scene='studio'].fd-brand .fd-brand-name {
+  font-family: var(--font-wide);
+  font-weight: 300;
+  font-size: clamp(1.25rem, 0.95rem + 1vw, 1.625rem);
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+
+/* ============================================================
+   THE TILE — Nimbus's where there is a photograph, Zodiac's where
+   there is a render. 2026-09-15, the night the standard changed.
+
+   Nimbus (builder.nimbusboats.com, driven live): a photograph fills
+   the tile, the model's name sits over it bottom-left in a light
+   wide face, the year small above it, "BUILD" an outline pill in
+   the corner. Zodiac (configure.zodiac-nautic.com): a render large
+   on white with the name under it. A place or a model gets one or
+   the other by what its own picture is — `data-scene` is read from
+   the pixels, never assumed.
+   ============================================================ */
+
+/* -- the scene tile: the picture is the card ------------------- */
+
+[data-scene='scene'].fd-quote {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--scene-deep);
+  color: var(--scene-ink);
+  box-shadow: var(--e-card);
+}
+
+[data-scene='scene'].fd-quote .fd-quote-well {
+  position: absolute;
+  inset: 0;
+  aspect-ratio: auto;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: var(--scene-deep);
+  box-shadow: none;
+  transition: transform var(--d-slow) var(--ease-out);
+}
+
+[data-scene='scene'].fd-quote .fd-quote-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: none;
+}
+
+[data-scene='scene'].fd-quote .fd-quote-plate {
+  display: none;
+}
+
+/* the veil under the words; the card's own deep ground is what the
+   contrast ruler composites */
+[data-scene='scene'].fd-quote::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--scene-veil) 0%, transparent 40%, var(--scene-foot) 100%);
+  pointer-events: none;
+}
+
+[data-scene='scene'].fd-quote .fd-quote-say {
+  position: absolute;
+  left: var(--s-5);
+  right: var(--s-5);
+  bottom: var(--s-5);
+  z-index: 2;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--s-1);
+  padding: 0;
+  color: var(--scene-ink);
+  text-shadow: 0 1px 2px var(--scene-foot);
+}
+
+[data-scene='scene'].fd-quote .fd-quote-name {
+  min-height: 0;
+  max-height: none;
+  font-family: var(--font-wide);
+  font-weight: 300;
+  font-size: clamp(1.375rem, 1rem + 1.3vw, 2rem);
+  line-height: 1.05;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--scene-ink);
+}
+
+[data-scene='scene'].fd-quote .fd-quote-say > :not(.fd-quote-name) {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--scene-ink);
+  opacity: 0.85;
+}
+
+.fd-quote-go {
+  display: none;
+}
+
+[data-scene='scene'].fd-quote .fd-quote-go {
+  position: absolute;
+  right: var(--s-5);
+  bottom: var(--s-5);
+  z-index: 2;
+  display: inline-block;
+  padding: var(--s-2) var(--s-4);
+  border: var(--border) solid var(--scene-ink);
+  border-radius: 4px;
+  color: var(--scene-ink);
+  font-size: var(--t-caption-size);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-scene='scene'].fd-quote:hover .fd-quote-well {
+    transform: scale(1.03);
+  }
+
+  [data-scene='scene'].fd-quote:hover .fd-quote-go {
+    background: var(--scene-ink);
+    color: var(--scene-deep);
+  }
+}
+
+/* -- the studio tile: the render on white, the name under it ---- */
+
+[data-scene='studio'].fd-quote .fd-quote-well {
+  background: var(--surface-1);
+}
+
+[data-scene='studio'].fd-quote .fd-quote-plate {
+  background: var(--surface-1);
+}
+
+[data-scene='studio'].fd-quote .fd-quote-name {
+  font-family: var(--font-wide);
+  font-weight: 300;
+  font-size: clamp(1.25rem, 0.95rem + 1vw, 1.625rem);
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+/* ON A SCENE TILE THE NAME OWNS THE BOTTOM-LEFT CORNER, so the
+   brand's glyph moves to the top-left in the scene's ink; measured
+   under "91 models" on Stacer at 1440, 2026-09-15. */
+.fd-brand[data-scene='scene'] .fd-brand-mark.is-over {
+  inset: var(--s-4) auto auto var(--s-4);
+  z-index: 2;
+  color: var(--scene-ink);
+}

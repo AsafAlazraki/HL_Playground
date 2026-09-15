@@ -50,6 +50,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { Button, Marque } from '@/ui'
 import type { AppUser } from '@/features/auth/session'
 import { FrozenPhoto } from '@/features/quote/photo'
+import { useSceneKind, useSceneKinds } from '@/features/quote/scene'
 import { useQuotes } from '@/features/quote/quotes'
 import type { DashboardActs } from './acts'
 import { doorPicture, doorsOf } from './doors'
@@ -149,6 +150,12 @@ export function HomeScreen({ user, ...acts }: HomeScreenProps): ReactElement {
     month: 'long',
   })
 
+  /* THE TILE RULE FOR THE SHELVES DRAWN INLINE — one hook, every
+     cover, since a card inside a `.map` cannot call one of its own */
+  const sceneOf = useSceneKinds([
+    ...brands.map((b) => b.cover?.src),
+    ...roll.mine.map((q) => q.subjectImage?.src),
+  ])
   return (
     <div className="fd" data-register="showroom">
       <div className="fd-port">
@@ -252,6 +259,7 @@ export function HomeScreen({ user, ...acts }: HomeScreenProps): ReactElement {
                     <button
                       type="button"
                       className="fd-brand"
+                      data-scene={sceneOf(b.cover?.src) === 'scene' ? 'scene' : 'studio'}
                       data-kind={b.place.kind}
                       data-press="card"
                       onClick={() => acts.onOpenModule(b.place.moduleId)}
@@ -299,6 +307,9 @@ export function HomeScreen({ user, ...acts }: HomeScreenProps): ReactElement {
                         <span className="t-caption fd-brand-n">
                           {b.place.census.items.toLocaleString('en-AU')} {b.place.census.noun}
                         </span>
+                      </span>
+                      <span className="fd-brand-go" aria-hidden="true">
+                        Open
                       </span>
                     </button>
                   </li>
@@ -352,6 +363,7 @@ export function HomeScreen({ user, ...acts }: HomeScreenProps): ReactElement {
                         <button
                           type="button"
                           className="fd-quote"
+                          data-scene={sceneOf(q.subjectImage?.src) === 'scene' ? 'scene' : 'studio'}
                           data-press="card"
                           onClick={() => acts.onOpenQuote(q.id)}
                         >
@@ -377,6 +389,9 @@ export function HomeScreen({ user, ...acts }: HomeScreenProps): ReactElement {
                             </span>
                           </span>
                           <span className="t-small fd-quote-sum">{money(totals.total)}</span>
+                          <span className="fd-quote-go" aria-hidden="true">
+                            Open
+                          </span>
                         </button>
                       </li>
                     )
@@ -425,11 +440,14 @@ function DoorTile({
   door: Door
   onOpen: (moduleId: string) => void
 }): ReactElement {
+  /* the tile rule, read from the picture's own pixels (`scene.ts`) */
+  const scene = useSceneKind(door.picture?.src)
   return (
     <li className="fd-cell">
       <button
         type="button"
         className="fd-tile"
+        data-scene={scene === 'scene' ? 'scene' : 'studio'}
         data-kind={door.kind}
         data-press="card"
         onClick={() => onOpen(door.moduleId)}
@@ -458,6 +476,9 @@ function DoorTile({
           <span className="t-caption fd-count">
             {door.items.toLocaleString('en-AU')} {door.noun}
           </span>
+        </span>
+        <span className="fd-go" aria-hidden="true">
+          Open
         </span>
       </button>
     </li>

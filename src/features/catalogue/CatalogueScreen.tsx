@@ -43,6 +43,7 @@ import { Field, Marque } from '@/ui'
 import { markOf } from '@/lib/mark'
 import { buildEntries } from '@/features/modules/read'
 import { FrozenPhoto } from '@/features/quote/photo'
+import { useSceneKind } from '@/features/quote/scene'
 import { Colourways } from './Colourways'
 import { finishLevels, foldModels, leafValues, priceOf } from './fold'
 import type { Model } from './fold'
@@ -193,6 +194,9 @@ function Card({
   const first = model.offers[0]
   const { say: priced, spread } = priceOf(model)
   const many = model.offers.length > 1
+  /* NIMBUS'S TILE WHERE THE MODEL HAS A PHOTOGRAPH, ZODIAC'S WHERE IT
+     HAS A RENDER — read from the picture's own pixels (`scene.ts`). */
+  const scene = useSceneKind(model.img?.src)
 
   return (
     <li className="ct-cell">
@@ -200,6 +204,7 @@ function Card({
         <button
           type="button"
           className="ct-face"
+          data-scene={scene === 'scene' ? 'scene' : 'studio'}
           data-press="card"
           aria-expanded={many ? open : undefined}
           onClick={() => {
@@ -243,6 +248,9 @@ function Card({
             <span className="t-caption ct-count">
               {many ? `${model.offers.length} finishes` : ''}
             </span>
+          </span>
+          <span className="ct-go" aria-hidden="true">
+            {many ? 'Finishes' : 'Open'}
           </span>
         </button>
 

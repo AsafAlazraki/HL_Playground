@@ -649,3 +649,30 @@ the note in the file says so.
 | `npm test` | seven green |
 | `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,278 clear · clean, document 4.73× |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-15, night — home, the catalogue, modules take the tile rule
+
+The three screens still in the earlier language. Each card now asks its
+own picture (`scene.ts`) and is one of two tiles: a **scene tile**
+where the picture is a photograph — Nimbus's shape, the picture to the
+edge at 4:3, the name in the wide light face over its foot, an outline
+pill — and a **studio tile** where it is a render — Zodiac's, the render
+on white, the name under it. Nothing is invented for a picture that is
+missing: a kind or a place with none shows its plate or its mark and
+stays a studio tile.
+
+`useSceneKinds` is the one-hook form for a shelf drawn inside a
+`.map` (home's brands and open quotes): one reducer, the same cache and
+judge as `useSceneKind`, and a function the caller asks per picture.
+
+Caught on the first photograph at 1440: the brand's glyph sat under
+"37 models" on Stabicraft and under "91 models" on Stacer, because a
+scene tile's name owns the bottom-left corner the glyph used to. On a
+scene tile the glyph now sits top-left in the scene's ink, where Nimbus
+puts its wordmark.
+
+| ruler | result |
+|---|---|
+| `npm test` | seven green, 2,974 tests, lint 343/343 |
+| `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,278 clear · clean |
+| `check:shots --update` | 14 of 14 re-taken |

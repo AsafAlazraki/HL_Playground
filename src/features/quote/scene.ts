@@ -26,7 +26,7 @@
    ============================================================ */
 
 import { useEffect, useReducer } from 'react'
-import { useImageDisplay } from '@/lib/imageSources'
+import { seededCopy, useImageDisplay } from '@/lib/imageSources'
 
 export type SceneKind = 'scene' | 'studio' | 'unknown'
 
@@ -119,4 +119,54 @@ export function useSceneKind(src: string | undefined): SceneKind {
   }, [src, at, paint])
   if (!src || !paint) return 'studio'
   return known.get(at) ?? 'unknown'
+}
+
+/* ============================================================
+   MANY PICTURES AT ONCE — for a screen that draws its cards inside
+   a `.map` and cannot call a hook per card. One hook, one reducer,
+   the same cache and the same judge; the caller asks the returned
+   function for each picture's verdict. Resolution is the same
+   `seededCopy` the display hook uses, so a seeded picture is read
+   from the repository's own copy and a remote one from its host —
+   where a host refuses the canvas, the honest failure is "studio".
+   ============================================================ */
+export function useSceneKinds(srcs: readonly (string | undefined)[]): (src: string | undefined) => SceneKind {
+  const [, landed] = useReducer((n: number) => n + 1, 0)
+  const key = srcs.filter(Boolean).join('\n')
+  useEffect(() => {
+    let live = true
+    for (const src of key.split('\n')) {
+      if (src === '') continue
+      const at = seededCopy(src)?.at ?? src
+      if (known.has(at)) continue
+      const img = new Image()
+      const origin = globalThis.location?.origin ?? ''
+      const local = at.startsWith('/') || (origin !== '' && at.startsWith(origin))
+      if (!local) img.crossOrigin = 'anonymous'
+      img.addEventListener(
+        'load',
+        () => {
+          known.set(at, judge(img))
+          if (live) landed()
+        },
+        { once: true },
+      )
+      img.addEventListener(
+        'error',
+        () => {
+          known.set(at, 'studio')
+          if (live) landed()
+        },
+        { once: true },
+      )
+      img.src = at
+    }
+    return () => {
+      live = false
+    }
+  }, [key])
+  return (src) => {
+    if (!src) return 'studio'
+    return known.get(seededCopy(src)?.at ?? src) ?? 'unknown'
+  }
 }
