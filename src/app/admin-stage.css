@@ -319,3 +319,164 @@ button.ad-row:focus-visible {
     grid-row: 4;
   }
 }
+
+/* ============================================================
+   ADMIN, IN PORSCHE'S LANGUAGE — 2026-09-15.
+
+   The language every Cockpit screen took tonight. What it was: an
+   uppercase mono eyebrow, a mono role beside the title, an
+   uppercase band head, doors on hairlines with a bordered glyph
+   square and a mono fact, a bordered button, a boxed field. What
+   it is: a title pair with the role as a chip; the band's doors in
+   a white card on a 16px radius, each led by its glyph on a disc,
+   the fact in the body face; the one field rounded; the door's act
+   a grey pill.
+   ============================================================ */
+
+.ad {
+  background: var(--surface-1);
+}
+
+.ad .ph-name {
+  font-size: var(--t-display-size);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+/* the role beside the name is a chip, not a mono aside */
+.ad .ph-count {
+  display: inline-block;
+  padding: 2px var(--s-3);
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.ad .ph-line {
+  color: var(--fg-secondary);
+}
+
+.ad .ui-section-caption {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-tertiary);
+}
+
+.ad-band-head {
+  padding-bottom: var(--s-2);
+  border-bottom: 0;
+}
+
+/* -- the doors are rows in a card ----------------------------- */
+
+.ad-grid {
+  border: var(--border) solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: var(--e-card);
+  overflow: hidden;
+}
+
+.ad-cell + .ad-cell {
+  border-top-color: var(--line);
+}
+
+.ad-row {
+  padding: var(--s-3) var(--s-5);
+  border-radius: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button.ad-row:hover {
+    background: var(--surface-2);
+  }
+}
+
+.ad-door-mark {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+}
+
+.ad-door-name {
+  font-size: var(--t-body-size);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.ad-door-fact {
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  color: var(--fg-tertiary);
+}
+
+.ad-door-go {
+  color: var(--fg-tertiary);
+}
+
+/* -- the field and the act ------------------------------------ */
+
+.ad-terms .ui-field-input {
+  border: var(--border) solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-1);
+  padding-inline: var(--s-4);
+}
+
+.ad-terms .ui-field-input:focus {
+  border-color: var(--fg);
+  box-shadow: none;
+}
+
+.ad-terms .ui-field-label {
+  color: var(--fg-tertiary);
+}
+
+.ad-do .ui-btn,
+.ad-do .btn {
+  min-height: 40px;
+  padding-inline: var(--s-4);
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg);
+  font-weight: 500;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ad-do .ui-btn:hover,
+  .ad-do .btn:hover {
+    background: var(--surface-4);
+  }
+}
+
+.ad-say {
+  color: var(--fg-tertiary);
+}
+
+/* the stage's own ground, at the class the stage actually carries;
+   and the act, whichever button class the primitive gives it */
+.shell-viewstage.ad {
+  background: var(--surface-1);
+}
+
+.ad .ad-do button {
+  min-height: 40px;
+  padding-inline: var(--s-4);
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg);
+  box-shadow: none;
+}

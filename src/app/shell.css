@@ -3506,3 +3506,14 @@
     background: var(--surface-1);
   }
 }
+
+/* admin too */
+.shell-viewstage.ad .shell-view-bar {
+  background: var(--surface-1);
+}
+
+@media (max-width: 1024px) {
+  .shell-body:has(.ad) {
+    background: var(--surface-1);
+  }
+}

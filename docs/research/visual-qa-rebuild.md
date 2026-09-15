@@ -506,3 +506,17 @@ where "BLOCKER" was a mono capital; column names in the body face.
 |---|---|
 | `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,286 clear · clean, review 2.83× |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-15, after close — Admin
+
+Second of the old-language screens. CSS only, the last block of
+`admin-stage.css`: a title pair with the role as a chip where it was a
+mono aside; the eyebrow and the band head in sentence case; the doors in
+a white card on a 16px radius, each led by its glyph on a disc where a
+bordered square stood, the fact in the body face; the one field rounded;
+the door's act a grey pill.
+
+| ruler | result |
+|---|---|
+| `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,286 clear · clean, admin 2.83× |
+| `check:shots --update` | 14 of 14 re-taken |
