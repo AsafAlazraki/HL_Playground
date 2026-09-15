@@ -3494,3 +3494,15 @@
     background: var(--surface-1);
   }
 }
+
+/* the reviewer too */
+.shell-viewstage:has(.rw),
+.shell-viewstage:has(.rw) .shell-view-bar {
+  background: var(--surface-1);
+}
+
+@media (max-width: 1024px) {
+  .shell-body:has(.rw) {
+    background: var(--surface-1);
+  }
+}

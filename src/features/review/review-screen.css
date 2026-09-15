@@ -339,3 +339,198 @@
     max-height: 40vh;
   }
 }
+
+/* ============================================================
+   THE REVIEWER, IN PORSCHE'S LANGUAGE — 2026-09-15.
+
+   The language every Cockpit screen took tonight: a title pair,
+   the list a white card on a 16px radius, every row led by a mark,
+   sentence case in the body face, no mono, the severity a chip.
+   The engine's findings and their words are untouched; this is
+   the last block of the file.
+   ============================================================ */
+
+.rw {
+  gap: var(--s-5);
+  padding-top: var(--s-6);
+  background: var(--surface-1);
+}
+
+/* -- the title pair ------------------------------------------- */
+
+.rw-name {
+  font-size: var(--t-display-size);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.rw-census {
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: 400;
+  color: var(--fg-secondary);
+}
+
+/* -- the ledger of rules: a card, rows led by a severity disc --- */
+
+.rw-ledger {
+  border: var(--border) solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: var(--e-card);
+}
+
+.rw-rule {
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4) var(--s-3) var(--s-4);
+  border-bottom: var(--border) solid var(--line);
+  font-family: var(--font-sans);
+}
+
+.rw-rule.is-on {
+  background: color-mix(in srgb, var(--action) 8%, var(--surface-1));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rw-rule:hover {
+    background: var(--surface-2);
+  }
+
+  .rw-rule.is-on:hover {
+    background: color-mix(in srgb, var(--action) 10%, var(--surface-1));
+  }
+}
+
+/* the 3px rail down the row's edge becomes a disc that leads it */
+.rw-rule-rail {
+  position: static;
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+
+.rw-rule-name {
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.rw-rule-where,
+.rw-rule-n {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+}
+
+.rw-rule-n {
+  padding: 1px var(--s-2);
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+}
+
+.rw-rule.is-on .rw-rule-n {
+  background: var(--action);
+  color: var(--action-fg);
+}
+
+/* -- every table's findings are a card ------------------------- */
+
+.rw-group {
+  gap: 0;
+  padding: var(--s-4) var(--s-5) var(--s-2);
+  border: var(--border) solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: var(--e-card);
+}
+
+.rw-group-head {
+  padding-bottom: var(--s-3);
+  border-bottom: 0;
+}
+
+.rw-group-name {
+  font-size: var(--t-heading-size);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.rw-group-n {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+}
+
+.rw-rolls {
+  gap: 0;
+}
+
+/* a roll is a row on a hairline, not a card with a rail */
+.rw-roll {
+  padding: var(--s-3) 0;
+  border: 0;
+  border-top: var(--border) solid var(--line);
+  border-radius: 0;
+  background: none;
+}
+
+.rw-roll::before {
+  display: none;
+}
+
+.rw-roll-head {
+  align-items: center;
+}
+
+.rw-roll-name {
+  font-size: var(--t-body-size);
+}
+
+/* the severity is a chip in the body face — never a mono capital */
+.rw-roll-sev {
+  padding: 1px var(--s-2);
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.rw-roll[data-severity='blocker'] .rw-roll-sev {
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface-1));
+  color: var(--danger);
+}
+
+.rw-roll[data-severity='advisory'] .rw-roll-sev {
+  background: color-mix(in srgb, var(--kind-amber) 14%, var(--surface-1));
+  color: var(--kind-amber);
+}
+
+.rw-why {
+  color: var(--fg-secondary);
+}
+
+.rw-each {
+  gap: 2px;
+  margin-top: var(--s-2);
+}
+
+/* the column names are values a person reads, in the body face */
+.rw-mark-at {
+  font-family: var(--font-sans);
+  color: var(--fg-secondary);
+}
+
+.rw-mark-why {
+  color: var(--fg-tertiary);
+}
+
+.rw-none {
+  color: var(--fg-tertiary);
+}

@@ -492,3 +492,17 @@ been waiting on `.ft`, a class nothing defines; it waits on `.fo-root`.
 | `check:styles` | 468/468, no orphans |
 | `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,286 clear · clean, fitment 3.09× |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-15, after close — Review
+
+"go." Review, first of the screens SCREENS.md lists as still in the old
+language. CSS only, the last block of `review-screen.css`: a title pair;
+the ledger of rules a card, each row led by a severity disc where a 3px
+rail ran down its edge, the count a chip; every table's findings a card,
+each finding a row on a hairline, the severity a chip in the body face
+where "BLOCKER" was a mono capital; column names in the body face.
+
+| ruler | result |
+|---|---|
+| `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,286 clear · clean, review 2.83× |
+| `check:shots --update` | 14 of 14 re-taken |
