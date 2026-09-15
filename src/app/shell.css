@@ -3476,3 +3476,21 @@
     background: var(--surface-1);
   }
 }
+
+/* what fits what: the page has its own masthead, so the bar keeps
+   only the way back — "Fitment" over "What one boat can be sold
+   with" was the catalogue's two-headers fault again */
+.shell-viewstage:has(.fo-root),
+.shell-viewstage:has(.fo-root) .shell-view-bar {
+  background: var(--surface-1);
+}
+
+.shell-viewstage:has(.fo-root) .shell-view-what {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .shell-body:has(.fo-root) {
+    background: var(--surface-1);
+  }
+}

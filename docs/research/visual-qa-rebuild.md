@@ -468,3 +468,27 @@ verdict are untouched.
 | `check:styles` | 468/468, no orphans |
 | `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,286 clear · clean, rules 3.09× |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-15, close — What fits what, and the inventory
+
+"Now do the same Porsche treatment on the What fits what screen BUT also —
+do we have a knowledge of what screens we actually need, and the
+experience in every screen?" No, not in one place: five documents each
+held a piece. `docs/specs/SCREENS.md` now lists every stage in
+`winKit.tsx`'s union with who stands in front of it, the job, the
+experience it must give, and its status tonight — and what is still
+missing by screen.
+
+Fitment was the closest screen already, so the pass is short: white
+ground, sentence-case eyebrows, the mono counts to the body face, 16px
+radii, the bar's second title ("Fitment" over "What one boat can be sold
+with") hidden. Two things resisted until `elementsFromPoint` named them:
+the stats are a `ul.fo-ledger` inside a raised `ui-card`, and the finder's
+well is a sunken `ui-card` — grey on a white page. And the harness had
+been waiting on `.ft`, a class nothing defines; it waits on `.fo-root`.
+
+| ruler | result |
+|---|---|
+| `check:styles` | 468/468, no orphans |
+| `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,286 clear · clean, fitment 3.09× |
+| `check:shots --update` | 14 of 14 re-taken |

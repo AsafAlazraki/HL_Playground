@@ -85,7 +85,7 @@ const SCREENS = {
     },
   ],
   fitment: [
-    '.ft',
+    '.fo-root',
     async (p) => {
       await rail(p, /^Data/)
       await wait(p, 1500)

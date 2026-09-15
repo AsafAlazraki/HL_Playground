@@ -1170,3 +1170,272 @@
     align-items: center;
   }
 }
+
+/* ============================================================
+   WHAT FITS WHAT, IN PORSCHE'S LANGUAGE — 2026-09-15.
+
+   The language every Cockpit screen took tonight: a title pair,
+   white cards on a 16px radius, sentence case in the body face,
+   figures in the body face with tabular numerals, no mono, the one
+   act a blue pill. This screen was closest already — it was cards
+   and bars — so the pass is short: the ground, the eyebrows, the
+   grey well the finder sat in, the mono counts, the radii, and the
+   window bar's second title ("Fitment" over "What one boat can be
+   sold with").
+   ============================================================ */
+
+.fo-root,
+.fo-page {
+  background: var(--surface-1);
+}
+
+/* -- captions: sentence case, body face ----------------------- */
+
+.fo-root .ui-section-caption,
+.fo-root .mono-label,
+.fo-root .ds-mono,
+.fo-root .ds-label,
+.fo-root .t-label,
+.fo-band-note,
+.fo-fan-count,
+.fo-void-count {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-tertiary);
+}
+
+/* -- the title pair ------------------------------------------- */
+
+.fo-title {
+  font-family: var(--font-sans);
+  font-size: var(--t-display-size);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+
+.fo-lede {
+  color: var(--fg-secondary);
+}
+
+/* -- the figures ----------------------------------------------- */
+
+.fo-stat-n,
+.fo-derived-n,
+.fo-row-n,
+.fo-pick-n,
+.fo-strand-n,
+.fo-gap-n,
+.fo-void-n {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.fo-stat-n {
+  font-size: var(--t-heading-size);
+  font-weight: 600;
+}
+
+.fo-stat-word,
+.fo-strand-of,
+.fo-row-say,
+.fo-pick-say {
+  color: var(--fg-tertiary);
+}
+
+/* -- every card on a 16px radius ------------------------------- */
+
+.fo-stat,
+.fo-band,
+.fo-fan,
+.fo-void,
+.fo-ledger {
+  border-radius: 16px;
+  border-color: var(--line);
+  box-shadow: var(--e-card);
+}
+
+.fo-band-title,
+.fo-fan-name {
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.fo-band-lede {
+  color: var(--fg-tertiary);
+}
+
+/* the fan's count is a chip, as every count on a register is */
+.fo-fan-count {
+  padding: 2px var(--s-3);
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+}
+
+/* -- the finder: a white well, a rounded field, rows on lines --- */
+
+.fo-picks {
+  padding: var(--s-4) var(--s-4) var(--s-3);
+  border: var(--border) solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-1);
+}
+
+.fo-picks .ui-field-input,
+.fo-pick-head input {
+  border: var(--border) solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-1);
+  padding-inline: var(--s-4);
+}
+
+.fo-picks .ui-field-input:focus,
+.fo-pick-head input:focus {
+  border-color: var(--fg);
+  box-shadow: none;
+}
+
+.fo-pick {
+  padding-block: var(--s-2);
+  border-bottom: var(--border) solid var(--line);
+}
+
+.fo-pick:last-of-type {
+  border-bottom: 0;
+}
+
+.fo-pick-name {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.fo-pick-open {
+  border-radius: 12px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .fo-pick-open:hover {
+    background: var(--surface-2);
+  }
+}
+
+.fo-list-more,
+.fo-pick-more {
+  color: var(--fg-tertiary);
+}
+
+/* -- the bars keep their kind hue; the track is the app's line --- */
+
+.fo-bar,
+.fo-derived-bar {
+  background: var(--surface-3);
+  border-radius: 999px;
+}
+
+.fo-bar-fill,
+.fo-derived-fill {
+  border-radius: 999px;
+}
+
+/* -- the rig (one boat opened) --------------------------------- */
+
+.rg-title {
+  font-family: var(--font-sans);
+  font-size: var(--t-display-size);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.rg-hull,
+.rg-cat,
+.rg-pick,
+.rg-note {
+  border-radius: 16px;
+  border-color: var(--line);
+}
+
+.rg-hull-price,
+.rg-row-price,
+.rg-pick-price,
+.rg-slot-count {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+
+/* the stat cells are cells of one card, not four cards of their
+   own — the first frame showed them shadowed and overlapping; and
+   the finder's well and its field sat under rules one selector
+   deeper than the ones above */
+.fo-stat {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.fo-root .fo-band .fo-picks,
+.fo-root .fo-picks {
+  background: var(--surface-1);
+  border: var(--border) solid var(--line);
+  border-radius: 12px;
+}
+
+.fo-root .fo-picks input,
+.fo-root .fo-pick-head input,
+.fo-root .fo-picks .ui-field-input {
+  border: var(--border) solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-1);
+  padding-inline: var(--s-4);
+}
+
+.fo-root .fo-picks input:focus {
+  border-color: var(--fg);
+  box-shadow: none;
+  outline: none;
+}
+
+/* named by the probe, not guessed: the stats are a `ul.fo-ledger`
+   inside a raised `ui-card`, so the ledger takes no shadow of its
+   own and the card takes the radius; the finder's well is a sunken
+   `ui-card`, and on a white page a sunken well is a grey box */
+.fo-ledger {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.fo-root .ui-card,
+.fo-root .ui-card--raised {
+  border-radius: 16px;
+  border-color: var(--line);
+}
+
+.fo-root .ui-card--sunken {
+  background: var(--surface-1);
+  border: var(--border) solid var(--line);
+  border-radius: 12px;
+}
+
+.fo-root .ui-card--sunken .ui-field-input {
+  border: var(--border) solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-1);
+  padding-inline: var(--s-4);
+}
+
+.fo-root .ui-card--sunken .ui-field-input:focus {
+  border-color: var(--fg);
+  box-shadow: none;
+}
+
+.fo-root .ui-row--action {
+  border-radius: 10px;
+}
