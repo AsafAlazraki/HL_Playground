@@ -93,9 +93,13 @@ Not styling — things a person would notice are absent.
   surface, and it has not been re-cut. It needs its own measurement pass
   before its language changes — density and keyboard parity are guarded there
   by tests that must stay green.
-- **The customer register is empty in the seed.** A demo that opens on
-  "No customer register yet" undersells the screen; `SEED_AT_FULL_SCALE.md`
-  should carry a dozen people, three of them quoted.
+- **The customer register is empty in the seed, and stays empty.** The
+  owner's rule (2026-09-15): **no fake data.** A demo that opens on "No
+  customer register yet" is the true state of a business that has not filed
+  anyone, and a register of invented people would be a lie a stakeholder
+  could be told. `tools/shot-customers.mjs` types two people in for a
+  photograph and is a harness, not a seed. The same rule covers the trailer
+  stop: nothing gets paired to a hull that the price file does not pair.
 - **The configurator's trailer stop has nothing paired for most hulls**, so
   the second section a customer sees is a refusal. That is data, not design,
   and it is the single biggest thing a stakeholder will notice.
