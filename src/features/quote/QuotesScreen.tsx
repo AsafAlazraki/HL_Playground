@@ -40,7 +40,8 @@ import type { ReactElement } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { Field } from '@/ui'
 import { money } from '@/lib/money'
-import type { QuoteDef } from '@/types/model'
+import type { ImageRef, QuoteDef } from '@/types/model'
+import { FrozenPhoto } from './photo'
 import { stagesOf, useStages, stageOf } from '@/features/pipeline'
 import { useQuotes } from './quotes'
 import { quoteTotals } from './totals'
@@ -72,6 +73,10 @@ interface Row {
   unpriced: number
   by: string
   hay: string
+  /** the hull, for the row's thumbnail — Porsche's list leads every
+   *  row with the car, and a register of boats without a boat on
+   *  it is a spreadsheet */
+  image?: ImageRef
 }
 
 export function QuotesScreen({
@@ -112,6 +117,7 @@ export function QuotesScreen({
         total: money(totals.total),
         unpriced: totals.unpricedCount,
         by: q.preparedBy ?? '',
+        ...(q.subjectImage ? { image: q.subjectImage } : {}),
         hay: `${q.reference} ${customer} ${q.subjectLabel} ${stage} ${q.preparedBy ?? ''}`.toLowerCase(),
       }
     })
@@ -333,9 +339,16 @@ export function QuotesScreen({
                 <td className={row.customer === 'nobody yet' ? 'qz-c qz-c--none' : 'qz-c'}>
                   {row.customer}
                 </td>
-                <td className="qz-c qz-c--what">{row.subject}</td>
+                <td className="qz-c qz-c--what">
+                      <span className="qz-what">
+                        <FrozenPhoto img={row.image} fallbackAlt={row.subject} className="qz-pic" w={96} h={96} />
+                        <span className="qz-what-name">{row.subject}</span>
+                      </span>
+                    </td>
                 <td className="qz-c qz-c--day">{row.day}</td>
-                <td className="qz-c qz-c--stage">{row.stage}</td>
+                <td className="qz-c qz-c--stage">
+                      <span className="qz-chip" data-stage={row.stage}>{row.stage}</span>
+                    </td>
                 <td className="qz-c qz-c--n">{row.total}</td>
                 {/* A SILENT $0 ON A SUMMARY IS THE CLASS OF FAULT
                     STAKEHOLDERS CATCH — `totals.ts` says so itself, so

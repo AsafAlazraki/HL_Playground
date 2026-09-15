@@ -547,3 +547,303 @@
   flex-wrap: wrap;
   justify-content: flex-end;
 }
+
+/* ============================================================
+   THE REGISTER, IN PORSCHE'S LANGUAGE — 2026-09-15.
+
+   Their list (Porsche Finder, driven live): a title pair at 33/400
+   and 26/400; a white card on a 16px radius for the filters, with
+   the active ones as chips; one for the results bar, with the sort;
+   and every result a white card led by the car's photograph, the
+   name at 26/400, facts on one line separated by middots, the price
+   large, one black pill and one grey. No uppercase anywhere, no
+   mono, and nothing without a photograph.
+
+   This is a COCKPIT register — a dealer wants twenty rows on the
+   screen, not twenty cards — so the rows stay rows. What changes:
+   every row leads with the hull; the pipeline is a row of chips in
+   a card, not two glass billboards in mono capitals; the table is a
+   card; every caption is sentence case in the body face; the stage
+   is a chip; the one act is the blue pill.
+   ============================================================ */
+
+.qz {
+  gap: var(--s-5);
+  padding-top: var(--s-6);
+  background: var(--surface-1);
+}
+
+/* -- the title pair ------------------------------------------- */
+
+.qz-name {
+  font-size: var(--t-hero-size);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.qz-census {
+  font-family: var(--font-sans);
+  font-size: var(--t-heading-size);
+  font-weight: 400;
+  color: var(--fg-secondary);
+}
+
+.qz-way {
+  height: 44px;
+  padding: 0 var(--s-5);
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg);
+  font-size: var(--t-body-size);
+  font-weight: 500;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qz-way:hover {
+    background: var(--surface-4);
+    color: var(--fg);
+  }
+}
+
+.qz-way--go {
+  background: var(--action);
+  color: var(--action-fg);
+}
+
+/* -- the pipeline: chips in a card ------------------------------ */
+
+.qz-pipe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-5);
+  border: var(--border) solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: var(--e-card);
+}
+
+.qz-stage {
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--s-2);
+  min-width: 0;
+  padding: var(--s-2) var(--s-4);
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg);
+  box-shadow: none;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qz-stage:hover {
+    background: var(--surface-4);
+    box-shadow: none;
+  }
+}
+
+.qz-stage[aria-pressed='true'] {
+  background: var(--action);
+  color: var(--action-fg);
+}
+
+.qz-stage[aria-pressed='true'] .qz-stage-name,
+.qz-stage[aria-pressed='true'] .qz-stage-worth,
+.qz-stage[aria-pressed='true'] .qz-stage-n {
+  color: var(--action-fg);
+}
+
+.qz-stage-name {
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.qz-stage-worth {
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--fg);
+}
+
+.qz-stage-n {
+  font-family: var(--font-sans);
+  color: var(--fg-tertiary);
+}
+
+.qz-stage-bar {
+  display: none;
+}
+
+/* -- the tools ------------------------------------------------- */
+
+.qz-tools {
+  align-items: center;
+}
+
+.qz-tools .ui-field-input {
+  border: var(--border) solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-1);
+  padding-inline: var(--s-4);
+}
+
+.qz-tools .ui-field-input:focus {
+  border-color: var(--fg);
+  box-shadow: none;
+}
+
+.qz-tools .ui-field-label {
+  color: var(--fg-tertiary);
+}
+
+.qz-count {
+  color: var(--fg-tertiary);
+}
+
+/* -- the table is a card --------------------------------------- */
+
+.qz-port {
+  border: var(--border) solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: var(--e-card);
+}
+
+.qz-h {
+  background: var(--surface-1);
+  border-bottom: var(--border) solid var(--line);
+}
+
+.qz-h .t-label,
+.qz-sort {
+  font-family: var(--font-sans);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-tertiary);
+}
+
+.qz-sort[aria-pressed='true'],
+.qz-h[aria-sort] .qz-sort {
+  color: var(--fg);
+}
+
+/* the row leads with the hull, so it is taller than a spreadsheet
+   row and still four of them fit where Porsche fits one */
+.qz-row,
+.qz-c,
+.qz-open {
+  height: 60px;
+}
+
+.qz-c {
+  font-family: var(--font-sans);
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+  border-bottom: var(--border) solid var(--line);
+}
+
+.qz-open {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.qz-what {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.qz-pic {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: var(--surface-2);
+}
+
+.qz-what-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.qz-c--none {
+  color: var(--fg-tertiary);
+  font-style: italic;
+}
+
+.qz-c--day {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+
+.qz-c--n {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.qz-c--held {
+  font-family: var(--font-sans);
+  color: var(--kind-amber);
+}
+
+.qz-chip {
+  display: inline-block;
+  padding: 2px var(--s-3);
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg-secondary);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.qz-chip[data-stage='Issued'] {
+  background: color-mix(in srgb, var(--action) 12%, var(--surface-1));
+  color: var(--action);
+}
+
+.qz-none {
+  color: var(--fg-tertiary);
+}
+
+/* the sort's underline and the reference's hover take the action hue
+   with the rest of the app; and the title steps down from hero to
+   display — the sweep put the register at 4.33x and a Cockpit screen
+   is asked for 2.5-4x */
+.qz-h[aria-sort='descending'] .qz-sort,
+.qz-h[aria-sort='ascending'] .qz-sort {
+  box-shadow: inset 0 -2px 0 var(--action);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qz-open:hover {
+    color: var(--action);
+  }
+}
+
+.qz-name {
+  font-size: var(--t-display-size);
+}

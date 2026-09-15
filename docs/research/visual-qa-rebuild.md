@@ -377,3 +377,31 @@ Note for the next person: `check-contrast` and `check-shots` take `--url`,
 not `HL_ORIGIN`; run against 5090 they measured a server that had since
 died and said "No dev server" — with the default port in the sentence,
 whichever port was asked for.
+
+## 2026-09-15, night — the register in Porsche's language
+
+"Now do the same Porsche treatment on the quotes register screen."
+Porsche's saved-vehicles page is behind Porsche ID; the public list is
+Finder (`finder.porsche.com`, driven live): a title pair at 33/400 and
+26/400, the filters as chips in a white card, a results bar with the
+sort, and every result a card led by the car's photograph — the name at
+26/400, facts on one line separated by middots, the price large, one
+black pill and one grey. No uppercase, no mono, nothing without a photo.
+
+The register is COCKPIT — twenty rows, not twenty cards — so the rows
+stay rows and the language changes: every row leads with the hull
+(`QuotesScreen` rows carry the quote's frozen `subjectImage`;
+`FrozenPhoto` draws it at 44px); the pipeline is chips in a card, not
+two glass billboards in mono capitals; the table is a card; captions are
+sentence case in the body face; the stage is a chip; the one act is the
+blue pill. The title is at the display step, because the sweep put the
+hero step at 4.33× and a Cockpit screen is asked for 2.5–4×; it is 2.83×
+now.
+
+| ruler | result |
+|---|---|
+| `check:types` · `lint` · `check:styles` | clean · 343/343 · 468/468 |
+| `check-collide` | nothing overlaps |
+| `check-contrast` | 1,286 text nodes, all clear |
+| `qa-sweep` | clean; quotes 2.83× |
+| `check:shots --update` | 14 of 14 re-taken |

@@ -3445,3 +3445,10 @@
     background: var(--surface-1);
   }
 }
+
+/* the register too */
+@media (max-width: 1024px) {
+  .shell-body:has(.qz) {
+    background: var(--surface-1);
+  }
+}
