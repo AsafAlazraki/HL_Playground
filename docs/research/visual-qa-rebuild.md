@@ -624,3 +624,28 @@ is now paper OR neutral (< 0.06).
 | `npm test` | seven green, 2,974 tests, lint 343/343 |
 | `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,278 clear · clean |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-15, night — the document's cover
+
+The chapters' rule on the quote a customer is handed. `QuoteDocument`'s
+hero carries `data-scene` from `useSceneKind` on the FROZEN picture —
+the rule reads its pixels and nothing else, so the document still reads
+no live data. Where the boat has a photograph the cover is the
+photograph, the name over it in the wide light face, the reference and
+date as chips on the picture, the figures on the veil at its foot; where
+it has a render the white cover stays. Paper never gets the scene: the
+print block strips it, verified by reading the hero's computed style
+under print media (`bg=none color=rgb(11,14,16) photo=block`).
+
+Caught on the way, for the second time in this file: the paper rules
+were first inserted before the file's last brace, which no longer closes
+the print block — screen rules were appended after it earlier — and so
+sat inside a screen rule and did nothing (`bg=url(...) color=white` under
+print). They are placed by brace-matching from `@media print {` now, and
+the note in the file says so.
+
+| ruler | result |
+|---|---|
+| `npm test` | seven green |
+| `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,278 clear · clean, document 4.73× |
+| `check:shots --update` | 14 of 14 re-taken |

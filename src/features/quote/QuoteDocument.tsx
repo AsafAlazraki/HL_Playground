@@ -40,10 +40,12 @@
    with its own screen. The @page rules live in quote.css.
    ============================================================ */
 
-import type { ReactElement, ReactNode } from 'react'
+import type { CSSProperties, ReactElement, ReactNode } from 'react'
 import { money } from './pricing'
 import { lineAmount, linesOf, looseLines, quoteTotals } from './totals'
 import { FrozenPhoto } from './photo'
+import { useSceneKind } from './scene'
+import { useImageDisplay } from '@/lib/imageSources'
 import { marqueOf } from './marque'
 import { colourwayOf, splitVariant } from './colourway'
 import type { QuoteDef, QuoteLine } from '@/types/model'
@@ -81,6 +83,15 @@ function readTrim(trim: string): string {
 }
 
 export function QuoteDocument({ quote, aside }: QuoteDocumentProps): ReactElement {
+  /* THE COVER IS A SCENE WHEN THE BOAT'S PICTURE IS A PHOTOGRAPH —
+     the chaptered configurator's rule, on the document's first page.
+     The frozen picture is still the frozen picture: `scene.ts` only
+     reads its pixels to decide whether it fills the cover or sits on
+     white. Paper never gets the scene (the print block strips it), so
+     the printed document is unchanged. */
+  const cover = useSceneKind(quote.subjectImage?.src)
+  const { at: coverAt, paint: coverPaints } = useImageDisplay(quote.subjectImage?.src ?? '')
+  const coverScene = cover === 'scene' && coverPaints
   const totals = quoteTotals(quote)
   const issued = quote.issuedAt ?? quote.updatedAt
 
@@ -150,7 +161,11 @@ export function QuoteDocument({ quote, aside }: QuoteDocumentProps): ReactElemen
           ============================================================ */}
       <div className="qt-doc-main">
         {/* -- 1. the cover ------------------------------------- */}
-        <section className="qt-doc-hero">
+        <section
+          className="qt-doc-hero"
+          data-scene={coverScene ? 'scene' : 'studio'}
+          style={coverScene ? ({ '--qt-cover': `url("${coverAt}")` } as CSSProperties) : undefined}
+        >
           {/* the box is reserved before the bytes land so a picture
               arriving late never re-paginates a document mid-print */}
           <FrozenPhoto

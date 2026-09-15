@@ -2746,6 +2746,83 @@
   }
 }
 
+
+/* ============================================================
+   THE COVER IS A SCENE WHEN THE BOAT HAS A PHOTOGRAPH — the
+   chapters' rule on the document's first page. The picture fills
+   the cover, the name sits over it in the light wide face, the
+   chips and the specs ride on the veil at its foot. A boat the seed
+   holds as a render keeps the white cover below. Paper never gets
+   the scene: the print block strips it.
+   ============================================================ */
+.qt-doc-hero[data-scene='scene'] {
+  position: relative;
+  min-height: 34rem;
+  padding: var(--s-8);
+  border: 0;
+  background: var(--scene-deep) var(--qt-cover) center 45% / cover no-repeat;
+  color: var(--scene-ink);
+  overflow: hidden;
+}
+
+.qt-doc-hero[data-scene='scene']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--scene-veil) 0%, transparent 40%, var(--scene-foot) 100%);
+  pointer-events: none;
+}
+
+.qt-doc-hero[data-scene='scene'] > * {
+  position: relative;
+  z-index: 1;
+}
+
+.qt-doc-hero[data-scene='scene'] .qt-doc-photo {
+  display: none;
+}
+
+.qt-doc-hero[data-scene='scene'] .qt-doc-subject-id {
+  align-items: flex-start;
+  margin-top: auto;
+  text-align: left;
+}
+
+.qt-doc-hero[data-scene='scene'] .qt-doc-name {
+  justify-content: flex-start;
+}
+
+.qt-doc-hero[data-scene='scene'] .qt-doc-marque-maker,
+.qt-doc-hero[data-scene='scene'] .qt-doc-marque-model,
+.qt-doc-hero[data-scene='scene'] .qt-doc-kind,
+.qt-doc-hero[data-scene='scene'] .qt-doc-org,
+.qt-doc-hero[data-scene='scene'] .qt-doc-spec-val,
+.qt-doc-hero[data-scene='scene'] .qt-doc-spec dt {
+  color: var(--scene-ink);
+  text-shadow: 0 1px 2px var(--scene-foot);
+}
+
+.qt-doc-hero[data-scene='scene'] .qt-doc-marque-model {
+  font-family: var(--font-wide);
+  font-weight: 200;
+  font-size: clamp(2.75rem, 1.5rem + 4.5vw, 5.5rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.qt-doc-hero[data-scene='scene'] .qt-doc-marque-trim,
+.qt-doc-hero[data-scene='scene'] .qt-doc-chip {
+  background: var(--scene-scrim);
+  color: var(--scene-ink);
+}
+
+.qt-doc-hero[data-scene='scene'] .qt-doc-who,
+.qt-doc-hero[data-scene='scene'] .qt-doc-chips,
+.qt-doc-hero[data-scene='scene'] .qt-doc-specs {
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
 @media print {
   html,
   body {
@@ -3094,6 +3171,38 @@
   body {
     background: var(--surface-1) !important;
   }
+
+  /* paper never gets the scene */
+  .qt-doc-hero[data-scene='scene'] {
+    min-height: 0;
+    background: var(--surface-1);
+    color: var(--fg);
+  }
+
+  .qt-doc-hero[data-scene='scene']::before {
+    display: none;
+  }
+
+  .qt-doc-hero[data-scene='scene'] .qt-doc-photo {
+    display: block;
+  }
+
+  .qt-doc-hero[data-scene='scene'] .qt-doc-marque-maker,
+  .qt-doc-hero[data-scene='scene'] .qt-doc-marque-model,
+  .qt-doc-hero[data-scene='scene'] .qt-doc-kind,
+  .qt-doc-hero[data-scene='scene'] .qt-doc-org,
+  .qt-doc-hero[data-scene='scene'] .qt-doc-spec-val,
+  .qt-doc-hero[data-scene='scene'] .qt-doc-spec dt {
+    color: var(--fg);
+    text-shadow: none;
+  }
+
+  .qt-doc-hero[data-scene='scene'] .qt-doc-marque-trim,
+  .qt-doc-hero[data-scene='scene'] .qt-doc-chip {
+    background: var(--surface-3);
+    color: var(--fg-secondary);
+  }
+
 }
 
 /* FOUR THINGS FROM THE FIRST PHOTOGRAPH OF THE RE-CUT DOCUMENT.
