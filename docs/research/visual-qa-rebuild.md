@@ -864,3 +864,36 @@ state of the seed.
 | `npm test` | seven green, 2,974 tests, lint 343/343, literal px 460/460 |
 | `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,684 text nodes clear over thirteen screens · clean |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-16 — the Pricing tab, recut
+
+The price levels a place declares and the rules it goes by. Before:
+seven cards of three rows, each row's facts in a trail ("WHOLE QUOTE ·
+On the face"), and beneath them the rules panel as a card holding three
+more cards, a derivation a card with its switch on the left.
+
+The reference is the app's own registers — the sheet's drawer lines and
+the quotes register's rows, both recut this week — because a level is a
+row about a column and nothing else. **The levels are one table now:**
+the place as a drawer line (its kind glyph on the line with its name), a
+row per level — the level, the column it reads in mono so a figure can
+always be traced back, what it prices in words ("the whole quote",
+"each line"), and the one on a quote's face marked in the action wash.
+Twenty-one levels across seven places, counted in the head, on one
+screen. A place whose file declares no level would say so in its own
+row; none of Boats' seven does.
+
+**The rules beneath are unboxed:** the three wells are sections under
+hairline heads, a derivation a row with its switch at the right, the
+same drawing as the verbs on the Settings tab. The rule editor keeps
+the shape the Rules screen set.
+
+Caught on the first photograph: the kind glyph stacked above the place's
+name because the symbol primitive draws itself as a block; and the
+sweep caught the drawer row unnamed in any stylesheet.
+
+| ruler | result |
+|---|---|
+| `npm test` | seven green, 2,974 tests, lint 343/343, literal px 460/460 |
+| `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,684 text nodes clear over thirteen screens · clean |
+| `check:shots --update` | 14 of 14 re-taken |

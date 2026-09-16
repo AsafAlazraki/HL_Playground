@@ -646,13 +646,6 @@ export interface ModulePricingProps {
 }
 
 export function ModulePricing({ module, tables }: ModulePricingProps): ReactElement {
-  /* WHAT PRICES EACH TABLE, read through the two resolvers that own
-     the question — `priceLevelsFor` for the ladder the table
-     declares, `priceReadOf` for the one rung a catalogue face may
-     print. Both refuse a cost column by construction; neither is
-     re-implemented here, because a second opinion about which
-     column is a price is how a dealer's buy price reaches a screen
-     a customer can read over a shoulder. */
   const read = useMemo(
     () =>
       tables.map((t) => ({
@@ -662,66 +655,81 @@ export function ModulePricing({ module, tables }: ModulePricingProps): ReactElem
       })),
     [tables],
   )
+  const levelCount = read.reduce((n, r) => n + r.levels.length, 0)
 
   return (
     <div className="md-price">
-      {read.map(({ table, levels, face }) => (
-        /* ONE CARD PER TABLE, IN THE TABLE'S OWN KIND. `<Card kind>`
-           is the primitive's kind ground — the rail this card wore is
-           the hue under the whole card now, at the mix card.css
-           measured for a name on it.
-
-           THE TABLE'S NAME IS NOT A CAPTION. It keeps its own case
-           and the heading step, so it is not `<SectionHead>`, whose
-           one style is the uppercase label — rule 3. */
-        <Card tone="flat" pad="md" kind={kindOf(table.kind)} key={table.id}>
-          <section className="md-stack" aria-label={table.name}>
-            <h3 className="md-price-name">
-              <TableKindSymbol kind={kindOf(table.kind)} size={ICON_SIZE.tiny} />
-              {table.name}
-            </h3>
-
-            {levels.length === 0 ? (
-              /* A THING THAT CANNOT BE DONE SAYS WHY, WHERE IT IS. */
-              <p className="md-price-none">
-                No column on {table.name} is marked as a price, so nothing here can be
-                quoted. Mark one in Settings.
-              </p>
-            ) : (
-              <ul className="md-price-levels">
-                {levels.map((l) => {
+      {/* ============================================================
+          THE PRICE LEVELS, AS ONE TABLE — recut 2026-09-16. Seven
+          places, three levels each, was seven cards of three rows with
+          the facts in a trail; it is one register now: the place as a
+          drawer line, then a row per level — the level, the column it
+          reads (mono, so a figure can always be traced back), whether it
+          prices the whole quote or each line, and which one is on the
+          face of a quote. Nothing is invented: a place whose file
+          declares no level says so in its own row.
+          ============================================================ */}
+      <section className="md-pt" aria-label="Price levels">
+        <p className="md-pt-say">
+          <b className="md-pt-say-n">{levelCount}</b>
+          <span>
+            {levelCount === 1 ? 'price level' : 'price levels'} across{' '}
+            {tables.length === 1 ? 'one place' : `${tables.length} places`}
+          </span>
+        </p>
+        <table className="md-pt-table">
+          <thead>
+            <tr>
+              <th scope="col" className="md-pt-h">
+                Level
+              </th>
+              <th scope="col" className="md-pt-h">
+                Column it reads
+              </th>
+              <th scope="col" className="md-pt-h">
+                Prices
+              </th>
+              <th scope="col" className="md-pt-h">
+                On the face
+              </th>
+            </tr>
+          </thead>
+          {read.map(({ table, levels, face }) => (
+            <tbody key={table.id} className="md-pt-place">
+              <tr className="md-pt-drawer">
+                <th scope="rowgroup" colSpan={4} className="md-pt-drawer-name">
+                  <TableKindSymbol kind={kindOf(table.kind)} size={ICON_SIZE.tiny} />
+                  {table.name}
+                </th>
+              </tr>
+              {levels.length === 0 ? (
+                <tr className="md-pt-row">
+                  <td colSpan={4} className="md-pt-c md-pt-c--none">
+                    {table.name} declares no price level; its rows are listed, not priced.
+                  </td>
+                </tr>
+              ) : (
+                levels.map((l) => {
                   const column = table.fields.find((f) => f.id === l.fieldId)
+                  const onFace = face !== null && face !== undefined && face.field.id === l.fieldId
                   return (
-                    <li key={l.key}>
-                      <Row
-                        name={l.label}
-                        /* THE COLUMN IT IS, in the business's own words,
-                           so a number can always be traced back. Mono,
-                           because it is an identifier. */
-                        meta={<span className="md-price-col">{column?.name ?? l.fieldId}</span>}
-                        trail={
-                          <>
-                            <span className="md-price-scope mono-label">
-                              {l.scope === 'quote' ? 'whole quote' : 'per line'}
-                            </span>
-                            {face && face.field.id === l.fieldId ? (
-                              <span className="k-chip">On the face</span>
-                            ) : null}
-                          </>
-                        }
-                      />
-                    </li>
+                    <tr key={l.key} className="md-pt-row">
+                      <td className="md-pt-c md-pt-c--level">{l.label}</td>
+                      <td className="md-pt-c md-pt-c--col">{column?.name ?? l.fieldId}</td>
+                      <td className="md-pt-c">{l.scope === 'quote' ? 'the whole quote' : 'each line'}</td>
+                      <td className="md-pt-c">
+                        {onFace ? <span className="md-pt-face">On the face</span> : null}
+                      </td>
+                    </tr>
                   )
-                })}
-              </ul>
-            )}
-          </section>
-        </Card>
-      ))}
-
+                })
+              )}
+            </tbody>
+          ))}
+        </table>
+      </section>
       {/* THE RULES THAT GOVERN IT — the same panel the designer
-          mounts, so there is one drawing of a module's rules and not
-          two that can drift. */}
+          draws, so the two can never drift. */}
       <ModuleRulesPanel module={module} tables={tables} />
     </div>
   )

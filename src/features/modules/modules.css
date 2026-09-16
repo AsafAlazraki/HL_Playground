@@ -5278,3 +5278,238 @@
   line-height: var(--t-body-lead);
   color: var(--fg-secondary);
 }
+
+/* ============================================================
+   THE PRICING TAB — one register of levels, and the rules beneath
+   it as hairline sections. 2026-09-16.
+
+   Seven cards of three rows each, the facts in a trail ("WHOLE
+   QUOTE · On the face"), became one table: the place as a drawer
+   line, a row per level, the column in mono, what it prices in
+   words, the one on a quote's face marked. The rules panel under
+   it — the designer's own, so the two cannot drift — loses its
+   boxes: its three wells are sections under hairline heads, a
+   derivation a row with its switch at the right, exactly as the
+   verbs are drawn on the Settings tab. The rule editor keeps its
+   own shape, which the Rules screen set.
+   ============================================================ */
+
+.md-price {
+  gap: var(--s-8);
+  padding: var(--s-5) var(--page-gutter, var(--s-6)) var(--s-16);
+}
+
+.md-pt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.md-pt-say {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  margin: 0;
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+
+.md-pt-say-n {
+  font-family: var(--font-mono);
+  font-size: var(--t-title-size);
+  font-weight: 500;
+  line-height: var(--t-title-lead);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.md-pt-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.md-pt-h {
+  height: 2.25rem;
+  padding: 0 var(--s-3);
+  border-bottom: var(--border) solid var(--line-strong);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--fg-secondary);
+  white-space: nowrap;
+}
+
+.md-pt-h:first-child,
+.md-pt-c--level,
+.md-pt-drawer-name {
+  padding-left: 0;
+}
+
+/* the place is a drawer line, as on the sheet: a name in sentence case
+   over a rule a hair heavier than a row's */
+.md-pt-drawer-name {
+  height: 2.5rem;
+  padding: var(--s-3) var(--s-3) var(--s-1);
+  border-bottom: var(--border) solid var(--line);
+  font-size: var(--t-small-size);
+  font-weight: 600;
+  text-align: left;
+  color: var(--fg);
+  vertical-align: bottom;
+}
+
+.md-pt-drawer-name svg {
+  margin-right: var(--s-2);
+  vertical-align: -2px;
+  color: var(--kind, var(--fg-tertiary));
+}
+
+.md-pt-place + .md-pt-place .md-pt-drawer-name {
+  padding-top: var(--s-5);
+  height: 3rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .md-pt-row:hover {
+    background: var(--bg-sunken);
+  }
+}
+
+.md-pt-c {
+  height: 2.25rem;
+  padding: 0 var(--s-3);
+  border-bottom: var(--border) solid var(--line-subtle);
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.md-pt-c--level {
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.md-pt-c--col {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.md-pt-c--none {
+  color: var(--fg-tertiary);
+  font-style: italic;
+  white-space: normal;
+}
+
+.md-pt-face {
+  display: inline-block;
+  padding: 2px var(--s-3);
+  border-radius: var(--r-full);
+  background: var(--action-wash);
+  color: var(--action);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+/* -- the rules beneath, unboxed ----------------------------------- */
+
+.md-price .ui-card,
+.md-price .ui-card--flat {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.md-price > .ui-card > .md-panel {
+  gap: var(--s-6);
+  padding-top: var(--s-5);
+  border-top: var(--border) solid var(--line);
+}
+
+.md-price .md-panel > .ui-card > .md-stack {
+  gap: var(--s-3);
+  padding-top: var(--s-4);
+  border-top: var(--border) solid var(--line-subtle);
+}
+
+.md-price .md-flows {
+  gap: 0;
+  border-top: var(--border) solid var(--line-subtle);
+}
+
+.md-price .md-flows > li {
+  border-bottom: var(--border) solid var(--line-subtle);
+}
+
+.md-price .md-flows > li .ui-card {
+  padding: var(--s-3) 0;
+}
+
+.md-price .md-switch {
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  gap: var(--s-6);
+}
+
+.md-price .md-switch-track {
+  width: 2.25rem;
+  height: 1.25rem;
+  padding: 2px;
+  border-color: var(--line-strong);
+  background: var(--bg-sunken);
+}
+
+.md-price .md-switch[aria-checked='true'] .md-switch-track {
+  background: var(--action);
+  border-color: var(--action);
+}
+
+.md-price .md-switch-knob {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.md-price .md-switch[aria-checked='true'] .md-switch-knob {
+  transform: translateX(1rem);
+}
+
+.md-price .md-cap-label {
+  font-size: var(--t-body-size);
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.md-price .md-cap-says {
+  color: var(--fg-tertiary);
+}
+
+.md-price .md-rules-none,
+.md-price .md-rules-say {
+  color: var(--fg-secondary);
+}
+
+.md-price .md-rules-count {
+  color: var(--fg-tertiary);
+  text-transform: none;
+}
+
+/* the drawer line's glyph sits on the line with the name, not above it —
+   the symbol primitive draws itself as a block; and the drawer row is
+   named so the sweep can see it */
+.md-pt-drawer {
+  background: transparent;
+}
+
+.md-pt-drawer-name .tk-symbol,
+.md-pt-drawer-name svg {
+  display: inline-block;
+  vertical-align: -3px;
+}
