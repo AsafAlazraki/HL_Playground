@@ -765,3 +765,39 @@ lever, and it is the dealer's call.
 | `npm test` | seven green, 2,974 tests, lint 343/343, literal px 460/460 |
 | `check-collide` · `check-contrast` (now twelve screens, the register added) · `qa-sweep` | nothing overlaps · 1,465 text nodes clear over twelve screens · clean |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-16 — a module's workspace, recut
+
+The page a place opens on — Boats, Highfield, Yamaha — and the one
+stage the inventory had no row for. Before: a marque at 88px beside a
+kind chip, five tabs under a brass rule, and a dashboard of bordered
+cards inside a bordered card; the Catalog tab a grid of bordered cards
+with a 3:2 shot on grey; Pricing a card in a card.
+
+References: Axopar's range page and Saxdor's and Nimbus's model pages
+from the earlier drive (`out/ref/boats/`) — a photograph across the
+top, the name in a wide light face over it, the range as tiles beneath.
+
+**The header takes the tile rule at page scale**, as the configurator's
+first chapter does. The picture is `doorPicture`'s — the same reader
+Home's doors use: the first real photograph a row of the place carries,
+never chosen for looks. Boats opens on a Stacer with BOATS over it in
+Outfit 300; Motors, whose rows hold renders, opens on white. The kind's
+glyph is a glyph, not a plate; the tab rule is `--action`.
+
+**Nothing is boxed.** The dashboard's cards lose their borders and
+shadows and become sections under hairline heads; the range's doors take
+the tile rule (`useSceneKinds` over the shelf); the chips at the foot are
+outline pills. The Catalog tab's tiles (`ModuleIndex`'s, not the table
+gallery's — found by photographing, the first pass restyled the wrong
+tiles) ask their pictures too, and a variant's label keeps its case
+because uppercase ran it to three lines. Pricing is hairline sections.
+
+Not touched: the Quotes tab's empty sentence and the Settings tab, which
+keep their earlier language and are named in the inventory as such.
+
+| ruler | result |
+|---|---|
+| `npm test` | seven green, 2,974 tests, lint 343/343, literal px 460/460 |
+| `check-collide` · `check-contrast` (the module is its third screen) · `qa-sweep` | nothing overlaps · 1,465 text nodes clear over twelve screens, after the ruler caught 66 figures in full ink over a scene door's deep ground (1.12:1) and they took the scene's ink · clean |
+| `check:shots --update` | 14 of 14 re-taken |

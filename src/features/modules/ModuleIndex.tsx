@@ -221,6 +221,7 @@ import {
 import { readTravel } from './travelCaps'
 import { CatalogTravel } from './CatalogTravel'
 import './modules.css'
+import { useSceneKind } from '@/features/quote/scene'
 
 /** How many items are drawn before the page asks you to narrow.
  *  240 is two full screens of tiles at any sensible width — enough
@@ -1482,6 +1483,8 @@ function Tile({
 }: FaceProps & { kind: TableKind; tableName: string }): ReactElement {
   const facts = entry.facts ?? []
   const naming = acts !== undefined && acts.renaming === faceKey(entry)
+  /* the tile rule, read from the picture's own pixels (`scene.ts`) */
+  const scene = useSceneKind(entry.img?.src)
   const body = (
     <span className="md-tile-in">
       <span className="md-tile-pic">
@@ -1525,7 +1528,7 @@ function Tile({
     .filter((w) => w !== '')
     .join(', ')
   return (
-    <li className="md-tile-slot">
+    <li className="md-tile-slot" data-scene={scene === 'scene' ? 'scene' : 'studio'}>
       {/* THE TILE IS `<Card>`. With `onActivate` it is a real button
           with the card's own press and focus ring; without, a still
           card. THE DOOR STANDS DOWN WHILE THE NAME IS BEING TYPED — an

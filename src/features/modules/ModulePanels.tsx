@@ -46,6 +46,7 @@ import { ACTIVITY_EMPTY_HERE, ActivityList, useModuleActivity } from '@/features
 import { money } from '@/lib/money'
 import { markOf } from '@/lib/mark'
 import { FrozenPhoto } from '@/features/quote/photo'
+import { useSceneKinds } from '@/features/quote/scene'
 import { Button, Card, Row, SectionHead } from '@/ui'
 import {
   buildEntries,
@@ -173,6 +174,9 @@ export function ModuleHome({
      their banner, counts each, and finds the cheapest and dearest
      REAL ROW under it — never an average and never a guess. */
   const series = useMemo(() => categoryDrawers(entries, listed), [entries, listed])
+  /* the tile rule for the doors, one hook for the shelf (a door is
+     drawn inside a `.map` and cannot call one of its own) */
+  const sceneOf = useSceneKinds(series.map((d) => d.img?.src))
 
   /* THE FIGURES THIS PLACE CAN STATE ABOUT ITSELF, and each one only
      where it is true of something. A zero is a cell of chrome. */
@@ -277,6 +281,7 @@ export function ModuleHome({
                           type="button"
                           className="md-door"
                           data-kind={d.kind}
+                          data-scene={sceneOf(d.img?.src) === 'scene' ? 'scene' : 'studio'}
                           onClick={() => onStock(d.key)}
                         >
                           <span className="md-door-well">

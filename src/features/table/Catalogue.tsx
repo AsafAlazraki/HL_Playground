@@ -86,6 +86,7 @@ import { TableSheet, SEARCH_ID } from './TableSheet'
 import { JobsPanel } from './JobsPanel'
 import { CatalogueScreen } from '@/features/catalogue/CatalogueScreen'
 import { rebuiltPicker } from '@/features/quote/rebuilt'
+import { useSceneKinds } from '@/features/quote/scene'
 import { jobsFor, tableSay } from './jobs'
 import { NoMatchPlate } from './EmptyPlates'
 import { FacetRail } from './FacetRail'
@@ -859,6 +860,9 @@ function Gallery({
   const kind = kindOf(entity.kind)
 
   const shot = useMemo(() => pictureField(entity), [entity])
+  /* THE TILE RULE, one hook for the whole gallery: each tile asks its
+     own picture and is a scene tile or a studio tile by the answer */
+  const sceneOf = useSceneKinds(data.rows.map((r) => rowPicture(r, shot)?.src))
   const priceId = useMemo(() => priceColumnOf(entity), [entity])
   const priceField: FieldDef | undefined = priceId
     ? entity.fields.find((f) => f.id === priceId)
@@ -1025,7 +1029,11 @@ function Gallery({
                   )
                 : ''
               return (
-                <li key={row.id} className="cat-tile">
+                <li
+                  key={row.id}
+                  className="cat-tile"
+                  data-scene={sceneOf(img?.src) === 'scene' ? 'scene' : 'studio'}
+                >
                   {/* THE TILE IS A CARD — the primitive, flat and
                       unpadded so the photograph runs to its edge.
                       `kind` puts the kind's 6% wash on the surface,

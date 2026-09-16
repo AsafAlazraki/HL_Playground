@@ -4474,3 +4474,397 @@
   margin-top: auto;
   color: var(--fg-tertiary);
 }
+
+/* ============================================================
+   THE MODULE'S WORKSPACE, RECUT — 2026-09-16.
+
+   The page a place opens on: Boats, or Highfield, or Yamaha. It
+   was a marque at 88px beside a kind chip, five tabs under a brass
+   rule, and a dashboard of bordered cards inside a bordered card.
+
+   Driven live and kept in out/ref/boats/: Axopar's range page (the
+   name, one line, hulls on white in a row), Saxdor's and Nimbus's
+   model pages (a photograph across the top, the model's name in a
+   wide light face over it, the range as tiles beneath). The header
+   takes the tile rule at page scale, the way the configurator's
+   first chapter does: where the place's own rows hold a photograph
+   the header is that photograph with the name over it in the wide
+   light face; where they hold renders — Highfield — it is the name
+   on white. The picture is `doorPicture`'s, the same reader Home's
+   doors use: the first real photograph a row carries, never chosen
+   for looks. The range is doors that take the tile rule too.
+
+   NOTHING IS BOXED. The dashboard's cards lose their borders and
+   shadows and become sections under hairline heads; the chips at
+   the foot are outline pills. The tab rule is the action colour.
+   ============================================================ */
+
+/* -- the header ---------------------------------------------- */
+
+.md-work-head {
+  position: relative;
+  isolation: isolate;
+  align-items: flex-end;
+  min-height: 10rem;
+  padding: var(--s-6) var(--page-gutter, var(--s-6)) var(--s-5);
+  background: var(--surface-1);
+}
+
+.md-work-head[data-scene='scene'] {
+  min-height: clamp(16rem, 32vh, 22rem);
+  background-color: var(--scene-deep);
+  background-image: var(--md-photo, none);
+  /* a 3:2 photograph in a wide band: keep the upper third, where the
+     people and the sky are — photographed at 1440 with heads cut off
+     at `center` */
+  background-position: center 30%;
+  background-size: cover;
+  color: var(--scene-ink);
+}
+
+.md-work-head[data-scene='scene']::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 0;
+  height: 70%;
+  background: linear-gradient(to top, var(--scene-foot), transparent);
+  pointer-events: none;
+}
+
+.md-work-head > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* the kind's glyph is a glyph, not a plate */
+.md-work-head .md-work-mark {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--fg-tertiary);
+}
+
+.md-work-head[data-scene='scene'] .md-work-mark {
+  color: var(--scene-ink);
+}
+
+/* the name, in the wide light face every boat maker sets a range in */
+.md-work-head .md-work-name,
+.md-work-head .ds-marque.md-work-name {
+  font-family: var(--font-wide);
+  font-weight: 300;
+  font-size: clamp(2.5rem, 1.6rem + 3vw, 4.5rem);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: inherit;
+}
+
+.md-work-head .md-work-name.is-quiet {
+  font-size: clamp(1.5rem, 1.1rem + 1.2vw, 2rem);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.md-work-head .md-work-of {
+  color: inherit;
+  opacity: 0.72;
+}
+
+.md-work-head .md-work-fact {
+  color: inherit;
+}
+
+.md-work-head .md-work-n {
+  color: inherit;
+}
+
+.md-work-head .md-work-noun {
+  color: inherit;
+  opacity: 0.72;
+}
+
+/* -- the tabs: a hairline row, the rule in the action colour ---- */
+
+.md-work-tabs {
+  padding: 0 var(--page-gutter, var(--s-6));
+  background: var(--surface-1);
+}
+
+.md-work-tab {
+  padding: var(--s-3) var(--s-3);
+}
+
+.md-work-tab[aria-selected='true']::after {
+  background: var(--action);
+}
+
+/* -- the dashboard, unboxed ------------------------------------ */
+
+.md-home .ui-card,
+.md-home .ui-card--raised {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.md-home-grid {
+  gap: var(--s-10);
+  margin-bottom: var(--s-8);
+}
+
+.md-home-grid > section,
+.md-home-rail > section {
+  padding-top: var(--s-4);
+  border-top: var(--border) solid var(--line);
+}
+
+.md-home-rail {
+  gap: var(--s-8);
+}
+
+/* the range's doors take the tile rule */
+.md-shelf {
+  grid-auto-columns: minmax(15rem, 18rem);
+  gap: var(--s-4);
+  margin-inline: 0;
+  padding: var(--s-1) 0 var(--s-3);
+}
+
+.md-door {
+  position: relative;
+  border: 0;
+  border-radius: var(--r-card);
+  background: transparent;
+  box-shadow: none;
+}
+
+.md-door:hover {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.md-door:focus-visible {
+  outline: var(--border-strong) solid var(--action);
+  outline-offset: 2px;
+}
+
+/* studio: the render on white, the name under it */
+.md-door-well {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  box-shadow: inset 0 0 0 var(--border) var(--line);
+}
+
+.md-door-img {
+  padding: var(--s-3);
+  object-fit: contain;
+  transition: transform var(--d-slow) var(--ease);
+}
+
+.md-door:hover .md-door-img {
+  transform: scale(1.03);
+}
+
+.md-door-say {
+  padding: var(--s-3) 0 0;
+}
+
+.md-door-name,
+.t-subtitle.md-door-name {
+  font-family: var(--font-wide);
+  font-weight: 300;
+  font-size: var(--t-title-size);
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  min-height: 0;
+  max-height: none;
+}
+
+/* scene: the photograph to the edge, the name over its foot */
+.md-door[data-scene='scene'] {
+  overflow: hidden;
+  background-color: var(--scene-deep);
+  color: var(--scene-ink);
+}
+
+.md-door[data-scene='scene'] .md-door-well {
+  aspect-ratio: 4 / 3;
+  background: transparent;
+  box-shadow: none;
+}
+
+.md-door[data-scene='scene'] .md-door-img {
+  padding: 0;
+  object-fit: cover;
+}
+
+.md-door[data-scene='scene']::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 1;
+  height: 60%;
+  background: linear-gradient(to top, var(--scene-foot), transparent);
+  pointer-events: none;
+}
+
+.md-door[data-scene='scene'] .md-door-say {
+  position: absolute;
+  inset: auto var(--s-4) var(--s-4) var(--s-4);
+  z-index: 2;
+  padding: 0;
+  color: var(--scene-ink);
+}
+
+.md-door[data-scene='scene'] .md-door-name {
+  color: var(--scene-ink);
+}
+
+.md-door[data-scene='scene'] .md-door-facts {
+  color: var(--scene-ink);
+  opacity: 0.8;
+}
+
+/* the chips at the foot: outline pills */
+.md-home-chip {
+  border: var(--border) solid var(--line-strong);
+  background: transparent;
+  color: var(--fg);
+  box-shadow: none;
+}
+
+.md-home-chip:hover {
+  border-color: var(--fg);
+}
+
+.md-home-chip.is-here {
+  background: var(--fg);
+  border-color: var(--fg);
+  color: var(--surface-1);
+}
+
+.md-home-foot {
+  padding-top: var(--s-4);
+  border-top: var(--border) solid var(--line);
+}
+
+/* -- the Catalog tab: the index's tiles take the tile rule --------
+   Each tile asks its picture (`Tile` calls `useSceneKind`): a
+   photograph makes a scene tile, the picture to the edge at 4:3; a
+   render makes a studio tile, the hull on white in a hairline well.
+   The name under it in the wide light face, the price a mono figure,
+   the facts a quiet row. Nothing is boxed. */
+
+.md-tiles {
+  gap: var(--s-6) var(--s-4);
+}
+
+.md-index .md-tile-slot .ui-card,
+.md-index .md-tile-slot .ui-card--raised,
+.md-index .md-tile-slot .ui-card--flat {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.md-index .md-tile-in {
+  gap: var(--s-1);
+  padding: 0;
+}
+
+.md-index .md-tile-pic {
+  aspect-ratio: 4 / 3;
+  height: auto;
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  box-shadow: inset 0 0 0 var(--border) var(--line);
+  overflow: hidden;
+}
+
+.md-index .md-tile-img {
+  width: 100%;
+  height: 100%;
+  padding: var(--s-3);
+  object-fit: contain;
+  transition: transform var(--d-slow) var(--ease);
+}
+
+.md-index .md-tile-slot:hover .md-tile-img {
+  transform: scale(1.03);
+}
+
+.md-index .md-tile-slot[data-scene='scene'] .md-tile-pic {
+  background: var(--scene-deep);
+  box-shadow: none;
+}
+
+.md-index .md-tile-slot[data-scene='scene'] .md-tile-img {
+  padding: 0;
+  object-fit: cover;
+}
+
+.md-index .md-tile-name {
+  margin-top: var(--s-3);
+  font-family: var(--font-wide);
+  font-weight: 300;
+  font-size: var(--t-title-size);
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.md-index .md-tile-price {
+  font-family: var(--font-mono);
+  font-size: var(--t-body-size);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.md-index .md-tile-facts {
+  margin-top: var(--s-2);
+  padding-top: var(--s-2);
+  border-top: var(--border) solid var(--line-subtle);
+}
+
+/* -- the Pricing tab, unboxed ------------------------------------ */
+
+.md-price .ui-card,
+.md-price .ui-card--flat {
+  padding: var(--s-4) 0 0;
+  border: 0;
+  border-top: var(--border) solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* a variant's label is long — "Highfield - RU230KAM (PVC) WH" — and
+   set uppercase it ran to three lines on every tile; a model's name
+   is a marque, a variant's is a label, so it keeps its case */
+.md-index .md-tile-name {
+  font-size: var(--t-heading-size, var(--t-body-size));
+  line-height: 1.25;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* a figure inside a scene door takes the scene's ink too — the contrast
+   ruler found 66 of them in full ink over the deep ground (1.12:1) on
+   the first module it opened, 2026-09-16 */
+.md-door[data-scene='scene'] .md-figure,
+.md-door[data-scene='scene'] .md-door-facts .md-figure {
+  color: inherit;
+}

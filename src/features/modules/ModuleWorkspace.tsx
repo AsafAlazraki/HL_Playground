@@ -51,6 +51,9 @@ import { kindOf } from '@/features/tablekit'
 import { ICON_SIZE } from '@/lib/icons'
 import { moduleCensus, moduleTables } from './read'
 import { moduleAt } from './places'
+import { doorPicture } from '@/features/dashboard/doors'
+import { useSceneKind } from '@/features/quote/scene'
+import { useImageDisplay } from '@/lib/imageSources'
 import { placeFor } from './openPlace'
 import { ModuleStock } from './ModuleIndex'
 import { ModuleSettings } from './ModuleSettings'
@@ -141,6 +144,18 @@ export function ModuleIndex({
 
   const table = standing && at ? entities[at] : undefined
   const tables = useMemo(() => moduleTables(module, entities), [module, entities])
+  /* THE HEADER'S PHOTOGRAPH IS A REAL ROW'S — `doorPicture`, the same
+     reader Home's doors use: the first picture a row of this place
+     actually carries, never chosen for looks. The tile rule then reads
+     its pixels: a photograph makes the header a scene, a render leaves
+     it on white. Highfield stays on white until its file holds a
+     photograph. */
+  const photo = useMemo(
+    () => doorPicture(tables.map((t) => t.id), entities, rowsByEntity),
+    [tables, entities, rowsByEntity],
+  )
+  const scene = useSceneKind(photo?.src)
+  const shown = useImageDisplay(photo?.src ?? '')
   const census = useMemo(
     () => moduleCensus(module, entities, rowsByEntity),
     [module, entities, rowsByEntity],
@@ -211,7 +226,15 @@ export function ModuleIndex({
 
   return (
     <section className="md-work" style={style} aria-label={name} data-kind={kindOf(table?.kind ?? tables[0]?.kind)}>
-      <header className="md-work-head">
+      <header
+        className="md-work-head"
+        data-scene={scene === 'scene' ? 'scene' : 'studio'}
+        style={
+          scene === 'scene' && shown.paint
+            ? ({ ['--md-photo' as string]: `url(${shown.at})` } as CSSProperties)
+            : undefined
+        }
+      >
         {/* THE BRAND'S OWN MARK. This drew `WorkMark`, which was a
             THIRD copy of "what mark does this place get" — after the
             modules grid's and the dashboard tiles' — and it had
