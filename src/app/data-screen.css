@@ -569,3 +569,163 @@
   width: 14px;
   height: 14px;
 }
+
+/* ============================================================
+   THE REGISTER OF TABLES, RECUT — 2026-09-16.
+
+   Data was rebuilt on 2026-09-14 as a register — fifty-three rows
+   where six cards had stood — and drawn in that day's language: the
+   table in a 16px-radius card with a shadow, the five doors as pills
+   inside a second card with a shadow, a 30px disc under every kind
+   glyph, figures in the sans. The sheet, the quotes register and a
+   module's registers were recut this week to one drawing, and this
+   is the same drawing: nothing boxed, a heading row of 11px labels
+   on white over a strong rule, rows on the 32px ladder, figures in
+   mono, the kind's glyph a glyph, the doors as outline pills, the
+   sort rule and the hover in the action colour.
+   ============================================================ */
+
+.dt {
+  --row-h: 2rem;
+  gap: var(--s-4);
+}
+
+/* -- the five doors: outline pills, no card round them ------------ */
+
+.dt-ways {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.dt-way {
+  height: 2rem;
+  padding: 0 var(--s-3);
+  border: var(--border) solid var(--line-strong);
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--fg);
+  font-weight: 500;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dt-way:hover {
+    background: transparent;
+    border-color: var(--fg);
+  }
+}
+
+.dt-way:active {
+  background: var(--bg-sunken);
+}
+
+.dt-way:focus-visible {
+  outline: var(--border-strong) solid var(--action);
+}
+
+.dt-way-glyph {
+  color: var(--fg-tertiary);
+}
+
+.dt-way-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- the search: a quiet box, not a pill --------------------------- */
+
+.dt-tools .ui-field-input {
+  border-radius: var(--r-control);
+  padding-inline: var(--s-3);
+}
+
+.dt-tools .ui-field-input:focus {
+  border-color: var(--action);
+  box-shadow: 0 0 0 var(--border) var(--action);
+}
+
+/* -- the table, unboxed -------------------------------------------- */
+
+.dt-port {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.dt-h {
+  height: var(--row-h);
+  background: var(--surface-1);
+  border-bottom: var(--border) solid var(--line-strong);
+}
+
+.dt-h .t-label,
+.dt-sort,
+.dt-h--plain {
+  height: var(--row-h);
+  font-family: var(--font-sans);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-secondary);
+}
+
+.dt-h--plain {
+  display: flex;
+  align-items: center;
+}
+
+.dt-h--plain .t-label {
+  height: auto;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dt-sort:hover {
+    background: transparent;
+    color: var(--fg);
+  }
+}
+
+.dt-sort:focus-visible {
+  outline-color: var(--action);
+}
+
+.dt-row,
+.dt-c,
+.dt-open {
+  height: var(--row-h);
+}
+
+.dt-c {
+  border-bottom: var(--border) solid var(--line-subtle);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dt-row:hover {
+    background: var(--bg-sunken);
+  }
+}
+
+/* the kind's glyph is a glyph, in its hue, not a plate */
+.dt-mark {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  color: var(--kind, var(--fg-tertiary));
+}
+
+.dt-open:focus-visible {
+  outline: var(--border-strong) solid var(--action);
+  outline-offset: -2px;
+}
+
+/* figures are mono and tabular, and line up (rule: Cockpit requires it) */
+.dt-c--n {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}

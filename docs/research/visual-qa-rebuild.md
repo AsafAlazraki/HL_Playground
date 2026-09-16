@@ -897,3 +897,30 @@ sweep caught the drawer row unnamed in any stylesheet.
 | `npm test` | seven green, 2,974 tests, lint 343/343, literal px 460/460 |
 | `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,684 text nodes clear over thirteen screens · clean |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-16 — the Data screen, recut to the registers' drawing
+
+Data was rebuilt on 2026-09-14 as a register — fifty-three rows where
+six cards had stood — in that day's language: the table in a 16px card
+with a shadow, the five doors as filled pills inside a second card with
+a shadow, a 30px disc under every kind glyph, 48px rows, figures in the
+sans. This week the sheet, the quotes register and a module's Quotes and
+Pricing tabs were recut to one drawing, and Data was the one register
+still in the older one.
+
+**One appended block** (`data-screen.css`): nothing boxed — the port and
+the doors lose their cards and shadows; a heading row of 11px labels on
+white over a strong rule; rows on the 32px ladder; figures in mono,
+tabular; the kind's glyph a glyph in its hue, no disc; the doors as
+outline pills with their counts in mono; the search a quiet box; the
+sort rule, hover and focus in the action colour.
+
+| measure | before | after |
+|---|---|---|
+| data rows fully on screen, 1280×800 | 12 (48px rows) | **18** (32px rows) — the Cockpit requirement, exactly |
+
+| ruler | result |
+|---|---|
+| `npm test` | seven green, 2,974 tests, lint 343/343, literal px 460/460 |
+| `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,684 text nodes clear over thirteen screens · clean |
+| `check:shots --update` | 14 of 14 re-taken |
