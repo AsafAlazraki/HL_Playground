@@ -5107,3 +5107,174 @@
   text-transform: none;
   letter-spacing: 0;
 }
+
+/* ============================================================
+   THE QUOTES TAB — the register's own shape, 2026-09-16.
+
+   The quotes raised from a place, drawn as the Quotes screen draws
+   every quote: a head that says what they come to, a table of
+   reference · customer · what it is for · day · where it is ·
+   comes to, hairline rows on the Cockpit ladder, mono figures on
+   the right, the stage a chip. It was a stack of rows with the
+   facts run together under each name and a count in uppercase at
+   the foot. With none raised it says so and offers the act, as the
+   register does. Nothing is boxed.
+   ============================================================ */
+
+.md-qt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-5) var(--page-gutter, var(--s-6)) var(--s-10);
+}
+
+.md-qt-worth {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  margin: 0;
+}
+
+.md-qt-worth-n {
+  font-family: var(--font-mono);
+  font-size: var(--t-title-size);
+  font-weight: 500;
+  line-height: var(--t-title-lead);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.md-qt-worth-say {
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+}
+
+.md-qt-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.md-qt-h {
+  height: 2.25rem;
+  padding: 0 var(--s-3);
+  border-bottom: var(--border) solid var(--line-strong);
+  font-size: var(--t-label-size);
+  font-weight: var(--t-label-weight);
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--fg-secondary);
+  white-space: nowrap;
+}
+
+.md-qt-h--n {
+  text-align: right;
+}
+
+.md-qt-h:first-child,
+.md-qt-c--ref {
+  padding-left: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .md-qt-row:hover {
+    background: var(--bg-sunken);
+  }
+}
+
+.md-qt-c {
+  height: 2.25rem;
+  padding: 0 var(--s-3);
+  border-bottom: var(--border) solid var(--line-subtle);
+  font-size: var(--t-small-size);
+  color: var(--fg-secondary);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.md-qt-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: var(--t-small-size);
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.md-qt-open:hover {
+  color: var(--action);
+}
+
+.md-qt-open:focus-visible {
+  outline: var(--border-strong) solid var(--action);
+  outline-offset: -2px;
+}
+
+.md-qt-c--none {
+  font-style: italic;
+  color: var(--fg-tertiary);
+}
+
+.md-qt-c--what {
+  color: var(--fg);
+}
+
+.md-qt-c--day {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-tertiary);
+}
+
+.md-qt-c--n {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.md-qt-chip {
+  display: inline-block;
+  padding: 2px var(--s-3);
+  border-radius: var(--r-full);
+  background: var(--bg-sunken);
+  color: var(--fg-secondary);
+  font-size: var(--t-caption-size);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.md-qt-chip[data-stage='Issued'] {
+  background: var(--action-wash);
+  color: var(--action);
+}
+
+.md-qt-foot {
+  margin: 0;
+  font-size: var(--t-caption-size);
+  color: var(--fg-tertiary);
+}
+
+/* none raised: the sentence, and the act */
+.md-qt-none {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-4);
+  max-width: 48rem;
+  padding: var(--s-8) var(--page-gutter, var(--s-6)) var(--s-10);
+}
+
+.md-qt-none-say {
+  margin: 0;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-lead);
+  color: var(--fg-secondary);
+}

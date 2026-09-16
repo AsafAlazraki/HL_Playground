@@ -503,25 +503,35 @@ export interface ModuleQuotesProps {
   module: ModuleDef
   owner: ModuleDef
   onOpenQuote?: ((quoteId: string) => void) | undefined
+  /** the way to raise the first one, when the tab has none to show */
+  onNewQuote?: (() => void) | undefined
 }
 
-export function ModuleQuotes({ module, owner, onOpenQuote }: ModuleQuotesProps): ReactElement {
+/* ============================================================
+   THE QUOTES RAISED FROM THIS PLACE — a register, the same one the
+   Quotes screen is: reference, customer, what it is for, the day,
+   where it is, what it comes to. Recut 2026-09-16: it was a list of
+   `<Row>`s with the facts run together in a meta line under the
+   name, and a count stamped in uppercase at the foot. A dealer who
+   has learnt to read the register has learnt to read this.
+
+   NOTHING IS SEEDED. With none raised the tab says so and offers the
+   act, exactly as the register does; the photograph in the review
+   page with one quote on it was raised through the app by a harness
+   pressing the real controls (`tools/shot-mquotes.mjs`).
+   ============================================================ */
+export function ModuleQuotes({
+  module,
+  owner,
+  onOpenQuote,
+  onNewQuote,
+}: ModuleQuotesProps): ReactElement {
   const entities = useProjectStore((s) => s.entities)
   const quotes = useQuotes()
-
-  /* EVERY member table counts, including a retired one: its rows are
-     withheld from the catalogue because they are history rather than
-     stock, but a quote raised against one still happened and still
-     opens. */
   const mine = useMemo(
     () => new Set(moduleTables(module, entities).map((t) => t.id)),
     [module, entities],
   )
-
-  /* NEWEST FIRST, BY WHEN IT WAS RAISED. `createdAt`, which is the
-     column the quotes list already prints — sorting by one date and
-     printing another puts an old day at the top of a list that
-     claims to be recent. */
   const raised = useMemo(
     () =>
       quotes
@@ -532,70 +542,97 @@ export function ModuleQuotes({ module, owner, onOpenQuote }: ModuleQuotesProps):
   )
 
   if (raised.length === 0) {
-    /* AN EMPTY STATE KEEPS ITS SENTENCE. Nothing has been raised
-       here, which is a true and useful answer on a freshly loaded
-       sheet — and it arrives the moment somebody quotes a boat. */
     return (
-      <p className="md-none">No quote has been raised from {module.name} yet.</p>
+      <div className="md-qt-none">
+        <p className="md-qt-none-say">
+          No quote has been raised from {module.name} yet. A quote is what a customer is
+          handed — the boat, what goes with it, and the price.
+        </p>
+        {onNewQuote ? (
+          <Button tone="primary" onClick={onNewQuote}>
+            New quote
+          </Button>
+        ) : (
+          <p className="md-qt-none-say">Press New quote to raise the first one.</p>
+        )}
+      </div>
     )
   }
 
-  /* WHAT THIS PLACE HAS OUT, added up. Every quote raised from here,
-     at what it comes to — the one figure a person opening this tab is
-     usually after, and it was the one thing the tab did not say. */
   const worth = raised.reduce((n, q) => n + quoteTotals(q).total, 0)
 
   return (
-    <ul className="md-qs">
-      <li className="md-qs-worth" role="presentation">
-        <b className="md-qs-worth-n ds-mono">{money(worth)}</b>
-        <span className="md-qs-worth-say">
+    <div className="md-qt">
+      <p className="md-qt-worth">
+        <b className="md-qt-worth-n">{money(worth)}</b>
+        <span className="md-qt-worth-say">
           across {raised.length === 1 ? 'one quote' : `${grouped(raised.length)} quotes`}
         </span>
-      </li>
-      {raised.map((q) => {
-        /* THE SUBJECT AS THE QUOTE FROZE IT. Never re-read from the
-           sheet: a quote prints what it froze, and a boat renamed
-           since is still the boat this was written for.
-
-           THE STATE IS THE ONE LABEL ON THE LINE; the reference and
-           the day are values a person reads back to somebody on the
-           phone, so they are figures, not stamps. `quoteTotals` is
-           the same reader the dashboard card and the board's cards
-           take, so three surfaces cannot disagree about what a deal
-           comes to. */
-        const meta = (
-          <span className="md-meta">
-            <span className="mono-label">{q.state === 'issued' ? 'Given' : 'Draft'}</span>
-            <span className="md-figure">{q.reference}</span>
-            <span className="md-figure">{money(quoteTotals(q).total)}</span>
-            <span className="md-figure">{localDay(q.createdAt)}</span>
-          </span>
-        )
-        return (
-          <li key={q.id}>
-            {onOpenQuote ? (
-              <Row
-                name={q.subjectLabel}
-                meta={meta}
-                label={`Open the quote for ${q.subjectLabel}, ${q.reference}`}
-                onActivate={() => onOpenQuote(q.id)}
-              />
-            ) : (
-              /* A FACT THAT CANNOT BE OPENED IS BETTER THAN A CONTROL
-                 THAT DOES NOTHING — the same shape the item rows take
-                 when this place cannot open one. */
-              <Row name={q.subjectLabel} meta={meta} />
-            )}
-          </li>
-        )
-      })}
-      <li className="md-qs-owner">
-        <span className="mono-label">
-          {raised.length} raised from {owner.name}
-        </span>
-      </li>
-    </ul>
+      </p>
+      <table className="md-qt-table">
+        <thead>
+          <tr>
+            <th scope="col" className="md-qt-h">
+              Reference
+            </th>
+            <th scope="col" className="md-qt-h">
+              Customer
+            </th>
+            <th scope="col" className="md-qt-h">
+              What it is for
+            </th>
+            <th scope="col" className="md-qt-h">
+              Day
+            </th>
+            <th scope="col" className="md-qt-h">
+              Where it is
+            </th>
+            <th scope="col" className="md-qt-h md-qt-h--n">
+              Comes to
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {raised.map((q) => {
+            const who = q.customer.name.trim()
+            const stage = q.state === 'issued' ? 'Issued' : 'Draft'
+            return (
+              <tr key={q.id} className="md-qt-row">
+                <td className="md-qt-c md-qt-c--ref">
+                  {onOpenQuote ? (
+                    <button
+                      type="button"
+                      className="md-qt-open"
+                      onClick={() => onOpenQuote(q.id)}
+                      aria-label={`Open the quote for ${q.subjectLabel}, ${q.reference}`}
+                    >
+                      {q.reference}
+                    </button>
+                  ) : (
+                    <span className="md-qt-open">{q.reference}</span>
+                  )}
+                </td>
+                <td className={who === '' ? 'md-qt-c md-qt-c--none' : 'md-qt-c'}>
+                  {who === '' ? 'no customer yet' : who}
+                </td>
+                <td className="md-qt-c md-qt-c--what">{q.subjectLabel}</td>
+                <td className="md-qt-c md-qt-c--day">{localDay(q.createdAt)}</td>
+                <td className="md-qt-c">
+                  <span className="md-qt-chip" data-stage={stage}>
+                    {stage}
+                  </span>
+                </td>
+                <td className="md-qt-c md-qt-c--n">{money(quoteTotals(q).total)}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+      <p className="md-qt-foot">
+        {raised.length === 1 ? 'One quote' : `${grouped(raised.length)} quotes`} raised from{' '}
+        {owner.name}
+      </p>
+    </div>
   )
 }
 

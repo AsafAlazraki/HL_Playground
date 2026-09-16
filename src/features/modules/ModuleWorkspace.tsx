@@ -446,7 +446,12 @@ export function ModuleIndex({
             onOpen={onOpen}
           />
         ) : tab === 'quotes' ? (
-          <ModuleQuotes module={module} owner={owner} onOpenQuote={onOpenQuote} />
+          <ModuleQuotes
+            module={module}
+            owner={owner}
+            onOpenQuote={onOpenQuote}
+            {...(onNewQuote ? { onNewQuote } : {})}
+          />
         ) : tab === 'pricing' ? (
           <ModulePricing module={module} tables={tables} />
         ) : (

@@ -836,3 +836,31 @@ reader only.
 | `npm test` | seven green, 2,974 tests, lint 343/343, literal px 460/460 |
 | `check-collide` · `check-contrast` (thirteen screens) · `qa-sweep` | nothing overlaps · 1,684 text nodes clear over thirteen screens · clean |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-16 — the Quotes tab, recut
+
+The quotes raised from a place. Before: a stack of `<Row>`s with the
+facts run together under each name ("DRAFT 20260916-01 $3,201
+2026-09-16") and a count stamped in uppercase at the foot; with none
+raised, one grey sentence centred in the void.
+
+The reference is the app's own Quotes register (`QuotesScreen`, recut
+earlier this week): a quote is one object and it is drawn one way. The
+tab is now that register's shape — a head that says what they come to,
+a table of reference · customer · what it is for · day · where it is ·
+comes to on the Cockpit ladder, mono figures on the right, the stage a
+chip (Issued in the action wash), a sentence-case count at the foot.
+With none raised it says so in the register's words and offers New
+quote, which the workspace now hands it.
+
+**Nothing is seeded.** The photograph with one quote on it was raised
+through the app by `tools/shot-mquotes.mjs` pressing the real controls —
+New quote, a Stacer, the first model, Start the quote — in a browser
+context that is thrown away after; the empty photograph is the true
+state of the seed.
+
+| ruler | result |
+|---|---|
+| `npm test` | seven green, 2,974 tests, lint 343/343, literal px 460/460 |
+| `check-collide` · `check-contrast` · `qa-sweep` | nothing overlaps · 1,684 text nodes clear over thirteen screens · clean |
+| `check:shots --update` | 14 of 14 re-taken |
