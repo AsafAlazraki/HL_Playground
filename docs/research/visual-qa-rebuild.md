@@ -801,3 +801,38 @@ keep their earlier language and are named in the inventory as such.
 | `npm test` | seven green, 2,974 tests, lint 343/343, literal px 460/460 |
 | `check-collide` · `check-contrast` (the module is its third screen) · `qa-sweep` | nothing overlaps · 1,465 text nodes clear over twelve screens, after the ruler caught 66 figures in full ink over a scene door's deep ground (1.12:1) and they took the scene's ink · clean |
 | `check:shots --update` | 14 of 14 re-taken |
+
+## 2026-09-16 — the Settings tab, recut
+
+Where an admin says what a place is. Before: seven bordered panels in
+two columns, a bordered card per verb with its switch on the left, a
+grey box per refusal, and a second copy of the place's name at the top
+of the tab under the header that already says it.
+
+Settings pages worth copying sit behind logins. What rendered on the
+drive (`out/ref/tables/`): shadcn's settings-form example (v3 — the
+current path 404s), GitHub's and Vercel's docs of their own settings;
+Stripe's and Linear's docs pages 404'd, Tailwind's and GitHub's live
+forms redirected to a login. The shape those describe is the one Linear,
+Stripe and Apple's System Settings all use: one column of sections under
+hairline heads, a setting a row with its words on the left and its
+control on the right, a refusal a sentence beside a rail.
+
+**The recut is one appended block** (`modules.css`, scoped to `.md-set`):
+every card loses its border and shadow and a section becomes a hairline
+and a caption; the verbs are a hairline list with the switch at the
+right, lit in the action colour; the state, the warning and the "no
+roles yet" box are sentences beside a rail; the two "how the list is
+drawn" choices are outline cards with the chosen one ringed in the action
+colour rather than washed in brass; the tables it lists are hairline
+rows; the fields are quiet boxes; the access grid's ticks take the action
+colour; a row count keeps its case. The tab's own head is clipped for the
+reader only.
+
+`check-contrast` gains the Settings tab as a screen, its thirteenth.
+
+| ruler | result |
+|---|---|
+| `npm test` | seven green, 2,974 tests, lint 343/343, literal px 460/460 |
+| `check-collide` · `check-contrast` (thirteen screens) · `qa-sweep` | nothing overlaps · 1,684 text nodes clear over thirteen screens · clean |
+| `check:shots --update` | 14 of 14 re-taken |

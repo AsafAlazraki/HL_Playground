@@ -242,6 +242,18 @@ const SCREENS = [
       await p.waitForTimeout(1200)
     },
   },
+  {
+    /* the same module's Settings tab — recut 2026-09-16 and measured
+       here for the first time; it holds the rails, the switches and
+       the grid whose inks the recut changed */
+    name: 'module-settings',
+    at: 'module',
+    sure: '.md-set',
+    open: async (p) => {
+      await p.getByRole('tab', { name: 'Settings' }).first().click()
+      await p.waitForTimeout(1200)
+    },
+  },
   { name: 'data', at: 'data', open: async (p) => door(p, /^Data/) },
   {
     /* THE CATALOGUE, REBUILT. This walked `.cat-gallery` and pressed

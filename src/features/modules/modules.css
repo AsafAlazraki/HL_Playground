@@ -4868,3 +4868,242 @@
 .md-door[data-scene='scene'] .md-door-facts .md-figure {
   color: inherit;
 }
+
+/* ============================================================
+   THE SETTINGS TAB, RECUT — 2026-09-16.
+
+   Where an admin says what a place is. It was seven bordered panels
+   in two columns, a bordered card per verb with its switch on the
+   left, a grey box per refusal, and a second copy of the place's
+   name at the top of the tab under the header that already says it.
+
+   Settings pages worth copying sit behind logins; what rendered on
+   the drive (out/ref/tables/) was GitHub's and Vercel's docs of
+   theirs, and the shape they describe is the shape Linear, Stripe
+   and Apple's System Settings all use: one column of sections under
+   hairline heads, a setting a row with its words on the left and
+   its control on the right, a refusal a sentence beside a rail —
+   never a box inside a box. That is the recut: every card under
+   `.md-set` loses its border and shadow; the verbs become a hairline
+   list with the switch at the right; the callouts become rails; the
+   tab's own head is hidden because the page header is the name.
+   ============================================================ */
+
+/* the page header says the name; the tab says it again — clipped,
+   kept for the reader as the section's heading */
+.md-work .md-set-head {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.md-work .md-set {
+  padding: var(--s-4) var(--page-gutter, var(--s-6)) var(--s-16);
+  background: var(--surface-1);
+  animation: none;
+}
+
+.md-set .ui-card,
+.md-set .ui-card--flat,
+.md-set .ui-card--raised {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* a section is a hairline and a caption, not a panel */
+.md-set .md-panel {
+  gap: var(--s-4);
+  padding-top: var(--s-5);
+  border-top: var(--border) solid var(--line);
+}
+
+.md-set-aside,
+.md-set-main {
+  gap: var(--s-6);
+}
+
+/* -- a refusal, a state, a note: a sentence beside a rail --------- */
+
+.md-set .md-set-state,
+.md-set .md-panel-warn,
+.md-set .ui-card--sunken {
+  padding: var(--s-1) 0 var(--s-1) var(--s-4);
+  border: 0;
+  border-left: var(--border-strong) solid var(--line-strong);
+  border-radius: 0;
+  background: transparent;
+  color: var(--fg-secondary);
+}
+
+.md-set .md-set-state.is-open {
+  border-left-color: var(--line);
+}
+
+.md-set .md-panel-warn {
+  border-left-color: var(--danger);
+  color: var(--fg);
+}
+
+/* -- the verbs: a hairline list, the switch at the right ---------- */
+
+.md-set .md-caps {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  border-top: var(--border) solid var(--line-subtle);
+}
+
+.md-set .md-caps > li {
+  border-bottom: var(--border) solid var(--line-subtle);
+}
+
+.md-set .md-caps > li .ui-card,
+.md-set .md-caps > li .ui-card--sunken {
+  padding: var(--s-3) 0;
+  border: 0;
+}
+
+.md-set .md-switch {
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  gap: var(--s-6);
+}
+
+.md-set .md-switch-track {
+  width: 2.25rem;
+  height: 1.25rem;
+  padding: 2px;
+  border-color: var(--line-strong);
+  background: var(--bg-sunken);
+}
+
+.md-set .md-switch[aria-checked='true'] .md-switch-track {
+  background: var(--action);
+  border-color: var(--action);
+}
+
+.md-set .md-switch-knob {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.md-set .md-switch[aria-checked='true'] .md-switch-knob {
+  transform: translateX(1rem);
+}
+
+.md-set .md-cap-label {
+  font-size: var(--t-body-size);
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.md-set .md-cap-says {
+  color: var(--fg-tertiary);
+}
+
+.md-set .md-cap-why,
+.md-set .md-cap-note {
+  margin-top: var(--s-2);
+  color: var(--fg-secondary);
+}
+
+/* -- the tables it lists, the blocks an item shows: hairline rows -- */
+
+.md-set .md-binds,
+.md-set .md-blocks {
+  gap: 0;
+  border-top: var(--border) solid var(--line-subtle);
+}
+
+.md-set .md-binds > li,
+.md-set .md-blocks > li {
+  border-bottom: var(--border) solid var(--line-subtle);
+}
+
+.md-set .md-binds > li .ui-card,
+.md-set .md-blocks > li .ui-card,
+.md-set .md-binds > li .ui-card--sunken,
+.md-set .md-blocks > li .ui-card--sunken {
+  padding: var(--s-3) 0;
+  border: 0;
+}
+
+.md-set .md-bind-name {
+  font-size: var(--t-body-size);
+  font-weight: 500;
+}
+
+/* how the list is drawn: two choices, the chosen one ringed in the
+   action colour rather than washed in brass */
+.md-set .md-shape .ui-card {
+  padding: var(--s-3) var(--s-4);
+  border: var(--border) solid var(--line-strong);
+  border-radius: var(--r-control);
+}
+
+.md-set .md-shape .ui-card[aria-current='true'],
+.md-set .md-shape .ui-card--current,
+.md-set .md-shape .ui-card[aria-pressed='true'] {
+  border-color: var(--action);
+  box-shadow: inset 0 0 0 var(--border) var(--action);
+  background: transparent;
+}
+
+/* -- the fields: quiet boxes, the label a caption ----------------- */
+
+.md-set .md-field > .mono-label,
+.md-set .md-field .mono-label {
+  color: var(--fg-tertiary);
+}
+
+.md-set .field-input,
+.md-set .ui-field-input {
+  border: var(--border) solid var(--line-strong);
+  border-radius: var(--r-control);
+  background: var(--surface-1);
+  box-shadow: none;
+}
+
+.md-set .field-input:focus,
+.md-set .ui-field-input:focus {
+  border-color: var(--action);
+  box-shadow: 0 0 0 var(--border) var(--action);
+  outline: none;
+}
+
+.md-set .md-mark-plate {
+  border: var(--border) solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-1);
+  box-shadow: none;
+}
+
+/* -- who may do what: the grid's ticks take the action colour ---- */
+
+.md-set .md-grant.is-on {
+  background: var(--action);
+  border-color: var(--action);
+  color: var(--action-fg);
+}
+
+.md-set .md-grant:focus-visible {
+  outline: var(--border-strong) solid var(--action);
+  outline-offset: 2px;
+}
+
+.md-set .md-set-note,
+.md-set .md-panel-say {
+  color: var(--fg-secondary);
+}
+
+/* a row count is a figure, not a label (rule 3) */
+.md-set .md-bind-count,
+.md-set .md-att-count {
+  text-transform: none;
+  letter-spacing: 0;
+}
